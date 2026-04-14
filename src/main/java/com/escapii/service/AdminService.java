@@ -1,0 +1,28 @@
+package com.escapii.service;
+
+import com.escapii.dto.AdminBookingResponse;
+import com.escapii.dto.AdminDateRequest;
+import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.DestinationResponse;
+import com.escapii.model.BookingStatus;
+
+import java.util.List;
+
+public interface AdminService {
+
+    // ── Destinacije ──
+    List<DestinationResponse> getAllDestinations();
+    void toggleDestinationActive(Long id, boolean active);
+
+    // ── Termini ──
+    List<AdminDateResponse> getAllDates();
+    AdminDateResponse addDate(AdminDateRequest request);
+    AdminDateResponse updateDestinations(Long id, List<Long> destinationIds);
+    void toggleActive(Long id, boolean active);
+    void updateSlots(Long id, int slots);
+    void deleteDate(Long id);
+
+    // ── Rezervacije ──
+    List<AdminBookingResponse> getAllBookings();
+    AdminBookingResponse updateBookingStatus(Long id, BookingStatus status);
+}

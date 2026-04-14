@@ -1,0 +1,86 @@
+package com.escapii.config;
+
+import jakarta.persistence.OptimisticLockException;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.StaleObjectStateException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Globalni exception handler.
+ * Pretvara sve greske u konzistentan JSON format.
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /** Pogrešan HTTP metod (npr. GET na /api/booking). */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        log.warn("[API] Pogrešan metod: {} — dozvoljeno: {}", ex.getMethod(), ex.getSupportedMethods());
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(Map.of("error", "HTTP metod nije podržan: " + ex.getMethod()));
+    }
+
+    /** Validacione greške — @Valid na BookingRequest. */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+          .forEach(fe -> fieldErrors.put(fe.getField(), fe.getDefaultMessage()));
+
+        String summary = fieldErrors.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(", "));
+        log.warn("[Validacija] {} grešaka: {}", fieldErrors.size(), summary);
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Validaciona greška", "fields", fieldErrors));
+    }
+
+    /**
+     * Race condition — dva korisnika istovremeno menjaju isti termin.
+     * Hibernate baca ovo kada @Version kolona ne odgovara.
+     */
+    @ExceptionHandler({
+        ObjectOptimisticLockingFailureException.class,
+        OptimisticLockException.class,
+        StaleObjectStateException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleOptimisticLock(Exception ex) {
+        log.warn("[Concurrency] Optimistic lock conflict: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Termin je upravo izmenjen od strane drugog korisnika. Molimo osvežite stranicu i pokušajte ponovo."));
+    }
+
+    /** Poslovne greške — termin ne postoji, destinacija ne postoji, itd. */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleBusinessException(ResponseStatusException ex) {
+        log.warn("[Poslovna greška] {} — {}", ex.getStatusCode(), ex.getReason());
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Greška"));
+    }
+
+    /** Nepredviđene greške — 500. */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
+        log.error("[GREŠKA] Neočekivana greška: {}", ex.getMessage(), ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Došlo je do greške na serveru. Pokušajte ponovo."));
+    }
+}

@@ -1,0 +1,130 @@
+package com.escapii.controller;
+
+import com.escapii.dto.AdminBookingResponse;
+import com.escapii.dto.AdminDateRequest;
+import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.DestinationResponse;
+import com.escapii.model.BookingStatus;
+import com.escapii.config.DailyTaskScheduler;
+import com.escapii.service.AdminService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Admin API za upravljanje terminima i rezervacijama.
+ * Svi endpointi su zaštićeni X-Admin-Key headerom (AdminKeyFilter).
+ */
+@RestController
+@RequestMapping("/api/admin")
+@RequiredArgsConstructor
+public class AdminController {
+
+    private final AdminService       adminService;
+    private final DailyTaskScheduler dailyTaskScheduler;
+
+    // ══ DESTINACIJE ══════════════════════════════════════════════════════════
+
+    /** GET /api/admin/destinations — sve destinacije (uključujući neaktivne). */
+    @GetMapping("/destinations")
+    public ResponseEntity<List<DestinationResponse>> getAllDestinations() {
+        return ResponseEntity.ok(adminService.getAllDestinations());
+    }
+
+    /** PATCH /api/admin/destinations/{id}/active?value=false — aktiviraj/deaktiviraj destinaciju. */
+    @PatchMapping("/destinations/{id}/active")
+    public ResponseEntity<Map<String, Object>> toggleDestinationActive(
+            @PathVariable Long id,
+            @RequestParam boolean value) {
+        adminService.toggleDestinationActive(id, value);
+        return ResponseEntity.ok(Map.of(
+                "id", id,
+                "active", value,
+                "message", value ? "Destinacija aktivirana" : "Destinacija deaktivirana"
+        ));
+    }
+
+    // ══ TERMINI ══════════════════════════════════════════════════════════════
+
+    /** GET /api/admin/dates — svi termini sa potencijalnim destinacijama. */
+    @GetMapping("/dates")
+    public ResponseEntity<List<AdminDateResponse>> getAllDates() {
+        return ResponseEntity.ok(adminService.getAllDates());
+    }
+
+    /** POST /api/admin/dates — dodaj novi termin. */
+    @PostMapping("/dates")
+    public ResponseEntity<AdminDateResponse> addDate(@Valid @RequestBody AdminDateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.addDate(request));
+    }
+
+    /** PUT /api/admin/dates/{id}/destinations — ažuriraj potencijalne destinacije. */
+    @PutMapping("/dates/{id}/destinations")
+    public ResponseEntity<AdminDateResponse> updateDestinations(
+            @PathVariable Long id,
+            @RequestBody List<Long> destinationIds) {
+        return ResponseEntity.ok(adminService.updateDestinations(id, destinationIds));
+    }
+
+    /** PATCH /api/admin/dates/{id}/active?value=false — aktiviraj/deaktiviraj termin. */
+    @PatchMapping("/dates/{id}/active")
+    public ResponseEntity<Map<String, Object>> toggleActive(
+            @PathVariable Long id,
+            @RequestParam boolean value) {
+        adminService.toggleActive(id, value);
+        return ResponseEntity.ok(Map.of(
+                "id", id,
+                "active", value,
+                "message", value ? "Termin aktiviran" : "Termin deaktiviran"
+        ));
+    }
+
+    /** PATCH /api/admin/dates/{id}/slots?value=50 — izmeni broj dostupnih mesta. */
+    @PatchMapping("/dates/{id}/slots")
+    public ResponseEntity<Map<String, Object>> updateSlots(
+            @PathVariable Long id,
+            @RequestParam int value) {
+        adminService.updateSlots(id, value);
+        return ResponseEntity.ok(Map.of(
+                "id", id,
+                "availableSlots", value,
+                "message", "Broj mesta ažuriran na " + value
+        ));
+    }
+
+    /** DELETE /api/admin/dates/{id} — trajno obriši termin. */
+    @DeleteMapping("/dates/{id}")
+    public ResponseEntity<Map<String, String>> deleteDate(@PathVariable Long id) {
+        adminService.deleteDate(id);
+        return ResponseEntity.ok(Map.of("message", "Termin obrisan"));
+    }
+
+    // ══ REZERVACIJE ══════════════════════════════════════════════════════════
+
+    /** GET /api/admin/bookings — sve rezervacije sortirane po datumu (najnovije prve). */
+    @GetMapping("/bookings")
+    public ResponseEntity<List<AdminBookingResponse>> getAllBookings() {
+        return ResponseEntity.ok(adminService.getAllBookings());
+    }
+
+    /** POST /api/admin/scheduler/test — ručno okida jutarnji digest (samo za testiranje). */
+//    @PostMapping("/scheduler/test")
+//    public ResponseEntity<Map<String, String>> testScheduler() {
+//        dailyTaskScheduler.triggerDigest();
+//        return ResponseEntity.ok(Map.of("status", "Digest je poslan — proveri email."));
+//    }
+
+    /** PATCH /api/admin/bookings/{id}/status?value=CONFIRMED — promeni status rezervacije. */
+    @PatchMapping("/bookings/{id}/status")
+    public ResponseEntity<AdminBookingResponse> updateBookingStatus(
+            @PathVariable Long id,
+            @RequestParam BookingStatus value) {
+        return ResponseEntity.ok(adminService.updateBookingStatus(id, value));
+    }
+
+}
