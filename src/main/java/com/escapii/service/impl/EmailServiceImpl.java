@@ -30,7 +30,7 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final DestinationService destinationService;
 
-    @Value("${app.mail-from:${spring.mail.username}}")
+    @Value("${app.mail-from}")
     private String fromEmail;
 
     @Value("${app.team-email}")
