@@ -226,7 +226,7 @@ public class EmailServiceImpl implements EmailService {
 
         String body = """
             <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-              Zdravo, %s!
+              Zdravo,
             </p>
             <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">
               Primili smo vaš upit. Tim Escapii će Vas kontaktirati u roku od
@@ -236,7 +236,6 @@ public class EmailServiceImpl implements EmailService {
             %s
             %s
             """.formatted(
-            esc(firstName(booking.getFirstName())),
             customerTripCard(booking, depDate, retDate, n),
             totalBox(booking.getTotalPriceAll(), n),
             nextStepsBlock()
@@ -276,7 +275,7 @@ public class EmailServiceImpl implements EmailService {
         if (confirmed) {
             content = """
                 <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-                  Zdravo, %s!
+                  Zdravo,
                 </p>
                 <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">%s</p>
                 %s
@@ -285,7 +284,6 @@ public class EmailServiceImpl implements EmailService {
                 %s
                 %s
                 """.formatted(
-                esc(firstName(booking.getFirstName())),
                 subtitle,
                 customerTripCard(booking, depDate, retDate, n),
                 totalBox(booking.getTotalPriceAll(), n),
@@ -296,7 +294,7 @@ public class EmailServiceImpl implements EmailService {
         } else {
             content = """
                 <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-                  Zdravo, %s!
+                  Zdravo,
                 </p>
                 <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">%s</p>
                 %s
@@ -308,7 +306,6 @@ public class EmailServiceImpl implements EmailService {
                   </p>
                 </div>
                 """.formatted(
-                esc(firstName(booking.getFirstName())),
                 subtitle,
                 customerTripCard(booking, depDate, retDate, n),
                 fromEmail, fromEmail
@@ -396,7 +393,7 @@ public class EmailServiceImpl implements EmailService {
                     <td style="vertical-align:top;padding-bottom:8px;">
                       <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">%s &middot; 72h pre polaska</div>
                       <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Koverta sa destinacijom</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dobijaš zatvorenu kovertu. Otvoriš je tek na aerodromu — to je pravilo!</div>
+                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dobijaš kovertu sa destinacijom.</div>
                     </td>
                   </tr>
                   <tr>
@@ -414,7 +411,7 @@ public class EmailServiceImpl implements EmailService {
                     <td style="vertical-align:top;">
                       <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">%s &middot; Dan polaska</div>
                       <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Avantura počinje!</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dođi na aerodrom, otvori kovertu i doživи iznenađenje o kom ćeš pričati godinama.</div>
+                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dođi na aerodrom i doživi nezaboravno putovanje.</div>
                     </td>
                   </tr>
 
