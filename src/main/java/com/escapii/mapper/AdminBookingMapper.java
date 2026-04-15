@@ -16,10 +16,17 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "selectedDate.returnDate",     target = "returnDate")
     @Mapping(source = "exclusionCostEur",            target = "exclusionCostEur")
     @Mapping(target = "excludedDestinations", expression = "java(buildExclusionList(entity))")
+    @Mapping(target = "passengerNames",       expression = "java(buildPassengerNames(entity))")
     public abstract AdminBookingResponse toResponse(Booking entity);
 
     public List<AdminBookingResponse> toResponseList(List<Booking> entities) {
         return entities.stream().map(this::toResponse).toList();
+    }
+
+    protected List<String> buildPassengerNames(Booking b) {
+        return b.getPassengers().stream()
+                .map(p -> p.getName())
+                .toList();
     }
 
     protected List<String> buildExclusionList(Booking b) {

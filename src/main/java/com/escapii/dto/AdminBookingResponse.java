@@ -37,10 +37,14 @@ public class AdminBookingResponse {
     private Boolean hasInsurance;
     private Boolean hasBreakfast;
     private Boolean hasSeatsTogther;
+    private Boolean hasConnectingFlights;
     private Integer cabinSuitcaseCount;
     private Integer exclusionCount;
     private java.util.List<String> excludedDestinations;
     private Integer exclusionCostEur;
+
+    // Putnici
+    private java.util.List<String> passengerNames;
 
     // Cene
     private Integer basePricePerPerson;
