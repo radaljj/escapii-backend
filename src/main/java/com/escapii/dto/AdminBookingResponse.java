@@ -39,6 +39,8 @@ public class AdminBookingResponse {
     private Boolean hasSeatsTogther;
     private Integer cabinSuitcaseCount;
     private Integer exclusionCount;
+    private java.util.List<String> excludedDestinations;
+    private Integer exclusionCostEur;
 
     // Cene
     private Integer basePricePerPerson;
