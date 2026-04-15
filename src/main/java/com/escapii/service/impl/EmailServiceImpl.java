@@ -647,8 +647,8 @@ public class EmailServiceImpl implements EmailService {
               <meta http-equiv="x-ua-compatible" content="ie=edge">
               <meta name="viewport" content="width=device-width, initial-scale=1">
               <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-              <meta name="color-scheme" content="light dark">
-              <meta name="supported-color-schemes" content="light dark">
+              <meta name="color-scheme" content="light">
+              <meta name="supported-color-schemes" content="light">
               <!--[if mso]>
               <noscript><xml><o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
                 <o:PixelsPerInch>96</o:PixelsPerInch>
@@ -656,19 +656,14 @@ public class EmailServiceImpl implements EmailService {
               <style>td,th,div,p,a,h1,h2,h3{font-family:"Segoe UI",sans-serif;mso-line-height-rule:exactly;}</style>
               <![endif]-->
               <style>
-                :root { color-scheme: light dark; supported-color-schemes: light dark; }
+                :root { color-scheme: light; }
                 @media (max-width:620px) {
                   .mob-full { width:100%% !important; }
                   .mob-pad  { padding:24px !important; }
                 }
-                @media (prefers-color-scheme:dark) {
-                  .dm-bg  { background-color:#1a1a1a !important; }
-                  .dm-card { background-color:#242424 !important; border-color:#333 !important; }
-                  .dm-text { color:#e5e7eb !important; }
-                }
               </style>
             </head>
-            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;" class="dm-bg">
+            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;color-scheme:light;">
 
               <!-- Preheader spacer -->
               <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
@@ -677,7 +672,7 @@ public class EmailServiceImpl implements EmailService {
 
               <div role="article" aria-roledescription="email" lang="sr">
               <table align="center" width="100%%" cellpadding="0" cellspacing="0" style="font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
-                <tr><td align="center" style="padding:32px 16px;" class="dm-bg">
+                <tr><td align="center" style="padding:32px 16px;">
 
                   <table class="mob-full" style="width:600px;max-width:600px;" cellpadding="0" cellspacing="0">
 
@@ -687,7 +682,7 @@ public class EmailServiceImpl implements EmailService {
                     </td></tr>
 
                     <!-- CARD -->
-                    <tr><td class="dm-card" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+                    <tr><td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
 
                       <!-- Top accent bar -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
@@ -714,7 +709,7 @@ public class EmailServiceImpl implements EmailService {
 
                       <!-- Body -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="padding:32px 36px;" class="mob-pad dm-text">
+                        <tr><td style="padding:32px 36px;" class="mob-pad">
                           %s
                         </td></tr>
                       </table>
