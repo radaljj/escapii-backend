@@ -941,7 +941,7 @@ public class EmailServiceImpl implements EmailService {
               Otvorili su se novi termini!
             </p>
             <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">
-              Čekao/la si — i isplatilo se. Dostupni su novi termini za polazak iz <strong>%s</strong>.
+              Čekao/la si — i isplatilo se. Dostupni su novi termini za polazak sa aerodroma <strong>%s</strong>.
             </p>
             <div style="background:#fff7ed;border-left:3px solid #f97316;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:28px;">
               <p style="margin:0;font-size:14px;color:#7c2d12;line-height:1.7;">
