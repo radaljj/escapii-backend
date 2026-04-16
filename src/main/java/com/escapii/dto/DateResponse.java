@@ -4,11 +4,9 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
- * Javni DTO za AvailableDate.
- * potentialDestinations su sada uključene — frontend ih koristi za grid isključivanja.
+ * Javni DTO za AvailableDate. Ne sadrži potentialDestinations — to je admin-only.
  */
 @Getter
 @Builder
@@ -20,5 +18,4 @@ public class DateResponse {
     private Integer numberOfNights;
     private Integer availableSlots;
     private Integer basePrice;
-    private List<DestinationResponse> potentialDestinations;
 }
