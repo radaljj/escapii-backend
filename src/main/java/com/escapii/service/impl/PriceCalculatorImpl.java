@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
  * Osiguranje  → +10€/pp
  * <p>
  * Flat (jedna cena za rezervaciju):
- * Isključivanja → 1. besplatno | 2. +10€ | 3. +10€ | 4. +15€ | 5. +15€ (max 50€)
+ * BEG/ostali → 1. besplatno | 2. +10€ | 3. +10€ | 4. +15€ | 5. +15€ (max 50€)
+ * INI        → 1. besplatno | 2. +15€ (max 2 isključivanja)
  * <p>
  * Kabinski kofer (selektivan po putniku):
  * +100€/pp (50€/smer × 2 smera)
@@ -43,7 +44,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
         int seatsTogether = hasSeatsTogther ? SEATS_PP : 0;
         int insurance = hasInsurance ? INSURANCE_PP : 0;
 
-        int exclusionCostFlat = calcExclusionCost(exclusionCount);
+        int exclusionCostFlat = calcExclusionCost(exclusionCount, date.getDepartureAirport());
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
 
@@ -68,9 +69,16 @@ public class PriceCalculatorImpl implements PriceCalculator {
             .build();
     }
 
-    /** 1→0€ | 2→10€ | 3→20€ | 4→35€ | 5→50€ */
-    private int calcExclusionCost(int n) {
+    /**
+     * BEG/ostali: 1→0€ | 2→10€ | 3→20€ | 4→35€ | 5→50€
+     * INI:        1→0€ | 2→15€ (max 2)
+     */
+    private int calcExclusionCost(int n, String airport) {
         if (n <= 1) return 0;
+        if ("INI".equalsIgnoreCase(airport)) {
+            // Za Niš: samo 2 isključivanja, 1. gratis, 2. +15€
+            return Math.min(n - 1, 1) * EXCLUSION_FLAT_HIGH;
+        }
         int cost = 0;
         for (int i = 2; i <= n; i++) {
             cost += (i <= 3) ? EXCLUSION_FLAT_LOW : EXCLUSION_FLAT_HIGH;
