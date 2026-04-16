@@ -230,6 +230,18 @@ public class AdminServiceImpl implements AdminService {
                 date.getId(), date.getAvailableSlots() - delta, newSlots, delta, bookingId);
     }
 
+    @Override
+    @Transactional
+    public AdminBookingResponse updateAdminNotes(Long id, String adminNotes) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+        booking.setAdminNotes(adminNotes == null ? null : adminNotes.strip());
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Napomena ažurirana za rezervaciju {}", saved.getBookingRef());
+        return adminBookingMapper.toResponse(saved);
+    }
+
     // ══ HELPERS ══════════════════════════════════════════════════════════════
 
     private AvailableDate findDateOrThrow(Long id) {

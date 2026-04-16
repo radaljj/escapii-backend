@@ -25,4 +25,5 @@ public interface AdminService {
     // ── Rezervacije ──
     List<AdminBookingResponse> getAllBookings();
     AdminBookingResponse updateBookingStatus(Long id, BookingStatus status);
+    AdminBookingResponse updateAdminNotes(Long id, String adminNotes);
 }

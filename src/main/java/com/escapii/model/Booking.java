@@ -144,6 +144,10 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    /** Interna napomena admina — nije vidljiva korisniku. */
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
+
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();

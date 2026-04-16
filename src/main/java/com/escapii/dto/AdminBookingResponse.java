@@ -46,6 +46,9 @@ public class AdminBookingResponse {
     // Putnici
     private java.util.List<String> passengerNames;
 
+    // Admin (interno)
+    private String adminNotes;
+
     // Cene
     private Integer basePricePerPerson;
     private Integer totalPricePerPerson;

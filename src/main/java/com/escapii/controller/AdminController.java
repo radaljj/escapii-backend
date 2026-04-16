@@ -127,4 +127,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateBookingStatus(id, value));
     }
 
+    /** PATCH /api/admin/bookings/{id}/notes — sačuvaj internu napomenu (samo za admina). */
+    @PatchMapping("/bookings/{id}/notes")
+    public ResponseEntity<AdminBookingResponse> updateAdminNotes(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String notes = body.getOrDefault("adminNotes", "");
+        return ResponseEntity.ok(adminService.updateAdminNotes(id, notes));
+    }
+
 }
