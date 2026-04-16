@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DestinationMapper.class)
 public interface DateMapper {
     DateResponse toResponse(AvailableDate entity);
     List<DateResponse> toResponseList(List<AvailableDate> entities);
