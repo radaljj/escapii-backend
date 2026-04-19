@@ -166,35 +166,43 @@ public class EmailServiceImpl implements EmailService {
 
         return wrapBase(
             "Escapii — Interni",
-            "#08112a",
+            "#1e1b4b",
             "Novi upit stigao",
+            depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
             "#f97316",
             "NOVI UPIT",
             body + notes,
-            "Escapii automatska notifikacija · Ne odgovarati na ovaj email"
+            "Interni email — escapii ops tim · Nije za prosleđivanje",
+            false
         );
     }
 
     private String metaSection(Booking booking, String dep, String ret, int n) {
+        String deadline = booking.getCreatedAt().plusHours(24).format(DATETIME_FMT);
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px; background:#fafafa; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:6px;">
               <tr>
-                <td style="padding:16px 20px; border-right:1px solid #e5e7eb; width:33%%;">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;">Ref. broj</div>
-                  <div style="font-size:15px;font-weight:800;color:#08112a;">%s</div>
+                <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ref. broj</div>
+                  <div style="font-size:14px;font-weight:700;color:#08112a;">%s</div>
                 </td>
-                <td style="padding:16px 20px; border-right:1px solid #e5e7eb; width:33%%;">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;">Vreme upita</div>
+                <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Primljeno</div>
                   <div style="font-size:13px;font-weight:600;color:#374151;">%s</div>
                 </td>
-                <td style="padding:16px 20px; width:33%%;">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;">Ukupno</div>
-                  <div style="font-size:15px;font-weight:800;color:#f97316;">%s €</div>
+                <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ukupno</div>
+                  <div style="font-size:14px;font-weight:700;color:#f97316;">%s €</div>
+                </td>
+                <td style="padding:12px 16px;width:25%%;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Rok odgovora</div>
+                  <div style="font-size:13px;font-weight:700;color:#dc2626;">%s</div>
                 </td>
               </tr>
             </table>
-            """.formatted(booking.getBookingRef(), booking.getCreatedAt().format(DATETIME_FMT), booking.getTotalPriceAll());
+            """.formatted(booking.getBookingRef(), booking.getCreatedAt().format(DATETIME_FMT),
+                booking.getTotalPriceAll(), deadline);
     }
 
     private String teamSection(String title, String rows) {
@@ -225,17 +233,16 @@ public class EmailServiceImpl implements EmailService {
         int n = booking.getNumberOfTravelers();
 
         String body = """
-            <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-              Zdravo,
-            </p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">
-              Primili smo vaš upit. Tim Escapii će Vas kontaktirati u roku od
-              <strong style="color:#111827;">24 sata</strong> sa svim detaljima putovanja.
+            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
+              Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>
+              uspešno smo primili vaš upit za putovanje. Naš tim pregledava vaše preference
+              i kontaktiraće vas u roku od <strong style="color:#08112a;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
             </p>
             %s
             %s
             %s
             """.formatted(
+            esc(booking.getFirstName()),
             customerTripCard(booking, depDate, retDate, n),
             totalBox(booking.getTotalPriceAll(), n),
             nextStepsBlock()
@@ -244,12 +251,14 @@ public class EmailServiceImpl implements EmailService {
         return wrapBase(
             "Escapii",
             "#08112a",
-            "Upit uspešno primljen",
+            "Vaš upit je primljen",
+            "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
             booking.getBookingRef(),
             "#f97316",
             "NA ČEKANJU",
             body,
-            "© 2026 Escapii · Pitanja? Pišite nam na " + fromEmail
+            customerFooter(fromEmail),
+            true
         );
     }
 
@@ -264,28 +273,26 @@ public class EmailServiceImpl implements EmailService {
 
         String accentColor = confirmed ? "#16a34a" : "#dc2626";
         String badgeLabel  = confirmed ? "POTVRĐENA" : "OTKAZANA";
-        String heading     = confirmed
-            ? "Rezervacija potvrđena!"
-            : "Rezervacija otkazana";
+        String heading     = confirmed ? "Rezervacija potvrđena!" : "Rezervacija otkazana";
         String subtitle    = confirmed
-            ? "Vaše putovanje je zvanično potvrđeno. Svi detalji su navedeni ispod."
-            : "Vaša rezervacija je nažalost otkazana. Za pitanja, slobodno nas kontaktirajte.";
+            ? "vaša rezervacija je zvanično potvrđena! Sve je spremno — vi samo spakovajte kofere i pustite uzbuđenje da raste. ✦"
+            : "sa žaljenjem vam obaveštavamo da je vaša rezervacija otkazana. Razumemo da su planovi nekad nepredvidivi — i nadamo se da ćete nam ponovo ukazati poverenje.<br><br>Vaša avantura nas čeka — kada budete spremni, mi ćemo biti tu. ✦";
 
         String content;
         if (confirmed) {
             content = """
-                <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-                  Zdravo,
+                <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
+                  Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>%s
                 </p>
-                <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">%s</p>
                 %s
                 %s
                 %s
                 %s
                 %s
                 """.formatted(
+                esc(booking.getFirstName()),
                 subtitle,
-                customerTripCard(booking, depDate, retDate, n),
+                customerTripCardStyled(booking, depDate, retDate, n, false),
                 totalBox(booking.getTotalPriceAll(), n),
                 buildConfirmedTimeline(booking),
                 buildPassengersSection(booking),
@@ -293,21 +300,22 @@ public class EmailServiceImpl implements EmailService {
             );
         } else {
             content = """
-                <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-                  Zdravo,
+                <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
+                  Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>%s
                 </p>
-                <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">%s</p>
                 %s
-                <div style="background:#fef2f2;border-left:3px solid #dc2626;border-radius:0 6px 6px 0;padding:16px 20px;margin-bottom:28px;">
-                  <p style="margin:0;font-size:14px;color:#7f1d1d;line-height:1.7;">
-                    Ukoliko smatrate da je ovo greška ili imate pitanja, kontaktirajte nas na
-                    <a href="mailto:%s" style="color:#dc2626;font-weight:700;text-decoration:none;">%s</a>.
+                <div style="background:#fff5f5;border:1px solid #fee2e2;border-left:3px solid #dc2626;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
+                  <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:6px;">Pitanja ili žalba?</div>
+                  <p style="margin:0;font-size:13px;color:#374151;line-height:1.7;">
+                    Kontaktirajte nas na
+                    <a href="mailto:%s" style="color:#dc2626;font-weight:600;text-decoration:none;">%s</a>.
                     Radujemo se vašem sledećem putovanju sa nama!
                   </p>
                 </div>
                 """.formatted(
+                esc(booking.getFirstName()),
                 subtitle,
-                customerTripCard(booking, depDate, retDate, n),
+                customerTripCardStyled(booking, depDate, retDate, n, true),
                 fromEmail, fromEmail
             );
         }
@@ -316,11 +324,15 @@ public class EmailServiceImpl implements EmailService {
             "Escapii",
             confirmed ? "#064e3b" : "#450a0a",
             heading,
+            confirmed
+                ? "Vaše putovanje je zvanično u kalendaru. Jedino što ne znate — kuda idete! ✦"
+                : "Nadamo se da ćemo vas videti na sledećem putovanju.",
             booking.getBookingRef(),
             accentColor,
             badgeLabel,
             content,
-            "© 2026 Escapii · Pitanja? Pišite nam na " + fromEmail
+            customerFooter(fromEmail),
+            confirmed
         );
     }
 
@@ -339,86 +351,49 @@ public class EmailServiceImpl implements EmailService {
         String depStr     = dep.format(DATE_FMT);
 
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-              <tr><td>
-                <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-                            color:#9ca3af;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #f3f4f6;">
-                  Šta te čeka
-                </div>
-              </td></tr>
-              <tr><td>
-                <table width="100%%" cellpadding="0" cellspacing="0">
+            <div style="margin-bottom:24px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:16px;">Šta vas čeka</div>
+              %s
+              %s
+              %s
+              %s
+            </div>
+            """.formatted(
+            timelineItem("✓", "#dcfce7", "#16a34a",
+                "Rezervacija potvrđena",
+                "Danas · " + today,
+                "Sve je rezervisano — letovi, smeštaj, transfer. Možete se opustiti — doslovno."),
+            timelineItem("🌤", "#fff7ed", "#f97316",
+                "Vremenska prognoza",
+                weatherStr + " · 7 dana pre polaska",
+                "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
+            timelineItem("✉", "#eff6ff", "#3b82f6",
+                "Koverta s destinacijom",
+                revealStr + " · 72h pre polaska",
+                "Fizička koverta na vašoj adresi. Konačno — otkrivate gde idete!"),
+            timelineItem("✈", "#08112a", "#f97316",
+                "Avantura počinje!",
+                depStr + " · Dan polaska",
+                "Dođite na aerodrom i dozvolite sebi da budete iznenađeni.")
+        );
+    }
 
-                  <tr>
-                    <td style="width:44px;vertical-align:top;">
-                      <div style="width:44px;height:44px;background:#dcfce7;border-radius:12px;text-align:center;line-height:44px;font-size:20px;">&#10003;</div>
-                    </td>
-                    <td style="width:12px;"></td>
-                    <td style="vertical-align:top;padding-bottom:8px;">
-                      <div style="font-size:11px;font-weight:700;color:#16a34a;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">Danas &middot; %s</div>
-                      <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Rezervacija potvrđena</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Sve je rezervisano. Možeš da se oputiš — doslovno.</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="width:44px;text-align:center;padding:4px 0;">
-                      <div style="width:2px;height:20px;background:#e5e7eb;margin:0 auto;"></div>
-                    </td>
-                    <td colspan="2"></td>
-                  </tr>
-
-                  <tr>
-                    <td style="width:44px;vertical-align:top;">
-                      <div style="width:44px;height:44px;background:#eff6ff;border-radius:12px;text-align:center;line-height:44px;font-size:20px;">&#127780;</div>
-                    </td>
-                    <td style="width:12px;"></td>
-                    <td style="vertical-align:top;padding-bottom:8px;">
-                      <div style="font-size:11px;font-weight:700;color:#3b82f6;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">%s &middot; 7 dana pre polaska</div>
-                      <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Prognoza vremena</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Šaljemo ti prognozu da znaš kako da se pakuješ — pre nego što saznaš kuda ideš.</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="width:44px;text-align:center;padding:4px 0;">
-                      <div style="width:2px;height:20px;background:#e5e7eb;margin:0 auto;"></div>
-                    </td>
-                    <td colspan="2"></td>
-                  </tr>
-
-                  <tr>
-                    <td style="width:44px;vertical-align:top;">
-                      <div style="width:44px;height:44px;background:#fff7ed;border-radius:12px;text-align:center;line-height:44px;font-size:20px;">&#9993;</div>
-                    </td>
-                    <td style="width:12px;"></td>
-                    <td style="vertical-align:top;padding-bottom:8px;">
-                      <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">%s &middot; 72h pre polaska</div>
-                      <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Koverta sa destinacijom</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dobijaš kovertu sa destinacijom.</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="width:44px;text-align:center;padding:4px 0;">
-                      <div style="width:2px;height:20px;background:#e5e7eb;margin:0 auto;"></div>
-                    </td>
-                    <td colspan="2"></td>
-                  </tr>
-
-                  <tr>
-                    <td style="width:44px;vertical-align:top;">
-                      <div style="width:44px;height:44px;background:#08112a;border-radius:12px;text-align:center;line-height:44px;font-size:20px;">&#9992;</div>
-                    </td>
-                    <td style="width:12px;"></td>
-                    <td style="vertical-align:top;">
-                      <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px;">%s &middot; Dan polaska</div>
-                      <div style="font-size:15px;font-weight:700;color:#08112a;margin-bottom:3px;">Avantura počinje!</div>
-                      <div style="font-size:13px;color:#6b7280;line-height:1.5;">Dođi na aerodrom i doživi nezaboravno putovanje.</div>
-                    </td>
-                  </tr>
-
-                </table>
-              </td></tr>
+    private String timelineItem(String icon, String iconBg, String accentColor,
+                                String title, String when, String description) {
+        return """
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+              <tr>
+                <td style="width:38px;vertical-align:top;">
+                  <div style="width:36px;height:36px;background:%s;border:2px solid %s;border-radius:50%%;text-align:center;line-height:32px;font-size:15px;">%s</div>
+                </td>
+                <td style="padding-left:14px;vertical-align:top;">
+                  <div style="font-size:14px;font-weight:700;color:#08112a;margin-bottom:2px;">%s</div>
+                  <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">%s</div>
+                  <div style="font-size:13px;color:#6b7280;line-height:1.5;">%s</div>
+                </td>
+              </tr>
             </table>
-            """.formatted(today, weatherStr, revealStr, depStr);
+            """.formatted(iconBg, accentColor, icon, title, when, description);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -426,27 +401,65 @@ public class EmailServiceImpl implements EmailService {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String customerTripCard(Booking booking, String depDate, String retDate, int n) {
-        return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-              <tr><td style="background:#f9fafb;padding:12px 20px;border-bottom:1px solid #e5e7eb;">
-                <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;">Detalji putovanja</span>
-              </td></tr>
-              <tr><td style="padding:4px 0;">
-                <table width="100%%" cellpadding="0" cellspacing="0">
-                  %s%s%s%s%s%s
-                </table>
-              </td></tr>
-            </table>
-            """.formatted(
-            cRow("Aerodrom polaska", booking.getDepartureAirport(), true),
-            cRow("Datum putovanja", depDate + " &rarr; " + retDate, false),
-            cRow("Trajanje", booking.getSelectedDate().getNumberOfNights() + " noći", true),
-            cRow("Putnici", n + (n == 1 ? " putnik" : " putnika"), false),
-            cRow("Smeštaj", resolveAccomLabel(booking.getAccommodationType()), true),
-            booking.getExclusionCount() > 0 ? cRow("Isključene dest.", buildExclusionsText(booking), false) : ""
-        );
+        return customerTripCardStyled(booking, depDate, retDate, n, false);
     }
 
+    private String customerTripCardStyled(Booking booking, String depDate, String retDate, int n, boolean cancelled) {
+        String borderColor = cancelled ? "#dc2626" : "#f97316";
+        String cardTitle   = cancelled ? "Otkazano putovanje" : "Detalji putovanja";
+
+        StringBuilder rows = new StringBuilder();
+        rows.append(dRow("Polazni aerodrom", esc(booking.getDepartureAirport())));
+        if (cancelled) {
+            rows.append(dRowStrike("Datum polaska",  depDate));
+            rows.append(dRowStrike("Datum povratka", retDate));
+            rows.append(dRowStrike("Trajanje",       booking.getSelectedDate().getNumberOfNights() + " noći"));
+        } else {
+            rows.append(dRow("Datum polaska",  depDate));
+            rows.append(dRow("Datum povratka", retDate));
+            rows.append(dRow("Trajanje",       booking.getSelectedDate().getNumberOfNights() + " noći"));
+        }
+        rows.append(dRow("Putnici",   n + (n == 1 ? " putnik" : " putnika")));
+        rows.append(dRow("Smeštaj",   resolveAccomLabel(booking.getAccommodationType())));
+        if (booking.getExclusionCount() > 0) rows.append(dRow("Isključene dest.", buildExclusionsText(booking)));
+        if (!cancelled) rows.append(dRowMystery("Destinacija", "✦ Iznenađenje!"));
+
+        return """
+            <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-left:3px solid %s;border-radius:6px;padding:18px 20px;margin:0 0 20px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:14px;">%s</div>
+              <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
+            </div>
+            """.formatted(borderColor, cardTitle, rows);
+    }
+
+    private String dRow(String label, String value) {
+        return """
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#1f2937;font-weight:500;text-align:right;">%s</td>
+            </tr>
+            """.formatted(label, value);
+    }
+
+    private String dRowStrike(String label, String value) {
+        return """
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;font-weight:500;text-align:right;text-decoration:line-through;">%s</td>
+            </tr>
+            """.formatted(label, value);
+    }
+
+    private String dRowMystery(String label, String value) {
+        return """
+            <tr>
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#f97316;font-weight:600;font-style:italic;text-align:right;">%s</td>
+            </tr>
+            """.formatted(label, value);
+    }
+
+    // Stari cRow zadr&zan za interni email (teamSection)
     private String cRow(String label, String value, boolean shaded) {
         String bg = shaded ? "background:#fafafa;" : "";
         return """
@@ -459,12 +472,12 @@ public class EmailServiceImpl implements EmailService {
 
     private String totalBox(int total, int n) {
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;background:#08112a;border-radius:8px;overflow:hidden;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background:#08112a;border-radius:8px;">
               <tr>
-                <td style="padding:24px 28px;">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;">Ukupna cena putovanja</div>
-                  <div style="font-size:38px;font-weight:900;color:#f97316;line-height:1;margin-bottom:4px;">%s €</div>
-                  <div style="font-size:13px;color:rgba(255,255,255,0.5);">za %d %s</div>
+                <td style="padding:20px 24px;">
+                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;">Ukupna cena putovanja</div>
+                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#f97316;line-height:1;margin-bottom:4px;">%s €</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">za %d %s · sve uključeno</div>
                 </td>
               </tr>
             </table>
@@ -473,34 +486,36 @@ public class EmailServiceImpl implements EmailService {
 
     private String nextStepsBlock() {
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-              <tr><td style="background:#f9fafb;padding:12px 20px;border-bottom:1px solid #e5e7eb;">
-                <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;">Šta sledi?</span>
-              </td></tr>
-              <tr><td style="padding:8px 0;">
-                %s
-                %s
-                %s
-              </td></tr>
-            </table>
+            <div style="margin-bottom:24px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:14px;">Šta vas čeka</div>
+              %s
+              %s
+              %s
+            </div>
             """.formatted(
-            step("1", "#f97316", "Tim Escapii vam se javlja u roku od <strong style='color:#111827;'>24 sata</strong>"),
-            step("2", "#f97316", "Destinacija se otkriva <strong style='color:#111827;'>72 sata pre polaska</strong>"),
-            step("3", "#f97316", "Prognoza vremena stiže <strong style='color:#111827;'>7 dana pre polaska</strong>")
+            step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#08112a;'>24 sata</strong>",
+                      "Proveravamo dostupnost i potvrđujemo vašu rezervaciju."),
+            step("2", "Vremenska prognoza — <strong style='color:#08112a;'>7 dana pre polaska</strong>",
+                      "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
+            step("3", "Koverta s destinacijom — <strong style='color:#08112a;'>72h pre polaska</strong>",
+                      "Fizička koverta na vašoj adresi otkriva gde putujete. ✉")
         );
     }
 
-    private String step(String num, String color, String text) {
+    private String step(String num, String title, String description) {
         return """
-            <table cellpadding="0" cellspacing="0" style="width:100%%;border-bottom:1px solid #f3f4f6;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
               <tr>
-                <td style="padding:12px 20px;width:36px;vertical-align:top;">
-                  <div style="width:24px;height:24px;background:%s;border-radius:6px;text-align:center;line-height:24px;font-size:12px;font-weight:800;color:#fff;">%s</div>
+                <td style="width:36px;vertical-align:top;padding-top:2px;">
+                  <div style="width:28px;height:28px;background:#f97316;border-radius:50%%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#fff;">%s</div>
                 </td>
-                <td style="padding:12px 20px 12px 0;font-size:14px;color:#6b7280;line-height:1.6;">%s</td>
+                <td style="padding-left:12px;vertical-align:top;">
+                  <div style="font-size:14px;color:#08112a;font-weight:600;margin-bottom:2px;">%s</div>
+                  <div style="font-size:13px;color:#6b7280;line-height:1.5;">%s</div>
+                </td>
               </tr>
             </table>
-            """.formatted(color, num, text);
+            """.formatted(num, title, description);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -626,29 +641,63 @@ public class EmailServiceImpl implements EmailService {
 
     /**
      * Zajednički wrapper koji svi emailovi dele.
-     * Generiše kompletan HTML dokument oko prosledjenog body sadržaja.
+     * subheading — opcioni podnaslov ispod headinga (može biti prazan string)
+     * mysteryStrip — prikazuje "Vaša destinacija ostaje tajna" traku (samo korisnički emailovi)
      */
     private String wrapBase(
         String logoLabel,
         String headerBg,
         String headingText,
+        String subheading,
         String refCode,
         String badgeColor,
         String badgeLabel,
         String bodyContent,
-        String footerText
+        String footerText,
+        boolean mysteryStrip
     ) {
+        // Badge style — providna pozadina sa obojenim rubom
+        String badgeBg     = switch (badgeColor) {
+            case "#16a34a" -> "rgba(22,163,74,0.2)";
+            case "#dc2626" -> "rgba(220,38,38,0.2)";
+            default        -> "rgba(249,115,22,0.2)";
+        };
+        String badgeText   = switch (badgeColor) {
+            case "#16a34a" -> "#4ade80";
+            case "#dc2626" -> "#f87171";
+            default        -> "#fb923c";
+        };
+        String badgeBorder = switch (badgeColor) {
+            case "#16a34a" -> "rgba(22,163,74,0.4)";
+            case "#dc2626" -> "rgba(220,38,38,0.4)";
+            default        -> "rgba(249,115,22,0.4)";
+        };
+
+        String subheadingHtml = subheading.isBlank() ? "" :
+            "<p style=\"margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;\">%s</p>".formatted(subheading);
+
+        String refHtml = refCode.isBlank() ? "" :
+            "<div style=\"display:inline-block;background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.3);color:#fb923c;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px;margin-top:10px;\">&#10022; %s</div>".formatted(refCode);
+
+        String mysteryHtml = mysteryStrip ? """
+            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#0f1f3d;">
+              <tr><td style="padding:10px 36px;font-size:11px;color:rgba(255,255,255,0.5);text-align:center;letter-spacing:1px;">
+                <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
+                &nbsp;&nbsp;Vaša destinacija ostaje tajna sve do 72h pre polaska&nbsp;&nbsp;
+                <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
+              </td></tr>
+            </table>
+            """ : "";
+
         return """
             <!DOCTYPE html>
             <html lang="sr" xmlns:v="urn:schemas-microsoft-com:vml">
             <head>
               <meta charset="UTF-8">
               <meta name="x-apple-disable-message-reformatting">
-              <meta http-equiv="x-ua-compatible" content="ie=edge">
               <meta name="viewport" content="width=device-width, initial-scale=1">
               <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
               <meta name="color-scheme" content="light">
-              <meta name="supported-color-schemes" content="light">
               <!--[if mso]>
               <noscript><xml><o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
                 <o:PixelsPerInch>96</o:PixelsPerInch>
@@ -656,88 +705,97 @@ public class EmailServiceImpl implements EmailService {
               <style>td,th,div,p,a,h1,h2,h3{font-family:"Segoe UI",sans-serif;mso-line-height-rule:exactly;}</style>
               <![endif]-->
               <style>
-                :root { color-scheme: light; }
                 @media (max-width:620px) {
                   .mob-full { width:100%% !important; }
-                  .mob-pad  { padding:24px !important; }
+                  .mob-pad  { padding:20px !important; }
                 }
               </style>
             </head>
-            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;color-scheme:light;">
+            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;">
 
-              <!-- Preheader spacer -->
+              <!-- Preheader -->
               <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
-                %s &#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&zwnj;&nbsp;
+                %s &#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&zwnj;&nbsp;
               </div>
 
-              <div role="article" aria-roledescription="email" lang="sr">
-              <table align="center" width="100%%" cellpadding="0" cellspacing="0" style="font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;">
                 <tr><td align="center" style="padding:32px 16px;">
-
                   <table class="mob-full" style="width:600px;max-width:600px;" cellpadding="0" cellspacing="0">
 
-                    <!-- LOGO ROW -->
-                    <tr><td style="padding-bottom:20px;text-align:center;">
-                      <span style="font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">%s</span>
+                    <!-- LOGO -->
+                    <tr><td style="padding-bottom:16px;text-align:center;">
+                      <div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#08112a;letter-spacing:0.5px;">escapii<span style="color:#f97316;">.</span></div>
+                      <div style="font-size:9px;color:#9ca3af;letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;">mystery travel</div>
                     </td></tr>
 
                     <!-- CARD -->
                     <tr><td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
 
-                      <!-- Top accent bar -->
+                      <!-- Accent bar -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="background:%s;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+                        <tr><td style="background:%s;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
                       </table>
 
                       <!-- Header -->
                       <table width="100%%" cellpadding="0" cellspacing="0" style="background:%s;">
-                        <tr><td style="padding:28px 36px;" class="mob-pad">
-                          <p style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#ffffff;line-height:1.3;">
-                            %s
-                          </p>
-                          <div>
-                            <span style="display:inline-block;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:4px;">
-                              %s
-                            </span>
-                            &nbsp;
-                            <span style="display:inline-block;background:%s;color:#fff;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:4px;">
-                              %s
-                            </span>
-                          </div>
+                        <tr><td style="padding:24px 36px 22px;" class="mob-pad">
+                          <!-- Logo + Badge -->
+                          <table width="100%%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="vertical-align:top;">
+                                <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:0.5px;">escapii<span style="color:#f97316;">.</span></div>
+                                <div style="font-size:9px;color:rgba(255,255,255,0.38);letter-spacing:2px;text-transform:uppercase;margin-top:2px;">mystery travel</div>
+                              </td>
+                              <td style="text-align:right;vertical-align:top;">
+                                <span style="display:inline-block;background:%s;color:%s;border:1px solid %s;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:100px;">%s</span>
+                              </td>
+                            </tr>
+                          </table>
+                          <!-- Heading -->
+                          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#fff;line-height:1.3;margin:16px 0 0;font-weight:normal;">%s</h1>
+                          %s
+                          %s
                         </td></tr>
                       </table>
 
+                      <!-- Mystery strip -->
+                      %s
+
                       <!-- Body -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="padding:32px 36px;" class="mob-pad">
+                        <tr><td style="padding:28px 36px;background:#ffffff;" class="mob-pad">
+                          %s
+                        </td></tr>
+                      </table>
+
+                      <!-- Footer -->
+                      <table width="100%%" cellpadding="0" cellspacing="0">
+                        <tr><td style="background:%s;border-top:1px solid #e5e7eb;padding:16px 36px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.8;">
                           %s
                         </td></tr>
                       </table>
 
                     </td></tr>
-
-                    <!-- Footer -->
-                    <tr><td style="padding:20px 0;text-align:center;font-size:12px;color:#9ca3af;line-height:1.8;">
-                      %s
-                    </td></tr>
-
                   </table>
                 </td></tr>
               </table>
-              </div>
             </body>
             </html>
             """.formatted(
-            headingText,      // preheader
-            logoLabel,        // logo label
-            badgeColor,       // top accent bar color
-            headerBg,         // header background
-            headingText,      // h1
-            refCode,          // ref badge (gray)
-            badgeColor,       // status badge color
-            badgeLabel,       // status badge text
-            bodyContent,      // main content
-            footerText        // footer
+            headingText,    // preheader
+            badgeColor,     // accent bar
+            headerBg,       // header bg
+            badgeBg,        // badge bg
+            badgeText,      // badge text color
+            badgeBorder,    // badge border
+            badgeLabel,     // badge label
+            headingText,    // h1
+            subheadingHtml, // subtitle
+            refHtml,        // ref chip
+            mysteryHtml,    // mystery strip
+            bodyContent,    // body
+            "#1e1b4b".equals(headerBg) ? "#f0f0f5" : "#f8f9fa", // footer bg
+            footerText      // footer
         );
     }
 
@@ -782,6 +840,14 @@ public class EmailServiceImpl implements EmailService {
 
     private String eur(int amount) { return amount + " €"; }
 
+    private String customerFooter(String email) {
+        return """
+            <strong style="color:#08112a;">escapii</strong> — mystery travel d.o.o.<br>
+            Beograd, Srbija · <a href="mailto:%s" style="color:#6b7280;text-decoration:underline;">%s</a><br><br>
+            <a href="#" style="color:#6b7280;text-decoration:underline;">Politika privatnosti</a>
+            """.formatted(email, email);
+    }
+
     private String esc(String input) {
         if (input == null) return "";
         return input.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
@@ -809,94 +875,151 @@ public class EmailServiceImpl implements EmailService {
             String ref     = esc(b.getBookingRef());
             String depStr  = dep.format(DATE_FMT);
             String airport = esc(b.getDepartureAirport());
-            long daysLeft  = today.until(dep).getDays();
-            String daysStr = daysLeft == 0 ? "danas" : "za " + daysLeft + (daysLeft == 1 ? " dan" : " dana");
+            long daysLeft = today.until(dep).getDays();
 
             if (dep.equals(weatherDay)) {
-                weatherRows.append(row(name, email, ref, airport, depStr, daysStr));
+                weatherRows.append(row(name, email, ref, airport, depStr, daysLeft, "🌤 Prognoza"));
             } else if (dep.equals(destinationDay)) {
-                destinationRows.append(row(name, email, ref, airport, depStr, daysStr));
+                destinationRows.append(row(name, email, ref, airport, depStr, daysLeft, "✉ Koverta"));
             } else {
-                // Preview — šta ga čeka
                 String nextTask = dep.isAfter(weatherDay)
-                    ? "🌤 prognoza: " + dep.minusDays(7).format(DATE_FMT) + " · ✉️ koverta: " + dep.minusDays(3).format(DATE_FMT)
-                    : "✉️ koverta: " + dep.minusDays(3).format(DATE_FMT);
-                previewRows.append(previewRow(name, ref, airport, depStr, daysStr, nextTask));
+                    ? "🌤 prognoza: " + dep.minusDays(7).format(DATE_FMT) + " · ✉ koverta: " + dep.minusDays(3).format(DATE_FMT)
+                    : "✉ koverta: " + dep.minusDays(3).format(DATE_FMT);
+                previewRows.append(previewRow(name, ref, airport, depStr, daysLeft, nextTask));
             }
         }
 
         String todayStr = today.format(DATE_FMT);
 
-        String weatherSection = !weatherRows.isEmpty() ? section(
-            "🌤 Danas pošalji prognozu vremena", "#fff7ed", "#fed7aa", "#7c2d12", weatherRows.toString()) : "";
-
         String destinationSection = !destinationRows.isEmpty() ? section(
-            "✉️ Danas pošalji kovertu s destinacijom", "#fff1f2", "#fecdd3", "#881337", destinationRows.toString()) : "";
+            "✉ Danas pošalji kovertu s destinacijom", "#fff1f2", "#fecaca", "#b91c1c",
+            DIGEST_THEAD, destinationRows.toString()) : "";
+
+        String weatherSection = !weatherRows.isEmpty() ? section(
+            "🌤 Danas pošalji prognozu vremena", "#fff7ed", "#fed7aa", "#c2410c",
+            DIGEST_THEAD, weatherRows.toString()) : "";
 
         String nothingToday = weatherRows.isEmpty() && destinationRows.isEmpty() ? """
-            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-              <p style="margin:0;font-size:14px;color:#14532d;font-weight:600;">✓ Nema zadataka za danas</p>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:3px solid #16a34a;border-radius:6px;padding:14px 20px;margin-bottom:20px;">
+              <p style="margin:0;font-size:13px;color:#14532d;font-weight:600;">✓ Nema zadataka za danas — sve je u redu!</p>
             </div>""" : "";
 
-        String previewSection = !previewRows.isEmpty() ? """
-            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-                        color:#6b7280;margin:24px 0 10px;">Narednih 14 dana</div>
-            <table width="100%%" cellpadding="0" cellspacing="0"
-                   style="background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
-              %s
-            </table>""".formatted(previewRows.toString()) : "";
+        String previewSection = !previewRows.isEmpty() ? section(
+            "📅 Narednih 14 dana", "#eff6ff", "#bfdbfe", "#1d4ed8",
+            PREVIEW_THEAD, previewRows.toString()) : "";
 
-        String body = """
-            <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:22px;
-                      font-weight:600;color:#08112a;">Jutarnji podsetnik — %s</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">%d rezervacija u narednih 14 dana</p>
-            %s%s%s%s
-            """.formatted(todayStr, bookings.size(),
-                nothingToday, weatherSection, destinationSection, previewSection);
+        // Meta bar — summary bro jevi
+        long weatherCount     = weatherRows.isEmpty() ? 0 : weatherRows.toString().split("<tr").length - 1;
+        long destinationCount = destinationRows.isEmpty() ? 0 : destinationRows.toString().split("<tr").length - 1;
+        String metaBar = """
+            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:20px;">
+              <tr>
+                <td style="padding:12px 16px;border-right:1px solid #e5e7eb;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ukupno aktivnih</div>
+                  <div style="font-size:15px;font-weight:700;color:#1f2937;">%d rezervacija</div>
+                </td>
+                <td style="padding:12px 16px;border-right:1px solid #e5e7eb;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">&#127780; Prognoza danas</div>
+                  <div style="font-size:15px;font-weight:700;color:%s;">%d</div>
+                </td>
+                <td style="padding:12px 16px;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">&#9993; Koverta danas</div>
+                  <div style="font-size:15px;font-weight:700;color:%s;">%d</div>
+                </td>
+              </tr>
+            </table>
+            """.formatted(
+            bookings.size(),
+            weatherCount > 0 ? "#ea580c" : "#1f2937", weatherCount,
+            destinationCount > 0 ? "#dc2626" : "#1f2937", destinationCount);
+
+        String body = metaBar + nothingToday + destinationSection + weatherSection + previewSection;
 
         boolean hasUrgent = !weatherRows.isEmpty() || !destinationRows.isEmpty();
         String html = wrapBase(
-            "Escapii Ops", "#08112a", "Jutarnji pregled", "",
+            "Escapii Ops",
+            "#1e1b4b",
+            "Jutarnji pregled",
+            todayStr + " &middot; " + bookings.size() + " rezervacija u narednih 14 dana",
+            "",
             hasUrgent ? "#f97316" : "#16a34a",
             hasUrgent ? "AKCIJA POTREBNA" : "SVE U REDU",
             body,
-            "Escapii interni sistem · Automatska poruka · Ne odgovarati"
+            "Escapii interni sistem &middot; Automatska poruka &middot; Ne odgovarati",
+            false
         );
 
         sendEmail(opsEmail, "📋 Escapii — " + todayStr, html);
     }
 
-    private String row(String name, String email, String ref, String airport, String dep, String daysStr) {
+    private String row(String name, String email, String ref, String airport, String dep, long daysLeft, String action) {
+        String badgeCss = daysLeft <= 3
+            ? "background:#fee2e2;color:#dc2626;"
+            : daysLeft <= 7 ? "background:#fff7ed;color:#ea580c;"
+            : "background:#dcfce7;color:#16a34a;";
+        String daysLabel = daysLeft == 0 ? "danas" : "za " + daysLeft + (daysLeft == 1 ? " dan" : " dana");
         return """
-            <tr style="border-bottom:1px solid rgba(0,0,0,.06);">
-              <td style="padding:12px 16px;">
-                <div style="font-weight:700;font-size:14px;color:#08112a;">%s
-                  <a href="mailto:%s" style="font-weight:400;font-size:13px;color:#2563eb;margin-left:8px;">%s</a>
-                </div>
-                <div style="font-size:12px;color:#6b7280;margin-top:2px;">%s · %s · polazak %s (%s)</div>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">
+                <strong style="color:#08112a;">%s</strong><br>
+                <a href="mailto:%s" style="color:#9ca3af;font-size:11px;text-decoration:none;">%s</a>
               </td>
-            </tr>""".formatted(name, email, email, ref, airport, dep, daysStr);
+              <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#f97316;vertical-align:middle;">%s</td>
+              <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">%s</td>
+              <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">%s</td>
+              <td style="padding:8px 10px;vertical-align:middle;">
+                <span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;%s">%s</span>
+              </td>
+              <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#374151;vertical-align:middle;">%s</td>
+            </tr>""".formatted(name, email, email, ref, airport, dep, badgeCss, daysLabel, action);
     }
 
-    private String previewRow(String name, String ref, String airport, String dep, String daysStr, String nextTask) {
+    private String previewRow(String name, String ref, String airport, String dep, long daysLeft, String nextTask) {
+        String badgeCss = daysLeft <= 7
+            ? "background:#fff7ed;color:#ea580c;"
+            : "background:#dcfce7;color:#16a34a;";
+        String daysLabel = daysLeft == 0 ? "danas" : "za " + daysLeft + (daysLeft == 1 ? " dan" : " dana");
         return """
-            <tr style="border-bottom:1px solid #f0f0f0;">
-              <td style="padding:11px 16px;">
-                <div style="font-weight:600;font-size:13px;color:#08112a;">%s
-                  <span style="font-weight:400;color:#9ca3af;font-size:12px;"> · %s · polazak %s (%s)</span>
-                </div>
-                <div style="font-size:12px;color:#6b7280;margin-top:3px;">%s</div>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">
+                <strong style="color:#08112a;">%s</strong>
+                <span style="color:#9ca3af;font-size:11px;"> · %s · %s</span>
               </td>
-            </tr>""".formatted(name, ref, airport, dep, daysStr, nextTask);
+              <td style="padding:8px 10px;vertical-align:middle;">
+                <span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;%s">%s</span>
+              </td>
+              <td style="padding:8px 10px;font-size:11px;color:#9ca3af;vertical-align:middle;">%s</td>
+            </tr>""".formatted(name, ref, dep, badgeCss, daysLabel, nextTask);
     }
 
-    private String section(String title, String bg, String border, String titleColor, String rows) {
+    private static final String DIGEST_THEAD = """
+        <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Putnik</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Ref</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Aerodrom</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Polazak</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Dana</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Akcija</th>
+        </tr></thead>
+        """;
+
+    private static final String PREVIEW_THEAD = """
+        <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Putnik · Ref · Polazak</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Dana</th>
+          <th style="padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#6b7280;">Sledeće</th>
+        </tr></thead>
+        """;
+
+    private String section(String title, String bg, String border, String titleColor, String thead, String rows) {
         return """
-            <div style="font-size:13px;font-weight:700;color:%s;margin-bottom:8px;">%s</div>
-            <table width="100%%" cellpadding="0" cellspacing="0"
-                   style="background:%s;border:1px solid %s;border-radius:10px;overflow:hidden;margin-bottom:20px;">
-              %s
-            </table>""".formatted(titleColor, title, bg, border, rows);
+            <div style="border-radius:8px;overflow:hidden;margin:0 0 16px;">
+              <div style="padding:12px 18px;font-size:13px;font-weight:700;background:%s;color:%s;border:1px solid %s;border-bottom:none;">%s</div>
+              <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid %s;border-top:none;font-size:12px;background:#fff;">
+                %s
+                <tbody>%s</tbody>
+              </table>
+            </div>""".formatted(bg, titleColor, border, title, border, thead, rows);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -908,28 +1031,35 @@ public class EmailServiceImpl implements EmailService {
     public void sendWaitlistConfirmation(String email, String airport) {
         String airportName = resolveAirportName(airport);
         String body = """
-            <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-              Dodali smo te na listu čekanja!
-            </p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">
-              Čim se otvore novi termini za aerodrom <strong>%s</strong>, bićeš prvi koji to sazna.
-            </p>
-            <div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:28px;">
-              <p style="margin:0;font-size:14px;color:#14532d;line-height:1.7;">
-                Poslaćemo ti email čim se pojave dostupni termini.
-              </p>
+            <div style="text-align:center;padding:8px 0 20px;">
+              <div style="font-size:44px;margin-bottom:12px;">✉</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#08112a;margin-bottom:8px;font-weight:normal;">Dobrodošli na listu čekanja!</div>
+              <div style="font-size:14px;color:#6b7280;line-height:1.6;">Prijavili ste se za sledeće odlaske iz:</div>
+              <div style="margin:12px 0;">
+                <span style="display:inline-block;background:#f3f4f6;border:1px solid #e5e7eb;padding:6px 16px;border-radius:100px;font-size:12px;font-weight:700;color:#374151;letter-spacing:0.5px;">✈ %s</span>
+              </div>
             </div>
-            <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">
-              Ako si se prijavio greškom, jednostavno ignoriši ovaj email.
+            <div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
+            <p style="margin:0 0 20px;font-size:13px;color:#6b7280;line-height:1.65;">
+              Novi termini se dodaju redovno. Čim se pojave mesta za vaš polazni aerodrom, odmah ćemo vas obavestiti — i imaćete <strong style="color:#08112a;">48 sati</strong> da rezervišete pre nego što ponuda bude dostupna svima.
+            </p>
+            <div style="background:#fffbf5;border:1px solid #fed7aa;border-left:3px solid #f97316;border-radius:6px;padding:14px 18px;margin-bottom:20px;">
+              <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:4px;">Šta sad?</div>
+              <div style="font-size:13px;color:#374151;line-height:1.6;">Nema ništa što treba da radite — sedite, opustite se, i čekajte naš email. Biće vredno čekanja. ✦</div>
+            </div>
+            <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+              Ako ste se prijavili greškom, jednostavno ignorišite ovaj email.
             </p>
             """.formatted(esc(airportName));
 
         String html = wrapBase(
-            "Escapii", "#08112a", "Lista čekanja", "",
-            "#16a34a", "NOVI TERMINI USKORO", body,
-            "Escapii · escapii.com"
+            "Escapii", "#08112a", "Na listi ste čekanja",
+            "Bićete prvi koji će saznati čim se otvore novi termini.",
+            "", "#16a34a", "USKORO", body,
+            "Escapii · escapii.com",
+            false
         );
-        sendEmail(email, "Na listi si čekanja — Escapii", html);
+        sendEmail(email, "Na listi ste čekanja — Escapii", html);
     }
 
     @Override
@@ -937,31 +1067,32 @@ public class EmailServiceImpl implements EmailService {
     public void sendWaitlistNotification(String email, String airport) {
         String airportName = resolveAirportName(airport);
         String body = """
-            <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;color:#08112a;line-height:1.3;">
-              Otvorili su se novi termini!
-            </p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.7;">
-              Čekao/la si — i isplatilo se. Dostupni su novi termini za polazak sa aerodroma <strong>%s</strong>.
-            </p>
-            <div style="background:#fff7ed;border-left:3px solid #f97316;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:28px;">
-              <p style="margin:0;font-size:14px;color:#7c2d12;line-height:1.7;">
-                Termini se brzo popunjavaju — rezerviši na vreme!
-              </p>
+            <div style="text-align:center;padding:8px 0 20px;">
+              <div style="font-size:44px;margin-bottom:12px;">✈</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#08112a;margin-bottom:8px;font-weight:normal;">Termini su otvoreni!</div>
+              <div style="font-size:14px;color:#6b7280;line-height:1.6;">Čekali ste — i isplatilo se.</div>
             </div>
-            <div style="text-align:center;margin-bottom:28px;">
-              <a href="https://escapii.com" style="display:inline-block;background:#f97316;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:100px;text-decoration:none;letter-spacing:.3px;">
+            <div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
+            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
+              Dostupni su novi termini za polazak sa aerodroma <strong style="color:#08112a;">%s</strong>.
+              Termini se brzo popunjavaju — rezervišite na vreme!
+            </p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="https://escapii.com" style="display:inline-block;background:#f97316;color:#fff;font-weight:700;font-size:15px;padding:14px 40px;border-radius:100px;text-decoration:none;letter-spacing:0.3px;">
                 Rezerviši sada &rarr;
               </a>
             </div>
-            <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">
-              Primio/la si ovaj email jer si se prijavio/la na listu čekanja za aerodrom %s.
+            <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+              Primili ste ovaj email jer ste se prijavili na listu čekanja za aerodrom %s.
             </p>
             """.formatted(esc(airportName), esc(airportName));
 
         String html = wrapBase(
-            "Escapii", "#08112a", "Novi termini dostupni", "",
-            "#f97316", "NOVI TERMINI", body,
-            "Escapii · escapii.com"
+            "Escapii", "#08112a", "Otvorili su se novi termini!",
+            "Termini se brzo popunjavaju — rezervišite na vreme!",
+            "", "#f97316", "NOVI TERMINI", body,
+            "Escapii · escapii.com",
+            false
         );
         sendEmail(email, "Otvorili su se novi termini — Escapii", html);
     }
