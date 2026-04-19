@@ -2,7 +2,7 @@ package com.escapii.service.impl;
 
 import com.escapii.model.WaitlistEntry;
 import com.escapii.repository.WaitlistRepository;
-import com.escapii.service.EmailService;
+import com.escapii.service.email.WaitlistEmailService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.Map;
 public class WaitlistServiceImpl implements WaitlistService {
 
     private final WaitlistRepository waitlistRepository;
-    private final EmailService emailService;
+    private final WaitlistEmailService waitlistEmailService;
 
     @Override
     public boolean subscribe(String email, String airport) {
@@ -32,6 +32,7 @@ public class WaitlistServiceImpl implements WaitlistService {
             entry.setAirport(airport);
             waitlistRepository.save(entry);
             log.info("[Waitlist] Novi subscriber: {} za {}", email, airport);
+            waitlistEmailService.sendWaitlistConfirmation(email, airport);
             return true;
         } catch (DataIntegrityViolationException e) {
             // Race condition — već postoji
@@ -61,7 +62,7 @@ public class WaitlistServiceImpl implements WaitlistService {
         int sent = 0;
         for (WaitlistEntry e : entries) {
             try {
-                emailService.sendWaitlistNotification(e.getEmail(), airport);
+                waitlistEmailService.sendWaitlistNotification(e.getEmail(), airport);
                 sent++;
             } catch (Exception ex) {
                 log.error("[Waitlist] Greška pri slanju na {}: {}", e.getEmail(), ex.getMessage());

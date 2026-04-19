@@ -14,7 +14,7 @@ import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.service.AdminService;
-import com.escapii.service.EmailService;
+import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class AdminServiceImpl implements AdminService {
     private final BookingRepository       bookingRepository;
     private final AdminBookingMapper      adminBookingMapper;
     private final DestinationMapper       destinationMapper;
-    private final EmailService            emailService;
+    private final BookingEmailService     bookingEmailService;
     private final WaitlistService         waitlistService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
@@ -187,9 +187,9 @@ public class AdminServiceImpl implements AdminService {
 
         // Slanje emaila korisniku na osnovu novog statusa
         if (status == BookingStatus.CONFIRMED) {
-            emailService.sendBookingConfirmed(saved);
+            bookingEmailService.sendBookingConfirmed(saved);
         } else if (status == BookingStatus.CANCELLED && oldStatus == BookingStatus.CONFIRMED) {
-            emailService.sendBookingCancelled(saved);
+            bookingEmailService.sendBookingCancelled(saved);
         }
 
         return adminBookingMapper.toResponse(saved);

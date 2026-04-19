@@ -3,7 +3,7 @@ package com.escapii.config;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.repository.BookingRepository;
-import com.escapii.service.EmailService;
+import com.escapii.service.email.DigestEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +28,7 @@ import java.util.List;
 public class DailyTaskScheduler {
 
     private final BookingRepository bookingRepository;
-    private final EmailService      emailService;
+    private final DigestEmailService digestEmailService;
 
     /** Svaki dan u 08:00. Cron: sekunda minuta sat dan mesec danUNedelji */
     @Scheduled(cron = "0 0 8 * * *")
@@ -69,7 +69,7 @@ public class DailyTaskScheduler {
             return;
         }
 
-        emailService.sendDailyDigest(today, upcoming);
+        digestEmailService.sendDailyDigest(today, upcoming);
         log.info("[Scheduler] Jutarnji digest poslat za {} rezervacija.", upcoming.size());
     }
 }

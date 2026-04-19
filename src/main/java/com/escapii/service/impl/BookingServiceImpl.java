@@ -15,7 +15,7 @@ import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.service.BookingService;
-import com.escapii.service.EmailService;
+import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.PriceCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class BookingServiceImpl implements BookingService {
     private final AvailableDateRepository availableDateRepository;
     private final DestinationRepository   destinationRepository;
     private final PriceCalculator         priceCalculator;
-    private final EmailService            emailService;
+    private final BookingEmailService     bookingEmailService;
     private final BookingMapper           bookingMapper;
 
     @Override
@@ -94,8 +94,8 @@ public class BookingServiceImpl implements BookingService {
                 saved.getDepartureAirport(),
                 date.getDepartureDate(), date.getReturnDate());
 
-        emailService.sendTeamNotification(saved);
-        emailService.sendCustomerConfirmation(saved);
+        bookingEmailService.sendTeamNotification(saved);
+        bookingEmailService.sendCustomerConfirmation(saved);
 
         return bookingMapper.toResponse(saved);
     }
