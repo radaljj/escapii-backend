@@ -37,17 +37,17 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         String body = """
             <div style="text-align:center;padding:8px 0 24px;">
               <div style="font-size:52px;margin-bottom:14px;">✉</div>
-              <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#08112a;margin-bottom:8px;font-weight:normal;">Vreme je, %s!</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#111344;margin-bottom:8px;font-weight:normal;">Vreme je, %s!</div>
               <div style="font-size:14px;color:#6b7280;line-height:1.65;">
-                Tvoje putovanje polazi <strong style="color:#08112a;">%s</strong>.<br>
+                Tvoje putovanje polazi <strong style="color:#111344;">%s</strong>.<br>
                 Koverta s tvojom tajnom destinacijom je gotova.
               </div>
             </div>
 
             <div style="height:1px;background:#f3f4f6;margin:0 0 24px;"></div>
 
-            <div style="background:#fffbf5;border:1px solid #fed7aa;border-left:3px solid #f97316;border-radius:6px;padding:16px 20px;margin-bottom:28px;">
-              <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:6px;">Šta dalje?</div>
+            <div style="background:#f5f0fa;border:1px solid #DAE0F2;border-left:3px solid #52154E;border-radius:6px;padding:16px 20px;margin-bottom:28px;">
+              <div style="font-size:13px;font-weight:700;color:#52154E;margin-bottom:6px;">Šta dalje?</div>
               <div style="font-size:13px;color:#374151;line-height:1.7;">
                 Klikni dugme ispod i otkrij svoju destinaciju — čeka te dramatično otvaranje koverte.<br>
                 <span style="color:#9ca3af;font-size:12px;">Link je personalan i važi do dana polaska.</span>
@@ -56,9 +56,9 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
             <div style="text-align:center;margin:0 0 28px;">
               <a href="%s"
-                 style="display:inline-block;background:#f97316;color:#fff;font-weight:800;font-size:16px;
+                 style="display:inline-block;background:#52154E;color:#fff;font-weight:800;font-size:16px;
                         padding:16px 44px;border-radius:100px;text-decoration:none;letter-spacing:0.3px;
-                        box-shadow:0 4px 16px rgba(249,115,22,0.35);">
+                        box-shadow:0 4px 16px rgba(82,21,78,0.4);">
                 Otkrij svoju destinaciju &rarr;
               </a>
             </div>
@@ -75,7 +75,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "Tvoja destinacija te čeka!",
             "72 sata pre polaska — stiglo je vreme.",
             ref,
-            "#f97316",
+            "#52154E",
             "OTKRIJ",
             body,
             "Escapii · escapii.com · Srećan put!",
@@ -107,23 +107,23 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             <table width="100%%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;width:140px;font-weight:600;">Rezervacija</td>
-                <td style="padding:6px 0;font-size:13px;color:#08112a;font-weight:800;">%s</td>
+                <td style="padding:6px 0;font-size:13px;color:#111344;font-weight:800;">%s</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Putnik</td>
-                <td style="padding:6px 0;font-size:13px;color:#08112a;">%s</td>
+                <td style="padding:6px 0;font-size:13px;color:#111344;">%s</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Email</td>
-                <td style="padding:6px 0;font-size:13px;color:#08112a;">%s</td>
+                <td style="padding:6px 0;font-size:13px;color:#111344;">%s</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Destinacija</td>
-                <td style="padding:6px 0;font-size:15px;color:#f97316;font-weight:800;">%s</td>
+                <td style="padding:6px 0;font-size:15px;color:#52154E;font-weight:800;">%s</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Datum polaska</td>
-                <td style="padding:6px 0;font-size:13px;color:#08112a;">%s</td>
+                <td style="padding:6px 0;font-size:13px;color:#111344;">%s</td>
               </tr>
             </table>
             """.formatted(ref, name, email, dest, departure);
