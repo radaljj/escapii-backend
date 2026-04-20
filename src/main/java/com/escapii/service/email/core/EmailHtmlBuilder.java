@@ -24,31 +24,31 @@ public final class EmailHtmlBuilder {
         String badgeBg = switch (badgeColor) {
             case "#16a34a" -> "rgba(22,163,74,0.2)";
             case "#dc2626" -> "rgba(220,38,38,0.2)";
-            default        -> "rgba(249,115,22,0.2)";
+            default        -> "rgba(82,21,78,0.2)";
         };
         String badgeText = switch (badgeColor) {
             case "#16a34a" -> "#4ade80";
             case "#dc2626" -> "#f87171";
-            default        -> "#fb923c";
+            default        -> "#F9CFF2";
         };
         String badgeBorder = switch (badgeColor) {
             case "#16a34a" -> "rgba(22,163,74,0.4)";
             case "#dc2626" -> "rgba(220,38,38,0.4)";
-            default        -> "rgba(249,115,22,0.4)";
+            default        -> "rgba(82,21,78,0.4)";
         };
 
         String subheadingHtml = subheading.isBlank() ? "" :
             "<p style=\"margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;\">%s</p>".formatted(subheading);
 
         String refHtml = refCode.isBlank() ? "" :
-            "<div style=\"display:inline-block;background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.3);color:#fb923c;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px;margin-top:10px;\">&#10022; %s</div>".formatted(refCode);
+            "<div style=\"display:inline-block;background:rgba(82,21,78,0.15);border:1px solid rgba(82,21,78,0.3);color:#F9CFF2;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px;margin-top:10px;\">&#10022; %s</div>".formatted(refCode);
 
         String mysteryHtml = mysteryStrip ? """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#0f1f3d;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#111344;">
               <tr><td style="padding:10px 36px;font-size:11px;color:rgba(255,255,255,0.5);text-align:center;letter-spacing:1px;">
-                <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
+                <span style="color:#F9CFF2;">&#9679; &#9679; &#9679;</span>
                 &nbsp;&nbsp;Vaša destinacija ostaje tajna sve do 72h pre polaska&nbsp;&nbsp;
-                <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
+                <span style="color:#F9CFF2;">&#9679; &#9679; &#9679;</span>
               </td></tr>
             </table>
             """ : "";
@@ -169,7 +169,7 @@ public final class EmailHtmlBuilder {
 
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#08112a;">escapii</strong> — mystery travel d.o.o.<br>
+            <strong style="color:#111344;">escapii</strong> — mystery travel d.o.o.<br>
             Beograd, Srbija · <a href="mailto:%s" style="color:#6b7280;text-decoration:underline;">%s</a><br><br>
             <a href="#" style="color:#6b7280;text-decoration:underline;">Politika privatnosti</a>
             """.formatted(email, email);
@@ -197,18 +197,18 @@ public final class EmailHtmlBuilder {
         return """
             <tr>
               <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
-              <td style="padding:7px 0;font-size:13px;color:#f97316;font-weight:600;font-style:italic;text-align:right;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#52154E;font-weight:600;font-style:italic;text-align:right;">%s</td>
             </tr>
             """.formatted(label, value);
     }
 
     public static String totalBox(int total, int n) {
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background:#08112a;border-radius:8px;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background:#111344;border-radius:8px;">
               <tr>
                 <td style="padding:20px 24px;">
                   <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;">Ukupna cena putovanja</div>
-                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#f97316;line-height:1;margin-bottom:4px;">%s €</div>
+                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#52154E;line-height:1;margin-bottom:4px;">%s €</div>
                   <div style="font-size:12px;color:rgba(255,255,255,0.4);">za %d %s · sve uključeno</div>
                 </td>
               </tr>
@@ -221,10 +221,10 @@ public final class EmailHtmlBuilder {
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
               <tr>
                 <td style="width:36px;vertical-align:top;padding-top:2px;">
-                  <div style="width:28px;height:28px;background:#f97316;border-radius:50%%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#fff;">%s</div>
+                  <div style="width:28px;height:28px;background:#52154E;border-radius:50%%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#fff;">%s</div>
                 </td>
                 <td style="padding-left:12px;vertical-align:top;">
-                  <div style="font-size:14px;color:#08112a;font-weight:600;margin-bottom:2px;">%s</div>
+                  <div style="font-size:14px;color:#111344;font-weight:600;margin-bottom:2px;">%s</div>
                   <div style="font-size:13px;color:#6b7280;line-height:1.5;">%s</div>
                 </td>
               </tr>
@@ -241,7 +241,7 @@ public final class EmailHtmlBuilder {
                   <div style="width:36px;height:36px;background:%s;border:2px solid %s;border-radius:50%%;text-align:center;line-height:32px;font-size:15px;">%s</div>
                 </td>
                 <td style="padding-left:14px;vertical-align:top;">
-                  <div style="font-size:14px;font-weight:700;color:#08112a;margin-bottom:2px;">%s</div>
+                  <div style="font-size:14px;font-weight:700;color:#111344;margin-bottom:2px;">%s</div>
                   <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">%s</div>
                   <div style="font-size:13px;color:#6b7280;line-height:1.5;">%s</div>
                 </td>
