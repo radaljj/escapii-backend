@@ -89,8 +89,8 @@ public final class EmailHtmlBuilder {
                     <!-- LOGO -->
                     <tr><td style="padding-bottom:16px;text-align:center;">
                       <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
-                           alt="Escapii" width="110" height="37"
-                           style="display:inline-block;border:0;height:37px;width:110px;"
+                           alt="Escapii" width="150" height="50"
+                           style="display:inline-block;border:0;height:50px;width:150px;"
                            onerror="this.style.display='none'">
                     </td></tr>
 
@@ -110,8 +110,8 @@ public final class EmailHtmlBuilder {
                             <tr>
                               <td style="vertical-align:top;">
                                 <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
-                                     alt="Escapii" width="90" height="30"
-                                     style="display:inline-block;border:0;height:30px;width:90px;"
+                                     alt="Escapii" width="120" height="40"
+                                     style="display:inline-block;border:0;height:40px;width:120px;"
                                      onerror="this.style.display='none'">
                               </td>
                               <td style="text-align:right;vertical-align:top;">
