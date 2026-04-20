@@ -233,7 +233,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String badgeLabel  = confirmed ? "POTVRĐENA" : "OTKAZANA";
         String heading     = confirmed ? "Rezervacija potvrđena!" : "Rezervacija otkazana";
         String subtitle    = confirmed
-            ? "vaša rezervacija je zvanično potvrđena! Sve je spremno — vi samo spakovajte kofere i pustite uzbuđenje da raste. ✦"
+            ? "vaša rezervacija je zvanično potvrđena! Sve je spremno — vi samo spakujte stvari i prepustite se misteriji. ✦"
             : "sa žaljenjem vam obaveštavamo da je vaša rezervacija otkazana. Razumemo da su planovi nekad nepredvidivi — i nadamo se da ćete nam ponovo ukazati poverenje.<br><br>Vaša avantura nas čeka — kada budete spremni, mi ćemo biti tu. ✦";
 
         String content;
@@ -328,7 +328,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("✉", "#eff6ff", "#3b82f6",
                 "Koverta s destinacijom",
                 revealStr + " · 72h pre polaska",
-                "Fizička koverta na vašoj adresi. Konačno — otkrivate gde idete!"),
+                "Konačno — otkrivate gde idete!"),
             EmailHtmlBuilder.timelineItem("✈", "#08112a", "#f97316",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
@@ -396,7 +396,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.step("2", "Vremenska prognoza — <strong style='color:#08112a;'>7 dana pre polaska</strong>",
                       "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
             EmailHtmlBuilder.step("3", "Koverta s destinacijom — <strong style='color:#08112a;'>72h pre polaska</strong>",
-                      "Fizička koverta na vašoj adresi otkriva gde putujete. ✉")
+                      "Koverta otkriva gde putujete. ✉")
         );
     }
 

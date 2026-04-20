@@ -49,6 +49,10 @@ public class AdminBookingResponse {
     // Admin (interno)
     private String adminNotes;
 
+    // Otkrivanje destinacije
+    private String assignedDestination;
+    private LocalDateTime revealSentAt;
+
     // Cene
     private Integer basePricePerPerson;
     private Integer totalPricePerPerson;

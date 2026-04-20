@@ -30,7 +30,7 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             </div>
             <div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
             <p style="margin:0 0 20px;font-size:13px;color:#6b7280;line-height:1.65;">
-              Novi termini se dodaju redovno. Čim se pojave mesta za vaš polazni aerodrom, odmah ćemo vas obavestiti — i imaćete <strong style="color:#08112a;">48 sati</strong> da rezervišete pre nego što ponuda bude dostupna svima.
+              Novi termini se dodaju redovno. Čim se pojave mesta za vaš polazni aerodrom, odmah ćemo vas obavestiti!
             </p>
             <div style="background:#fffbf5;border:1px solid #fed7aa;border-left:3px solid #f97316;border-radius:6px;padding:14px 18px;margin-bottom:20px;">
               <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:4px;">Šta sad?</div>

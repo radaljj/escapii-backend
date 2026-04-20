@@ -37,4 +37,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("ref")      String ref,
             @Param("lastName") String lastName
     );
+
+    /** Pronađi booking po reveal tokenu (za /api/reveal endpoint). */
+    java.util.Optional<Booking> findByRevealToken(String revealToken);
+
+    /**
+     * CONFIRMED bookingovi kojima:
+     *   - assignedDestination je unesena
+     *   - revealSentAt je null (još nije poslato)
+     *   - departureDate <= cutoff (T-3 od danas ili ranije ako propušteno)
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.assignedDestination IS NOT NULL " +
+           "AND b.revealSentAt IS NULL " +
+           "AND b.selectedDate.departureDate <= :cutoff")
+    List<Booking> findReadyForReveal(@Param("cutoff") LocalDate cutoff);
 }

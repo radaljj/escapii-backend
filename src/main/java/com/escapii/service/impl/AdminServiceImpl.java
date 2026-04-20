@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -239,6 +240,32 @@ public class AdminServiceImpl implements AdminService {
         booking.setAdminNotes(adminNotes == null ? null : adminNotes.strip());
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Napomena ažurirana za rezervaciju {}", saved.getBookingRef());
+        return adminBookingMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminBookingResponse setDestination(Long id, String destination) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+
+        String trimmed = (destination == null) ? null : destination.strip();
+        booking.setAssignedDestination(trimmed);
+
+        // Generiši token tek kad je destinacija unesena i još nema tokena
+        if (trimmed != null && !trimmed.isEmpty() && booking.getRevealToken() == null) {
+            booking.setRevealToken(UUID.randomUUID().toString().replace("-", ""));
+        }
+
+        // Ako admin briše destinaciju, resetuj i token i sentAt
+        if (trimmed == null || trimmed.isEmpty()) {
+            booking.setRevealToken(null);
+            booking.setRevealSentAt(null);
+        }
+
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Destinacija za rezervaciju {} → '{}'", saved.getBookingRef(), trimmed);
         return adminBookingMapper.toResponse(saved);
     }
 

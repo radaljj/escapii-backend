@@ -148,6 +148,23 @@ public class Booking {
     @Column(name = "admin_notes", columnDefinition = "TEXT")
     private String adminNotes;
 
+    // ── Otkrivanje destinacije ────────────────────────────────────────
+
+    /** Destinacija koju admin dodjeljuje — šalje se korisniku T-3 dana prije polaska. */
+    @Column(name = "assigned_destination", length = 200)
+    private String assignedDestination;
+
+    /**
+     * UUID token za magic link u reveal emailu.
+     * Generira se čim admin unese destinaciju. Nikad se ne izlaže kroz javne API-je.
+     */
+    @Column(name = "reveal_token", unique = true, length = 64)
+    private String revealToken;
+
+    /** Trenutak kad je reveal email poslan korisniku — null znači još nije poslan. */
+    @Column(name = "reveal_sent_at")
+    private LocalDateTime revealSentAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();

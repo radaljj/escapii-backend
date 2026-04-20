@@ -113,11 +113,11 @@ public class AdminController {
     }
 
     /** POST /api/admin/scheduler/test — ručno okida jutarnji digest (samo za testiranje). */
-//    @PostMapping("/scheduler/test")
-//    public ResponseEntity<Map<String, String>> testScheduler() {
-//        dailyTaskScheduler.triggerDigest();
-//        return ResponseEntity.ok(Map.of("status", "Digest je poslan — proveri email."));
-//    }
+    @PostMapping("/scheduler/test")
+    public ResponseEntity<Map<String, String>> testScheduler() {
+        dailyTaskScheduler.triggerDigest();
+        return ResponseEntity.ok(Map.of("status", "Digest je poslan — proveri email."));
+    }
 
     /** PATCH /api/admin/bookings/{id}/status?value=CONFIRMED — promeni status rezervacije. */
     @PatchMapping("/bookings/{id}/status")
@@ -134,6 +134,19 @@ public class AdminController {
             @RequestBody Map<String, String> body) {
         String notes = body.getOrDefault("adminNotes", "");
         return ResponseEntity.ok(adminService.updateAdminNotes(id, notes));
+    }
+
+    /**
+     * PATCH /api/admin/bookings/{id}/destination
+     * Body: { "destination": "Barcelona" }
+     * Admin unosi destinaciju — scheduler je šalje korisniku automatski na T-3.
+     */
+    @PatchMapping("/bookings/{id}/destination")
+    public ResponseEntity<AdminBookingResponse> setDestination(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String destination = body.getOrDefault("destination", "");
+        return ResponseEntity.ok(adminService.setDestination(id, destination));
     }
 
 }
