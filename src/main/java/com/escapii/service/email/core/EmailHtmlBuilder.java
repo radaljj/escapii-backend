@@ -88,8 +88,10 @@ public final class EmailHtmlBuilder {
 
                     <!-- LOGO -->
                     <tr><td style="padding-bottom:16px;text-align:center;">
-                      <div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#08112a;letter-spacing:0.5px;">escapii<span style="color:#f97316;">.</span></div>
-                      <div style="font-size:9px;color:#9ca3af;letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;">mystery travel</div>
+                      <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
+                           alt="Escapii" width="110" height="37"
+                           style="display:inline-block;border:0;height:37px;width:110px;"
+                           onerror="this.style.display='none'">
                     </td></tr>
 
                     <!-- CARD -->
@@ -107,8 +109,10 @@ public final class EmailHtmlBuilder {
                           <table width="100%%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td style="vertical-align:top;">
-                                <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:0.5px;">escapii<span style="color:#f97316;">.</span></div>
-                                <div style="font-size:9px;color:rgba(255,255,255,0.38);letter-spacing:2px;text-transform:uppercase;margin-top:2px;">mystery travel</div>
+                                <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
+                                     alt="Escapii" width="90" height="30"
+                                     style="display:inline-block;border:0;height:30px;width:90px;"
+                                     onerror="this.style.display='none'">
                               </td>
                               <td style="text-align:right;vertical-align:top;">
                                 <span style="display:inline-block;background:%s;color:%s;border:1px solid %s;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:100px;">%s</span>
