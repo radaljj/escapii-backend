@@ -1,7 +1,6 @@
 package com.escapii.config;
 
 import com.escapii.model.Booking;
-import com.escapii.model.BookingStatus;
 import com.escapii.repository.BookingRepository;
 import com.escapii.service.email.DigestEmailService;
 import com.escapii.service.email.RevealEmailService;
@@ -13,16 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-/**
- * Svako jutro u 08:00 (po server vremenu) šalje operativni digest na ops-email.
- *
- * Logika po rezervaciji:
- *   weatherSent=false  + polazak ≤ 7 dana → hitno/danas
- *   destinationSent=false + polazak ≤ 3 dana → hitno/danas
- *   ostalo → preview sekcija "narednih 14 dana"
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,14 +25,40 @@ public class DailyTaskScheduler {
     private final DigestEmailService digestEmailService;
     private final RevealEmailService revealEmailService;
 
-    /** Svaki dan u 10:00. Cron: sekunda minuta sat dan mesec danUNedelji */
     @Scheduled(cron = "0 0 10 * * *")
-    public void sendMorningDigest() {
+    public void runDailyTasks() {
         triggerDigest();
     }
 
-    /** Svaki dan u 08:05 — auto-cancel PENDING rezervacija starijih od 5 dana. */
-    @Scheduled(cron = "0 5 8 * * *")
+    /** Ručno okidanje iz AdminController-a. */
+    public void triggerDigest() {
+        LocalDate today = LocalDate.now();
+
+        // 1. Auto-reveal: CONFIRMED + destinacija dodeljena + revealSentAt == null + polazak <= T+3
+        List<Booking> revealReady = bookingRepository.findReadyForReveal(today.plusDays(3));
+        List<Booking> revealSent  = sendReveals(revealReady);
+
+        // 2. Sve CONFIRMED rezervacije u narednih 14 dana za digest preview
+        List<Booking> upcoming = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
+
+        // 3. Prognoza danas (T+5) — za sada informativno u digestu, auto-slanje dolazi kasnije
+        LocalDate forecastDate = today.plusDays(5);
+        List<Booking> forecastDue = upcoming.stream()
+                .filter(b -> b.getSelectedDate().getDepartureDate().equals(forecastDate))
+                .toList();
+
+        // 4. Digest email timu
+        if (!upcoming.isEmpty() || !revealSent.isEmpty()) {
+            digestEmailService.sendDailyDigest(today, revealSent, forecastDue, upcoming);
+            log.info("[Scheduler] Digest poslan. Reveal-ovi danas: {}, forecast danas: {}, ukupno u 14 dana: {}",
+                    revealSent.size(), forecastDue.size(), upcoming.size());
+        } else {
+            log.info("[Scheduler] Nema aktivnih rezervacija — digest nije poslan.");
+        }
+    }
+
+    /** Auto-cancel PENDING rezervacija starijih od 5 dana. */
+    @Scheduled(cron = "0 5 10 * * *")
     @Transactional
     public void autoCancelStalePending() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(5);
@@ -49,66 +68,47 @@ public class DailyTaskScheduler {
             log.info("[Scheduler] Auto-cancel: nema PENDING rezervacija starijih od 5 dana.");
             return;
         }
-
-        for (Booking booking : stale) {
-            booking.setOldStatus(BookingStatus.PENDING);
-            booking.setStatus(BookingStatus.CANCELLED);
-            bookingRepository.save(booking);
-            log.info("[Scheduler] Auto-cancel: rezervacija {} otkazana (kreirana: {}, ref: {})",
-                    booking.getId(), booking.getCreatedAt(), booking.getBookingRef());
+        for (Booking b : stale) {
+            b.setStatus(com.escapii.model.BookingStatus.CANCELLED);
+            bookingRepository.save(b);
+            log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
         }
-
         log.info("[Scheduler] Auto-cancel završen — otkazano {} rezervacija.", stale.size());
     }
 
-    /** Ručno okidanje za testiranje — poziva se iz AdminController-a. */
-    @Transactional
-    public void triggerDigest() {
-        LocalDate today = LocalDate.now();
-
-        // ── 1. Reveal: pošalji destinacije za bookinge koji su T-3 ili ranije (catch-up) ──
-        processRevealEmails(today);
-
-        // ── 2. Jutarnji digest ────────────────────────────────────────────────────────────
-        List<Booking> upcoming = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
-        if (upcoming.isEmpty()) {
-            log.info("[Scheduler] Nema nadolazećih CONFIRMED rezervacija — digest nije poslat.");
-            return;
-        }
-        digestEmailService.sendDailyDigest(today, upcoming);
-        log.info("[Scheduler] Jutarnji digest poslat za {} rezervacija.", upcoming.size());
-    }
-
     /**
-     * Pronađi sve CONFIRMED bookinge koji:
-     *  - imaju assignedDestination
-     *  - reveal još nije poslan (revealSentAt == null)
-     *  - polazak je za <= 3 dana (ili je već prošlo — catch-up slučaj)
-     * Pošalji reveal email i označi kao poslato.
+     * Za svaki booking iz liste:
+     *  1. Generiši revealToken ako nedostaje
+     *  2. Sačuvaj token u bazu
+     *  3. Označi revealSentAt (pre slanja — da ne bi duplo slali pri ponovnom pokušaju)
+     *  4. Sačuvaj u bazu
+     *  5. Pošalji email korisniku (async)
+     *
+     * Greška na jednom booking-u ne prekida ostale.
      */
-    private void processRevealEmails(LocalDate today) {
-        LocalDate cutoff = today.plusDays(3);
-        List<Booking> readyList = bookingRepository.findReadyForReveal(cutoff);
-
-        if (readyList.isEmpty()) {
-            log.info("[Reveal] Nema booking-a spremnih za reveal danas.");
-            return;
-        }
+    private List<Booking> sendReveals(List<Booking> readyList) {
+        List<Booking> sent = new ArrayList<>();
 
         for (Booking booking : readyList) {
             try {
-                revealEmailService.sendRevealEmail(booking);
+                if (booking.getRevealToken() == null) {
+                    booking.setRevealToken(UUID.randomUUID().toString().replace("-", ""));
+                }
                 booking.setRevealSentAt(LocalDateTime.now());
                 bookingRepository.save(booking);
-                log.info("[Reveal] ✅ Poslan za {} ({})", booking.getBookingRef(),
-                        booking.getAssignedDestination());
+
+                revealEmailService.sendRevealEmail(booking);
+
+                sent.add(booking);
+                log.info("[Reveal] ✅ {} → {}", booking.getBookingRef(), booking.getAssignedDestination());
             } catch (Exception e) {
-                // Ne prekidaj ostatak — loguj grešku i nastavi sa sledećim
-                log.error("[Reveal] ❌ Greška pri slanju za {}: {}",
-                        booking.getBookingRef(), e.getMessage(), e);
+                log.error("[Reveal] ❌ Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
             }
         }
 
-        log.info("[Reveal] Ukupno obrađeno: {} booking-a.", readyList.size());
+        if (!sent.isEmpty()) {
+            log.info("[Reveal] Ukupno poslato: {}/{}", sent.size(), readyList.size());
+        }
+        return sent;
     }
 }

@@ -87,16 +87,8 @@ public final class EmailHtmlBuilder {
               </div>
 
               <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;">
-                <tr><td align="center" style="padding:32px 16px;">
-                  <table class="mob-full" style="width:600px;max-width:600px;" cellpadding="0" cellspacing="0">
-
-                    <!-- LOGO -->
-                    <tr><td style="padding-bottom:20px;text-align:center;">
-                      <img src="%s"
-                           alt="Escapii" width="160" height="53"
-                           style="display:block;margin:0 auto;border:0;max-width:160px;"
-                           onerror="this.style.display='none'">
-                    </td></tr>
+                <tr><td align="center" style="padding:40px 16px;">
+                  <table class="mob-full" style="width:640px;max-width:640px;margin:0 auto;" cellpadding="0" cellspacing="0">
 
                     <!-- CARD -->
                     <tr><td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
@@ -108,23 +100,16 @@ public final class EmailHtmlBuilder {
 
                       <!-- Header -->
                       <table width="100%%" cellpadding="0" cellspacing="0" style="background:%s;">
-                        <tr><td style="padding:24px 36px 22px;" class="mob-pad">
-                          <!-- Logo + Badge -->
-                          <table width="100%%" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="vertical-align:top;">
-                                <img src="%s"
-                                     alt="Escapii" width="120" height="40"
-                                     style="display:block;border:0;max-width:120px;height:auto;"
-                                     onerror="this.style.display='none'">
-                              </td>
-                              <td style="text-align:right;vertical-align:top;">
-                                <span style="display:inline-block;background:%s;color:%s;border:1px solid %s;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:100px;">%s</span>
-                              </td>
-                            </tr>
-                          </table>
+                        <tr><td style="padding:28px 40px 26px;" class="mob-pad">
+                          <!-- Logo centered -->
+                          <div style="text-align:center;margin-bottom:20px;">
+                            <img src="%s"
+                                 alt="Escapii" width="140" height="47"
+                                 style="display:inline-block;border:0;max-width:140px;height:auto;"
+                                 onerror="this.style.display='none'">
+                          </div>
                           <!-- Heading -->
-                          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#fff;line-height:1.3;margin:16px 0 0;font-weight:normal;">%s</h1>
+                          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:30px;color:#fff;line-height:1.3;margin:0 0 0;font-weight:normal;">%s</h1>
                           %s
                           %s
                         </td></tr>
@@ -135,14 +120,14 @@ public final class EmailHtmlBuilder {
 
                       <!-- Body -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="padding:28px 36px;background:#ffffff;" class="mob-pad">
+                        <tr><td style="padding:28px 40px;background:#ffffff;" class="mob-pad">
                           %s
                         </td></tr>
                       </table>
 
                       <!-- Footer -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="background:%s;border-top:1px solid #e5e7eb;padding:16px 36px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.8;">
+                        <tr><td style="background:%s;border-top:1px solid #e5e7eb;padding:16px 40px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.8;">
                           %s
                         </td></tr>
                       </table>
@@ -155,14 +140,9 @@ public final class EmailHtmlBuilder {
             </html>
             """.formatted(
             headingText,    // preheader
-            LOGO_BLACK_URL, // top logo (svetla pozadina → crni logo)
             badgeColor,     // accent bar
             headerBg,       // header bg
-            LOGO_WHITE_URL, // header logo (tamna pozadina → beli logo)
-            badgeBg,        // badge bg
-            badgeText,      // badge text color
-            badgeBorder,    // badge border
-            badgeLabel,     // badge label
+            LOGO_WHITE_URL, // logo centered
             headingText,    // h1
             subheadingHtml, // subtitle
             refHtml,        // ref chip
