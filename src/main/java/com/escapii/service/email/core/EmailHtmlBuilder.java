@@ -158,11 +158,11 @@ public final class EmailHtmlBuilder {
             LOGO_BLACK_URL, // top logo (svetla pozadina → crni logo)
             badgeColor,     // accent bar
             headerBg,       // header bg
+            LOGO_WHITE_URL, // header logo (tamna pozadina → beli logo)
             badgeBg,        // badge bg
             badgeText,      // badge text color
             badgeBorder,    // badge border
             badgeLabel,     // badge label
-            LOGO_WHITE_URL, // header logo (tamna pozadina → beli logo)
             headingText,    // h1
             subheadingHtml, // subtitle
             refHtml,        // ref chip
