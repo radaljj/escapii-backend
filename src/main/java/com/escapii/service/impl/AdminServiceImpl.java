@@ -103,11 +103,11 @@ public class AdminServiceImpl implements AdminService {
                 saved.getPotentialDestinations().stream().map(Destination::getName).toList());
 
         // Automatski notifikuj waitlist korisnike za ovaj aerodrom
-        int notified = waitlistService.notifyAndClear(saved.getDepartureAirport());
-        if (notified > 0) {
-            log.info("[ADMIN] Waitlist notifikacija poslata za {} korisnika (aerodrom={})",
-                    notified, saved.getDepartureAirport());
-        }
+//        int notified = waitlistService.notifyAndClear(saved.getDepartureAirport());
+//        if (notified > 0) {
+//            log.info("[ADMIN] Waitlist notifikacija poslata za {} korisnika (aerodrom={})",
+//                    notified, saved.getDepartureAirport());
+//        }
 
         return new AdminDateResponse(saved);
     }

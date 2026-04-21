@@ -32,8 +32,8 @@ public class DailyTaskScheduler {
     private final DigestEmailService digestEmailService;
     private final RevealEmailService revealEmailService;
 
-    /** Svaki dan u 08:00. Cron: sekunda minuta sat dan mesec danUNedelji */
-    @Scheduled(cron = "0 0 8 * * *")
+    /** Svaki dan u 10:00. Cron: sekunda minuta sat dan mesec danUNedelji */
+    @Scheduled(cron = "0 0 10 * * *")
     public void sendMorningDigest() {
         triggerDigest();
     }
@@ -98,7 +98,6 @@ public class DailyTaskScheduler {
         for (Booking booking : readyList) {
             try {
                 revealEmailService.sendRevealEmail(booking);
-                revealEmailService.sendRevealTeamNotification(booking);
                 booking.setRevealSentAt(LocalDateTime.now());
                 bookingRepository.save(booking);
                 log.info("[Reveal] ✅ Poslan za {} ({})", booking.getBookingRef(),
