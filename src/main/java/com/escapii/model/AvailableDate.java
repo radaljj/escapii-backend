@@ -47,9 +47,11 @@ public class AvailableDate {
     /**
      * Optimistic locking — štiti od race condition-a kada više korisnika
      * istovremeno pokušava da rezerviše isti termin.
+     * Primitive long (ne Long) — JDBC getLong() vraća 0 za SQL NULL,
+     * čime se izbegava NPE pri Hibernate version increment-u.
      */
     @Version
-    private Long version;
+    private long version;
 
     /**
      * Potencijalne destinacije koje admin vezuje za ovaj termin.
