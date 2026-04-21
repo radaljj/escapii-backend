@@ -1,4 +1,4 @@
-package com.escapii.service.email.impl;
+﻿package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.service.email.DigestEmailService;
@@ -111,7 +111,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             </table>
             """.formatted(
             bookings.size(),
-            weatherCount > 0 ? "#8B2FC9" : "#1f2937", weatherCount,
+            weatherCount > 0 ? "#CA8A71" : "#1f2937", weatherCount,
             destinationCount > 0 ? "#dc2626" : "#1f2937", destinationCount);
 
         String body = metaBar + nothingToday + destinationSection + weatherSection + previewSection;
@@ -119,11 +119,11 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         boolean hasUrgent = !weatherRows.isEmpty() || !destinationRows.isEmpty();
         String html = EmailHtmlBuilder.wrapBase(
             "Escapii Ops",
-            "#1e1b4b",
+            "#0D2E38",
             "Jutarnji pregled",
             todayStr + " &middot; " + bookings.size() + " rezervacija u narednih 14 dana",
             "",
-            hasUrgent ? "#8B2FC9" : "#16a34a",
+            hasUrgent ? "#CA8A71" : "#16a34a",
             hasUrgent ? "AKCIJA POTREBNA" : "SVE U REDU",
             body,
             "Escapii interni sistem &middot; Automatska poruka &middot; Ne odgovarati",
@@ -142,10 +142,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         return """
             <tr style="border-bottom:1px solid #f3f4f6;">
               <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">
-                <strong style="color:#111344;">%s</strong><br>
+                <strong style="color:#2D5F6B;">%s</strong><br>
                 <a href="mailto:%s" style="color:#9ca3af;font-size:11px;text-decoration:none;">%s</a>
               </td>
-              <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#8B2FC9;vertical-align:middle;">%s</td>
+              <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#CA8A71;vertical-align:middle;">%s</td>
               <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">%s</td>
               <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">%s</td>
               <td style="padding:8px 10px;vertical-align:middle;">
@@ -163,7 +163,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         return """
             <tr style="border-bottom:1px solid #f3f4f6;">
               <td style="padding:8px 10px;font-size:12px;color:#374151;vertical-align:middle;">
-                <strong style="color:#111344;">%s</strong>
+                <strong style="color:#2D5F6B;">%s</strong>
                 <span style="color:#9ca3af;font-size:11px;"> · %s · %s</span>
               </td>
               <td style="padding:8px 10px;vertical-align:middle;">

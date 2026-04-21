@@ -1,4 +1,4 @@
-package com.escapii.service.email.impl;
+﻿package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.model.PassengerInfo;
@@ -103,9 +103,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             """.formatted(
             metaSection(booking, depDate, retDate, n),
             teamSection("Kontakt",
-                tRow("Ime i prezime", "<a href='mailto:" + booking.getEmail() + "' style='color:#111344;font-weight:700;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName()) + "</a>") +
-                tRow("Email", "<a href='mailto:" + booking.getEmail() + "' style='color:#8B2FC9;text-decoration:none;'>" + booking.getEmail() + "</a>") +
-                tRow("Telefon", "<a href='tel:" + booking.getPhone() + "' style='color:#8B2FC9;text-decoration:none;'>" + booking.getPhone() + "</a>")
+                tRow("Ime i prezime", "<a href='mailto:" + booking.getEmail() + "' style='color:#2D5F6B;font-weight:700;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName()) + "</a>") +
+                tRow("Email", "<a href='mailto:" + booking.getEmail() + "' style='color:#CA8A71;text-decoration:none;'>" + booking.getEmail() + "</a>") +
+                tRow("Telefon", "<a href='tel:" + booking.getPhone() + "' style='color:#CA8A71;text-decoration:none;'>" + booking.getPhone() + "</a>")
             ),
             teamSection("Putovanje",
                 tRow("Aerodrom", booking.getDepartureAirport()) +
@@ -124,11 +124,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         return EmailHtmlBuilder.wrapBase(
             "Escapii — Interni",
-            "#1e1b4b",
+            "#0D2E38",
             "Novi upit stigao",
             depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
-            "#8B2FC9",
+            "#CA8A71",
             "NOVI UPIT",
             body + notes,
             "Interni email — escapii ops tim · Nije za prosleđivanje",
@@ -143,7 +143,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               <tr>
                 <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ref. broj</div>
-                  <div style="font-size:14px;font-weight:700;color:#111344;">%s</div>
+                  <div style="font-size:14px;font-weight:700;color:#2D5F6B;">%s</div>
                 </td>
                 <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Primljeno</div>
@@ -151,7 +151,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 </td>
                 <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ukupno</div>
-                  <div style="font-size:14px;font-weight:700;color:#8B2FC9;">%s €</div>
+                  <div style="font-size:14px;font-weight:700;color:#CA8A71;">%s €</div>
                 </td>
                 <td style="padding:12px 16px;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Rok odgovora</div>
@@ -192,9 +192,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         String body = """
             <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
-              Draga/i <strong style="color:#111344;">%s</strong>,<br><br>
+              Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>
               uspešno smo primili vaš upit za putovanje. Naš tim pregledava vaše preference
-              i kontaktiraće vas u roku od <strong style="color:#111344;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
+              i kontaktiraće vas u roku od <strong style="color:#2D5F6B;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
             </p>
             %s
             %s
@@ -208,11 +208,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         return EmailHtmlBuilder.wrapBase(
             "Escapii",
-            "#1a1230",
+            "#0D2E38",
             "Vaš upit je primljen",
             "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
             booking.getBookingRef(),
-            "#8B2FC9",
+            "#CA8A71",
             "NA ČEKANJU",
             body,
             EmailHtmlBuilder.customerFooter(sender.getFrom()),
@@ -240,7 +240,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (confirmed) {
             content = """
                 <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
-                  Draga/i <strong style="color:#111344;">%s</strong>,<br><br>%s
+                  Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>%s
                 </p>
                 %s
                 %s
@@ -259,7 +259,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         } else {
             content = """
                 <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
-                  Draga/i <strong style="color:#111344;">%s</strong>,<br><br>%s
+                  Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>%s
                 </p>
                 %s
                 <div style="background:#fff5f5;border:1px solid #fee2e2;border-left:3px solid #dc2626;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
@@ -321,15 +321,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 "Rezervacija potvrđena",
                 "Danas · " + today,
                 "Sve je rezervisano — letovi, smeštaj, transfer. Možete se opustiti — doslovno."),
-            EmailHtmlBuilder.timelineItem("🌤", "#f0eafa", "#8B2FC9",
+            EmailHtmlBuilder.timelineItem("🌤", "#EDF4F5", "#CA8A71",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
                 "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
-            EmailHtmlBuilder.timelineItem("✉", "#DAE0F2", "#111344",
+            EmailHtmlBuilder.timelineItem("✉", "#BFD8DE", "#2D5F6B",
                 "Koverta s destinacijom",
                 revealStr + " · 72h pre polaska",
                 "Konačno — otkrivate gde idete!"),
-            EmailHtmlBuilder.timelineItem("✈", "#111344", "#F9CFF2",
+            EmailHtmlBuilder.timelineItem("✈", "#0D2E38", "#F5C9A8",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
                 "Dođite na aerodrom i dozvolite sebi da budete iznenađeni.")
@@ -345,7 +345,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     private String customerTripCardStyled(Booking booking, String depDate, String retDate, int n, boolean cancelled) {
-        String borderColor = cancelled ? "#dc2626" : "#8B2FC9"; // purple for active, red for cancelled
+        String borderColor = cancelled ? "#dc2626" : "#CA8A71"; // purple for active, red for cancelled
         String cardTitle   = cancelled ? "Otkazano putovanje" : "Detalji putovanja";
 
         StringBuilder rows = new StringBuilder();
@@ -391,11 +391,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               %s
             </div>
             """.formatted(
-            EmailHtmlBuilder.step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#111344;'>24 sata</strong>",
+            EmailHtmlBuilder.step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#2D5F6B;'>24 sata</strong>",
                       "Proveravamo dostupnost i potvrđujemo vašu rezervaciju."),
-            EmailHtmlBuilder.step("2", "Vremenska prognoza — <strong style='color:#111344;'>7 dana pre polaska</strong>",
+            EmailHtmlBuilder.step("2", "Vremenska prognoza — <strong style='color:#2D5F6B;'>7 dana pre polaska</strong>",
                       "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
-            EmailHtmlBuilder.step("3", "Koverta s destinacijom — <strong style='color:#111344;'>72h pre polaska</strong>",
+            EmailHtmlBuilder.step("3", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>72h pre polaska</strong>",
                       "Koverta otkriva gde putujete. ✉")
         );
     }
@@ -482,9 +482,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 </thead>
                 <tbody>%s</tbody>
                 <tfoot>
-                  <tr style="background:#111344;">
+                  <tr style="background:#0D2E38;">
                     <td colspan="3" style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
-                    <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#F9CFF2;">%s</td>
+                    <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#F5C9A8;">%s</td>
                   </tr>
                 </tfoot>
               </table>
