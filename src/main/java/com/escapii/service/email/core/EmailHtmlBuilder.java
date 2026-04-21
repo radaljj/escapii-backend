@@ -7,6 +7,10 @@ public final class EmailHtmlBuilder {
     public static final DateTimeFormatter DATE_FMT     = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
+    /** Postavljaju se iz EmailHtmlBuilderConfig @PostConstruct — ne menjati direktno. */
+    public static volatile String LOGO_WHITE_URL = "https://escapii-backend.onrender.com/images/logo-white.png";
+    public static volatile String LOGO_BLACK_URL = "https://escapii-backend.onrender.com/images/logo-black.png";
+
     private EmailHtmlBuilder() {}
 
     public static String wrapBase(
@@ -88,7 +92,7 @@ public final class EmailHtmlBuilder {
 
                     <!-- LOGO -->
                     <tr><td style="padding-bottom:20px;text-align:center;">
-                      <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-black.png"
+                      <img src="%s"
                            alt="Escapii" width="160" height="53"
                            style="display:block;margin:0 auto;border:0;max-width:160px;"
                            onerror="this.style.display='none'">
@@ -109,7 +113,7 @@ public final class EmailHtmlBuilder {
                           <table width="100%%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td style="vertical-align:top;">
-                                <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.png"
+                                <img src="%s"
                                      alt="Escapii" width="120" height="40"
                                      style="display:block;border:0;max-width:120px;height:auto;"
                                      onerror="this.style.display='none'">
@@ -151,12 +155,14 @@ public final class EmailHtmlBuilder {
             </html>
             """.formatted(
             headingText,    // preheader
+            LOGO_BLACK_URL, // top logo (svetla pozadina → crni logo)
             badgeColor,     // accent bar
             headerBg,       // header bg
             badgeBg,        // badge bg
             badgeText,      // badge text color
             badgeBorder,    // badge border
             badgeLabel,     // badge label
+            LOGO_WHITE_URL, // header logo (tamna pozadina → beli logo)
             headingText,    // h1
             subheadingHtml, // subtitle
             refHtml,        // ref chip
