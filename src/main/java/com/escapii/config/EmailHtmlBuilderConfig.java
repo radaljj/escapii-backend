@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EmailHtmlBuilderConfig {
 
-    @Value("${app.backend-url:https://escapii-backend.onrender.com}")
+    @Value("${app.backend-url}")
     private String backendUrl;
 
     @PostConstruct

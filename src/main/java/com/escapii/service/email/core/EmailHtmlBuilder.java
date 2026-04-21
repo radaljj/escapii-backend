@@ -8,8 +8,8 @@ public final class EmailHtmlBuilder {
     public static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     /** Postavljaju se iz EmailHtmlBuilderConfig @PostConstruct — ne menjati direktno. */
-    public static volatile String LOGO_WHITE_URL = "https://escapii-backend.onrender.com/images/logo-white.png";
-    public static volatile String LOGO_BLACK_URL = "https://escapii-backend.onrender.com/images/logo-black.png";
+    public static volatile String LOGO_WHITE_URL = "";
+    public static volatile String LOGO_BLACK_URL = "";
 
     private EmailHtmlBuilder() {}
 
