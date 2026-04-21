@@ -28,8 +28,13 @@ public class EmailSender {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
+            log.info("[EmailSender] Email poslan na {}", to);
         } catch (MessagingException e) {
-            log.error("[EmailSender] Greška pri slanju emaila na {}: {}", to, e.getMessage());
+            log.error("[EmailSender] MessagingException za {}: {}", to, e.getMessage(), e);
+        } catch (Exception e) {
+            // MailException (Spring, RuntimeException) — auth failure, connection refused, itd.
+            log.error("[EmailSender] Greška pri slanju na {} — proveriti SMTP env vars (MAIL_USERNAME, MAIL_APP_PASSWORD): {}",
+                    to, e.getMessage(), e);
         }
     }
 
