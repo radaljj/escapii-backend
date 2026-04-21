@@ -1,4 +1,4 @@
-﻿package com.escapii.service.email.impl;
+package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.model.PassengerInfo;

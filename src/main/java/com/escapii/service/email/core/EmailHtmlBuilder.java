@@ -1,4 +1,4 @@
-﻿package com.escapii.service.email.core;
+package com.escapii.service.email.core;
 
 import java.time.format.DateTimeFormatter;
 
