@@ -24,24 +24,24 @@ public final class EmailHtmlBuilder {
         String badgeBg = switch (badgeColor) {
             case "#16a34a" -> "rgba(22,163,74,0.2)";
             case "#dc2626" -> "rgba(220,38,38,0.2)";
-            default        -> "rgba(82,21,78,0.2)";
+            default        -> "rgba(139,47,201,0.2)";
         };
         String badgeText = switch (badgeColor) {
             case "#16a34a" -> "#4ade80";
             case "#dc2626" -> "#f87171";
-            default        -> "#F9CFF2";
+            default        -> "#F0CAFF";
         };
         String badgeBorder = switch (badgeColor) {
             case "#16a34a" -> "rgba(22,163,74,0.4)";
             case "#dc2626" -> "rgba(220,38,38,0.4)";
-            default        -> "rgba(82,21,78,0.4)";
+            default        -> "rgba(139,47,201,0.4)";
         };
 
         String subheadingHtml = subheading.isBlank() ? "" :
             "<p style=\"margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;\">%s</p>".formatted(subheading);
 
         String refHtml = refCode.isBlank() ? "" :
-            "<div style=\"display:inline-block;background:rgba(82,21,78,0.15);border:1px solid rgba(82,21,78,0.3);color:#F9CFF2;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px;margin-top:10px;\">&#10022; %s</div>".formatted(refCode);
+            "<div style=\"display:inline-block;background:rgba(139,47,201,0.18);border:1px solid rgba(139,47,201,0.35);color:#F0CAFF;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px;margin-top:10px;\">&#10022; %s</div>".formatted(refCode);
 
         String mysteryHtml = mysteryStrip ? """
             <table width="100%%" cellpadding="0" cellspacing="0" style="background:#111344;">
@@ -87,10 +87,10 @@ public final class EmailHtmlBuilder {
                   <table class="mob-full" style="width:600px;max-width:600px;" cellpadding="0" cellspacing="0">
 
                     <!-- LOGO -->
-                    <tr><td style="padding-bottom:16px;text-align:center;">
-                      <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
-                           alt="Escapii" width="150" height="50"
-                           style="display:inline-block;border:0;height:50px;width:150px;"
+                    <tr><td style="padding-bottom:20px;text-align:center;">
+                      <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-black.png"
+                           alt="Escapii" width="160" height="53"
+                           style="display:block;margin:0 auto;border:0;max-width:160px;"
                            onerror="this.style.display='none'">
                     </td></tr>
 
@@ -109,9 +109,9 @@ public final class EmailHtmlBuilder {
                           <table width="100%%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td style="vertical-align:top;">
-                                <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.svg"
+                                <img src="https://escapii.com/wp-content/themes/escapii-theme/images/logo-white.png"
                                      alt="Escapii" width="120" height="40"
-                                     style="display:inline-block;border:0;height:40px;width:120px;"
+                                     style="display:block;border:0;max-width:120px;height:auto;"
                                      onerror="this.style.display='none'">
                               </td>
                               <td style="text-align:right;vertical-align:top;">
@@ -197,7 +197,7 @@ public final class EmailHtmlBuilder {
         return """
             <tr>
               <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
-              <td style="padding:7px 0;font-size:13px;color:#52154E;font-weight:600;font-style:italic;text-align:right;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#8B2FC9;font-weight:600;font-style:italic;text-align:right;">%s</td>
             </tr>
             """.formatted(label, value);
     }
@@ -208,7 +208,7 @@ public final class EmailHtmlBuilder {
               <tr>
                 <td style="padding:20px 24px;">
                   <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;">Ukupna cena putovanja</div>
-                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#52154E;line-height:1;margin-bottom:4px;">%s €</div>
+                  <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#F0CAFF;line-height:1;margin-bottom:4px;">%s €</div>
                   <div style="font-size:12px;color:rgba(255,255,255,0.4);">za %d %s · sve uključeno</div>
                 </td>
               </tr>
@@ -221,7 +221,7 @@ public final class EmailHtmlBuilder {
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
               <tr>
                 <td style="width:36px;vertical-align:top;padding-top:2px;">
-                  <div style="width:28px;height:28px;background:#52154E;border-radius:50%%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#fff;">%s</div>
+                  <div style="width:28px;height:28px;background:#8B2FC9;border-radius:50%%;text-align:center;line-height:28px;font-size:13px;font-weight:800;color:#fff;">%s</div>
                 </td>
                 <td style="padding-left:12px;vertical-align:top;">
                   <div style="font-size:14px;color:#111344;font-weight:600;margin-bottom:2px;">%s</div>

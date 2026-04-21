@@ -104,8 +104,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             metaSection(booking, depDate, retDate, n),
             teamSection("Kontakt",
                 tRow("Ime i prezime", "<a href='mailto:" + booking.getEmail() + "' style='color:#111344;font-weight:700;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName()) + "</a>") +
-                tRow("Email", "<a href='mailto:" + booking.getEmail() + "' style='color:#52154E;text-decoration:none;'>" + booking.getEmail() + "</a>") +
-                tRow("Telefon", "<a href='tel:" + booking.getPhone() + "' style='color:#52154E;text-decoration:none;'>" + booking.getPhone() + "</a>")
+                tRow("Email", "<a href='mailto:" + booking.getEmail() + "' style='color:#8B2FC9;text-decoration:none;'>" + booking.getEmail() + "</a>") +
+                tRow("Telefon", "<a href='tel:" + booking.getPhone() + "' style='color:#8B2FC9;text-decoration:none;'>" + booking.getPhone() + "</a>")
             ),
             teamSection("Putovanje",
                 tRow("Aerodrom", booking.getDepartureAirport()) +
@@ -128,7 +128,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             "Novi upit stigao",
             depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
-            "#52154E",
+            "#8B2FC9",
             "NOVI UPIT",
             body + notes,
             "Interni email — escapii ops tim · Nije za prosleđivanje",
@@ -151,7 +151,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 </td>
                 <td style="padding:12px 16px;border-right:1px solid #e5e7eb;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Ukupno</div>
-                  <div style="font-size:14px;font-weight:700;color:#52154E;">%s €</div>
+                  <div style="font-size:14px;font-weight:700;color:#8B2FC9;">%s €</div>
                 </td>
                 <td style="padding:12px 16px;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:3px;">Rok odgovora</div>
@@ -212,7 +212,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             "Vaš upit je primljen",
             "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
             booking.getBookingRef(),
-            "#52154E",
+            "#8B2FC9",
             "NA ČEKANJU",
             body,
             EmailHtmlBuilder.customerFooter(sender.getFrom()),
@@ -321,7 +321,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 "Rezervacija potvrđena",
                 "Danas · " + today,
                 "Sve je rezervisano — letovi, smeštaj, transfer. Možete se opustiti — doslovno."),
-            EmailHtmlBuilder.timelineItem("🌤", "#f0eafa", "#52154E",
+            EmailHtmlBuilder.timelineItem("🌤", "#f0eafa", "#8B2FC9",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
                 "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
@@ -345,7 +345,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     private String customerTripCardStyled(Booking booking, String depDate, String retDate, int n, boolean cancelled) {
-        String borderColor = cancelled ? "#dc2626" : "#52154E"; // purple for active, red for cancelled
+        String borderColor = cancelled ? "#dc2626" : "#8B2FC9"; // purple for active, red for cancelled
         String cardTitle   = cancelled ? "Otkazano putovanje" : "Detalji putovanja";
 
         StringBuilder rows = new StringBuilder();

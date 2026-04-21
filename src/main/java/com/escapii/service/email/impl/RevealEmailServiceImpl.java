@@ -46,8 +46,8 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
             <div style="height:1px;background:#f3f4f6;margin:0 0 24px;"></div>
 
-            <div style="background:#f5f0fa;border:1px solid #DAE0F2;border-left:3px solid #52154E;border-radius:6px;padding:16px 20px;margin-bottom:28px;">
-              <div style="font-size:13px;font-weight:700;color:#52154E;margin-bottom:6px;">Šta dalje?</div>
+            <div style="background:#f5f0fa;border:1px solid #e8d5f5;border-left:3px solid #8B2FC9;border-radius:6px;padding:16px 20px;margin-bottom:28px;">
+              <div style="font-size:13px;font-weight:700;color:#8B2FC9;margin-bottom:6px;">Šta dalje?</div>
               <div style="font-size:13px;color:#374151;line-height:1.7;">
                 Klikni dugme ispod i otkrij svoju destinaciju — čeka te dramatično otvaranje koverte.<br>
                 <span style="color:#9ca3af;font-size:12px;">Link je personalan i važi do dana polaska.</span>
@@ -56,9 +56,9 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
             <div style="text-align:center;margin:0 0 28px;">
               <a href="%s"
-                 style="display:inline-block;background:#52154E;color:#fff;font-weight:800;font-size:16px;
+                 style="display:inline-block;background:#8B2FC9;color:#fff;font-weight:800;font-size:16px;
                         padding:16px 44px;border-radius:100px;text-decoration:none;letter-spacing:0.3px;
-                        box-shadow:0 4px 16px rgba(82,21,78,0.4);">
+                        box-shadow:0 4px 16px rgba(139,47,201,0.4);">
                 Otkrij svoju destinaciju &rarr;
               </a>
             </div>
@@ -75,7 +75,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "Tvoja destinacija te čeka!",
             "72 sata pre polaska — stiglo je vreme.",
             ref,
-            "#52154E",
+            "#8B2FC9",
             "OTKRIJ",
             body,
             "Escapii · escapii.com · Srećan put!",
@@ -119,7 +119,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Destinacija</td>
-                <td style="padding:6px 0;font-size:15px;color:#52154E;font-weight:800;">%s</td>
+                <td style="padding:6px 0;font-size:15px;color:#8B2FC9;font-weight:800;">%s</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;font-size:13px;color:#374151;font-weight:600;">Datum polaska</td>
