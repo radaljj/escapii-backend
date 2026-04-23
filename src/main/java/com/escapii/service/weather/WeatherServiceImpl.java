@@ -30,7 +30,7 @@ public class WeatherServiceImpl implements WeatherService {
             "https://api.open-meteo.com/v1/forecast"
             + "?latitude=%.4f&longitude=%.4f"
             + "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum"
-            + "&timezone=auto&forecast_days=7";
+            + "&timezone=auto&forecast_days=11";
 
     private static final String USER_AGENT = "Escapii/1.0 (contact@escapii.com)";
     private static final int    TIMEOUT_SEC = 10;

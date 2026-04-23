@@ -170,7 +170,12 @@ public class DailyTaskScheduler {
      * Isti flow kao automatski, ali okida admin ručno.
      * Ako je već poslato → 409 Conflict (ne šalje ponovo).
      */
-    public Map<String, String> sendRevealForBooking(Long bookingId) {
+    /**
+     * @param siteUrl WordPress sajt URL koji šalje request (npr. http://escapiitest.great-site.net
+     *                 ili https://escapii.com). Koristi se za magic link u emailu.
+     *                 Null = koristi konfigurisani app.frontend-url.
+     */
+    public Map<String, String> sendRevealForBooking(Long bookingId, String siteUrl) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Booking nije pronađen."));
@@ -191,10 +196,10 @@ public class DailyTaskScheduler {
         }
         booking.setRevealSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
-        revealEmailService.sendRevealEmail(booking);
+        revealEmailService.sendRevealEmail(booking, siteUrl); // prosleđuje URL sajta
 
-        log.info("[Admin] ✉ Ručni reveal poslan za {} → '{}'",
-                booking.getBookingRef(), booking.getAssignedDestination());
+        log.info("[Admin] ✉ Ručni reveal poslan za {} → '{}' (siteUrl={})",
+                booking.getBookingRef(), booking.getAssignedDestination(), siteUrl);
         return Map.of("message", "Reveal email poslan za " + booking.getBookingRef() + ".");
     }
 

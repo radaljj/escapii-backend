@@ -108,8 +108,21 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             <!-- Packing tips -->
             %s
 
+            <!-- Reveal note -->
+            <table width="100%%" cellpadding="0" cellspacing="0"
+              style="background:#fff8f0;border:1px solid #fed7aa;border-left:3px solid #CA8A71;border-radius:8px;margin-bottom:12px;">
+              <tr><td style="padding:14px 18px;">
+                <div style="font-size:12px;font-weight:700;color:#CA8A71;margin-bottom:4px;">📬 Preporuka</div>
+                <div style="font-size:12px;color:#374151;line-height:1.6;">
+                  Kada dobiješ email sa otkrićem destinacije (3 dana pre polaska),
+                  <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju —
+                  prognoza za toliko dana unapred može biti okvirna.
+                </div>
+              </td></tr>
+            </table>
+
             <!-- Footer note -->
-            <p style="font-size:11px;color:#9ca3af;text-align:center;margin:16px 0 0;line-height:1.6;">
+            <p style="font-size:11px;color:#9ca3af;text-align:center;margin:8px 0 0;line-height:1.6;">
               Prognoza se ažurira svakodnevno — moguća su manja odstupanja.<br>
               Srećan put! 🌍
             </p>
@@ -134,38 +147,42 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         );
     }
 
-    // ── 7-day cards ───────────────────────────────────────────────────────────
+    // ── 11-day cards ──────────────────────────────────────────────────────────
 
     private String buildDayCards(List<DailyForecast> forecast) {
         StringBuilder sb = new StringBuilder();
         Locale sr = new Locale("sr", "RS");
 
         for (int i = 0; i < forecast.size(); i++) {
-            DailyForecast d   = forecast.get(i);
-            boolean isFirst   = i == 0;
-            String dayName    = isFirst ? "Danas"
+            DailyForecast d = forecast.get(i);
+            boolean isFirst = i == 0;
+            String dayName  = isFirst ? "Danas"
                     : d.date().getDayOfWeek().getDisplayName(TextStyle.SHORT, sr);
-            String bg         = isFirst
+            // Datum ispod dana (npr. "25.04")
+            String dayDate  = d.date().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM"));
+            String bg       = isFirst
                     ? "background:rgba(125,211,252,0.15);border:1px solid rgba(125,211,252,0.25);"
                     : "background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);";
 
             sb.append("""
-                <td style="text-align:center;padding:0 3px;">
-                  <div style="%sborder-radius:12px;padding:10px 6px;">
-                    <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">%s</div>
-                    <div style="font-size:22px;margin-bottom:6px;">%s</div>
-                    <div style="font-size:13px;font-weight:700;color:#fca5a5;">%d°</div>
-                    <div style="font-size:11px;color:#93c5fd;margin-top:2px;">%d°</div>
+                <td style="text-align:center;padding:0 2px;">
+                  <div style="%sborder-radius:12px;padding:10px 4px;">
+                    <div style="font-size:9px;color:rgba(255,255,255,0.5);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;">%s</div>
+                    <div style="font-size:8px;color:rgba(255,255,255,0.3);margin-bottom:5px;">%s</div>
+                    <div style="font-size:20px;margin-bottom:5px;">%s</div>
+                    <div style="font-size:12px;font-weight:700;color:#fca5a5;">%d°</div>
+                    <div style="font-size:10px;color:#93c5fd;margin-top:2px;">%d°</div>
                     %s
                   </div>
                 </td>""".formatted(
                     bg,
                     dayName,
+                    dayDate,
                     d.emoji(),
                     d.maxTemp(),
                     d.minTemp(),
                     d.precipitation() > 0.5
-                        ? "<div style=\"font-size:10px;color:#7dd3fc;margin-top:4px;\">💧" + String.format("%.0f", d.precipitation()) + "mm</div>"
+                        ? "<div style=\"font-size:9px;color:#7dd3fc;margin-top:3px;\">💧" + String.format("%.0f", d.precipitation()) + "mm</div>"
                         : ""
             ));
         }

@@ -28,9 +28,16 @@ public class RevealEmailServiceImpl implements RevealEmailService {
     @Override
     @Async
     public void sendRevealEmail(Booking booking) {
+        sendRevealEmail(booking, frontendUrl); // koristi konfigurisani URL
+    }
+
+    @Override
+    @Async
+    public void sendRevealEmail(Booking booking, String siteUrl) {
+        String usedUrl   = (siteUrl != null && !siteUrl.isBlank()) ? siteUrl : frontendUrl;
         String firstName = EmailHtmlBuilder.esc(booking.getFirstName());
         String ref       = EmailHtmlBuilder.esc(booking.getBookingRef());
-        String magicLink = frontendUrl + "/otkrivanje?token=" + booking.getRevealToken();
+        String magicLink = usedUrl.stripTrailing() + "/otkrivanje?token=" + booking.getRevealToken();
         String departure = booking.getSelectedDate().getDepartureDate()
                 .format(EmailHtmlBuilder.DATE_FMT);
 

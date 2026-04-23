@@ -152,10 +152,15 @@ public class AdminController {
     /**
      * POST /api/admin/bookings/{id}/send-reveal
      * Ručno šalje reveal email. Ako je već poslato → 409 Conflict.
+     * Header X-Frontend-Url: URL WordPress sajta koji okida request
+     * (npr. http://escapiitest.great-site.net ili https://escapii.rs).
+     * Ako header nije prisutan, koristi konfigurisani app.frontend-url.
      */
     @PostMapping("/bookings/{id}/send-reveal")
-    public ResponseEntity<Map<String, String>> sendRevealManual(@PathVariable Long id) {
-        return ResponseEntity.ok(dailyTaskScheduler.sendRevealForBooking(id));
+    public ResponseEntity<Map<String, String>> sendRevealManual(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Frontend-Url", required = false) String siteUrl) {
+        return ResponseEntity.ok(dailyTaskScheduler.sendRevealForBooking(id, siteUrl));
     }
 
     /**
