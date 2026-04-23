@@ -149,4 +149,22 @@ public class AdminController {
         return ResponseEntity.ok(adminService.setDestination(id, destination));
     }
 
+    /**
+     * POST /api/admin/bookings/{id}/send-reveal
+     * Ručno šalje reveal email. Ako je već poslato → 409 Conflict.
+     */
+    @PostMapping("/bookings/{id}/send-reveal")
+    public ResponseEntity<Map<String, String>> sendRevealManual(@PathVariable Long id) {
+        return ResponseEntity.ok(dailyTaskScheduler.sendRevealForBooking(id));
+    }
+
+    /**
+     * POST /api/admin/bookings/{id}/send-forecast
+     * Ručno šalje forecast email. Ako je već poslato → 409 Conflict.
+     */
+    @PostMapping("/bookings/{id}/send-forecast")
+    public ResponseEntity<Map<String, String>> sendForecastManual(@PathVariable Long id) {
+        return ResponseEntity.ok(dailyTaskScheduler.sendForecastForBooking(id));
+    }
+
 }

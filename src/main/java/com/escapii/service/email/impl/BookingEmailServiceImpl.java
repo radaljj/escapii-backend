@@ -123,13 +123,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String notes = buildNotesBox(booking.getNotes());
 
         return EmailHtmlBuilder.wrapBase(
-            "Escapii — Interni",
             "#0D2E38",
             "Novi upit stigao",
             depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
-            "#CA8A71",
-            "NOVI UPIT",
             body + notes,
             "Interni email — escapii ops tim · Nije za prosleđivanje",
             false
@@ -207,13 +204,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         );
 
         return EmailHtmlBuilder.wrapBase(
-            "Escapii",
             "#0D2E38",
             "Vaš upit je primljen",
             "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
             booking.getBookingRef(),
-            "#CA8A71",
-            "NA ČEKANJU",
             body,
             EmailHtmlBuilder.customerFooter(sender.getFrom()),
             true
@@ -279,15 +273,12 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         }
 
         return EmailHtmlBuilder.wrapBase(
-            "Escapii",
             confirmed ? "#064e3b" : "#450a0a",
             heading,
             confirmed
                 ? "Vaše putovanje je zvanično u kalendaru. Jedino što ne znate — kuda idete! ✦"
                 : "Nadamo se da ćemo vas videti na sledećem putovanju.",
             booking.getBookingRef(),
-            accentColor,
-            badgeLabel,
             content,
             EmailHtmlBuilder.customerFooter(sender.getFrom()),
             confirmed

@@ -82,13 +82,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         }
 
         String html = EmailHtmlBuilder.wrapBase(
-            "Escapii Ops",
             "#0D2E38",
             "Jutarnji pregled",
             todayStr + " &middot; " + upcoming.size() + " aktivnih rezervacija",
             "",
-            hasToday ? "#CA8A71" : "#16a34a",
-            hasToday ? "AKCIJA DANAS" : "SVE U REDU",
             body.toString(),
             "Escapii interni sistem &middot; Automatska poruka &middot; Ne odgovarati",
             false

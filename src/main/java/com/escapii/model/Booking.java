@@ -165,6 +165,10 @@ public class Booking {
     @Column(name = "reveal_sent_at")
     private LocalDateTime revealSentAt;
 
+    /** Trenutak kad je weather forecast email poslan korisniku — null znači još nije poslan. */
+    @Column(name = "forecast_sent_at")
+    private LocalDateTime forecastSentAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();

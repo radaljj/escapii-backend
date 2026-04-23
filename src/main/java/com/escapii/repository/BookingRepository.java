@@ -52,4 +52,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.revealSentAt IS NULL " +
            "AND b.selectedDate.departureDate <= :cutoff")
     List<Booking> findReadyForReveal(@Param("cutoff") LocalDate cutoff);
+
+    /**
+     * CONFIRMED bookingovi kojima:
+     *   - assignedDestination je unesena (potrebna za geocoding)
+     *   - forecastSentAt je null (još nije poslato)
+     *   - departureDate je između [from, until]:
+     *       from  = today+4  → nikad ne šaljemo ako je reveal već otišao (T-3)
+     *       until = today+7  → primarni okidač na T-7; catch-up za propuštene dane T-4..T-6
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.assignedDestination IS NOT NULL " +
+           "AND b.forecastSentAt IS NULL " +
+           "AND b.selectedDate.departureDate >= :from " +
+           "AND b.selectedDate.departureDate <= :until " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findReadyForForecast(@Param("from") LocalDate from,
+                                       @Param("until") LocalDate until);
 }

@@ -14,33 +14,14 @@ public final class EmailHtmlBuilder {
     private EmailHtmlBuilder() {}
 
     public static String wrapBase(
-        String logoLabel,
         String headerBg,
         String headingText,
         String subheading,
         String refCode,
-        String badgeColor,
-        String badgeLabel,
         String bodyContent,
         String footerText,
         boolean mysteryStrip
     ) {
-        String badgeBg = switch (badgeColor) {
-            case "#16a34a" -> "rgba(22,163,74,0.2)";
-            case "#dc2626" -> "rgba(220,38,38,0.2)";
-            default        -> "rgba(202,138,113,0.2)";
-        };
-        String badgeText = switch (badgeColor) {
-            case "#16a34a" -> "#4ade80";
-            case "#dc2626" -> "#f87171";
-            default        -> "#F5C9A8";
-        };
-        String badgeBorder = switch (badgeColor) {
-            case "#16a34a" -> "rgba(22,163,74,0.4)";
-            case "#dc2626" -> "rgba(220,38,38,0.4)";
-            default        -> "rgba(202,138,113,0.4)";
-        };
-
         String subheadingHtml = subheading.isBlank() ? "" :
             "<p style=\"margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;\">%s</p>".formatted(subheading);
 
@@ -140,7 +121,7 @@ public final class EmailHtmlBuilder {
             </html>
             """.formatted(
             headingText,    // preheader
-            badgeColor,     // accent bar
+            "#CA8A71",      // accent bar (Escapii brand color)
             headerBg,       // header bg
             LOGO_WHITE_URL, // logo centered
             headingText,    // h1

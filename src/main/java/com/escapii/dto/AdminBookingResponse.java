@@ -52,6 +52,7 @@ public class AdminBookingResponse {
     // Otkrivanje destinacije
     private String assignedDestination;
     private LocalDateTime revealSentAt;
+    private LocalDateTime forecastSentAt;
 
     // Cene
     private Integer basePricePerPerson;

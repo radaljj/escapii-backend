@@ -70,13 +70,10 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             """.formatted(firstName, departure, magicLink, magicLink);
 
         String html = EmailHtmlBuilder.wrapBase(
-            "Escapii",
             "#0f1f3d",
             "Tvoja destinacija te čeka!",
             "72 sata pre polaska — stiglo je vreme.",
             ref,
-            "#CA8A71",
-            "OTKRIJ",
             body,
             "Escapii · escapii.com · Srećan put!",
             false
@@ -129,13 +126,10 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             """.formatted(ref, name, email, dest, departure);
 
         String html = EmailHtmlBuilder.wrapBase(
-            "Escapii Ops",
             "#064e3b",
             "✅ Destinacija poslata",
             "Reveal email je automatski poslan korisniku.",
             ref,
-            "#16a34a",
-            "REVEAL POSLAN",
             body,
             "Escapii · interni sistem",
             false

@@ -3,7 +3,10 @@ package com.escapii.config;
 import com.escapii.model.Booking;
 import com.escapii.repository.BookingRepository;
 import com.escapii.service.email.DigestEmailService;
+import com.escapii.service.email.ForecastEmailService;
 import com.escapii.service.email.RevealEmailService;
+import com.escapii.service.weather.DailyForecast;
+import com.escapii.service.weather.WeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +17,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -24,6 +29,8 @@ public class DailyTaskScheduler {
     private final BookingRepository  bookingRepository;
     private final DigestEmailService digestEmailService;
     private final RevealEmailService revealEmailService;
+    private final ForecastEmailService forecastEmailService;
+    private final WeatherService     weatherService;
 
     @Scheduled(cron = "0 0 10 * * *")
     public void runDailyTasks() {
@@ -34,24 +41,24 @@ public class DailyTaskScheduler {
     public void triggerDigest() {
         LocalDate today = LocalDate.now();
 
-        // 1. Auto-reveal: CONFIRMED + destinacija dodeljena + revealSentAt == null + polazak <= T+3
+        // 1. Auto-reveal: CONFIRMED + destinacija + revealSentAt == null + polazak <= T+3
         List<Booking> revealReady = bookingRepository.findReadyForReveal(today.plusDays(3));
         List<Booking> revealSent  = sendReveals(revealReady);
 
-        // 2. Sve CONFIRMED rezervacije u narednih 14 dana za digest preview
+        // 2. Auto-forecast: CONFIRMED + destinacija + forecastSentAt == null + polazak između T+4 i T+7
+        //    Donji limit T+4 osigurava da se forecast NIKAD ne šalje posle reveal-a (koji ide na T+3)
+        List<Booking> forecastReady = bookingRepository.findReadyForForecast(
+                today.plusDays(4), today.plusDays(7));
+        List<Booking> forecastSent  = sendForecasts(forecastReady);
+
+        // 3. Sve CONFIRMED rezervacije u narednih 14 dana za digest preview
         List<Booking> upcoming = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
 
-        // 3. Prognoza danas (T+5) — za sada informativno u digestu, auto-slanje dolazi kasnije
-        LocalDate forecastDate = today.plusDays(5);
-        List<Booking> forecastDue = upcoming.stream()
-                .filter(b -> b.getSelectedDate().getDepartureDate().equals(forecastDate))
-                .toList();
-
         // 4. Digest email timu
-        if (!upcoming.isEmpty() || !revealSent.isEmpty()) {
-            digestEmailService.sendDailyDigest(today, revealSent, forecastDue, upcoming);
-            log.info("[Scheduler] Digest poslan. Reveal-ovi danas: {}, forecast danas: {}, ukupno u 14 dana: {}",
-                    revealSent.size(), forecastDue.size(), upcoming.size());
+        if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty()) {
+            digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming);
+            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}",
+                    revealSent.size(), forecastSent.size(), upcoming.size());
         } else {
             log.info("[Scheduler] Nema aktivnih rezervacija — digest nije poslan.");
         }
@@ -74,6 +81,50 @@ public class DailyTaskScheduler {
             log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
         }
         log.info("[Scheduler] Auto-cancel završen — otkazano {} rezervacija.", stale.size());
+    }
+
+    /**
+     * Za svaki booking:
+     *  1. Geocodira assignedDestination → lat/lon
+     *  2. Preuzima 7-dnevnu prognozu sa Open-Meteo
+     *  3. Šalje weather email korisniku (async)
+     *  4. Setuje forecastSentAt
+     *
+     * Greška na jednom ne prekida ostale.
+     */
+    private List<Booking> sendForecasts(List<Booking> readyList) {
+        List<Booking> sent = new ArrayList<>();
+
+        for (Booking booking : readyList) {
+            try {
+                Optional<List<DailyForecast>> forecast =
+                        weatherService.getForecast(booking.getAssignedDestination());
+
+                if (forecast.isEmpty()) {
+                    log.warn("[Forecast] ⚠️ Nije moguće preuzeti prognozu za '{}' ({})",
+                            booking.getAssignedDestination(), booking.getBookingRef());
+                    continue;
+                }
+
+                booking.setForecastSentAt(LocalDateTime.now());
+                bookingRepository.save(booking);
+
+                forecastEmailService.sendForecastEmail(booking, forecast.get());
+
+                sent.add(booking);
+                log.info("[Forecast] ✅ {} → dest='{}' dana={}",
+                        booking.getBookingRef(),
+                        booking.getAssignedDestination(),
+                        forecast.get().size());
+            } catch (Exception e) {
+                log.error("[Forecast] ❌ Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
+            }
+        }
+
+        if (!sent.isEmpty()) {
+            log.info("[Forecast] Ukupno poslato: {}/{}", sent.size(), readyList.size());
+        }
+        return sent;
     }
 
     /**
@@ -110,5 +161,78 @@ public class DailyTaskScheduler {
             log.info("[Reveal] Ukupno poslato: {}/{}", sent.size(), readyList.size());
         }
         return sent;
+    }
+
+    // ── Ručno slanje (admin dugmad) ───────────────────────────────────────────
+
+    /**
+     * POST /api/admin/bookings/{id}/send-reveal
+     * Isti flow kao automatski, ali okida admin ručno.
+     * Ako je već poslato → 409 Conflict (ne šalje ponovo).
+     */
+    public Map<String, String> sendRevealForBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Booking nije pronađen."));
+
+        if (booking.getRevealSentAt() != null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Reveal je već poslan " + booking.getRevealSentAt() + ".");
+        }
+        if (booking.getAssignedDestination() == null || booking.getAssignedDestination().isBlank()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Destinacija nije unesena — unesi je pre slanja reveal-a.");
+        }
+
+        if (booking.getRevealToken() == null) {
+            booking.setRevealToken(UUID.randomUUID().toString().replace("-", ""));
+        }
+        booking.setRevealSentAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+        revealEmailService.sendRevealEmail(booking);
+
+        log.info("[Admin] ✉ Ručni reveal poslan za {} → '{}'",
+                booking.getBookingRef(), booking.getAssignedDestination());
+        return Map.of("message", "Reveal email poslan za " + booking.getBookingRef() + ".");
+    }
+
+    /**
+     * POST /api/admin/bookings/{id}/send-forecast
+     * Isti flow kao automatski, ali okida admin ručno.
+     * Ako je već poslato → 409 Conflict (ne šalje ponovo).
+     */
+    public Map<String, String> sendForecastForBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Booking nije pronađen."));
+
+        if (booking.getForecastSentAt() != null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Prognoza je već poslata " + booking.getForecastSentAt() + ".");
+        }
+        if (booking.getAssignedDestination() == null || booking.getAssignedDestination().isBlank()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Destinacija nije unesena — unesi je pre slanja prognoze.");
+        }
+
+        Optional<List<DailyForecast>> forecast =
+                weatherService.getForecast(booking.getAssignedDestination());
+        if (forecast.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+                    "Nije moguće preuzeti prognozu za '" + booking.getAssignedDestination() + "'.");
+        }
+
+        booking.setForecastSentAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+        forecastEmailService.sendForecastEmail(booking, forecast.get());
+
+        log.info("[Admin] 🌤 Ručna prognoza poslana za {} → '{}'",
+                booking.getBookingRef(), booking.getAssignedDestination());
+        return Map.of("message", "Prognoza email poslan za " + booking.getBookingRef() + ".");
     }
 }

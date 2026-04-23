@@ -73,10 +73,12 @@ public class RevealController {
         log.info("[Reveal] Destinacija otkrivena za rezervaciju {}", booking.getBookingRef());
 
         return ResponseEntity.ok(Map.of(
-                "destination",  booking.getAssignedDestination(),
-                "firstName",    booking.getFirstName(),
-                "departureDate", booking.getSelectedDate().getDepartureDate().toString(),
-                "bookingRef",   booking.getBookingRef()
+                "destination",      booking.getAssignedDestination(),
+                "firstName",        booking.getFirstName(),
+                "departureDate",    booking.getSelectedDate().getDepartureDate().toString(),
+                "bookingRef",       booking.getBookingRef(),
+                "departureAirport", booking.getDepartureAirport(),
+                "numberOfNights",   booking.getSelectedDate().getNumberOfNights()
         ));
     }
 }
