@@ -114,7 +114,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
               <tr><td style="padding:14px 18px;">
                 <div style="font-size:12px;font-weight:700;color:#CA8A71;margin-bottom:4px;">📬 Preporuka</div>
                 <div style="font-size:12px;color:#374151;line-height:1.6;">
-                  Kada dobiješ email sa otkrićem destinacije (3 dana pre polaska),
+                  Kada dobiješ email sa otkrićem destinacije,
                   <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju —
                   prognoza za toliko dana unapred može biti okvirna.
                 </div>
