@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Javni endpoint za otkrivanje destinacije.
@@ -72,13 +74,23 @@ public class RevealController {
 
         log.info("[Reveal] Destinacija otkrivena za rezervaciju {}", booking.getBookingRef());
 
-        return ResponseEntity.ok(Map.of(
-                "destination",      booking.getAssignedDestination(),
-                "firstName",        booking.getFirstName(),
-                "departureDate",    booking.getSelectedDate().getDepartureDate().toString(),
-                "bookingRef",       booking.getBookingRef(),
-                "departureAirport", booking.getDepartureAirport(),
-                "numberOfNights",   booking.getSelectedDate().getNumberOfNights()
+        // Izvuci imena svih putnika; ako lista prazna, koristi nosioca rezervacije
+        List<String> passengerNames = booking.getPassengers() != null && !booking.getPassengers().isEmpty()
+                ? booking.getPassengers().stream()
+                         .map(com.escapii.model.PassengerInfo::getName)
+                         .filter(n -> n != null && !n.isBlank())
+                         .collect(Collectors.toList())
+                : List.of(booking.getFirstName() + (booking.getLastName() != null ? " " + booking.getLastName() : ""));
+
+        return ResponseEntity.ok(Map.ofEntries(
+                Map.entry("destination",      booking.getAssignedDestination()),
+                Map.entry("departureDate",    booking.getSelectedDate().getDepartureDate().toString()),
+                Map.entry("returnDate",       booking.getSelectedDate().getReturnDate() != null
+                                                  ? booking.getSelectedDate().getReturnDate().toString() : ""),
+                Map.entry("bookingRef",       booking.getBookingRef()),
+                Map.entry("departureAirport", booking.getDepartureAirport() != null ? booking.getDepartureAirport() : ""),
+                Map.entry("numberOfNights",   booking.getSelectedDate().getNumberOfNights()),
+                Map.entry("passengers",       passengerNames)
         ));
     }
 }
