@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Rate limiting filter:
  * - POST /api/booking:              max 5 zahteva po IP na sat
  * - GET  /api/booking/price-preview: max 30 zahteva po IP na sat
+ * - POST /api/waitlist:             max 5 zahteva po IP na sat
  * - /api/admin/**:                  max 20 zahteva po IP na minut (brute-force zaštita ključa)
  *
  * VAŽNO: X-Forwarded-For se prihvata bez provere — ovo je bezbedno samo ako firewall
@@ -42,9 +43,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  ADMIN_MAX        = 20;
     private static final long ADMIN_WINDOW     = 60 * 1000L;      // 1 minut
 
-    private final Map<String, Queue<Long>> bookingLog = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> previewLog = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> adminLog   = new ConcurrentHashMap<>();
+    private static final int  WAITLIST_MAX     = 5;
+    private static final long WAITLIST_WINDOW  = 60 * 60 * 1000L; // 1 sat
+
+    private final Map<String, Queue<Long>> bookingLog  = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> previewLog  = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> adminLog    = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> waitlistLog = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -69,6 +74,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             if (isRateLimited(previewLog, ip, PREVIEW_MAX, PREVIEW_WINDOW)) {
                 log.warn("[RateLimit] Price-preview limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva.");
+                return;
+            }
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.endsWith("/api/waitlist")) {
+            if (isRateLimited(waitlistLog, ip, WAITLIST_MAX, WAITLIST_WINDOW)) {
+                log.warn("[RateLimit] Waitlist limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Pokušajte ponovo za sat vremena.");
                 return;
             }
         }

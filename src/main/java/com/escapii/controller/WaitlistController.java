@@ -24,6 +24,13 @@ public class WaitlistController {
 
     @PostMapping("/api/waitlist")
     public ResponseEntity<Map<String, String>> subscribe(@RequestBody Map<String, String> body) {
+        // Honeypot: boti popune ovo polje, pravi korisnici ne vide ga
+        String honeypot = body.getOrDefault("hp", "");
+        if (!honeypot.isBlank()) {
+            log.warn("[Waitlist] Honeypot uhvaćen — ignorisan zahtev");
+            return ResponseEntity.ok(Map.of("status", "subscribed")); // tiho odbaciti
+        }
+
         String email   = body.getOrDefault("email",   "").trim().toLowerCase();
         String airport = body.getOrDefault("airport", "").trim().toUpperCase();
 
