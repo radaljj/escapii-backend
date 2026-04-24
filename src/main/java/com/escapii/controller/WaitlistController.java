@@ -27,7 +27,6 @@ public class WaitlistController {
         // Honeypot: boti popune ovo polje, pravi korisnici ne vide ga
         String honeypot = body.getOrDefault("hp", "");
         if (!honeypot.isBlank()) {
-            log.warn("[Waitlist] Honeypot uhvaćen — ignorisan zahtev");
             return ResponseEntity.ok(Map.of("status", "subscribed")); // tiho odbaciti
         }
 
