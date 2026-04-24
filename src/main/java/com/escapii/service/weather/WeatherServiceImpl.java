@@ -24,7 +24,7 @@ public class WeatherServiceImpl implements WeatherService {
     // ── Konstante ─────────────────────────────────────────────────────────────
 
     private static final String NOMINATIM_URL =
-            "https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1&featuretype=city";
+            "https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1";
 
     private static final String OPEN_METEO_URL =
             "https://api.open-meteo.com/v1/forecast"
