@@ -55,10 +55,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             ));
         }
 
-        // ── Prognoza danas (informativno) ─────────────────────────────────────
+        // ── Prognoza poslata danas ─────────────────────────────────────────────
         if (!forecastDue.isEmpty()) {
             body.append(section(
-                "🌤 Prognoza vremena danas — pošalji ručno (" + forecastDue.size() + ")",
+                "🌤 Prognoza poslata danas (" + forecastDue.size() + ")",
                 "#fff7ed", "#fed7aa", "#c2410c",
                 forecastThead(),
                 forecastRows(today, forecastDue)
@@ -164,7 +164,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
     // ── Prognoza sekcija ──────────────────────────────────────────────────────
 
     private String forecastThead() {
-        return thead("Putnik", "Email", "Ref", "Aerodrom", "Polazak", "");
+        return thead("Putnik", "Email", "Ref", "Aerodrom", "Polazak", "Status");
     }
 
     private String forecastRows(LocalDate today, List<Booking> bookings) {
@@ -187,7 +187,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                     <span style="font-size:12px;color:#374151;">%s</span>
                     <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff7ed;color:#c2410c;">%s</span>
                   </td>
-                  <td style="padding:9px 10px;font-size:11px;color:#9ca3af;vertical-align:middle;font-style:italic;">pošalji ručno</td>
+                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#16a34a;vertical-align:middle;">🌤 poslato</td>
                 </tr>""".formatted(
                     EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
                     EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail()),
@@ -214,9 +214,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             String badgeCss    = daysLeft <= 5
                     ? "background:#fff7ed;color:#ea580c;"
                     : "background:#e0f2fe;color:#0369a1;";
-            String revealDate  = dep.minusDays(3).format(EmailHtmlBuilder.DATE_FMT);
-            String forecastDate = dep.minusDays(5).format(EmailHtmlBuilder.DATE_FMT);
-            boolean revealDone = b.getRevealSentAt() != null;
+            String revealDate   = dep.minusDays(3).format(EmailHtmlBuilder.DATE_FMT);
+            String forecastDate = dep.minusDays(4).format(EmailHtmlBuilder.DATE_FMT);
+            boolean revealDone   = b.getRevealSentAt()   != null;
+            boolean forecastDone = b.getForecastSentAt() != null;
 
             sb.append("""
                 <tr style="border-bottom:1px solid #f3f4f6;">
@@ -227,16 +228,19 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                   <td style="padding:9px 10px;vertical-align:middle;">
                     <span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;%s">%s</span>
                   </td>
-                  <td style="padding:9px 10px;font-size:11px;vertical-align:middle;color:%s;">%s</td>
-                  <td style="padding:9px 10px;font-size:11px;color:#9ca3af;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:11px;vertical-align:middle;color:%s;font-weight:%s;">%s</td>
+                  <td style="padding:9px 10px;font-size:11px;vertical-align:middle;color:%s;font-weight:%s;">%s</td>
                 </tr>""".formatted(
                     EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
                     EmailHtmlBuilder.esc(b.getBookingRef()),
                     dep.format(EmailHtmlBuilder.DATE_FMT),
                     badgeCss, daysLbl,
-                    revealDone ? "#16a34a" : "#6b7280",
-                    revealDone ? "✉ poslat" : revealDate,
-                    forecastDate
+                    revealDone   ? "#16a34a" : "#6b7280",
+                    revealDone   ? "700" : "400",
+                    revealDone   ? "✉ poslat"    : revealDate,
+                    forecastDone ? "#16a34a" : "#9ca3af",
+                    forecastDone ? "700" : "400",
+                    forecastDone ? "🌤 poslata" : forecastDate
             ));
         }
         return sb.toString();
