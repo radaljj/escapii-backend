@@ -46,7 +46,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
               <div style="font-size:52px;margin-bottom:14px;">✉</div>
               <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#2D5F6B;margin-bottom:8px;font-weight:normal;">Vreme je, %s!</div>
               <div style="font-size:14px;color:#6b7280;line-height:1.65;">
-                Tvoje putovanje polazi <strong style="color:#2D5F6B;">%s</strong>.<br>
+                Tvoje putovanje počinje <strong style="color:#2D5F6B;">%s</strong>.<br>
                 Koverta s tvojom tajnom destinacijom je gotova.
               </div>
             </div>
