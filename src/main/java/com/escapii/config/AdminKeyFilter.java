@@ -102,10 +102,7 @@ public class AdminKeyFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        return (forwarded != null && !forwarded.isBlank())
-                ? forwarded.split(",")[0].trim()
-                : request.getRemoteAddr();
+        return IpUtils.extractClientIp(request);
     }
 
     private void reject(HttpServletResponse response, int status, String message) throws IOException {

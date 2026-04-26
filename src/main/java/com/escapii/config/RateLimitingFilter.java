@@ -5,10 +5,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -16,14 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Rate limiting filter:
- * - POST /api/booking:              max 5 zahteva po IP na sat
- * - GET  /api/booking/price-preview: max 30 zahteva po IP na sat
- * - POST /api/waitlist:             max 5 zahteva po IP na sat
- * - /api/admin/**:                  max 20 zahteva po IP na minut (brute-force zaštita ključa)
+ * - POST /api/booking:               max 5 zahteva po IP na sat
+ * - GET  /api/booking/price-preview:  max 30 zahteva po IP na sat
+ * - GET  /api/booking/status:         max 20 zahteva po IP na 10 minuta
+ * - POST /api/waitlist:              max 5 zahteva po IP na sat
+ * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
  *
- * VAŽNO: X-Forwarded-For se prihvata bez provere — ovo je bezbedno samo ako firewall
- * blokira direktan pristup portu 8080 i sav promet ide kroz reverse proxy (Nginx/Cloudflare).
- * Ako je port 8080 javno dostupan, korisnik može da spoofuje IP.
+ * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted proxy
+ * (Render/Railway), pa korisnik ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
  */
 @Slf4j
 @Component
@@ -35,19 +37,26 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private static final int  BOOKING_MAX      = 5;
-    private static final long BOOKING_WINDOW   = 60 * 60 * 1000L; // 1 sat
+    private static final long BOOKING_WINDOW   = 60 * 60 * 1000L;      // 1 sat
 
     private static final int  PREVIEW_MAX      = 30;
-    private static final long PREVIEW_WINDOW   = 60 * 60 * 1000L; // 1 sat
+    private static final long PREVIEW_WINDOW   = 60 * 60 * 1000L;      // 1 sat
+
+    private static final int  STATUS_MAX       = 20;
+    private static final long STATUS_WINDOW    = 10 * 60 * 1000L;      // 10 minuta
 
     private static final int  ADMIN_MAX        = 20;
-    private static final long ADMIN_WINDOW     = 60 * 1000L;      // 1 minut
+    private static final long ADMIN_WINDOW     = 60 * 1000L;           // 1 minut
 
     private static final int  WAITLIST_MAX     = 5;
-    private static final long WAITLIST_WINDOW  = 60 * 60 * 1000L; // 1 sat
+    private static final long WAITLIST_WINDOW  = 60 * 60 * 1000L;      // 1 sat
+
+    // Maksimalni prozor — za cleanup: ne čuvamo ništa starije od ovoga
+    private static final long MAX_WINDOW       = 60 * 60 * 1000L;      // 1 sat
 
     private final Map<String, Queue<Long>> bookingLog  = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> previewLog  = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> statusLog   = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> adminLog    = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> waitlistLog = new ConcurrentHashMap<>();
 
@@ -74,6 +83,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             if (isRateLimited(previewLog, ip, PREVIEW_MAX, PREVIEW_WINDOW)) {
                 log.warn("[RateLimit] Price-preview limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva.");
+                return;
+            }
+        }
+
+        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.contains("/api/booking/status")) {
+            if (isRateLimited(statusLog, ip, STATUS_MAX, STATUS_WINDOW)) {
+                log.warn("[RateLimit] Status limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Pokušajte ponovo za 10 minuta.");
                 return;
             }
         }
@@ -116,15 +133,31 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 
-    /**
-     * Uzima pravi IP korisnika — uzima u obzir X-Forwarded-For header
-     * koji Railway/Render/Cloudflare dodaju.
-     */
     private String extractClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
+        return IpUtils.extractClientIp(request);
+    }
+
+    /**
+     * Periodično čisti stare unose iz rate-limit mapa — svakih sat vremena.
+     * Sprečava neograničen rast memorije pri velikom broju unikatnih IP-ova.
+     */
+    @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
+    public void evictStaleEntries() {
+        long cutoff = System.currentTimeMillis() - MAX_WINDOW;
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog}) {
+            Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, Queue<Long>> entry = it.next();
+                Queue<Long> q = entry.getValue();
+                synchronized (q) {
+                    // Ukloni stare timestampove
+                    while (!q.isEmpty() && q.peek() < cutoff) q.poll();
+                    // Ako je red prazan, ukloni IP iz mape
+                    if (q.isEmpty()) it.remove();
+                }
+            }
         }
-        return request.getRemoteAddr();
+        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}",
+                bookingLog.size(), previewLog.size(), statusLog.size(), adminLog.size(), waitlistLog.size());
     }
 }

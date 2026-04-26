@@ -89,6 +89,9 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> updateSlots(
             @PathVariable Long id,
             @RequestParam int value) {
+        if (value < 0 || value > 9999) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Broj mesta mora biti između 0 i 9999."));
+        }
         adminService.updateSlots(id, value);
         return ResponseEntity.ok(Map.of(
                 "id", id,
@@ -133,6 +136,10 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String notes = body.getOrDefault("adminNotes", "");
+        if (notes.length() > 3000) {
+            return ResponseEntity.badRequest()
+                    .body(null); // Admin će videti 400 ako pokuša da upiše previše
+        }
         return ResponseEntity.ok(adminService.updateAdminNotes(id, notes));
     }
 
@@ -146,6 +153,9 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String destination = body.getOrDefault("destination", "");
+        if (destination.length() > 200) {
+            return ResponseEntity.badRequest().body(null);
+        }
         return ResponseEntity.ok(adminService.setDestination(id, destination));
     }
 

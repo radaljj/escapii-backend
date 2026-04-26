@@ -28,7 +28,7 @@ import java.util.List;
  *  - Autentikacija        → nema (MVP, bez login sistema)
  *  - Rate limiting        → videti RateLimitingFilter (5 req/IP/sat na POST /api/booking)
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -45,13 +45,14 @@ public class SecurityConfig {
     private final AdminKeyFilter     adminKeyFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .cors(cors ->
-                cors.configurationSource(corsConfigurationSource()))
+                cors.configurationSource(corsConfigurationSource))
 
             .csrf(AbstractHttpConfigurer::disable)
 

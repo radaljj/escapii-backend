@@ -42,8 +42,9 @@ public class WaitlistController {
                     .body(Map.of("error", "Nepoznat aerodrom."));
         }
 
-        boolean subscribed = waitlistService.subscribe(email, airport);
-        return ResponseEntity.ok(Map.of("status", subscribed ? "subscribed" : "already_subscribed"));
+        // Uvek vraćamo isti odgovor — sprečava enumeraciju registrovanih email adresa
+        waitlistService.subscribe(email, airport);
+        return ResponseEntity.ok(Map.of("status", "subscribed"));
     }
 
     // ── Admin endpointi ───────────────────────────────────────────────────────
@@ -60,8 +61,11 @@ public class WaitlistController {
      */
     @PostMapping("/api/admin/waitlist/notify/{airport}")
     public ResponseEntity<Map<String, Object>> notifyAndClear(@PathVariable String airport) {
-        String ap   = airport.trim().toUpperCase();
-        int    sent = waitlistService.notifyAndClear(ap);
+        String ap = airport.trim().toUpperCase();
+        if (!VALID_AIRPORTS.contains(ap)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nepoznat aerodrom: " + ap));
+        }
+        int sent = waitlistService.notifyAndClear(ap);
 
         if (sent == 0) {
             return ResponseEntity.ok(Map.of("sent", 0, "message", "Nema čekajućih za " + ap));
