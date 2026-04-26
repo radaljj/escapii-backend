@@ -129,6 +129,7 @@ public class BookingServiceImpl implements BookingService {
                 .bookingRef(b.getBookingRef())
                 .status(b.getStatus())
                 .firstName(b.getFirstName())
+                .lastName(b.getLastName())
                 .departureAirport(b.getDepartureAirport())
                 .departureDate(b.getSelectedDate().getDepartureDate())
                 .returnDate(b.getSelectedDate().getReturnDate())

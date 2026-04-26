@@ -17,6 +17,7 @@ public class BookingStatusResponse {
     private String        bookingRef;
     private BookingStatus status;
     private String        firstName;
+    private String        lastName;
     private String        departureAirport;
     private LocalDate     departureDate;
     private LocalDate     returnDate;
