@@ -2,6 +2,7 @@ package com.escapii.repository;
 
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatusOrderByCreatedAtDesc(BookingStatus status);
 
+    /**
+     * Učitava sve bookinge zajedno sa svim isključenim destinacijama (JOIN FETCH)
+     * i putnicima (@BatchSize) — ukupno 2 SQL upita bez obzira na N rezervacija.
+     *
+     * @EntityGraph JOIN-uje 5 excluded destination kolona u jednom SELECT-u.
+     * Passengers se učitavaju batch-om (50 po upitu) zahvaljujući @BatchSize na entitetu.
+     */
+    @EntityGraph(attributePaths = {
+        "excludedDestination1", "excludedDestination2", "excludedDestination3",
+        "excludedDestination4", "excludedDestination5"
+    })
     List<Booking> findAllByOrderByCreatedAtDesc();
 
     /** Sve CONFIRMED rezervacije čiji je polazak između danas i datuma 'until' (za jutarnji digest). */

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,23 +53,23 @@ public class Booking {
 
     // ── Isključene destinacije (max 3) ────────────────────────────────
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest1_id")
     private Destination excludedDestination1; // besplatno
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest2_id")
     private Destination excludedDestination2; // +10€ flat
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest3_id")
     private Destination excludedDestination3; // +10€ flat
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest4_id")
     private Destination excludedDestination4; // +15€ flat
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest5_id")
     private Destination excludedDestination5; // +15€ flat
 
@@ -110,9 +111,10 @@ public class Booking {
 
     // ── Putnici ───────────────────────────────────────────────────────
 
-    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "booking_passengers", joinColumns = @JoinColumn(name = "booking_id"))
     @OrderColumn(name = "position")
+    @BatchSize(size = 50)
     private List<PassengerInfo> passengers = new ArrayList<>();
 
     // ── Kalkulisane cene (EUR) ────────────────────────────────────────
