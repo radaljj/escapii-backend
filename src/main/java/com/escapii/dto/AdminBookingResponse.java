@@ -1,5 +1,6 @@
 package com.escapii.dto;
 
+import com.escapii.model.AccommodationType;
 import com.escapii.model.BookingStatus;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,12 +32,12 @@ public class AdminBookingResponse {
     private Integer numberOfTravelers;
     private LocalDate departureDate;
     private LocalDate returnDate;
-    private String accommodationType;
+    private AccommodationType accommodationType;
 
     // Dodaci
     private Boolean hasInsurance;
     private Boolean hasBreakfast;
-    private Boolean hasSeatsTogther;
+    private Boolean hasSeatsTogether;
     private Boolean hasConnectingFlights;
     private Integer cabinSuitcaseCount;
     private Integer exclusionCount;

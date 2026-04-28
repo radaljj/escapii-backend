@@ -4,6 +4,7 @@ import com.escapii.dto.BookingRequest;
 import com.escapii.dto.BookingResponse;
 import com.escapii.dto.BookingStatusResponse;
 import com.escapii.dto.PricePreviewResponse;
+import com.escapii.model.AccommodationType;
 import com.escapii.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,16 +48,16 @@ public class BookingController {
     public ResponseEntity<PricePreviewResponse> pricePreview(
             @RequestParam                            Long    selectedDateId,
             @RequestParam(defaultValue = "1")        int     numberOfTravelers,
-            @RequestParam(defaultValue = "STANDARD") String  accommodationType,
+            @RequestParam(defaultValue = "STANDARD") AccommodationType accommodationType,
             @RequestParam(defaultValue = "0")        int     exclusionCount,
             @RequestParam(defaultValue = "0")        int     cabinSuitcaseCount,
             @RequestParam(defaultValue = "false")    boolean hasInsurance,
             @RequestParam(defaultValue = "false")    boolean hasBreakfast,
-            @RequestParam(defaultValue = "false")    boolean hasSeatsTogther
+            @RequestParam(defaultValue = "false")    boolean hasSeatsTogether
     ) {
         return ResponseEntity.ok(bookingService.previewPrice(
                 selectedDateId, numberOfTravelers, accommodationType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogther
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether
         ));
     }
 }

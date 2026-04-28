@@ -1,6 +1,7 @@
 package com.escapii.service.impl;
 
 import com.escapii.dto.PricePreviewResponse;
+import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 import com.escapii.service.PriceCalculator;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Service;
  * Superior    → +50€/pp
  * Premium     → +130€/pp
  * Doručak     → +13€/pp
- * Sedišta     → +20€/pp (10€/smer × 2 smera)
- * Osiguranje  → +10€/pp
+ * Sedišta     → +24€/pp (12€/smer × 2 smera)
+ * Osiguranje  → +12€/pp
  * <p>
  * Flat (jedna cena za rezervaciju):
  * BEG/ostali → 1. besplatno | 2. +10€ | 3. +10€ | 4. +15€ | 5. +15€ (max 50€)
@@ -26,22 +27,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class PriceCalculatorImpl implements PriceCalculator {
 
-    private static final Integer SUPERIOR_PP    = 50;
-    private static final Integer PREMIUM_PP     = 130;
+    public static final Integer SUPERIOR_PP    = 50;
+    public static final Integer PREMIUM_PP     = 130;
     private static final Integer CABIN_SUITCASE = 100;  // 50€/smer × 2 smera
-    private static final Integer INSURANCE_PP   = 10;
-    private static final Integer BREAKFAST_PP   = 13;
-    private static final Integer SEATS_PP       = 20;   // 10€/smer × 2 smera, po osobi
+    public static final Integer INSURANCE_PP   = 12;
+    public static final Integer BREAKFAST_PP   = 13;
+    public static final Integer SEATS_PP       = 24;   // 12€/smer × 2 smera, po osobi
+    public static final Integer CABIN_SUITCASE_PRICE = 100;  // 50€/smer × 2 smera
     private static final Integer EXCLUSION_FLAT_LOW  = 10;  // 2. i 3. isključivanje
     private static final Integer EXCLUSION_FLAT_HIGH = 15;  // 4. i 5. isključivanje
     private static final Integer SOLO_SURCHARGE  = 60;  // doplata za solo putnika
 
     @Override
-    public PricePreviewResponse calculate(AvailableDate date, int n, String accommodationType, int exclusionCount, int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogther) {
+    public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType, int exclusionCount, int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
         int breakfast = hasBreakfast ? BREAKFAST_PP : 0;
-        int seatsTogether = hasSeatsTogther ? SEATS_PP : 0;
+        int seatsTogether = hasSeatsTogether ? SEATS_PP : 0;
         int insurance = hasInsurance ? INSURANCE_PP : 0;
 
         int exclusionCostFlat = calcExclusionCost(exclusionCount, date.getDepartureAirport());
@@ -55,7 +57,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
             .basePricePerPerson(basePrice)
             .accommodationExtraPerPerson(accommodationExtra)
             .breakfastPerPerson(breakfast)
-            .seatsTogtherPerPerson(seatsTogether)
+            .seatsTogether(seatsTogether)
             .insurancePerPerson(insurance)
             .eurPerPerson(eurPerPerson)
             .exclusionCostFlat(exclusionCostFlat)
@@ -86,12 +88,12 @@ public class PriceCalculatorImpl implements PriceCalculator {
         return cost;
     }
 
-    private int resolveAccommodationExtra(String type) {
+    private int resolveAccommodationExtra(AccommodationType type) {
         if (type == null) return 0;
-        return switch (type.toUpperCase()) {
-            case "SUPERIOR" -> SUPERIOR_PP;
-            case "PREMIUM" -> PREMIUM_PP;
-            default -> 0;
+        return switch (type) {
+            case SUPERIOR -> SUPERIOR_PP;
+            case PREMIUM  -> PREMIUM_PP;
+            default       -> 0;
         };
     }
 }

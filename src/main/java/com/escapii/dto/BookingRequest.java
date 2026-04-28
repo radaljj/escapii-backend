@@ -1,5 +1,6 @@
 package com.escapii.dto;
 
+import com.escapii.model.AccommodationType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -48,9 +49,8 @@ public class BookingRequest {
 
     // ── Korak 5: Tip smeštaja ─────────────────────────────────────────
 
-    @NotBlank(message = "Tip smeštaja je obavezan")
-    @Pattern(regexp = "STANDARD|SUPERIOR|PREMIUM", message = "Tip smeštaja mora biti STANDARD, SUPERIOR ili PREMIUM")
-    private String accommodationType;
+    @NotNull(message = "Tip smeštaja je obavezan")
+    private AccommodationType accommodationType;
 
     // ── Korak 6: Dodaci ───────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ public class BookingRequest {
 
     private boolean hasInsurance         = false; // +20€/pp
     private boolean hasBreakfast         = false; // +15€/pp
-    private boolean hasSeatsTogther      = false; // +10€/pp
+    private boolean hasSeatsTogether     = false; // +24€/pp (12€/smer × 2 smera)
     private boolean hasConnectingFlights = false; // besplatno — saglasnost na presedanje
 
     // ── Korak 7: Putnici (ime + pasoš) ───────────────────────────────
@@ -105,7 +105,6 @@ public class BookingRequest {
      */
     public void normalize() {
         if (departureAirport  != null) departureAirport  = departureAirport.trim().toUpperCase();
-        if (accommodationType != null) accommodationType = accommodationType.trim().toUpperCase();
         if (firstName         != null) firstName         = firstName.trim();
         if (lastName          != null) lastName          = lastName.trim();
         if (email             != null) email             = email.trim().toLowerCase();

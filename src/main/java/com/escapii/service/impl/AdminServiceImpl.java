@@ -23,8 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.escapii.util.TokenUtils;
+
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -255,7 +256,7 @@ public class AdminServiceImpl implements AdminService {
 
         // Generiši token tek kad je destinacija unesena i još nema tokena
         if (trimmed != null && !trimmed.isEmpty() && booking.getRevealToken() == null) {
-            booking.setRevealToken(UUID.randomUUID().toString().replace("-", ""));
+            booking.setRevealToken(TokenUtils.generate());
         }
 
         // Ako admin briše destinaciju, resetuj i token i sentAt

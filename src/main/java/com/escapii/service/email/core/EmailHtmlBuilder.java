@@ -1,5 +1,7 @@
 package com.escapii.service.email.core;
 
+import com.escapii.model.AccommodationType;
+
 import java.time.format.DateTimeFormatter;
 
 public final class EmailHtmlBuilder {
@@ -235,12 +237,12 @@ public final class EmailHtmlBuilder {
         };
     }
 
-    public static String resolveAccomLabel(String type) {
+    public static String resolveAccomLabel(AccommodationType type) {
         if (type == null) return "Standard (3*)";
-        return switch (type.toUpperCase()) {
-            case "SUPERIOR" -> "Superior (4*)";
-            case "PREMIUM"  -> "Premium (5*)";
-            default         -> "Standard (3*)";
+        return switch (type) {
+            case SUPERIOR -> "Superior (4*)";
+            case PREMIUM  -> "Premium (5*)";
+            default       -> "Standard (3*)";
         };
     }
 }

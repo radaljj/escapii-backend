@@ -81,8 +81,9 @@ public class Booking {
 
     // ── Smeštaj ───────────────────────────────────────────────────────
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String accommodationType; // STANDARD | SUPERIOR
+    private AccommodationType accommodationType;
 
     /** Flat upgrade naknada za Superior sobu (0 ili 100€). */
     @Column(nullable = false)
@@ -100,8 +101,8 @@ public class Booking {
     @Column(nullable = false)
     private Boolean hasBreakfast    = false; // +15€/pp
 
-    @Column(nullable = false)
-    private Boolean hasSeatsTogther = false; // +10€/pp (naziv iz spec)
+    @Column(name = "has_seats_together", nullable = false)
+    private Boolean hasSeatsTogether = false; // +12€/smer × 2 smera, po osobi
 
     /** Putnik je saglasan da može presedati tokom leta (ne naplaćuje se). */
     @Column(nullable = false)

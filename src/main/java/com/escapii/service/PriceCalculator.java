@@ -1,6 +1,7 @@
 package com.escapii.service;
 
 import com.escapii.dto.PricePreviewResponse;
+import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 
 public interface PriceCalculator {
@@ -21,11 +22,11 @@ public interface PriceCalculator {
     PricePreviewResponse calculate(
             AvailableDate date,
             int n,
-            String accommodationType,
+            AccommodationType accommodationType,
             int exclusionCount,
             int cabinSuitcaseCount,
             boolean hasInsurance,
             boolean hasBreakfast,
-            boolean hasSeatsTogther
+            boolean hasSeatsTogether
     );
 }

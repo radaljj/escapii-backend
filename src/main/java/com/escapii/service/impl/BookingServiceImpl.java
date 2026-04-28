@@ -5,6 +5,7 @@ import com.escapii.dto.BookingResponse;
 import com.escapii.dto.BookingStatusResponse;
 import com.escapii.dto.PricePreviewResponse;
 import com.escapii.mapper.BookingMapper;
+import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.Destination;
@@ -84,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),
-                request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogther()
+                request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether()
         );
 
         Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, excl4, excl5, exclusionCount, price));
@@ -102,15 +103,17 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public PricePreviewResponse previewPrice(
-            Long selectedDateId, int n, String accommodationType, int exclusionCount,
-            int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogther
+            Long selectedDateId, int n, AccommodationType accommodationType, int exclusionCount,
+            int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether
     ) {
         AvailableDate date = availableDateRepository.findById(selectedDateId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Termin ne postoji: " + selectedDateId));
 
-        return priceCalculator.calculate(date, n, accommodationType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogther);
+        // accommodationType can be null for preview (default = STANDARD)
+        AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
+        return priceCalculator.calculate(date, n, accomType, exclusionCount,
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether);
     }
 
     @Override
@@ -190,7 +193,7 @@ public class BookingServiceImpl implements BookingService {
         b.setCabinSuitcaseCount(request.getCabinSuitcaseCount());
         b.setHasInsurance(request.isHasInsurance());
         b.setHasBreakfast(request.isHasBreakfast());
-        b.setHasSeatsTogther(request.isHasSeatsTogther());
+        b.setHasSeatsTogether(request.isHasSeatsTogether());
         b.setHasConnectingFlights(request.isHasConnectingFlights());
 
         b.setPassengers(request.getPassengers().stream()

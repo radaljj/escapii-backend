@@ -60,16 +60,17 @@ public class WaitlistServiceImpl implements WaitlistService {
     public int notifyAndClear(String airport) {
         List<WaitlistEntry> entries = waitlistRepository.findByAirportOrderByCreatedAtAsc(airport);
         int sent = 0;
-        for (WaitlistEntry e : entries) {
+        // Only delete entries where the email was successfully sent
+        for (WaitlistEntry entry : entries) {
             try {
-                waitlistEmailService.sendWaitlistNotification(e.getEmail(), airport);
+                waitlistEmailService.sendWaitlistNotification(entry.getEmail(), entry.getAirport());
+                waitlistRepository.delete(entry);
                 sent++;
-            } catch (Exception ex) {
-                log.error("[Waitlist] Greška pri slanju na {}: {}", e.getEmail(), ex.getMessage());
+            } catch (Exception e) {
+                log.warn("[Waitlist] Email nije poslat na {}: {}", entry.getEmail(), e.getMessage());
             }
         }
-        waitlistRepository.deleteByAirport(airport);
-        log.info("[Waitlist] Poslato {} notifikacija za {}, lista obrisana.", sent, airport);
+        log.info("[Waitlist] Poslato {} notifikacija za {}.", sent, airport);
         return sent;
     }
 }

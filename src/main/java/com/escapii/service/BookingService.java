@@ -4,6 +4,7 @@ import com.escapii.dto.BookingRequest;
 import com.escapii.dto.BookingResponse;
 import com.escapii.dto.BookingStatusResponse;
 import com.escapii.dto.PricePreviewResponse;
+import com.escapii.model.AccommodationType;
 
 public interface BookingService {
 
@@ -17,11 +18,11 @@ public interface BookingService {
     PricePreviewResponse previewPrice(
             Long selectedDateId,
             int n,
-            String accommodationType,
+            AccommodationType accommodationType,
             int exclusionCount,
             int cabinSuitcaseCount,
             boolean hasInsurance,
             boolean hasBreakfast,
-            boolean hasSeatsTogther
+            boolean hasSeatsTogether
     );
 }

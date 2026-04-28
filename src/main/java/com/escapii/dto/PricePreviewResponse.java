@@ -17,7 +17,7 @@ public class PricePreviewResponse {
     private Integer basePricePerPerson;
     private Integer accommodationExtraPerPerson; // 0, 50 (Superior) ili 130 (Premium)
     private Integer breakfastPerPerson;          // 0 ili 15
-    private Integer seatsTogtherPerPerson;       // 0 ili 10
+    private Integer seatsTogether;               // 0 ili 24 (12€/smer × 2 smera)
     private Integer insurancePerPerson;          // 0 ili 15
     private Integer eurPerPerson;                // zbir svih per-person stavki
 

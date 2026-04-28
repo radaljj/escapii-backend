@@ -69,4 +69,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "ORDER BY b.selectedDate.departureDate ASC")
     List<Booking> findReadyForForecast(@Param("from") LocalDate from,
                                        @Param("until") LocalDate until);
+
+    /** Bookings kojima je revealSentAt između zadatih trenutaka (za digest — šta je danas poslato). */
+    @Query("SELECT b FROM Booking b WHERE b.revealSentAt >= :from AND b.revealSentAt < :until")
+    List<Booking> findRevealSentBetween(@Param("from") LocalDateTime from,
+                                        @Param("until") LocalDateTime until);
+
+    /** Bookings kojima je forecastSentAt između zadatih trenutaka (za digest — šta je danas poslato). */
+    @Query("SELECT b FROM Booking b WHERE b.forecastSentAt >= :from AND b.forecastSentAt < :until")
+    List<Booking> findForecastSentBetween(@Param("from") LocalDateTime from,
+                                          @Param("until") LocalDateTime until);
+
 }

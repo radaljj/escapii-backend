@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.escapii.service.impl.PriceCalculatorImpl;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -447,13 +449,13 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (booking.getAccommodationExtra() > 0)
             rows.append(priceRow(EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType()) + " upgrade", EmailHtmlBuilder.eur(booking.getAccommodationExtra()) + " / os", n, booking.getAccommodationExtra() * n, false));
         if (Boolean.TRUE.equals(booking.getHasBreakfast()))
-            rows.append(priceRow("Doručak", "15 € / os", n, 15 * n, false));
-        if (Boolean.TRUE.equals(booking.getHasSeatsTogther()))
-            rows.append(priceRow("Sedišta zajedno", "10 € / os", n, 10 * n, false));
+            rows.append(priceRow("Doručak", PriceCalculatorImpl.BREAKFAST_PP + " € / os", n, PriceCalculatorImpl.BREAKFAST_PP * n, false));
+        if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))
+            rows.append(priceRow("Sedišta zajedno (12 € × 2 smera)", PriceCalculatorImpl.SEATS_PP + " € / os", n, PriceCalculatorImpl.SEATS_PP * n, false));
         if (Boolean.TRUE.equals(booking.getHasInsurance()))
-            rows.append(priceRow("Putno osiguranje", "15 € / os", n, 15 * n, false));
+            rows.append(priceRow("Putno osiguranje", PriceCalculatorImpl.INSURANCE_PP + " € / os", n, PriceCalculatorImpl.INSURANCE_PP * n, false));
         if (booking.getCabinSuitcaseCount() > 0)
-            rows.append(priceRow("Kabinski kofer (×2 smera)", "80 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 80, false));
+            rows.append(priceRow("Kabinski kofer (50 € × 2 smera)", "100 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 100, false));
         if (booking.getExclusionCostEur() > 0) {
             int paid = booking.getExclusionCount() - 1;
             rows.append(priceRow("Isključivanja (%d× 10€)".formatted(paid), "—", null, booking.getExclusionCostEur(), true));
