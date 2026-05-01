@@ -113,7 +113,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 tRow("Aerodrom", booking.getDepartureAirport()) +
                 tRow("Datum", "<strong>" + depDate + " &rarr; " + retDate + "</strong>") +
                 tRow("Noći", booking.getSelectedDate().getNumberOfNights() + " noći") +
-                tRow("Putnici", n + (n == 1 ? " putnik" : " putnika")) +
+                tRow("Putnici", passengerNamesList(booking)) +
                 tRow("Smeštaj", EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType())) +
                 tRow("Isključene dest.", buildExclusionsText(booking)) +
                 tRow("Presedanje OK", Boolean.TRUE.equals(booking.getHasConnectingFlights()) ? "✔ Da" : "✘ Ne — samo direktni letovi")
@@ -352,7 +352,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             rows.append(EmailHtmlBuilder.dRow("Datum povratka", retDate));
             rows.append(EmailHtmlBuilder.dRow("Trajanje",       booking.getSelectedDate().getNumberOfNights() + " noći"));
         }
-        rows.append(EmailHtmlBuilder.dRow("Putnici",   n + (n == 1 ? " putnik" : " putnika")));
+        rows.append(EmailHtmlBuilder.dRow("Putnici",   passengerNamesList(booking)));
         rows.append(EmailHtmlBuilder.dRow("Smeštaj",   EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType())));
         if (booking.getExclusionCount() > 0) rows.append(EmailHtmlBuilder.dRow("Isključene dest.", buildExclusionsText(booking)));
         if (!cancelled) rows.append(EmailHtmlBuilder.dRowMystery("Destinacija", "✦ Iznenađenje!"));
@@ -436,6 +436,24 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               </table>
             </div>
             """.formatted(rows);
+    }
+
+    /**
+     * Vraća HTML listu putnika (ime i prezime, svaki u novom redu) za "Putnici" red u
+     * tabeli detalja putovanja. Ako putnici nisu uneti, padback je broj putnika.
+     */
+    private String passengerNamesList(Booking booking) {
+        List<PassengerInfo> passengers = booking.getPassengers();
+        if (passengers == null || passengers.isEmpty()) {
+            int n = booking.getNumberOfTravelers();
+            return n + (n == 1 ? " putnik" : " putnika");
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < passengers.size(); i++) {
+            if (i > 0) sb.append("<br>");
+            sb.append(EmailHtmlBuilder.esc(passengers.get(i).getName()));
+        }
+        return sb.toString();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
