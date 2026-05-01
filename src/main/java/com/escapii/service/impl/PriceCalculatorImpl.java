@@ -33,7 +33,6 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public static final Integer INSURANCE_PP   = 12;
     public static final Integer BREAKFAST_PP   = 13;
     public static final Integer SEATS_PP       = 24;   // 12€/smer × 2 smera, po osobi
-    public static final Integer CABIN_SUITCASE_PRICE = 100;  // 50€/smer × 2 smera
     private static final Integer EXCLUSION_FLAT_LOW  = 10;  // 2. i 3. isključivanje
     private static final Integer EXCLUSION_FLAT_HIGH = 15;  // 4. i 5. isključivanje
     private static final Integer SOLO_SURCHARGE  = 60;  // doplata za solo putnika
