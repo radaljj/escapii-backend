@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -29,6 +30,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         "excludedDestination4", "excludedDestination5"
     })
     List<Booking> findAllByOrderByCreatedAtDesc();
+
+    /**
+     * Učitava jedan booking sa svim asocijacijama potrebnim za slanje emaila —
+     * isključene destinacije (JOIN FETCH) + putnici (@BatchSize).
+     * Koristiti uvek pre prosleđivanja Bookinga u email servis.
+     */
+    @EntityGraph(attributePaths = {
+        "excludedDestination1", "excludedDestination2", "excludedDestination3",
+        "excludedDestination4", "excludedDestination5", "passengers"
+    })
+    Optional<Booking> findWithDetailsById(Long id);
 
     /** Sve CONFIRMED rezervacije čiji je polazak između danas i datuma 'until' (za jutarnji digest). */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +

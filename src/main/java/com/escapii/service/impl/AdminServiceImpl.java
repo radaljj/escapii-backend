@@ -170,7 +170,9 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AdminBookingResponse updateBookingStatus(Long id, BookingStatus status) {
-        Booking booking = bookingRepository.findById(id)
+        // findWithDetailsById — učitava sve LAZY asocijacije (excluded destinations, passengers)
+        // da bi @Async email servis mogao da pristupi njima van transakcije
+        Booking booking = bookingRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + id));
 
