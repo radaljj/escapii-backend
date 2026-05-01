@@ -34,7 +34,7 @@ public record DailyForecast(
             case 2                      -> "Delimično oblačno";
             case 3                      -> "Oblačno";
             case 45, 48                 -> "Magla";
-            case 51, 53, 55             -> "Rosulja";
+            case 51, 53, 55             -> "Blaga Kiša";
             case 61, 63, 65             -> "Kiša";
             case 71, 73, 75             -> "Sneg";
             case 77                     -> "Snežne pahulje";
