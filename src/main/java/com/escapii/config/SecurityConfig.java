@@ -101,7 +101,7 @@ public class SecurityConfig {
             }
         }
         config.setAllowedOrigins(origins);
-        config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Accept", "X-Admin-Key", "X-Frontend-Url"));
         config.setMaxAge(3600L);
 
