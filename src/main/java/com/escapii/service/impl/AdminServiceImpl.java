@@ -118,7 +118,8 @@ public class AdminServiceImpl implements AdminService {
     public AdminDateResponse updateDestinations(Long id, List<Long> destinationIds) {
         AvailableDate date = findDateOrThrow(id);
         List<Destination> destinations = destinationRepository.findAllById(destinationIds);
-        date.setPotentialDestinations(destinations);
+        date.getPotentialDestinations().clear();
+        date.getPotentialDestinations().addAll(destinations);
         AvailableDate saved = availableDateRepository.save(date);
         log.info("[ADMIN] Azurirane destinacije za termin id={} → {}",
                 id, destinations.stream().map(Destination::getName).toList());
