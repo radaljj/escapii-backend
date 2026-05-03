@@ -138,7 +138,6 @@ public final class EmailHtmlBuilder {
 
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#2D5F6B;">escapii</strong> — mystery travel d.o.o.<br>
             Beograd, Srbija · <a href="mailto:%s" style="color:#6b7280;text-decoration:underline;">%s</a><br><br>
             <a href="#" style="color:#6b7280;text-decoration:underline;">Politika privatnosti</a>
             """.formatted(email, email);
