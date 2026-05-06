@@ -6,6 +6,7 @@ import com.escapii.service.email.WaitlistEmailService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.escapii.util.LogUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class WaitlistServiceImpl implements WaitlistService {
             entry.setEmail(email);
             entry.setAirport(airport);
             waitlistRepository.save(entry);
-            log.info("[Waitlist] Novi subscriber: {} za {}", email, airport);
+            log.info("[Waitlist] Novi subscriber: {} za {}", LogUtils.maskEmail(email), airport);
             waitlistEmailService.sendWaitlistConfirmation(email, airport);
             return true;
         } catch (DataIntegrityViolationException e) {
@@ -71,7 +72,7 @@ public class WaitlistServiceImpl implements WaitlistService {
                 waitlistRepository.delete(entry);
                 sent++;
             } catch (Exception e) {
-                log.warn("[Waitlist] Email nije poslat na {}: {}", entry.getEmail(), e.getMessage());
+                log.warn("[Waitlist] Email nije poslat na {}: {}", LogUtils.maskEmail(entry.getEmail()), e.getMessage());
             }
         }
         log.info("[Waitlist] Poslato {} notifikacija za {}.", sent, airport);

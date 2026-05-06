@@ -2,6 +2,7 @@ package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.service.email.RevealEmailService;
+import com.escapii.util.LogUtils;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
@@ -93,7 +94,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         );
 
         log.info("[Reveal] Email poslan korisniku {} za rezervaciju {}",
-                booking.getEmail(), booking.getBookingRef());
+                LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
     }
 
     // ── Interna notifikacija timu ────────────────────────────────────────────

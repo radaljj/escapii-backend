@@ -2,6 +2,7 @@ package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.model.PassengerInfo;
+import com.escapii.util.LogUtils;
 import com.escapii.service.DestinationService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
@@ -73,7 +74,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             "Rezervacija potvrđena — %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, true)
         );
-        log.info("[Email] Poslat CONFIRMED email na adresu {} za booking {}", booking.getEmail(), booking.getBookingRef());
+        log.info("[Email] Poslat CONFIRMED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
     }
 
     @Override
@@ -84,7 +85,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             "Rezervacija otkazana — %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, false)
         );
-        log.info("[Email] Poslat CANCELLED email na adresu {} za booking {}", booking.getEmail(), booking.getBookingRef());
+        log.info("[Email] Poslat CANCELLED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

@@ -1,5 +1,6 @@
 package com.escapii.service.email.core;
 
+import com.escapii.util.LogUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,13 @@ public class EmailSender {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
-            log.info("[EmailSender] Email poslan na {}", to);
+            log.info("[EmailSender] Email poslan na {}", LogUtils.maskEmail(to));
         } catch (MessagingException e) {
-            log.error("[EmailSender] MessagingException za {}: {}", to, e.getMessage(), e);
+            log.error("[EmailSender] MessagingException za {}: {}", LogUtils.maskEmail(to), e.getMessage(), e);
         } catch (Exception e) {
             // MailException (Spring, RuntimeException) — auth failure, connection refused, itd.
             log.error("[EmailSender] Greška pri slanju na {} — proveriti SMTP env vars (MAIL_USERNAME, MAIL_APP_PASSWORD): {}",
-                    to, e.getMessage(), e);
+                    LogUtils.maskEmail(to), e.getMessage(), e);
         }
     }
 

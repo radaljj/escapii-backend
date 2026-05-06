@@ -2,6 +2,7 @@ package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.service.email.ForecastEmailService;
+import com.escapii.util.LogUtils;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
 import com.escapii.service.weather.DailyForecast;
@@ -38,7 +39,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
 
             sender.send(booking.getEmail(), subject, html);
-            log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), booking.getEmail());
+            log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
         } catch (Exception e) {
             log.error("[Forecast] ❌ Greška pri slanju za {}: {}", booking.getBookingRef(), e.getMessage(), e);
         }
