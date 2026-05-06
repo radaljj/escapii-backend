@@ -118,7 +118,7 @@ public class AppErrorServiceImpl implements AppErrorService {
         String html = """
             <div style="font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px;border-radius:8px;max-width:700px;">
               <h2 style="color:#ff7b72;margin:0 0 20px;font-family:sans-serif;">🚨 Nova greška u Escapii aplikaciji</h2>
-              <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+              <table style="width:100%%;border-collapse:collapse;margin-bottom:20px;">
                 <tr>
                   <td style="color:#8b949e;padding:6px 0;width:130px;font-family:sans-serif;font-size:13px;">Endpoint</td>
                   <td style="color:#e6edf3;font-weight:bold;font-size:13px;">%s</td>
