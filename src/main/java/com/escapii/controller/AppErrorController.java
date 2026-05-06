@@ -52,10 +52,4 @@ public class AppErrorController {
         appErrorService.deleteAll();
         return ResponseEntity.ok(Map.of("deleted", true));
     }
-
-    /** TEST ONLY — namerno baca exception da testiramo monitoring. Obrisati nakon testa! */
-    @GetMapping("/trigger-test-error")
-    public ResponseEntity<Void> triggerTestError() {
-        throw new RuntimeException("TEST: Ovo je namerna test greška za proveru error monitoringa 🚨");
-    }
 }
