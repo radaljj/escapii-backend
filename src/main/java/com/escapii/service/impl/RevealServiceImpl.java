@@ -27,7 +27,10 @@ public class RevealServiceImpl implements RevealService {
 
         Booking booking = bookingRepository.findByRevealToken(token)
                 .orElseThrow(() -> {
-                    log.warn("[Reveal] Nepostojeci token: {}", token);
+                    // Logujemo samo prvih 8 karaktera tokena — sprečava curenje punog tokena u logove
+                    String safeToken = (token != null && token.length() > 8)
+                            ? token.substring(0, 8) + "..." : token;
+                    log.warn("[Reveal] Nepostojeci token: {}", safeToken);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Link nije validan.");
                 });

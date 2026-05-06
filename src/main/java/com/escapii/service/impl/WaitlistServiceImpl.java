@@ -7,6 +7,7 @@ import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +41,12 @@ public class WaitlistServiceImpl implements WaitlistService {
         }
     }
 
+    // Gornja granica za findAll — sprečava OOM ako lista poraste
+    private static final int WAITLIST_FETCH_LIMIT = 1000;
+
     @Override
     public Map<String, Object> getWaitlistSummary() {
-        List<WaitlistEntry> all = waitlistRepository.findAll();
+        List<WaitlistEntry> all = waitlistRepository.findAll(PageRequest.of(0, WAITLIST_FETCH_LIMIT)).getContent();
         Map<String, Long> byAirport = all.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         WaitlistEntry::getAirport,

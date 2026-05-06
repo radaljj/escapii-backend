@@ -3,6 +3,8 @@ package com.escapii.controller;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.AdminDestinationRequest;
+import com.escapii.dto.AdminNotesRequest;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
 import com.escapii.config.DailyTaskScheduler;
@@ -134,12 +136,8 @@ public class AdminController {
     @PatchMapping("/bookings/{id}/notes")
     public ResponseEntity<AdminBookingResponse> updateAdminNotes(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-        String notes = body.getOrDefault("adminNotes", "");
-        if (notes.length() > 3000) {
-            return ResponseEntity.badRequest()
-                    .body(null); // Admin će videti 400 ako pokuša da upiše previše
-        }
+            @Valid @RequestBody AdminNotesRequest body) {
+        String notes = body.adminNotes() != null ? body.adminNotes() : "";
         return ResponseEntity.ok(adminService.updateAdminNotes(id, notes));
     }
 
@@ -151,11 +149,8 @@ public class AdminController {
     @PatchMapping("/bookings/{id}/destination")
     public ResponseEntity<AdminBookingResponse> setDestination(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-        String destination = body.getOrDefault("destination", "");
-        if (destination.length() > 200) {
-            return ResponseEntity.badRequest().body(null);
-        }
+            @Valid @RequestBody AdminDestinationRequest body) {
+        String destination = body.destination() != null ? body.destination() : "";
         return ResponseEntity.ok(adminService.setDestination(id, destination));
     }
 

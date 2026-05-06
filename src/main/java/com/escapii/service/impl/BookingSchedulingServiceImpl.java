@@ -11,6 +11,7 @@ import com.escapii.service.weather.WeatherService;
 import com.escapii.util.TokenUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,19 +20,30 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
-    private final BookingRepository   bookingRepository;
-    private final RevealEmailService  revealEmailService;
+    private final BookingRepository    bookingRepository;
+    private final RevealEmailService   revealEmailService;
     private final ForecastEmailService forecastEmailService;
-    private final WeatherService      weatherService;
+    private final WeatherService       weatherService;
+
+    @Value("${app.cors-allowed-origin:https://escapii.com}")
+    private String corsAllowedOrigin;
+
+    @Value("${app.cors-extra-origins:}")
+    private String corsExtraOrigins;
+
+    @Value("${app.frontend-url:https://escapii.com}")
+    private String defaultFrontendUrl;
 
     @Override
     @Transactional
@@ -86,15 +98,18 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     "Destinacija nije unesena — unesi je pre slanja reveal-a.");
         }
 
+        // Validiraj X-Frontend-Url da nije open redirect — mora biti u dozvoljenim originima
+        String validatedUrl = validateFrontendUrl(siteUrl);
+
         if (booking.getRevealToken() == null) {
             booking.setRevealToken(TokenUtils.generate());
         }
         booking.setRevealSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
-        revealEmailService.sendRevealEmail(booking, siteUrl);
+        revealEmailService.sendRevealEmail(booking, validatedUrl);
 
         log.info("[Admin] Ručni reveal poslan za {} → '{}' (siteUrl={})",
-                booking.getBookingRef(), booking.getAssignedDestination(), siteUrl);
+                booking.getBookingRef(), booking.getAssignedDestination(), validatedUrl);
         return Map.of("message", "Reveal email poslan za " + booking.getBookingRef() + ".");
     }
 
@@ -131,6 +146,46 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         log.info("[Admin] Ručna prognoza poslana za {} → '{}'",
                 booking.getBookingRef(), booking.getAssignedDestination());
         return Map.of("message", "Prognoza email poslan za " + booking.getBookingRef() + ".");
+    }
+
+    // ── Security helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Validira X-Frontend-Url header da sprečava open redirect napad.
+     * Prihvata URL samo ako tačno odgovara jednom od dozvoljenih CORS origina.
+     * Ako ne odgovara → vraća konfigurisani defaultFrontendUrl.
+     */
+    private String validateFrontendUrl(String siteUrl) {
+        if (siteUrl == null || siteUrl.isBlank()) {
+            return null; // RevealEmailServiceImpl će koristiti konfigurisani frontendUrl
+        }
+
+        Set<String> allowed = buildAllowedOrigins();
+        String normalized = siteUrl.stripTrailing().replaceAll("/+$", "");
+
+        if (allowed.contains(normalized)) {
+            return normalized;
+        }
+
+        log.warn("[Security] X-Frontend-Url '{}' nije u dozvoljenim originima — koristi se default", siteUrl);
+        return defaultFrontendUrl;
+    }
+
+    private Set<String> buildAllowedOrigins() {
+        Set<String> origins = new java.util.HashSet<>();
+        if (corsAllowedOrigin != null && !corsAllowedOrigin.isBlank()) {
+            Arrays.stream(corsAllowedOrigin.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(origins::add);
+        }
+        if (corsExtraOrigins != null && !corsExtraOrigins.isBlank()) {
+            Arrays.stream(corsExtraOrigins.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(origins::add);
+        }
+        return origins;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

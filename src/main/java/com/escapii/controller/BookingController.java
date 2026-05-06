@@ -7,11 +7,15 @@ import com.escapii.dto.PricePreviewResponse;
 import com.escapii.model.AccommodationType;
 import com.escapii.service.BookingService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequestMapping("/api/booking")
 @RequiredArgsConstructor
@@ -46,14 +50,17 @@ public class BookingController {
      */
     @GetMapping("/price-preview")
     public ResponseEntity<PricePreviewResponse> pricePreview(
-            @RequestParam                            Long    selectedDateId,
-            @RequestParam(defaultValue = "1")        int     numberOfTravelers,
-            @RequestParam(defaultValue = "STANDARD") AccommodationType accommodationType,
-            @RequestParam(defaultValue = "0")        int     exclusionCount,
-            @RequestParam(defaultValue = "0")        int     cabinSuitcaseCount,
-            @RequestParam(defaultValue = "false")    boolean hasInsurance,
-            @RequestParam(defaultValue = "false")    boolean hasBreakfast,
-            @RequestParam(defaultValue = "false")    boolean hasSeatsTogether
+            @RequestParam                                     Long    selectedDateId,
+            @Min(1) @Max(30)
+            @RequestParam(defaultValue = "1")                 int     numberOfTravelers,
+            @RequestParam(defaultValue = "STANDARD")          AccommodationType accommodationType,
+            @Min(0) @Max(30)
+            @RequestParam(defaultValue = "0")                 int     exclusionCount,
+            @Min(0) @Max(30)
+            @RequestParam(defaultValue = "0")                 int     cabinSuitcaseCount,
+            @RequestParam(defaultValue = "false")             boolean hasInsurance,
+            @RequestParam(defaultValue = "false")             boolean hasBreakfast,
+            @RequestParam(defaultValue = "false")             boolean hasSeatsTogether
     ) {
         return ResponseEntity.ok(bookingService.previewPrice(
                 selectedDateId, numberOfTravelers, accommodationType, exclusionCount,

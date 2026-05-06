@@ -66,6 +66,8 @@ public class AdminKeyFilter extends OncePerRequestFilter {
         if (!constantTimeEquals(adminKey, provided)) {
             recordFailedAttempt(ip);
             log.warn("[Admin] Neispravan ključ sa IP: {}", ip);
+            // Konstantno kašnjenje — usporava brute-force i timing napade
+            try { Thread.sleep(500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
             reject(response, HttpServletResponse.SC_FORBIDDEN,
                     "Pristup odbijen — neispravan admin ključ");
             return;

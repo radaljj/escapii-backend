@@ -1,6 +1,6 @@
 package com.escapii.controller;
 
-import com.escapii.model.AppError;
+import com.escapii.dto.AppErrorSummaryResponse;
 import com.escapii.service.AppErrorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +20,14 @@ public class AppErrorController {
 
     private final AppErrorService appErrorService;
 
-    /** Sve greške, najnovije prve. */
+    /** Sve greške, najnovije prve — bez stackTrace (zaštita od curenja internih detalja). */
     @GetMapping
-    public ResponseEntity<List<AppError>> getAll() {
-        return ResponseEntity.ok(appErrorService.getAll());
+    public ResponseEntity<List<AppErrorSummaryResponse>> getAll() {
+        return ResponseEntity.ok(
+                appErrorService.getAll().stream()
+                        .map(AppErrorSummaryResponse::from)
+                        .toList()
+        );
     }
 
     /** Broj nerešenih grešaka — za badge. */

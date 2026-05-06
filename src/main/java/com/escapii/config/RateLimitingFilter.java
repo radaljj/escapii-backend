@@ -20,8 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Rate limiting filter:
  * - POST /api/booking:               max 5 zahteva po IP na sat
  * - GET  /api/booking/price-preview:  max 30 zahteva po IP na sat
- * - GET  /api/booking/status:         max 20 zahteva po IP na 10 minuta
+ * - GET  /api/booking/status:         max 5 zahteva po IP na 15 minuta
  * - POST /api/waitlist:              max 5 zahteva po IP na sat
+ * - GET  /api/dates:                 max 60 zahteva po IP na minut
+ * - GET  /api/destinations:          max 60 zahteva po IP na minut
  * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
  *
  * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted proxy
@@ -42,8 +44,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  PREVIEW_MAX      = 30;
     private static final long PREVIEW_WINDOW   = 60 * 60 * 1000L;      // 1 sat
 
-    private static final int  STATUS_MAX       = 20;
-    private static final long STATUS_WINDOW    = 10 * 60 * 1000L;      // 10 minuta
+    private static final int  STATUS_MAX       = 5;
+    private static final long STATUS_WINDOW    = 15 * 60 * 1000L;      // 15 minuta
 
     private static final int  ADMIN_MAX        = 20;
     private static final long ADMIN_WINDOW     = 60 * 1000L;           // 1 minut
@@ -51,14 +53,22 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  WAITLIST_MAX     = 5;
     private static final long WAITLIST_WINDOW  = 60 * 60 * 1000L;      // 1 sat
 
+    private static final int  DATES_MAX        = 60;
+    private static final long DATES_WINDOW     = 60 * 1000L;           // 1 minut
+
+    private static final int  DESTINATIONS_MAX    = 60;
+    private static final long DESTINATIONS_WINDOW = 60 * 1000L;        // 1 minut
+
     // Maksimalni prozor — za cleanup: ne čuvamo ništa starije od ovoga
     private static final long MAX_WINDOW       = 60 * 60 * 1000L;      // 1 sat
 
-    private final Map<String, Queue<Long>> bookingLog  = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> previewLog  = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> statusLog   = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> adminLog    = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> waitlistLog = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> bookingLog      = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> previewLog      = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> statusLog       = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> adminLog        = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> waitlistLog     = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> datesLog        = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> destinationsLog = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -90,7 +100,23 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if ("GET".equalsIgnoreCase(request.getMethod()) && uri.contains("/api/booking/status")) {
             if (isRateLimited(statusLog, ip, STATUS_MAX, STATUS_WINDOW)) {
                 log.warn("[RateLimit] Status limit prekoračen za IP: {}", ip);
-                reject(response, "Previše zahteva. Pokušajte ponovo za 10 minuta.");
+                reject(response, "Previše zahteva. Pokušajte ponovo za 15 minuta.");
+                return;
+            }
+        }
+
+        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/dates")) {
+            if (isRateLimited(datesLog, ip, DATES_MAX, DATES_WINDOW)) {
+                log.warn("[RateLimit] Dates limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva.");
+                return;
+            }
+        }
+
+        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/destinations")) {
+            if (isRateLimited(destinationsLog, ip, DESTINATIONS_MAX, DESTINATIONS_WINDOW)) {
+                log.warn("[RateLimit] Destinations limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva.");
                 return;
             }
         }
@@ -144,7 +170,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();
@@ -157,7 +183,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 }
             }
         }
-        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}",
-                bookingLog.size(), previewLog.size(), statusLog.size(), adminLog.size(), waitlistLog.size());
+        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}, dates={}, destinations={}",
+                bookingLog.size(), previewLog.size(), statusLog.size(), adminLog.size(), waitlistLog.size(),
+                datesLog.size(), destinationsLog.size());
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 /**
  * Javni DTO za pregled statusa rezervacije od strane korisnika.
  * Vraća samo javno dostupne informacije — bez cena, pasoša i internih detalja.
+ * passengerNames je sigurno prikazati: ref je random 8-hex UUID fragment, nije pogodiv.
  */
 @Getter
 @Builder

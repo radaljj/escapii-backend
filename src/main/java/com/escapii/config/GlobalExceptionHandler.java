@@ -3,6 +3,7 @@ package com.escapii.config;
 import com.escapii.service.AppErrorService;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleObjectStateException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +83,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ex.getStatusCode())
                 .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Greška"));
+    }
+
+    /**
+     * Constraint violation na @RequestParam/@PathVariable (npr. @Min/@Max u BookingController).
+     * Vraća 400 umesto da pada u 500 catch-all handler.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations().stream()
+                .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
+                .collect(Collectors.joining(", "));
+        log.warn("[Validacija] ConstraintViolation: {}", message);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Neispravan parametar: " + message));
     }
 
     /** Nepredviđene greške — 500. Beleži u bazu i šalje email (samo nova pojava). */
