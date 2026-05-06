@@ -1,8 +1,11 @@
 package com.escapii.config;
 
+import com.escapii.service.AppErrorService;
 import jakarta.persistence.OptimisticLockException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleObjectStateException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -19,10 +22,14 @@ import java.util.stream.Collectors;
 /**
  * Globalni exception handler.
  * Pretvara sve greske u konzistentan JSON format.
+ * Neočekivane 5xx greške se čuvaju u bazi i šalju email alert (samo prva pojava).
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Autowired(required = false)
+    private AppErrorService appErrorService;
 
     /** Pogrešan HTTP metod (npr. GET na /api/booking). */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -75,10 +82,13 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Greška"));
     }
 
-    /** Nepredviđene greške — 500. */
+    /** Nepredviđene greške — 500. Beleži u bazu i šalje email (samo nova pojava). */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        log.error("[GREŠKA] Neočekivana greška: {}", ex.getMessage(), ex);
+    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("[GREŠKA] Neočekivana greška na {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        if (appErrorService != null) {
+            appErrorService.record(request, 500, ex);
+        }
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Došlo je do greške na serveru. Pokušajte ponovo."));
