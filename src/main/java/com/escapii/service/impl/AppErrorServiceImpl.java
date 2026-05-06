@@ -4,7 +4,6 @@ import com.escapii.model.AppError;
 import com.escapii.repository.AppErrorRepository;
 import com.escapii.service.AppErrorService;
 import com.escapii.service.email.core.EmailSender;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +32,9 @@ public class AppErrorServiceImpl implements AppErrorService {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
     @Async
-    @Transactional
     @Override
-    public void record(HttpServletRequest request, int statusCode, Exception ex) {
+    public void record(String endpoint, int statusCode, Exception ex) {
         try {
-            String endpoint   = request.getMethod() + " " + request.getRequestURI();
             String exType     = ex.getClass().getSimpleName();
             String exMessage  = ex.getMessage() != null
                     ? ex.getMessage().substring(0, Math.min(ex.getMessage().length(), 500))
@@ -72,7 +69,7 @@ public class AppErrorServiceImpl implements AppErrorService {
             }
         } catch (Exception recordEx) {
             // Nikad ne sme da padne sam error handler
-            log.error("[AppError] Greška pri belezenju greške: {}", recordEx.getMessage());
+            log.error("[AppError] Greška pri belezenju greške: {}", recordEx.getMessage(), recordEx);
         }
     }
 

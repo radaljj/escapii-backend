@@ -85,9 +85,11 @@ public class GlobalExceptionHandler {
     /** Nepredviđene greške — 500. Beleži u bazu i šalje email (samo nova pojava). */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("[GREŠKA] Neočekivana greška na {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        // Endpoint izvlačimo SINHRONO — request se reciklira pre nego što async thread počne
+        String endpoint = request.getMethod() + " " + request.getRequestURI();
+        log.error("[GREŠKA] Neočekivana greška na {}: {}", endpoint, ex.getMessage(), ex);
         if (appErrorService != null) {
-            appErrorService.record(request, 500, ex);
+            appErrorService.record(endpoint, 500, ex);
         }
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
