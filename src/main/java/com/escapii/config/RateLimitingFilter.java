@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * - GET  /api/dates:                 max 60 zahteva po IP na minut
  * - GET  /api/destinations:          max 60 zahteva po IP na minut
  * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
+ * - GET  /api/reveal:                max 10 zahteva po IP na 15 minuta
+ * - POST /api/reveal/confirm:        max 10 zahteva po IP na 15 minuta
  *
  * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted proxy
  * (Render/Railway), pa korisnik ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
@@ -59,6 +61,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  DESTINATIONS_MAX    = 60;
     private static final long DESTINATIONS_WINDOW = 60 * 1000L;        // 1 minut
 
+    private static final int  REVEAL_MAX         = 10;
+    private static final long REVEAL_WINDOW      = 15 * 60 * 1000L;   // 15 minuta
+
     // Maksimalni prozor — za cleanup: ne čuvamo ništa starije od ovoga
     private static final long MAX_WINDOW       = 60 * 60 * 1000L;      // 1 sat
 
@@ -69,6 +74,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> waitlistLog     = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> datesLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> destinationsLog = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> revealLog       = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -129,6 +135,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
+        if (uri.startsWith("/api/reveal")) {
+            if (isRateLimited(revealLog, ip, REVEAL_MAX, REVEAL_WINDOW)) {
+                log.warn("[RateLimit] Reveal limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Pokušajte ponovo za 15 minuta.");
+                return;
+            }
+        }
+
         if (uri.startsWith("/api/admin")) {
             if (isRateLimited(adminLog, ip, ADMIN_MAX, ADMIN_WINDOW)) {
                 log.warn("[RateLimit] Admin limit prekoračen za IP: {}", ip);
@@ -170,7 +184,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();
@@ -183,8 +197,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 }
             }
         }
-        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}, dates={}, destinations={}",
+        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}, dates={}, destinations={}, reveal={}",
                 bookingLog.size(), previewLog.size(), statusLog.size(), adminLog.size(), waitlistLog.size(),
-                datesLog.size(), destinationsLog.size());
+                datesLog.size(), destinationsLog.size(), revealLog.size());
     }
 }
