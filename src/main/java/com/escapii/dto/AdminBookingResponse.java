@@ -4,6 +4,7 @@ import com.escapii.model.AccommodationType;
 import com.escapii.model.BookingStatus;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * Admin DTO za pregled rezervacija — sadrži sve relevantne informacije.
  */
 @Getter
+@Setter
 @Builder
 public class AdminBookingResponse {
 

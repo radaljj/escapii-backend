@@ -2,7 +2,9 @@ package com.escapii.service.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.RevealEvent;
 import com.escapii.repository.BookingRepository;
+import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.RevealService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RevealServiceImpl implements RevealService {
 
-    private final BookingRepository bookingRepository;
+    private final BookingRepository      bookingRepository;
+    private final RevealEventRepository  revealEventRepository;
 
     @Override
     public Map<String, Object> getRevealInfo(String token) {
@@ -97,10 +100,9 @@ public class RevealServiceImpl implements RevealService {
     @Override
     public void confirmRevealed(String token) {
         bookingRepository.findByRevealToken(token).ifPresent(booking -> {
-            // Idempotentno — samo prvi put, ne menjamo ako je već ogrebaо
-            if (booking.getDestinationRevealedAt() == null) {
-                booking.setDestinationRevealedAt(LocalDateTime.now());
-                bookingRepository.save(booking);
+            // Idempotentno — samo prvi put, ne menjamo ako event već postoji
+            if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
+                revealEventRepository.save(new RevealEvent(booking.getBookingRef()));
                 log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());
             }
         });

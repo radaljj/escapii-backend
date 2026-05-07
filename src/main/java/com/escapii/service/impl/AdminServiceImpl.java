@@ -10,9 +10,11 @@ import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.Destination;
+import com.escapii.model.RevealEvent;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
+import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.AdminService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.WaitlistService;
@@ -26,6 +28,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.escapii.util.TokenUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,6 +39,7 @@ public class AdminServiceImpl implements AdminService {
     private final AvailableDateRepository availableDateRepository;
     private final DestinationRepository   destinationRepository;
     private final BookingRepository       bookingRepository;
+    private final RevealEventRepository   revealEventRepository;
     private final AdminBookingMapper      adminBookingMapper;
     private final DestinationMapper       destinationMapper;
     private final BookingEmailService     bookingEmailService;
@@ -165,7 +170,17 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public List<AdminBookingResponse> getAllBookings() {
-        return adminBookingMapper.toResponseList(bookingRepository.findAllByOrderByCreatedAtDesc());
+        List<AdminBookingResponse> responses = adminBookingMapper.toResponseList(
+                bookingRepository.findAllByOrderByCreatedAtDesc());
+
+        // Batch fetch reveal events — jedan upit za sve rezervacije
+        List<String> refs = responses.stream().map(AdminBookingResponse::getBookingRef).toList();
+        Map<String, java.time.LocalDateTime> revealedMap = revealEventRepository
+                .findAllByBookingRefIn(refs).stream()
+                .collect(Collectors.toMap(RevealEvent::getBookingRef, RevealEvent::getRevealedAt));
+
+        responses.forEach(r -> r.setDestinationRevealedAt(revealedMap.get(r.getBookingRef())));
+        return responses;
     }
 
     @Override

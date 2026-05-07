@@ -181,10 +181,6 @@ public class Booking {
     @Column(name = "forecast_sent_at")
     private LocalDateTime forecastSentAt;
 
-    /** Trenutak kad je korisnik ogrebaо scratch karticu i video destinaciju. Null = još nije video. */
-    @Column(name = "destination_revealed_at")
-    private LocalDateTime destinationRevealedAt;
-
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();
