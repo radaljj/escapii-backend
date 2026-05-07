@@ -55,6 +55,7 @@ public class AdminBookingResponse {
     private String weatherCity;
     private LocalDateTime revealSentAt;
     private LocalDateTime forecastSentAt;
+    private LocalDateTime destinationRevealedAt;
 
     // Cene
     private Integer basePricePerPerson;

@@ -35,4 +35,17 @@ public class RevealController {
     public ResponseEntity<Map<String, Object>> reveal(@RequestParam String token) {
         return ResponseEntity.ok(revealService.getRevealInfo(token));
     }
+
+    /**
+     * POST /api/reveal/confirm?token=abc123
+     *
+     * Korisnik je ogrebaо scratch karticu — beležimo timestamp.
+     * Idempotentno: pozivi posle prvog nemaju efekta.
+     * Vraća 200 OK bez body-ja (fire-and-forget sa frontenda).
+     */
+    @PostMapping("/confirm")
+    public ResponseEntity<Void> confirmRevealed(@RequestParam String token) {
+        revealService.confirmRevealed(token);
+        return ResponseEntity.ok().build();
+    }
 }

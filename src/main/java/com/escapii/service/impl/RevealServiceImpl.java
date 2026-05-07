@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,9 +59,7 @@ public class RevealServiceImpl implements RevealService {
             throw new ResponseStatusException(HttpStatus.GONE,
                     "Link je istekao — putovanje je već počelo. Srećan put! ✈");
         }
-
-        log.info("[Reveal] Destinacija otkrivena za rezervaciju {}", booking.getBookingRef());
-
+        
         // Izvuci imena svih putnika; ako lista prazna, koristi nosioca rezervacije
         List<String> passengerNames = booking.getPassengers() != null && !booking.getPassengers().isEmpty()
                 ? booking.getPassengers().stream()
@@ -93,5 +92,17 @@ public class RevealServiceImpl implements RevealService {
                 Map.entry("totalPriceAll",     booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
                 Map.entry("firstName",         booking.getFirstName() != null ? booking.getFirstName() : "")
         );
+    }
+
+    @Override
+    public void confirmRevealed(String token) {
+        bookingRepository.findByRevealToken(token).ifPresent(booking -> {
+            // Idempotentno — samo prvi put, ne menjamo ako je već ogrebaо
+            if (booking.getDestinationRevealedAt() == null) {
+                booking.setDestinationRevealedAt(LocalDateTime.now());
+                bookingRepository.save(booking);
+                log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());
+            }
+        });
     }
 }
