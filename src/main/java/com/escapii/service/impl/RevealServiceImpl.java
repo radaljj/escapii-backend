@@ -69,15 +69,29 @@ public class RevealServiceImpl implements RevealService {
                          .collect(Collectors.toList())
                 : List.of(booking.getFirstName() + (booking.getLastName() != null ? " " + booking.getLastName() : ""));
 
+        // Plaćeni dodaci (za popup)
+        java.util.List<String> addons = new java.util.ArrayList<>();
+        if (Boolean.TRUE.equals(booking.getHasInsurance()))      addons.add("🛡 Putno osiguranje");
+        if (Boolean.TRUE.equals(booking.getHasBreakfast()))      addons.add("🍳 Doručak");
+        if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))  addons.add("💺 Sedišta zajedno");
+        if (booking.getCabinSuitcaseCount() != null && booking.getCabinSuitcaseCount() > 0) {
+            addons.add("🧳 " + booking.getCabinSuitcaseCount() + "× kabinski kofer");
+        }
+
         return Map.ofEntries(
-                Map.entry("destination",      booking.getAssignedDestination()),
-                Map.entry("departureDate",    booking.getSelectedDate().getDepartureDate().toString()),
-                Map.entry("returnDate",       booking.getSelectedDate().getReturnDate() != null
-                                                  ? booking.getSelectedDate().getReturnDate().toString() : ""),
-                Map.entry("bookingRef",       booking.getBookingRef()),
-                Map.entry("departureAirport", booking.getDepartureAirport() != null ? booking.getDepartureAirport() : ""),
-                Map.entry("numberOfNights",   booking.getSelectedDate().getNumberOfNights()),
-                Map.entry("passengers",       passengerNames)
+                Map.entry("destination",       booking.getAssignedDestination()),
+                Map.entry("departureDate",     booking.getSelectedDate().getDepartureDate().toString()),
+                Map.entry("returnDate",        booking.getSelectedDate().getReturnDate() != null
+                                                   ? booking.getSelectedDate().getReturnDate().toString() : ""),
+                Map.entry("bookingRef",        booking.getBookingRef()),
+                Map.entry("departureAirport",  booking.getDepartureAirport() != null ? booking.getDepartureAirport() : ""),
+                Map.entry("numberOfNights",    booking.getSelectedDate().getNumberOfNights()),
+                Map.entry("passengers",        passengerNames),
+                // Dodaci za popup detalje
+                Map.entry("numberOfTravelers", booking.getNumberOfTravelers() != null ? booking.getNumberOfTravelers() : 1),
+                Map.entry("addons",            addons),
+                Map.entry("totalPriceAll",     booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
+                Map.entry("firstName",         booking.getFirstName() != null ? booking.getFirstName() : "")
         );
     }
 }
