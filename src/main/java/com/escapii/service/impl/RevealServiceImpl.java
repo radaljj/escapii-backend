@@ -8,15 +8,14 @@ import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.RevealService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -68,17 +67,11 @@ public class RevealServiceImpl implements RevealService {
                 ? booking.getPassengers().stream()
                          .map(com.escapii.model.PassengerInfo::getName)
                          .filter(n -> n != null && !n.isBlank())
-                         .collect(Collectors.toList())
+                         .toList()
                 : List.of(booking.getFirstName() + (booking.getLastName() != null ? " " + booking.getLastName() : ""));
 
         // Plaćeni dodaci (za popup)
-        java.util.List<String> addons = new java.util.ArrayList<>();
-        if (Boolean.TRUE.equals(booking.getHasInsurance()))      addons.add("🛡 Putno osiguranje");
-        if (Boolean.TRUE.equals(booking.getHasBreakfast()))      addons.add("🍳 Doručak");
-        if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))  addons.add("💺 Sedišta zajedno");
-        if (booking.getCabinSuitcaseCount() != null && booking.getCabinSuitcaseCount() > 0) {
-            addons.add("🧳 " + booking.getCabinSuitcaseCount() + "× kabinski kofer");
-        }
+        List<String> addons = getAddons(booking);
 
         return Map.ofEntries(
                 Map.entry("destination",       booking.getAssignedDestination()),
@@ -95,6 +88,17 @@ public class RevealServiceImpl implements RevealService {
                 Map.entry("totalPriceAll",     booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
                 Map.entry("firstName",         booking.getFirstName() != null ? booking.getFirstName() : "")
         );
+    }
+
+    private static @NonNull List<String> getAddons(Booking booking) {
+        List<String> addons = new java.util.ArrayList<>();
+        if (Boolean.TRUE.equals(booking.getHasInsurance()))      addons.add("🛡 Putno osiguranje");
+        if (Boolean.TRUE.equals(booking.getHasBreakfast()))      addons.add("🍳 Doručak");
+        if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))  addons.add("💺 Sedišta zajedno");
+        if (booking.getCabinSuitcaseCount() != null && booking.getCabinSuitcaseCount() > 0) {
+            addons.add("🧳 " + booking.getCabinSuitcaseCount() + "× kabinski kofer");
+        }
+        return addons;
     }
 
     @Override
