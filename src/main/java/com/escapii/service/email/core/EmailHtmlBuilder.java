@@ -177,11 +177,11 @@ public final class EmailHtmlBuilder {
                 <td style="padding:20px 24px;">
                   <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;">Ukupna cena putovanja</div>
                   <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:700;color:#F5C9A8;line-height:1;margin-bottom:4px;">%s €</div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">za %d %s · sve uključeno</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">za %d %s</div>
                 </td>
               </tr>
             </table>
-            """.formatted(total, n, n == 1 ? "putnika" : "putnika");
+            """.formatted(total, n, "putnika");
     }
 
     public static String step(String num, String title, String description) {
