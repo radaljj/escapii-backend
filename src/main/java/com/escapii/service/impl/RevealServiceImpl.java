@@ -62,7 +62,7 @@ public class RevealServiceImpl implements RevealService {
             throw new ResponseStatusException(HttpStatus.GONE,
                     "Link je istekao — putovanje je već počelo. Srećan put! ✈");
         }
-        
+
         // Izvuci imena svih putnika; ako lista prazna, koristi nosioca rezervacije
         List<String> passengerNames = booking.getPassengers() != null && !booking.getPassengers().isEmpty()
                 ? booking.getPassengers().stream()
