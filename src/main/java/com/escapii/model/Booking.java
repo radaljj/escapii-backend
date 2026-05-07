@@ -158,6 +158,15 @@ public class Booking {
     private String assignedDestination;
 
     /**
+     * Opcionalni geocoding hint za vremensku prognozu.
+     * Ako admin unese "Tenerife", geocoder može da pogodi planinu umesto obale.
+     * Ovde se upiše precizan naziv: "Santa Cruz de Tenerife, Spain".
+     * Ako prazno → koristi se assignedDestination.
+     */
+    @Column(name = "weather_city", length = 200)
+    private String weatherCity;
+
+    /**
      * UUID token za magic link u reveal emailu.
      * Generira se čim admin unese destinaciju. Nikad se ne izlaže kroz javne API-je.
      */

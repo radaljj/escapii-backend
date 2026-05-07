@@ -273,6 +273,19 @@ public class AdminServiceImpl implements AdminService {
         return adminBookingMapper.toResponse(saved);
     }
 
+    @Override
+    @Transactional
+    public AdminBookingResponse setWeatherCity(Long id, String weatherCity) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+        String trimmed = (weatherCity == null || weatherCity.isBlank()) ? null : weatherCity.strip();
+        booking.setWeatherCity(trimmed);
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Weather city za {} → '{}'", saved.getBookingRef(), trimmed);
+        return adminBookingMapper.toResponse(saved);
+    }
+
     // ══ HELPERS ══════════════════════════════════════════════════════════════
 
     private AvailableDate findDateOrThrow(Long id) {

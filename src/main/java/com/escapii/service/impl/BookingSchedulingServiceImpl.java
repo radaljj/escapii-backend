@@ -131,21 +131,34 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     "Destinacija nije unesena — unesi je pre slanja prognoze.");
         }
 
-        Optional<List<DailyForecast>> forecast =
-                weatherService.getForecast(booking.getAssignedDestination());
+        String weatherQuery = resolveWeatherQuery(booking);
+        Optional<List<DailyForecast>> forecast = weatherService.getForecast(weatherQuery);
         if (forecast.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Nije moguće preuzeti prognozu za '" + booking.getAssignedDestination() + "'.");
+                    "Nije moguće preuzeti prognozu za '" + weatherQuery + "'. " +
+                    "Pokušaj uneti precizniji naziv u polje 'Grad za prognozu'.");
         }
 
         booking.setForecastSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
         forecastEmailService.sendForecastEmail(booking, forecast.get());
 
-        log.info("[Admin] Ručna prognoza poslana za {} → '{}'",
-                booking.getBookingRef(), booking.getAssignedDestination());
+        log.info("[Admin] Ručna prognoza poslana za {} → '{}' (weatherQuery='{}')",
+                booking.getBookingRef(), booking.getAssignedDestination(), weatherQuery);
         return Map.of("message", "Prognoza email poslan za " + booking.getBookingRef() + ".");
+    }
+
+    // ── Weather helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Vraća string koji se šalje geocoderu za vremensku prognozu.
+     * Admin može uneti precizniji naziv u weatherCity polje (npr. "Santa Cruz de Tenerife, Spain")
+     * dok assignedDestination ostaje marketinški naziv koji vidi korisnik (npr. "Tenerife").
+     */
+    private String resolveWeatherQuery(Booking booking) {
+        String wc = booking.getWeatherCity();
+        return (wc != null && !wc.isBlank()) ? wc.strip() : booking.getAssignedDestination();
     }
 
     // ── Security helpers ──────────────────────────────────────────────────────
@@ -195,12 +208,12 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
         for (Booking booking : readyList) {
             try {
-                Optional<List<DailyForecast>> forecast =
-                        weatherService.getForecast(booking.getAssignedDestination());
+                String weatherQuery = resolveWeatherQuery(booking);
+                Optional<List<DailyForecast>> forecast = weatherService.getForecast(weatherQuery);
 
                 if (forecast.isEmpty()) {
-                    log.warn("[Forecast] Nije moguće preuzeti prognozu za '{}' ({})",
-                            booking.getAssignedDestination(), booking.getBookingRef());
+                    log.warn("[Forecast] Nije moguće preuzeti prognozu za '{}' weatherQuery='{}' ({})",
+                            booking.getAssignedDestination(), weatherQuery, booking.getBookingRef());
                     continue;
                 }
 

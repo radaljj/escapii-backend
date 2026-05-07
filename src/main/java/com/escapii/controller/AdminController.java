@@ -5,6 +5,7 @@ import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.AdminDestinationRequest;
 import com.escapii.dto.AdminNotesRequest;
+import com.escapii.dto.AdminWeatherCityRequest;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
 import com.escapii.config.DailyTaskScheduler;
@@ -152,6 +153,20 @@ public class AdminController {
             @Valid @RequestBody AdminDestinationRequest body) {
         String destination = body.destination() != null ? body.destination() : "";
         return ResponseEntity.ok(adminService.setDestination(id, destination));
+    }
+
+    /**
+     * PATCH /api/admin/bookings/{id}/weather-city
+     * Body: { "weatherCity": "Santa Cruz de Tenerife, Spain" }
+     * Opcionalni geocoding hint — ako je destinacija ambigvitetna (npr. "Tenerife"),
+     * ovde se upiše precizniji naziv za vremensku prognozu.
+     * Prazno polje → brisanje overridea, koristi se assignedDestination.
+     */
+    @PatchMapping("/bookings/{id}/weather-city")
+    public ResponseEntity<AdminBookingResponse> setWeatherCity(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminWeatherCityRequest body) {
+        return ResponseEntity.ok(adminService.setWeatherCity(id, body.weatherCity()));
     }
 
     /**

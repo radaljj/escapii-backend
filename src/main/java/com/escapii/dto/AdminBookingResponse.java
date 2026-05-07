@@ -52,6 +52,7 @@ public class AdminBookingResponse {
 
     // Otkrivanje destinacije
     private String assignedDestination;
+    private String weatherCity;
     private LocalDateTime revealSentAt;
     private LocalDateTime forecastSentAt;
 
