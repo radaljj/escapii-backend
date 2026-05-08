@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - GET  /api/booking/status:         max 5 zahteva po IP na 15 minuta
  * - POST /api/waitlist:              max 5 zahteva po IP na sat
  * - GET  /api/dates:                 max 60 zahteva po IP na minut
- * - GET  /api/destinations:          max 60 zahteva po IP na minut
+ * - GET  /api/destinations/**:        max 60 zahteva po IP na minut (/all, /countries, itd.)
  * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
  * - GET  /api/reveal:                max 10 zahteva po IP na 15 minuta
  * - POST /api/reveal/confirm:        max 10 zahteva po IP na 15 minuta
@@ -119,7 +119,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
-        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/destinations")) {
+        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.startsWith("/api/destinations")) {
             if (isRateLimited(destinationsLog, ip, DESTINATIONS_MAX, DESTINATIONS_WINDOW)) {
                 log.warn("[RateLimit] Destinations limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva.");

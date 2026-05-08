@@ -295,6 +295,10 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + id));
         String trimmed = (name == null || name.isBlank()) ? null : name.strip();
+        if (trimmed != null && trimmed.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Naziv avio kompanije ne sme biti duži od 100 karaktera");
+        }
         booking.setAirlineName(trimmed);
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Airline name za {} → '{}'", saved.getBookingRef(), trimmed);
@@ -308,6 +312,10 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + id));
         String trimmed = (code == null || code.isBlank()) ? null : code.strip().toUpperCase();
+        if (trimmed != null && trimmed.length() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Booking kod ne sme biti duži od 20 karaktera");
+        }
         booking.setAirlineBookingCode(trimmed);
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Airline booking code za {} → '{}'", saved.getBookingRef(), trimmed);
