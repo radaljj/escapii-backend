@@ -15,6 +15,8 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "selectedDate.departureDate",  target = "departureDate")
     @Mapping(source = "selectedDate.returnDate",     target = "returnDate")
     @Mapping(source = "exclusionCostEur",            target = "exclusionCostEur")
+    @Mapping(source = "airlineName",                 target = "airlineName")
+    @Mapping(source = "airlineBookingCode",          target = "airlineBookingCode")
     @Mapping(target = "excludedDestinations", expression = "java(buildExclusionList(entity))")
     @Mapping(target = "passengerNames",       expression = "java(buildPassengerNames(entity))")
     public abstract AdminBookingResponse toResponse(Booking entity);
