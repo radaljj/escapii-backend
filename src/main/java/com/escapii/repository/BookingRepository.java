@@ -22,12 +22,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Učitava sve bookinge zajedno sa svim isključenim destinacijama (JOIN FETCH)
      * i putnicima (@BatchSize) — ukupno 2 SQL upita bez obzira na N rezervacija.
      *
-     * @EntityGraph JOIN-uje 5 excluded destination kolona u jednom SELECT-u.
+     * @EntityGraph JOIN-uje 3 excluded destination kolone u jednom SELECT-u.
      * Passengers se učitavaju batch-om (50 po upitu) zahvaljujući @BatchSize na entitetu.
      */
     @EntityGraph(attributePaths = {
-        "excludedDestination1", "excludedDestination2", "excludedDestination3",
-        "excludedDestination4", "excludedDestination5"
+        "excludedDestination1", "excludedDestination2", "excludedDestination3"
     })
     List<Booking> findAllByOrderByCreatedAtDesc();
 
@@ -38,7 +37,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @EntityGraph(attributePaths = {
         "excludedDestination1", "excludedDestination2", "excludedDestination3",
-        "excludedDestination4", "excludedDestination5", "passengers"
+        "passengers"
     })
     Optional<Booking> findWithDetailsById(Long id);
 
