@@ -99,7 +99,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <!-- Separator -->
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin-bottom:20px;"></div>
 
-                <!-- 11-day forecast strip -->
+                <!-- Forecast strip (travel days only) -->
                 <table width="100%%" cellpadding="0" cellspacing="0">
                   <tr>%s</tr>
                 </table>
@@ -149,7 +149,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         );
     }
 
-    // ── 11-day forecast strip ─────────────────────────────────────────────────
+    // ── Travel days forecast strip ───────────────────────────────────────────
 
     private String buildDayCards(List<DailyForecast> forecast, LocalDate depDate, LocalDate retDate) {
         StringBuilder sb = new StringBuilder();
@@ -158,6 +158,9 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
         for (int i = 0; i < forecast.size(); i++) {
             DailyForecast d = forecast.get(i);
+            // Prikazujemo samo dane dok je putnik na putu
+            if (d.date().isBefore(depDate) || d.date().isAfter(retDate)) continue;
+
             boolean isDep   = d.date().equals(depDate);
             boolean isRet   = d.date().equals(retDate);
             boolean isToday = d.date().equals(today);

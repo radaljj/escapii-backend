@@ -18,7 +18,7 @@ public record DailyForecast(
             case 1                           -> "🌤";
             case 2                           -> "⛅";
             case 3                           -> "☁️";
-            case 45, 48                      -> "🌫️";
+            case 45, 48                      -> "🌁";
             case 51, 53, 55                  -> "🌦️";
             case 61, 63, 65, 80, 81, 82      -> "🌧️";
             case 71, 73, 75, 77, 85, 86      -> "🌨️";

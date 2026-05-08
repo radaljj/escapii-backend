@@ -30,7 +30,7 @@ public class WeatherServiceImpl implements WeatherService {
             "https://api.open-meteo.com/v1/forecast"
             + "?latitude=%.4f&longitude=%.4f"
             + "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum"
-            + "&timezone=auto&forecast_days=11";
+            + "&timezone=auto&forecast_days=16";
 
     private static final String USER_AGENT = "Escapii/1.0 (contact@escapii.com)";
     private static final int    TIMEOUT_SEC = 10;
@@ -94,7 +94,7 @@ public class WeatherServiceImpl implements WeatherService {
 
     // ── Vremenska prognoza (Open-Meteo) ───────────────────────────────────────
 
-    /** Preuzima 7-dnevnu dnevnu prognozu. Nikad ne šalje ime grada ka API-ju. */
+    /** Preuzima 16-dnevnu dnevnu prognozu. Nikad ne šalje ime grada ka API-ju. */
     private List<DailyForecast> fetchForecast(double lat, double lon) throws Exception {
         String url = OPEN_METEO_URL.formatted(lat, lon);
 
