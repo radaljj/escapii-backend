@@ -123,6 +123,13 @@ public class Booking {
     // ── Airline booking code ─────────────────────────────────────────
 
     /**
+     * Naziv avio kompanije (npr. "Wizz Air").
+     * Unosi admin — prikazuje se korisniku na reveal stranici.
+     */
+    @Column(name = "airline_name", length = 100)
+    private String airlineName;
+
+    /**
      * Kod avio kompanije za check-in (npr. "ABC123").
      * Unosi admin nakon potvrde rezervacije — prikazuje se korisniku na reveal stranici.
      */

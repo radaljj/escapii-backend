@@ -290,6 +290,19 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public AdminBookingResponse setAirlineName(Long id, String name) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+        String trimmed = (name == null || name.isBlank()) ? null : name.strip();
+        booking.setAirlineName(trimmed);
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Airline name za {} → '{}'", saved.getBookingRef(), trimmed);
+        return adminBookingMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public AdminBookingResponse setAirlineBookingCode(Long id, String code) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

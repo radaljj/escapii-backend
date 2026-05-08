@@ -170,6 +170,18 @@ public class AdminController {
     }
 
     /**
+     * PATCH /api/admin/bookings/{id}/airline-name
+     * Body: { "name": "Wizz Air" }
+     * Naziv avio kompanije — prikazuje se korisniku na reveal stranici.
+     */
+    @PatchMapping("/bookings/{id}/airline-name")
+    public ResponseEntity<AdminBookingResponse> setAirlineName(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(adminService.setAirlineName(id, body.get("name")));
+    }
+
+    /**
      * PATCH /api/admin/bookings/{id}/airline-code
      * Body: { "code": "ABC123" }
      * Kod avio kompanije za check-in — prikazuje se korisniku na reveal stranici.

@@ -28,5 +28,6 @@ public interface AdminService {
     AdminBookingResponse updateAdminNotes(Long id, String adminNotes);
     AdminBookingResponse setDestination(Long id, String destination);
     AdminBookingResponse setWeatherCity(Long id, String weatherCity);
+    AdminBookingResponse setAirlineName(Long id, String name);
     AdminBookingResponse setAirlineBookingCode(Long id, String code);
 }

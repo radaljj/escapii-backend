@@ -87,6 +87,7 @@ public class RevealServiceImpl implements RevealService {
                 Map.entry("addons",               addons),
                 Map.entry("totalPriceAll",        booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
                 Map.entry("firstName",            booking.getFirstName() != null ? booking.getFirstName() : ""),
+                Map.entry("airlineName",           booking.getAirlineName() != null ? booking.getAirlineName() : ""),
                 Map.entry("airlineBookingCode",   booking.getAirlineBookingCode() != null ? booking.getAirlineBookingCode() : "")
         );
     }
