@@ -170,6 +170,18 @@ public class AdminController {
     }
 
     /**
+     * PATCH /api/admin/bookings/{id}/airline-code
+     * Body: { "code": "ABC123" }
+     * Kod avio kompanije za check-in — prikazuje se korisniku na reveal stranici.
+     */
+    @PatchMapping("/bookings/{id}/airline-code")
+    public ResponseEntity<AdminBookingResponse> setAirlineBookingCode(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(adminService.setAirlineBookingCode(id, body.get("code")));
+    }
+
+    /**
      * POST /api/admin/bookings/{id}/send-reveal
      * Ručno šalje reveal email. Ako je već poslato → 409 Conflict.
      * Header X-Frontend-Url: URL WordPress sajta koji okida request

@@ -293,7 +293,8 @@
       "PowerShell(winget install ffmpeg --accept-source-agreements --accept-package-agreements 2>&1)",
       "PowerShell(Select-String -Pattern \"success|install|already|error\" -CaseSensitive:$false)",
       "Bash(export PATH=\"$PATH:/c/Users/user/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-7.1.1-full_build/bin\")",
-      "Bash(ffmpeg -i '/c/Users/user/Local Sites/escapii/app/public/wp-content/themes/escapii-theme/assets/hero-bg.mp4')"
+      "Bash(ffmpeg -i '/c/Users/user/Local Sites/escapii/app/public/wp-content/themes/escapii-theme/assets/hero-bg.mp4')",
+      "Bash(curl -s -X GET \"http://localhost:8080/api/admin/errors/trigger-test-error\" -H \"X-Admin-Key: 123\")"
     ]
   }
 }

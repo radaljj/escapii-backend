@@ -32,4 +32,12 @@ public class PassengerInfo {
      */
     @Column(name = "visa_info", length = 500)
     private String visaInfo;
+
+    /** Da li putnik ima validan pasoš (važeći najmanje 6 meseci od povratka). */
+    @Column(name = "has_valid_passport", nullable = false)
+    private Boolean hasValidPassport = true;
+
+    /** Broj pasoša kojim putnik putuje — unosi se pri rezervaciji. Opciono. */
+    @Column(name = "passport_number", length = 50)
+    private String passportNumber;
 }

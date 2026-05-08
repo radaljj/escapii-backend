@@ -142,5 +142,12 @@ public class BookingRequest {
          */
         @Size(max = 500, message = "Informacija o vizi ne sme biti duža od 500 karaktera")
         private String visaInfo;
+
+        /** Da li putnik ima validan pasoš (važeći najmanje 6 meseci od povratka). */
+        private Boolean hasValidPassport = true;
+
+        /** Broj pasoša kojim putnik putuje. Opciono. */
+        @Size(max = 50, message = "Broj pasoša ne sme biti duži od 50 karaktera")
+        private String passportNumber;
     }
 }

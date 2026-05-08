@@ -65,14 +65,6 @@ public class Booking {
     @JoinColumn(name = "excluded_dest3_id")
     private Destination excludedDestination3; // +10€ flat
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "excluded_dest4_id")
-    private Destination excludedDestination4; // +15€ flat
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "excluded_dest5_id")
-    private Destination excludedDestination5; // +15€ flat
-
     @Column(nullable = false)
     private Integer exclusionCount = 0;
 
@@ -128,7 +120,14 @@ public class Booking {
     @Column(nullable = false)
     private Integer totalPriceAll = 0;       // kompletna cena rezervacije
 
-    // ── Pasoš ─────────────────────────────────────────────────────────
+    // ── Airline booking code ─────────────────────────────────────────
+
+    /**
+     * Kod avio kompanije za check-in (npr. "ABC123").
+     * Unosi admin nakon potvrde rezervacije — prikazuje se korisniku na reveal stranici.
+     */
+    @Column(name = "airline_booking_code", length = 20)
+    private String airlineBookingCode;
 
     // ── Kontakt ───────────────────────────────────────────────────────
 

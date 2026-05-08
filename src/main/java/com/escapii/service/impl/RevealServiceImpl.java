@@ -74,19 +74,20 @@ public class RevealServiceImpl implements RevealService {
         List<String> addons = getAddons(booking);
 
         return Map.ofEntries(
-                Map.entry("destination",       booking.getAssignedDestination()),
-                Map.entry("departureDate",     booking.getSelectedDate().getDepartureDate().toString()),
-                Map.entry("returnDate",        booking.getSelectedDate().getReturnDate() != null
-                                                   ? booking.getSelectedDate().getReturnDate().toString() : ""),
-                Map.entry("bookingRef",        booking.getBookingRef()),
-                Map.entry("departureAirport",  booking.getDepartureAirport() != null ? booking.getDepartureAirport() : ""),
-                Map.entry("numberOfNights",    booking.getSelectedDate().getNumberOfNights()),
-                Map.entry("passengers",        passengerNames),
+                Map.entry("destination",          booking.getAssignedDestination()),
+                Map.entry("departureDate",        booking.getSelectedDate().getDepartureDate().toString()),
+                Map.entry("returnDate",           booking.getSelectedDate().getReturnDate() != null
+                                                      ? booking.getSelectedDate().getReturnDate().toString() : ""),
+                Map.entry("bookingRef",           booking.getBookingRef()),
+                Map.entry("departureAirport",     booking.getDepartureAirport() != null ? booking.getDepartureAirport() : ""),
+                Map.entry("numberOfNights",       booking.getSelectedDate().getNumberOfNights()),
+                Map.entry("passengers",           passengerNames),
                 // Dodaci za popup detalje
-                Map.entry("numberOfTravelers", booking.getNumberOfTravelers() != null ? booking.getNumberOfTravelers() : 1),
-                Map.entry("addons",            addons),
-                Map.entry("totalPriceAll",     booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
-                Map.entry("firstName",         booking.getFirstName() != null ? booking.getFirstName() : "")
+                Map.entry("numberOfTravelers",    booking.getNumberOfTravelers() != null ? booking.getNumberOfTravelers() : 1),
+                Map.entry("addons",               addons),
+                Map.entry("totalPriceAll",        booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
+                Map.entry("firstName",            booking.getFirstName() != null ? booking.getFirstName() : ""),
+                Map.entry("airlineBookingCode",   booking.getAirlineBookingCode() != null ? booking.getAirlineBookingCode() : "")
         );
     }
 

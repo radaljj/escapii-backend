@@ -383,13 +383,16 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               %s
               %s
               %s
+              %s
             </div>
             """.formatted(
             EmailHtmlBuilder.step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#2D5F6B;'>24 sata</strong>",
                       "Proveravamo dostupnost i potvrđujemo vašu rezervaciju."),
-            EmailHtmlBuilder.step("2", "Vremenska prognoza — <strong style='color:#2D5F6B;'>7 dana pre polaska</strong>",
+            EmailHtmlBuilder.step("2", "Detalji rezervacije i uplata",
+                      "Javićemo vam se sa svim detaljima — koracima za uplatu, pravilima putovanja i svim informacijama koje su vam potrebne pre polaska."),
+            EmailHtmlBuilder.step("3", "Vremenska prognoza — <strong style='color:#2D5F6B;'>7 dana pre polaska</strong>",
                       "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
-            EmailHtmlBuilder.step("3", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>72h pre polaska</strong>",
+            EmailHtmlBuilder.step("4", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>72h pre polaska</strong>",
                       "Koverta otkriva gde putujete. ✉")
         );
     }
@@ -534,9 +537,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         List<com.escapii.model.Destination> excl = Arrays.asList(
             booking.getExcludedDestination1(),
             booking.getExcludedDestination2(),
-            booking.getExcludedDestination3(),
-            booking.getExcludedDestination4(),
-            booking.getExcludedDestination5()
+            booking.getExcludedDestination3()
         );
         for (com.escapii.model.Destination d : excl) {
             if (d == null) continue;

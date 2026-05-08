@@ -34,8 +34,6 @@ public abstract class AdminBookingMapper {
         if (b.getExcludedDestination1() != null) list.add(b.getExcludedDestination1().getName());
         if (b.getExcludedDestination2() != null) list.add(b.getExcludedDestination2().getName());
         if (b.getExcludedDestination3() != null) list.add(b.getExcludedDestination3().getName());
-        if (b.getExcludedDestination4() != null) list.add(b.getExcludedDestination4().getName());
-        if (b.getExcludedDestination5() != null) list.add(b.getExcludedDestination5().getName());
         return list;
     }
 }

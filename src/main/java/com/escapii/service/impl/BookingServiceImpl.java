@@ -78,9 +78,7 @@ public class BookingServiceImpl implements BookingService {
         Destination   excl1 = resolveDestination(request.getExcludedDestination1Id());
         Destination   excl2 = resolveDestination(request.getExcludedDestination2Id());
         Destination   excl3 = resolveDestination(request.getExcludedDestination3Id());
-        Destination   excl4 = resolveDestination(request.getExcludedDestination4Id());
-        Destination   excl5 = resolveDestination(request.getExcludedDestination5Id());
-        int exclusionCount  = countNonNull(excl1, excl2, excl3, excl4, excl5);
+        int exclusionCount  = countNonNull(excl1, excl2, excl3);
 
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
@@ -88,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether()
         );
 
-        Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, excl4, excl5, exclusionCount, price));
+        Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, exclusionCount, price));
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",
                 saved.getBookingRef(), saved.getNumberOfTravelers(),
@@ -170,7 +168,6 @@ public class BookingServiceImpl implements BookingService {
     private Booking buildBooking(
             BookingRequest request, AvailableDate date,
             Destination excl1, Destination excl2, Destination excl3,
-            Destination excl4, Destination excl5,
             int exclusionCount, PricePreviewResponse price
     ) {
         Booking b = new Booking();
@@ -182,8 +179,6 @@ public class BookingServiceImpl implements BookingService {
         b.setExcludedDestination1(excl1);
         b.setExcludedDestination2(excl2);
         b.setExcludedDestination3(excl3);
-        b.setExcludedDestination4(excl4);
-        b.setExcludedDestination5(excl5);
         b.setExclusionCount(exclusionCount);
         b.setExclusionCostEur(price.getExclusionCostFlat());
 
@@ -198,7 +193,9 @@ public class BookingServiceImpl implements BookingService {
 
         b.setPassengers(request.getPassengers().stream()
                 .map(p -> new com.escapii.model.PassengerInfo(
-                        p.getName(), p.getGender(), p.getDateOfBirth(), p.getVisaInfo()))
+                        p.getName(), p.getGender(), p.getDateOfBirth(), p.getVisaInfo(),
+                        p.getHasValidPassport() != null ? p.getHasValidPassport() : true,
+                        p.getPassportNumber()))
                 .toList());
 
         b.setBasePricePerPerson(date.getBasePrice());
