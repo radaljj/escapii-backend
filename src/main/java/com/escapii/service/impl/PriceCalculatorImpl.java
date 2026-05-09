@@ -80,7 +80,6 @@ public class PriceCalculatorImpl implements PriceCalculator {
         if (type == null) return 0;
         return switch (type) {
             case SUPERIOR -> SUPERIOR_PP;
-            case PREMIUM  -> PREMIUM_PP;
             default       -> 0;
         };
     }
