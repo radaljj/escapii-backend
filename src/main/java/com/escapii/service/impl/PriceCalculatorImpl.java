@@ -11,14 +11,13 @@ import org.springframework.stereotype.Service;
  * <p>
  * Po osobi (× n putnika):
  * Osnovna cena  → iz AvailableDate (definisana pri unosu termina)
- * Superior    → +50€/pp
- * Premium     → +130€/pp
- * Doručak     → +13€/pp
+ * Superior    → +100€/pp
+ * Doručak     → +20€/pp
  * Sedišta     → +24€/pp (12€/smer × 2 smera)
  * Osiguranje  → +12€/pp
  * <p>
- * Isključivanja (max 3 za sve aerodrome):
- * 1. besplatno | 2. +15€/pp | 3. +15€/pp
+ * Isključivanja (max 4 za sve aerodrome):
+ * 1. besplatno | 2. +15€/pp | 3. +15€/pp | 4. +15€/pp
  * <p>
  * Kabinski kofer (selektivan po putniku):
  * +100€/pp (50€/smer × 2 smera)
@@ -26,13 +25,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class PriceCalculatorImpl implements PriceCalculator {
 
-    public static final Integer SUPERIOR_PP      = 50;
-    public static final Integer PREMIUM_PP       = 130;
+    public static final Integer SUPERIOR_PP      = 100;
     private static final Integer CABIN_SUITCASE  = 100;  // 50€/smer × 2 smera
     public static final Integer INSURANCE_PP     = 12;
-    public static final Integer BREAKFAST_PP     = 13;
+    public static final Integer BREAKFAST_PP     = 20;
     public static final Integer SEATS_PP         = 24;   // 12€/smer × 2 smera, po osobi
-    private static final Integer EXCLUSION_PP    = 15;   // po osobi, za 2. i 3. isključivanje
+    private static final Integer EXCLUSION_PP    = 15;   // po osobi, za 2., 3. i 4. isključivanje
     private static final Integer SOLO_SURCHARGE  = 60;   // doplata za solo putnika
 
     @Override
@@ -70,12 +68,12 @@ public class PriceCalculatorImpl implements PriceCalculator {
     }
 
     /**
-     * Sve aerodrome: max 3 isključivanja.
-     * 1. → 0€ | 2. → +15€/pp | 3. → +15€/pp
+     * Sve aerodrome: max 4 isključivanja.
+     * 1. → 0€ | 2. → +15€/pp | 3. → +15€/pp | 4. → +15€/pp
      */
     private int calcExclusionCost(int exclusionCount, int n) {
         if (exclusionCount <= 1) return 0;
-        return Math.min(exclusionCount - 1, 2) * EXCLUSION_PP * n;
+        return Math.min(exclusionCount - 1, 3) * EXCLUSION_PP * n;
     }
 
     private int resolveAccommodationExtra(AccommodationType type) {
