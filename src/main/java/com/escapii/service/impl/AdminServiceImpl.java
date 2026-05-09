@@ -312,7 +312,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + id));
         String trimmed = (code == null || code.isBlank()) ? null : code.strip().toUpperCase();
-        if (trimmed != null && trimmed.length() > 20) {
+        if (trimmed != null && trimmed.length() > 25) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Booking kod ne sme biti duži od 20 karaktera");
         }
