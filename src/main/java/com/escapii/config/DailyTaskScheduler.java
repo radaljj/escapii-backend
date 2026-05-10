@@ -1,7 +1,9 @@
 package com.escapii.config;
 
 import com.escapii.model.Booking;
+import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
+import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.DigestEmailService;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DailyTaskScheduler {
 
-    private final BookingSchedulingService schedulingService;
-    private final BookingRepository        bookingRepository;
-    private final DigestEmailService       digestEmailService;
+    private final BookingSchedulingService     schedulingService;
+    private final BookingRepository            bookingRepository;
+    private final DigestEmailService           digestEmailService;
+    private final AvailableDateRepository      availableDateRepository;
+    private final CustomDateInquiryRepository  inquiryRepository;
 
     @Scheduled(cron = "0 0 7 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -29,6 +33,8 @@ public class DailyTaskScheduler {
         schedulingService.sendPendingForecasts();
         schedulingService.cancelStalePendingBookings();
         sendDigest();
+        cleanupExpiredDates();
+        cleanupClosedInquiries();
     }
 
     /** Ručno okidanje iz AdminController-a — okida iste taskove kao i automatski. */
@@ -37,6 +43,35 @@ public class DailyTaskScheduler {
         schedulingService.sendPendingForecasts();
         schedulingService.cancelStalePendingBookings();
         sendDigest();
+    }
+
+    // ── Cleanup ───────────────────────────────────────────────────────────────
+
+    /**
+     * Briše termine čiji je datum polaska prošao:
+     * - bez rezervacija → briše se iz baze
+     * - sa rezervacijama → deaktivira se (čuva istoriju)
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void cleanupExpiredDates() {
+        LocalDate today = LocalDate.now();
+        int deleted     = availableDateRepository.deleteExpiredWithNoBookings(today);
+        int deactivated = availableDateRepository.deactivateExpiredWithBookings(today);
+        if (deleted > 0 || deactivated > 0) {
+            log.info("[Cleanup] Termini: obrisano={}, deaktivirano={}", deleted, deactivated);
+        }
+    }
+
+    /**
+     * Briše zatvorene upite (status=CLOSED) koji su zatvoreni pre više od 24 sata.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void cleanupClosedInquiries() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        int deleted = inquiryRepository.deleteClosedBefore(cutoff);
+        if (deleted > 0) {
+            log.info("[Cleanup] Upiti: obrisano {} zatvorenih upita starijih od 24h", deleted);
+        }
     }
 
     public Map<String, String> sendRevealForBooking(Long id, String url) {

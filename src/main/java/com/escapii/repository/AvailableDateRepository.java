@@ -6,6 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,4 +35,22 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
      * Vraća Optional.empty() ako token ne postoji ili termin nije privatan.
      */
     Optional<AvailableDate> findByPrivateTokenAndIsPrivateTrue(String privateToken);
+
+    /**
+     * Briše prošle termine koji NEMAJU nijednu rezervaciju.
+     * Sigurno — ne narušava FK constraints.
+     */
+    @Modifying
+    @Query("DELETE FROM AvailableDate d WHERE d.departureDate < :today " +
+           "AND NOT EXISTS (SELECT b FROM Booking b WHERE b.selectedDate.id = d.id)")
+    int deleteExpiredWithNoBookings(@Param("today") LocalDate today);
+
+    /**
+     * Deaktivira prošle termine koji IMAJU rezervacije — ne brišemo ih, čuvamo istoriju.
+     */
+    @Modifying
+    @Query("UPDATE AvailableDate d SET d.active = false WHERE d.departureDate < :today " +
+           "AND d.active = true " +
+           "AND EXISTS (SELECT b FROM Booking b WHERE b.selectedDate.id = d.id)")
+    int deactivateExpiredWithBookings(@Param("today") LocalDate today);
 }

@@ -57,4 +57,12 @@ public class CustomDateInquiry {
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    /**
+     * Vreme kada je upit zatvoren (status → CLOSED).
+     * Koristi se za automatsko brisanje 24h nakon zatvaranja.
+     * Null = upit još nije zatvoren.
+     */
+    @Column
+    private LocalDateTime closedAt;
 }

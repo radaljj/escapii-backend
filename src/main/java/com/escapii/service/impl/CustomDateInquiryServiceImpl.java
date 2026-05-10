@@ -6,6 +6,7 @@ import com.escapii.model.CustomDateInquiry;
 import com.escapii.model.InquiryStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.CustomDateInquiryService;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,7 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Upit sa ID=" + id + " nije pronađen."));
         inquiry.setStatus(status);
+        inquiry.setClosedAt(status == InquiryStatus.CLOSED ? LocalDateTime.now() : null);
         log.info("[Inquiry] Status upita id={} promenjen na {}", id, status);
         return new CustomDateInquiryResponse(inquiryRepository.save(inquiry));
     }
