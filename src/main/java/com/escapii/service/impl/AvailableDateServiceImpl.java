@@ -23,7 +23,7 @@ public class AvailableDateServiceImpl implements AvailableDateService {
 
     @Override
     public List<AvailableDate> getActiveDatesByAirport(String airport) {
-        return availableDateRepository.findByDepartureAirportAndActiveTrueOrderByDepartureDateAsc(
+        return availableDateRepository.findByDepartureAirportAndActiveTrueAndIsPrivateFalseOrderByDepartureDateAsc(
                 airport.trim().toUpperCase()
         );
     }

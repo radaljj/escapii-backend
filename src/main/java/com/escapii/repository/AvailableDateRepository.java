@@ -12,7 +12,8 @@ import java.util.Optional;
 @Repository
 public interface AvailableDateRepository extends JpaRepository<AvailableDate, Long> {
 
-    List<AvailableDate> findByDepartureAirportAndActiveTrueOrderByDepartureDateAsc(String departureAirport);
+    /** Javni termini — isključuje privatne (isPrivate=true) */
+    List<AvailableDate> findByDepartureAirportAndActiveTrueAndIsPrivateFalseOrderByDepartureDateAsc(String departureAirport);
 
     List<AvailableDate> findAllByOrderByDepartureDateAsc();
 
