@@ -20,7 +20,15 @@ public record MakePrivateRequest(
      * Koliko sati je link validan.
      * Podrazumevano: 72 sata (3 dana).
      */
-    Integer expiresInHours
+    Integer expiresInHours,
+
+    /**
+     * Cena po osobi u EUR — ako je postavljeno, prepisuje basePrice termina.
+     * Admin unosi cenu iz upita (inquiry.price / travelers).
+     * Null = zadržati originalnu cenu termina.
+     */
+    @Min(value = 1, message = "Cena po osobi mora biti pozitivna.")
+    Integer pricePerPerson
 ) {
     /** Vraća expiresInHours ili podrazumevanu vrednost 72. */
     public int effectiveExpiry() {

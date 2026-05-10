@@ -127,7 +127,8 @@ public class AdminController {
         AdminDateResponse response = adminService.makePrivate(
                 id,
                 request.travelers(),
-                request.effectiveExpiry()
+                request.effectiveExpiry(),
+                request.pricePerPerson()
         );
         return ResponseEntity.ok(response);
     }

@@ -19,5 +19,8 @@ public interface AvailableDateService {
      * Pravi termin privatnim — generiše token, postavlja availableSlots i expiresAt.
      * Koristi se iz admin panela kada admin prihvati upit i hoće da pošalje link.
      */
-    AvailableDate makePrivate(Long dateId, int travelers, int expiresInHours);
+    /**
+     * @param pricePerPerson Ako nije null, prepisuje basePrice termina (cena iz upita / broj putnika).
+     */
+    AvailableDate makePrivate(Long dateId, int travelers, int expiresInHours, Integer pricePerPerson);
 }

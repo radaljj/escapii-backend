@@ -46,7 +46,7 @@ public class AvailableDateServiceImpl implements AvailableDateService {
 
     @Override
     @Transactional
-    public AvailableDate makePrivate(Long dateId, int travelers, int expiresInHours) {
+    public AvailableDate makePrivate(Long dateId, int travelers, int expiresInHours, Integer pricePerPerson) {
         AvailableDate date = availableDateRepository.findById(dateId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Termin sa ID=" + dateId + " nije pronađen."));
@@ -56,9 +56,13 @@ public class AvailableDateServiceImpl implements AvailableDateService {
         date.setAvailableSlots(travelers);
         date.setExpiresAt(LocalDateTime.now().plusHours(expiresInHours));
 
+        if (pricePerPerson != null && pricePerPerson > 0) {
+            date.setBasePrice(pricePerPerson);
+        }
+
         AvailableDate saved = availableDateRepository.save(date);
-        log.info("[Private] Termin id={} postavljen kao privatan. Token={}, travelers={}, expiresAt={}",
-                saved.getId(), saved.getPrivateToken(), travelers, saved.getExpiresAt());
+        log.info("[Private] Termin id={} privatizovan. Token={}, travelers={}, basePrice={}€/os, expiresAt={}",
+                saved.getId(), saved.getPrivateToken(), travelers, saved.getBasePrice(), saved.getExpiresAt());
         return saved;
     }
 }

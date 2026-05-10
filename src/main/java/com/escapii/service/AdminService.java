@@ -29,7 +29,7 @@ public interface AdminService {
      * Pretvara termin u privatni — generiše token, postavlja slots i expiresAt.
      * Vraća ažuriran AdminDateResponse sa privateToken poljem.
      */
-    AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours);
+    AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours, Integer pricePerPerson);
 
     // ── Rezervacije ──
     List<AdminBookingResponse> getAllBookings();

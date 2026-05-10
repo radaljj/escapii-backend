@@ -348,8 +348,8 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours) {
-        AvailableDate saved = availableDateService.makePrivate(dateId, travelers, expiresInHours);
+    public AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours, Integer pricePerPerson) {
+        AvailableDate saved = availableDateService.makePrivate(dateId, travelers, expiresInHours, pricePerPerson);
         return new AdminDateResponse(saved);
     }
 
