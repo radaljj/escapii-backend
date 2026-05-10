@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -150,6 +151,17 @@ public class AdminController {
             @PathVariable Long id,
             @RequestParam InquiryStatus value) {
         return ResponseEntity.ok(adminService.updateInquiryStatus(id, value));
+    }
+
+    /**
+     * PATCH /api/admin/inquiries/{id}/price?value=279.00 — postavi cenu putovanja.
+     * Vrednost u EUR (ukupno za sve putnike). Null vrednost briše cenu.
+     */
+    @PatchMapping("/inquiries/{id}/price")
+    public ResponseEntity<CustomDateInquiryResponse> updateInquiryPrice(
+            @PathVariable Long id,
+            @RequestParam(required = false) BigDecimal value) {
+        return ResponseEntity.ok(adminService.updateInquiryPrice(id, value));
     }
 
     // ══ REZERVACIJE ══════════════════════════════════════════════════════════

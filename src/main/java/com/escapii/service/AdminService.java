@@ -8,6 +8,7 @@ import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.InquiryStatus;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface AdminService {
@@ -42,4 +43,5 @@ public interface AdminService {
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);
+    CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price);
 }

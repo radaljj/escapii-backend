@@ -32,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.escapii.util.TokenUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -364,6 +365,12 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status) {
         return inquiryService.updateStatus(id, status);
+    }
+
+    @Override
+    @Transactional
+    public CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price) {
+        return inquiryService.updatePrice(id, price);
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

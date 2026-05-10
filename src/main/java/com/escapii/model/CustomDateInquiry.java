@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -46,6 +47,13 @@ public class CustomDateInquiry {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private InquiryStatus status = InquiryStatus.PENDING;
+
+    /**
+     * Cena putovanja koju admin unosi nakon obrade upita (ukupno, u EUR).
+     * Null = cena još nije određena.
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal price;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

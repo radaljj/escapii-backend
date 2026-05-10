@@ -3,6 +3,7 @@ package com.escapii.dto;
 import com.escapii.model.CustomDateInquiry;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -21,6 +22,7 @@ public class CustomDateInquiryResponse {
     private final String        email;
     private final String        notes;
     private final String        status;
+    private final BigDecimal    price;
     private final LocalDateTime createdAt;
 
     public CustomDateInquiryResponse(CustomDateInquiry e) {
@@ -32,6 +34,7 @@ public class CustomDateInquiryResponse {
         this.email                = e.getEmail();
         this.notes                = e.getNotes();
         this.status               = e.getStatus().name();
+        this.price                = e.getPrice();
         this.createdAt            = e.getCreatedAt();
     }
 }

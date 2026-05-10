@@ -4,6 +4,8 @@ import com.escapii.dto.CustomDateInquiryRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.model.CustomDateInquiry;
 import com.escapii.model.InquiryStatus;
+
+import java.math.BigDecimal;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.CustomDateInquiryService;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +59,17 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
                         "Upit sa ID=" + id + " nije pronađen."));
         inquiry.setStatus(status);
         log.info("[Inquiry] Status upita id={} promenjen na {}", id, status);
+        return new CustomDateInquiryResponse(inquiryRepository.save(inquiry));
+    }
+
+    @Override
+    @Transactional
+    public CustomDateInquiryResponse updatePrice(Long id, BigDecimal price) {
+        CustomDateInquiry inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Upit sa ID=" + id + " nije pronađen."));
+        inquiry.setPrice(price);
+        log.info("[Inquiry] Cena upita id={} postavljena na {}", id, price);
         return new CustomDateInquiryResponse(inquiryRepository.save(inquiry));
     }
 }
