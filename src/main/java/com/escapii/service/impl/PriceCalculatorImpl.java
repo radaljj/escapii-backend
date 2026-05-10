@@ -37,7 +37,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType, int exclusionCount, int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
-        int breakfast = hasBreakfast ? BREAKFAST_PP : 0;
+        int breakfast = hasBreakfast ? BREAKFAST_PP * date.getNumberOfNights() : 0;
         int seatsTogether = hasSeatsTogether ? SEATS_PP : 0;
         int insurance = hasInsurance ? INSURANCE_PP : 0;
 
