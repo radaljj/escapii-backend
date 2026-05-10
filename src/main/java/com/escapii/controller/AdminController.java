@@ -8,6 +8,7 @@ import com.escapii.dto.AdminNotesRequest;
 import com.escapii.dto.AdminWeatherCityRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.MakePrivateRequest;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.InquiryStatus;
@@ -141,6 +142,20 @@ public class AdminController {
     @GetMapping("/inquiries")
     public ResponseEntity<List<CustomDateInquiryResponse>> getAllInquiries() {
         return ResponseEntity.ok(adminService.getAllInquiries());
+    }
+
+    /**
+     * POST /api/admin/inquiries/{id}/create-private-date
+     * Kreira privatni termin direktno iz podataka upita (atomično, bez race conditiona).
+     * Termin je privatan od prvog trenutka — nikad nije javno vidljiv.
+     * Body: { "pricePerPerson": 299, "travelers": 2, "expiresInHours": 72 }
+     */
+    @PostMapping("/inquiries/{id}/create-private-date")
+    public ResponseEntity<AdminDateResponse> createPrivateDateFromInquiry(
+            @PathVariable Long id,
+            @Valid @RequestBody CreatePrivateDateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(adminService.createPrivateDateFromInquiry(id, request));
     }
 
     /**

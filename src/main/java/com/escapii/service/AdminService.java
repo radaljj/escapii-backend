@@ -3,6 +3,7 @@ package com.escapii.service;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
@@ -44,4 +45,10 @@ public interface AdminService {
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);
     CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price);
+
+    /**
+     * Kreira privatni termin direktno iz podataka upita (atomično — bez race conditiona).
+     * Termin je privatan od prvog trenutka; nikad nije javno vidljiv.
+     */
+    AdminDateResponse createPrivateDateFromInquiry(Long inquiryId, CreatePrivateDateRequest request);
 }

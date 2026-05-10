@@ -3,6 +3,7 @@ package com.escapii.service.impl;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.mapper.AdminBookingMapper;
@@ -10,6 +11,7 @@ import com.escapii.mapper.DestinationMapper;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.CustomDateInquiry;
 import com.escapii.model.Destination;
 import com.escapii.model.InquiryStatus;
 import com.escapii.model.RevealEvent;
@@ -33,6 +35,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.escapii.util.TokenUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -371,6 +375,38 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price) {
         return inquiryService.updatePrice(id, price);
+    }
+
+    // ══ KREIRANJE PRIVATNOG TERMINA IZ UPITA ════════════════════════════════
+
+    @Override
+    @Transactional
+    public AdminDateResponse createPrivateDateFromInquiry(Long inquiryId, CreatePrivateDateRequest req) {
+        CustomDateInquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Upit nije pronađen: " + inquiryId));
+
+        LocalDate depDate = inquiry.getDesiredDepartureDate();
+        LocalDate retDate = depDate.plusDays(inquiry.getNights());
+
+        AvailableDate date = new AvailableDate();
+        date.setDepartureDate(depDate);
+        date.setReturnDate(retDate);
+        date.setNumberOfNights(inquiry.getNights());
+        date.setDepartureAirport(inquiry.getAirport());
+        date.setAvailableSlots(req.travelers());
+        date.setBasePrice(req.pricePerPerson());
+        date.setActive(true);
+        // Odmah privatan — nikad nije javno vidljiv
+        date.setIsPrivate(true);
+        date.setPrivateToken(TokenUtils.generate());
+        date.setExpiresAt(LocalDateTime.now().plusHours(req.effectiveExpiry()));
+
+        AvailableDate saved = availableDateRepository.save(date);
+        log.info("[ADMIN] Privatni termin kreiran za upit id={} | {} → {} | token={} | {}€/os | expiresAt={}",
+                inquiryId, depDate, retDate, saved.getPrivateToken(), req.pricePerPerson(), saved.getExpiresAt());
+
+        return new AdminDateResponse(saved);
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════
