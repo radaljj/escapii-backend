@@ -6,8 +6,11 @@ import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.AdminDestinationRequest;
 import com.escapii.dto.AdminNotesRequest;
 import com.escapii.dto.AdminWeatherCityRequest;
+import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
+import com.escapii.dto.MakePrivateRequest;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.InquiryStatus;
 import com.escapii.config.DailyTaskScheduler;
 import com.escapii.service.AdminService;
 import jakarta.validation.Valid;
@@ -108,6 +111,45 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> deleteDate(@PathVariable Long id) {
         adminService.deleteDate(id);
         return ResponseEntity.ok(Map.of("message", "Termin obrisan"));
+    }
+
+    /**
+     * POST /api/admin/dates/{id}/make-private
+     * Body: { "travelers": 2, "expiresInHours": 72 }
+     * Pretvara termin u privatni — generiše token, ograničava slots, postavlja expiresAt.
+     * Odgovor sadrži privateToken koji admin kopira i šalje korisniku.
+     */
+    @PostMapping("/dates/{id}/make-private")
+    public ResponseEntity<AdminDateResponse> makeDatePrivate(
+            @PathVariable Long id,
+            @Valid @RequestBody MakePrivateRequest request) {
+        AdminDateResponse response = adminService.makePrivate(
+                id,
+                request.travelers(),
+                request.effectiveExpiry()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    // ══ UPITI ZA CUSTOM TERMINE ══════════════════════════════════════════════
+
+    /**
+     * GET /api/admin/inquiries — svi upiti za custom termine, najnoviji prvi.
+     */
+    @GetMapping("/inquiries")
+    public ResponseEntity<List<CustomDateInquiryResponse>> getAllInquiries() {
+        return ResponseEntity.ok(adminService.getAllInquiries());
+    }
+
+    /**
+     * PATCH /api/admin/inquiries/{id}/status?value=IN_REVIEW — promeni status upita.
+     * Dozvoljene vrednosti: PENDING, IN_REVIEW, PRIVATE_SENT, CLOSED
+     */
+    @PatchMapping("/inquiries/{id}/status")
+    public ResponseEntity<CustomDateInquiryResponse> updateInquiryStatus(
+            @PathVariable Long id,
+            @RequestParam InquiryStatus value) {
+        return ResponseEntity.ok(adminService.updateInquiryStatus(id, value));
     }
 
     // ══ REZERVACIJE ══════════════════════════════════════════════════════════

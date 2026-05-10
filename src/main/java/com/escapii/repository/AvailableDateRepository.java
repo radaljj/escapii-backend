@@ -24,4 +24,10 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
      */
     @Query("SELECT b.selectedDate FROM Booking b WHERE b.id = :bookingId")
     Optional<AvailableDate> findByBookingId(@Param("bookingId") Long bookingId);
+
+    /**
+     * Pronalazi privatni termin po tokenu.
+     * Vraća Optional.empty() ako token ne postoji ili termin nije privatan.
+     */
+    Optional<AvailableDate> findByPrivateTokenAndIsPrivateTrue(String privateToken);
 }

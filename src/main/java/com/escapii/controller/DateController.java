@@ -15,7 +15,7 @@ import java.util.List;
 public class DateController {
 
     private final AvailableDateService availableDateService;
-    private final DateMapper dateMapper;
+    private final DateMapper           dateMapper;
 
     /**
      * GET /api/dates?airport=BEG
@@ -27,6 +27,20 @@ public class DateController {
     public ResponseEntity<List<DateResponse>> getDatesByAirport(@RequestParam String airport) {
         return ResponseEntity.ok(
                 dateMapper.toResponseList(availableDateService.getActiveDatesByAirport(airport))
+        );
+    }
+
+    /**
+     * GET /api/dates/private?token=TOKEN
+     *
+     * Vraća privatni termin po tokenu (iz linka koji admin pošalje korisniku).
+     * Token je UUID bez crtica (32 hex karaktera).
+     * 404 → token ne postoji | 410 → link istekao
+     */
+    @GetMapping("/private")
+    public ResponseEntity<DateResponse> getPrivateDate(@RequestParam String token) {
+        return ResponseEntity.ok(
+                dateMapper.toResponse(availableDateService.getPrivateDateByToken(token))
         );
     }
 }

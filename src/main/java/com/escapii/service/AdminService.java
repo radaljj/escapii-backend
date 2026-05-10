@@ -3,8 +3,10 @@ package com.escapii.service;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.InquiryStatus;
 
 import java.util.List;
 
@@ -22,6 +24,12 @@ public interface AdminService {
     void updateSlots(Long id, int slots);
     void deleteDate(Long id);
 
+    /**
+     * Pretvara termin u privatni — generiše token, postavlja slots i expiresAt.
+     * Vraća ažuriran AdminDateResponse sa privateToken poljem.
+     */
+    AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours);
+
     // ── Rezervacije ──
     List<AdminBookingResponse> getAllBookings();
     AdminBookingResponse updateBookingStatus(Long id, BookingStatus status);
@@ -30,4 +38,8 @@ public interface AdminService {
     AdminBookingResponse setWeatherCity(Long id, String weatherCity);
     AdminBookingResponse setAirlineName(Long id, String name);
     AdminBookingResponse setAirlineBookingCode(Long id, String code);
+
+    // ── Upiti za custom termine ──
+    List<CustomDateInquiryResponse> getAllInquiries();
+    CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);
 }

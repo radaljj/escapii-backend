@@ -3,6 +3,7 @@ package com.escapii.service.impl;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
@@ -10,12 +11,16 @@ import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.Destination;
+import com.escapii.model.InquiryStatus;
 import com.escapii.model.RevealEvent;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
+import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.AdminService;
+import com.escapii.service.AvailableDateService;
+import com.escapii.service.CustomDateInquiryService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +41,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-    private final AvailableDateRepository availableDateRepository;
-    private final DestinationRepository   destinationRepository;
-    private final BookingRepository       bookingRepository;
-    private final RevealEventRepository   revealEventRepository;
-    private final AdminBookingMapper      adminBookingMapper;
-    private final DestinationMapper       destinationMapper;
-    private final BookingEmailService     bookingEmailService;
-    private final WaitlistService         waitlistService;
+    private final AvailableDateRepository    availableDateRepository;
+    private final DestinationRepository      destinationRepository;
+    private final BookingRepository          bookingRepository;
+    private final RevealEventRepository      revealEventRepository;
+    private final CustomDateInquiryRepository inquiryRepository;
+    private final AdminBookingMapper         adminBookingMapper;
+    private final DestinationMapper          destinationMapper;
+    private final BookingEmailService        bookingEmailService;
+    private final WaitlistService            waitlistService;
+    private final AvailableDateService       availableDateService;
+    private final CustomDateInquiryService   inquiryService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -333,6 +341,29 @@ public class AdminServiceImpl implements AdminService {
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Weather city za {} → '{}'", saved.getBookingRef(), trimmed);
         return adminBookingMapper.toResponse(saved);
+    }
+
+    // ══ PRIVATNI TERMINI ═════════════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours) {
+        AvailableDate saved = availableDateService.makePrivate(dateId, travelers, expiresInHours);
+        return new AdminDateResponse(saved);
+    }
+
+    // ══ UPITI ZA CUSTOM TERMINE ══════════════════════════════════════════════
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CustomDateInquiryResponse> getAllInquiries() {
+        return inquiryService.getAllInquiries();
+    }
+
+    @Override
+    @Transactional
+    public CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status) {
+        return inquiryService.updateStatus(id, status);
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

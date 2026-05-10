@@ -7,6 +7,7 @@ import lombok.Setter;
 import jakarta.persistence.Version;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,26 @@ public class AvailableDate {
 
     @Column(nullable = false)
     private Boolean active = true;
+
+    /**
+     * Privatni termin — kreiran samo za određenog korisnika na osnovu upita.
+     * Vidljiv samo putem privateToken linka; ne pojavljuje se u javnom listingu.
+     */
+    @Column(nullable = false)
+    private Boolean isPrivate = false;
+
+    /**
+     * Jedinstveni token za pristup privatnom terminu.
+     * Null za javne termine. Generišemo UUID bez crtica.
+     */
+    @Column(unique = true, length = 64)
+    private String privateToken;
+
+    /**
+     * Vreme isteka privatnog linka.
+     * Null za javne termine. Tipično NOW + 72 sata.
+     */
+    private LocalDateTime expiresAt;
 
     /**
      * Optimistic locking — štiti od race condition-a kada više korisnika
