@@ -139,7 +139,9 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         );
 
         return EmailHtmlBuilder.wrapBase(
+            "#f97316",
             "#0a1628",
+            EmailHtmlBuilder.statusBadge("Prognoza", "orange"),
             "Tvoja vremenska prognoza",
             "Putovanje · " + depDateStr,
             "",

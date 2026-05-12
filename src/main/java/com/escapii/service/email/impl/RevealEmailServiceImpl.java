@@ -78,7 +78,9 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             """.formatted(firstName, departure, magicLink, magicLink);
 
         String html = EmailHtmlBuilder.wrapBase(
+            "#3b82f6",
             "#0f1f3d",
+            EmailHtmlBuilder.statusBadge("Otkrij destinaciju", "blue"),
             "Tvoja destinacija te čeka!",
             "72 sata pre polaska — stiglo je vreme.",
             ref,
@@ -134,7 +136,9 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             """.formatted(ref, name, email, dest, departure);
 
         String html = EmailHtmlBuilder.wrapBase(
+            "#16a34a",
             "#064e3b",
+            EmailHtmlBuilder.statusBadge("Reveal poslan", "green"),
             "✅ Destinacija poslata",
             "Reveal email je automatski poslan korisniku.",
             ref,

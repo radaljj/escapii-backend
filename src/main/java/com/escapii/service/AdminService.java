@@ -45,6 +45,7 @@ public interface AdminService {
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);
     CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price);
+    void deleteInquiry(Long id);
 
     /**
      * Kreira privatni termin direktno iz podataka upita (atomično — bez race conditiona).

@@ -159,8 +159,18 @@ public class AdminController {
     }
 
     /**
-     * PATCH /api/admin/inquiries/{id}/status?value=IN_REVIEW — promeni status upita.
-     * Dozvoljene vrednosti: PENDING, IN_REVIEW, PRIVATE_SENT, CLOSED
+     * DELETE /api/admin/inquiries/{id} — trajno obriši upit.
+     * Poziva se automatski sa fronta kada se status postavi na PRIVATE_SENT.
+     */
+    @DeleteMapping("/inquiries/{id}")
+    public ResponseEntity<Map<String, String>> deleteInquiry(@PathVariable Long id) {
+        adminService.deleteInquiry(id);
+        return ResponseEntity.ok(Map.of("message", "Upit obrisan"));
+    }
+
+    /**
+     * PATCH /api/admin/inquiries/{id}/status?value=PRIVATE_SENT — promeni status upita.
+     * Dozvoljene vrednosti: PENDING, PRIVATE_SENT
      */
     @PatchMapping("/inquiries/{id}/status")
     public ResponseEntity<CustomDateInquiryResponse> updateInquiryStatus(

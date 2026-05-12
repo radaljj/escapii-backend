@@ -82,7 +82,9 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         }
 
         String html = EmailHtmlBuilder.wrapBase(
-            "#0D2E38",
+            "#f97316",
+            "#1e1b4b",
+            EmailHtmlBuilder.statusBadge("Jutarnji pregled", "blue"),
             "Jutarnji pregled",
             todayStr + " &middot; " + upcoming.size() + " aktivnih rezervacija",
             "",

@@ -126,7 +126,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String notes = buildNotesBox(booking.getNotes());
 
         return EmailHtmlBuilder.wrapBase(
-            "#0D2E38",
+            "#f97316",
+            "#1e1b4b",
+            EmailHtmlBuilder.statusBadge("Novi upit", "blue"),
             "Novi upit stigao",
             depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
@@ -192,22 +194,28 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         String body = """
             <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.65;">
-              Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>
+              Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>
               uspešno smo primili vaš upit za putovanje. Naš tim pregledava vaše preference
-              i kontaktiraće vas u roku od <strong style="color:#2D5F6B;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
+              i kontaktiraće vas u roku od <strong style="color:#08112a;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
             </p>
+            %s
+            %s
             %s
             %s
             %s
             """.formatted(
             EmailHtmlBuilder.esc(booking.getFirstName()),
             customerTripCard(booking, depDate, retDate, n),
+            buildPassengersSection(booking),
             EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n),
+            buildPriceTable(booking, n),
             nextStepsBlock()
         );
 
         return EmailHtmlBuilder.wrapBase(
-            "#0D2E38",
+            "#f97316",
+            "#08112a",
+            EmailHtmlBuilder.statusBadge("Na čekanju", "orange"),
             "Vaš upit je primljen",
             "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
             booking.getBookingRef(),
@@ -226,8 +234,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
 
-        String accentColor = confirmed ? "#16a34a" : "#dc2626";
-        String badgeLabel  = confirmed ? "POTVRĐENA" : "OTKAZANA";
         String heading     = confirmed ? "Rezervacija potvrđena!" : "Rezervacija otkazana";
         String subtitle    = confirmed
             ? "vaša rezervacija je zvanično potvrđena! Sve je spremno — vi samo spakujte stvari i prepustite se misteriji. ✦"
@@ -237,7 +243,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (confirmed) {
             content = """
                 <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
-                  Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>%s
+                  Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>%s
                 </p>
                 %s
                 %s
@@ -256,7 +262,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         } else {
             content = """
                 <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
-                  Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>%s
+                  Draga/i <strong style="color:#08112a;">%s</strong>,<br><br>%s
                 </p>
                 %s
                 <div style="background:#fff5f5;border:1px solid #fee2e2;border-left:3px solid #dc2626;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
@@ -276,7 +282,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         }
 
         return EmailHtmlBuilder.wrapBase(
+            confirmed ? "#16a34a" : "#dc2626",
             confirmed ? "#064e3b" : "#450a0a",
+            confirmed
+                ? EmailHtmlBuilder.statusBadge("Potvrđena", "green")
+                : EmailHtmlBuilder.statusBadge("Otkazana", "red"),
             heading,
             confirmed
                 ? "Vaše putovanje je zvanično u kalendaru. Jedino što ne znate — kuda idete! ✦"
@@ -315,15 +325,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 "Rezervacija potvrđena",
                 "Danas · " + today,
                 "Sve je rezervisano — letovi, smeštaj, transfer. Možete se opustiti — doslovno."),
-            EmailHtmlBuilder.timelineItem("🌤", "#EDF4F5", "#CA8A71",
+            EmailHtmlBuilder.timelineItem("🌤", "#fff7ed", "#f97316",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
                 "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
-            EmailHtmlBuilder.timelineItem("✉", "#BFD8DE", "#2D5F6B",
+            EmailHtmlBuilder.timelineItem("✉", "#eff6ff", "#3b82f6",
                 "Koverta s destinacijom",
                 revealStr + " · 72h pre polaska",
                 "Konačno — otkrivate gde idete!"),
-            EmailHtmlBuilder.timelineItem("✈", "#0D2E38", "#F5C9A8",
+            EmailHtmlBuilder.timelineItem("✈", "#f3f4f6", "#e5e7eb",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
                 "Dođite na aerodrom i dozvolite sebi da budete iznenađeni.")

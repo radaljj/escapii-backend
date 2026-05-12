@@ -42,7 +42,10 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             """.formatted(EmailHtmlBuilder.esc(airportName));
 
         String html = EmailHtmlBuilder.wrapBase(
-            "#08112a", "Na listi ste čekanja",
+            "#f97316",
+            "#08112a",
+            EmailHtmlBuilder.statusBadge("Lista čekanja", "orange"),
+            "Na listi ste čekanja",
             "Bićete prvi koji će saznati čim se otvore novi termini.",
             "", body,
             "Escapii · escapii.com",
@@ -77,7 +80,10 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             """.formatted(EmailHtmlBuilder.esc(airportName), EmailHtmlBuilder.esc(airportName));
 
         String html = EmailHtmlBuilder.wrapBase(
-            "#08112a", "Otvorili su se novi termini!",
+            "#f97316",
+            "#08112a",
+            EmailHtmlBuilder.statusBadge("Novi termini", "orange"),
+            "Otvorili su se novi termini!",
             "Termini se brzo popunjavaju — rezervišite na vreme!",
             "", body,
             "Escapii · escapii.com",

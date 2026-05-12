@@ -377,6 +377,17 @@ public class AdminServiceImpl implements AdminService {
         return inquiryService.updatePrice(id, price);
     }
 
+    @Override
+    @Transactional
+    public void deleteInquiry(Long id) {
+        if (!inquiryRepository.existsById(id)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "Upit nije pronađen: " + id);
+        }
+        inquiryRepository.deleteById(id);
+        log.info("[ADMIN] Obrisan upit id={}", id);
+    }
+
     // ══ KREIRANJE PRIVATNOG TERMINA IZ UPITA ════════════════════════════════
 
     @Override
