@@ -186,11 +186,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildCustomerReceivedHtml(Booking booking) {
-        // Null-safe date resolution (private dates always have selectedDate, but guard anyway)
-        String depDate = booking.getSelectedDate() != null
-            ? booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT) : "—";
-        String retDate = booking.getSelectedDate() != null
-            ? booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT) : "—";
+        String depDate = booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT);
+        String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
 
         String body = """
@@ -204,7 +201,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             %s
             """.formatted(
             EmailHtmlBuilder.esc(booking.getFirstName()),
-            buildBoardingPassBlock(booking, depDate, retDate, n),
+            customerTripCard(booking, depDate, retDate, n),
             EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n),
             nextStepsBlock()
         );
