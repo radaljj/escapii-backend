@@ -186,12 +186,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildCustomerReceivedHtml(Booking booking) {
-        String depDate = booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT);
-        String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
+        // Null-safe date resolution (private dates always have selectedDate, but guard anyway)
+        String depDate = booking.getSelectedDate() != null
+            ? booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT) : "—";
+        String retDate = booking.getSelectedDate() != null
+            ? booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT) : "—";
         int n = booking.getNumberOfTravelers();
 
         String body = """
-            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.65;">
+            <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.65;">
               Draga/i <strong style="color:#2D5F6B;">%s</strong>,<br><br>
               uspešno smo primili vaš upit za putovanje. Naš tim pregledava vaše preference
               i kontaktiraće vas u roku od <strong style="color:#2D5F6B;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
@@ -201,7 +204,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             %s
             """.formatted(
             EmailHtmlBuilder.esc(booking.getFirstName()),
-            customerTripCard(booking, depDate, retDate, n),
+            buildBoardingPassBlock(booking, depDate, retDate, n),
             EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n),
             nextStepsBlock()
         );
@@ -327,6 +330,286 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
                 "Dođite na aerodrom i dozvolite sebi da budete iznenađeni.")
+        );
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Boarding pass block — replaces customerTripCard in customer-received email
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Generiše boarding-pass vizuelni blok za email korisniku.
+     * Koristi table-based inline CSS za maksimalnu kompatibilnost s email klijentima.
+     * Prikazuje logo, rutu, datume, broj putnika i stvarna imena putnika.
+     */
+    private String buildBoardingPassBlock(Booking booking, String depDate, String retDate, int n) {
+        String airportCode = EmailHtmlBuilder.esc(booking.getDepartureAirport());
+        String airportCity = EmailHtmlBuilder.resolveAirportName(booking.getDepartureAirport());
+
+        // Passenger names — show actual passengers, fall back to booking holder
+        List<PassengerInfo> pax = booking.getPassengers();
+        String passengerNamesHtml;
+        String avatarInitials;
+
+        if (pax != null && !pax.isEmpty()) {
+            StringBuilder names = new StringBuilder();
+            names.append("<div style=\"font-size:15px;font-weight:700;color:#1a1410;line-height:1.3;\">")
+                 .append(EmailHtmlBuilder.esc(pax.get(0).getName()))
+                 .append("</div>");
+            for (int i = 1; i < pax.size(); i++) {
+                names.append("<div style=\"font-size:13px;font-weight:600;color:#6b5d4f;line-height:1.4;margin-top:1px;\">")
+                     .append(EmailHtmlBuilder.esc(pax.get(i).getName()))
+                     .append("</div>");
+            }
+            passengerNamesHtml = names.toString();
+            String[] parts = pax.get(0).getName().split(" ", 2);
+            avatarInitials = (parts.length >= 2)
+                ? String.valueOf(parts[0].charAt(0)) + String.valueOf(parts[1].charAt(0))
+                : parts[0].length() > 0 ? String.valueOf(parts[0].charAt(0)) : "?";
+        } else {
+            passengerNamesHtml = "<div style=\"font-size:15px;font-weight:700;color:#1a1410;\">"
+                + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName())
+                + "</div>";
+            avatarInitials = String.valueOf(booking.getFirstName().charAt(0))
+                + String.valueOf(booking.getLastName().charAt(0));
+        }
+
+        return """
+            <!-- ═══ BOARDING PASS ══════════════════════════════════════════════ -->
+            <table width="100%%" cellpadding="0" cellspacing="0"
+                   style="margin-bottom:20px;border-radius:18px;overflow:hidden;
+                          border:1px solid rgba(200,119,90,0.18);
+                          box-shadow:0 8px 32px rgba(168,94,68,0.14);">
+
+              <!-- Gradient header -->
+              <tr>
+                <td style="background:linear-gradient(135deg,#a85e44 0%%,#c8775a 50%%,#e29070 100%%);
+                           padding:22px 30px 60px;border-radius:18px 18px 0 0;">
+                  <table width="100%%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:middle;">
+                        <img src="%s" alt="escapii" height="34"
+                             style="display:block;border:0;height:34px;max-width:140px;"
+                             onerror="this.style.display='none'">
+                      </td>
+                      <td style="text-align:right;vertical-align:middle;">
+                        <span style="display:inline-block;font-size:9px;letter-spacing:3px;
+                                     font-weight:700;color:#fff;
+                                     background:rgba(255,255,255,0.14);
+                                     border:1px solid rgba(255,255,255,0.3);
+                                     padding:6px 14px;border-radius:100px;">
+                          ✦ BOARDING PASS
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- White body — pulled up with negative margin simulation via inner table -->
+              <tr>
+                <td style="background:#f5efe2;padding:0 20px 0;">
+                  <table width="100%%" cellpadding="0" cellspacing="0"
+                         style="background:#ffffff;border-radius:18px;margin-top:-32px;
+                                box-shadow:0 -4px 24px rgba(168,94,68,0.1);overflow:hidden;">
+                    <tr>
+                      <td style="padding:30px 30px 24px;">
+
+                        <!-- Route -->
+                        <table width="100%%" cellpadding="0" cellspacing="0"
+                               style="margin-bottom:22px;">
+                          <tr>
+                            <td style="width:40%%;vertical-align:top;">
+                              <div style="font-family:Georgia,'Times New Roman',serif;
+                                          font-size:54px;font-weight:700;color:#1a1410;
+                                          line-height:0.9;letter-spacing:-1px;">%s</div>
+                              <div style="font-size:13px;font-weight:600;color:#1a1410;
+                                          margin-top:8px;">%s</div>
+                              <div style="font-size:11px;color:#a89888;margin-top:2px;">
+                                Polazni aerodrom</div>
+                            </td>
+                            <td style="width:20%%;text-align:center;vertical-align:middle;
+                                       padding:0 10px;">
+                              <div style="font-size:20px;color:#c8775a;line-height:1;">✈</div>
+                              <div style="border-top:2px dashed #e29070;margin:8px 0;"></div>
+                            </td>
+                            <td style="width:40%%;vertical-align:top;text-align:right;">
+                              <div style="font-family:Georgia,'Times New Roman',serif;
+                                          font-size:54px;font-weight:700;color:#a85e44;
+                                          font-style:italic;line-height:0.9;">???</div>
+                              <div style="font-size:13px;font-weight:600;color:#1a1410;
+                                          margin-top:8px;">Iznenađenje</div>
+                              <div style="font-size:11px;color:#a89888;margin-top:2px;">
+                                otkrij 72h pre polaska</div>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Meta strip: Polazak · Povratak · Putnika -->
+                        <table width="100%%" cellpadding="0" cellspacing="0"
+                               style="background:linear-gradient(135deg,
+                                        rgba(200,119,90,0.07),rgba(200,119,90,0.02));
+                                      border:1px solid rgba(200,119,90,0.16);
+                                      border-radius:12px;margin-bottom:22px;">
+                          <tr>
+                            <td style="padding:14px 18px;
+                                       border-right:1px solid rgba(200,119,90,0.16);">
+                              <div style="font-size:8px;letter-spacing:3px;
+                                          text-transform:uppercase;color:#a89888;font-weight:700;">
+                                Polazak</div>
+                              <div style="font-size:14px;font-weight:700;color:#1a1410;
+                                          margin-top:5px;font-family:'Courier New',monospace;">
+                                %s</div>
+                            </td>
+                            <td style="padding:14px 18px;
+                                       border-right:1px solid rgba(200,119,90,0.16);">
+                              <div style="font-size:8px;letter-spacing:3px;
+                                          text-transform:uppercase;color:#a89888;font-weight:700;">
+                                Povratak</div>
+                              <div style="font-size:14px;font-weight:700;color:#1a1410;
+                                          margin-top:5px;font-family:'Courier New',monospace;">
+                                %s</div>
+                            </td>
+                            <td style="padding:14px 18px;">
+                              <div style="font-size:8px;letter-spacing:3px;
+                                          text-transform:uppercase;color:#a89888;font-weight:700;">
+                                Putnika</div>
+                              <div style="font-size:14px;font-weight:700;color:#1a1410;
+                                          margin-top:5px;font-family:'Courier New',monospace;">
+                                %d</div>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Bottom: passengers + ref -->
+                        <table width="100%%" cellpadding="0" cellspacing="0"
+                               style="border-top:1.5px dashed rgba(26,20,16,0.12);padding-top:20px;">
+                          <tr>
+                            <td style="padding-top:18px;vertical-align:top;">
+                              <table cellpadding="0" cellspacing="0">
+                                <tr>
+                                  <td style="vertical-align:top;">
+                                    <!-- Avatar -->
+                                    <div style="width:40px;height:40px;border-radius:50%%;
+                                                background:linear-gradient(135deg,#e29070,#c8775a);
+                                                color:#fff;font-weight:700;font-size:13px;
+                                                text-align:center;line-height:40px;
+                                                letter-spacing:0.04em;margin-right:12px;
+                                                box-shadow:0 4px 12px rgba(200,119,90,0.45);
+                                                display:inline-block;">%s</div>
+                                  </td>
+                                  <td style="padding-left:12px;vertical-align:top;">
+                                    <div style="font-size:8px;letter-spacing:3px;
+                                                text-transform:uppercase;color:#a89888;
+                                                font-weight:700;margin-bottom:5px;">Putnici</div>
+                                    %s
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                            <td style="padding-top:18px;vertical-align:top;text-align:right;">
+                              <div style="font-size:8px;letter-spacing:3px;
+                                          text-transform:uppercase;color:#a89888;
+                                          font-weight:700;margin-bottom:5px;">Rezervacija</div>
+                              <div style="font-family:'Courier New',monospace;font-size:13px;
+                                          font-weight:700;color:#a85e44;letter-spacing:0.04em;">
+                                %s</div>
+                            </td>
+                          </tr>
+                        </table>
+
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Tear line -->
+              <tr>
+                <td style="background:#f5efe2;padding:0;">
+                  <table width="100%%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:14px;">
+                        <div style="width:28px;height:28px;background:#f3f4f6;
+                                    border-radius:50%%;margin-left:-14px;"></div>
+                      </td>
+                      <td style="border-top:1px dashed rgba(26,20,16,0.2);"></td>
+                      <td style="width:14px;">
+                        <div style="width:28px;height:28px;background:#f3f4f6;
+                                    border-radius:50%%;margin-right:-14px;"></div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Stub -->
+              <tr>
+                <td style="background:#f5efe2;padding:18px 30px 26px;
+                           border-radius:0 0 18px 18px;">
+                  <table width="100%%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:22%%;">
+                        <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
+                                    color:#a89888;font-weight:700;">Gate</div>
+                        <div style="font-size:16px;font-weight:700;color:#1a1410;margin-top:4px;
+                                    font-family:'Courier New',monospace;">—</div>
+                      </td>
+                      <td style="width:28%%;">
+                        <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
+                                    color:#a89888;font-weight:700;">Boarding</div>
+                        <div style="font-size:14px;font-weight:700;color:#1a1410;margin-top:4px;
+                                    font-family:'Courier New',monospace;">USKORO</div>
+                      </td>
+                      <td style="width:22%%;">
+                        <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
+                                    color:#a89888;font-weight:700;">Sedište</div>
+                        <div style="font-size:16px;font-weight:700;color:#1a1410;margin-top:4px;
+                                    font-family:'Courier New',monospace;">—</div>
+                      </td>
+                      <td style="text-align:right;vertical-align:bottom;">
+                        <!-- Decorative barcode -->
+                        <div style="display:inline-flex;gap:2px;height:38px;
+                                    align-items:stretch;vertical-align:bottom;">
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:5px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:5px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
+                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+            <!-- ═══ END BOARDING PASS ════════════════════════════════════════════ -->
+            """.formatted(
+            EmailHtmlBuilder.LOGO_WHITE_URL,   // logo src
+            airportCode,                        // IATA (BEG)
+            airportCity,                        // city name
+            depDate,                            // Polazak
+            retDate,                            // Povratak
+            n,                                  // Putnika
+            avatarInitials,                     // avatar
+            passengerNamesHtml,                 // names list
+            EmailHtmlBuilder.esc(booking.getBookingRef())  // ref code
         );
     }
 
@@ -470,8 +753,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         rows.append(priceRow("Osnovna cena", EmailHtmlBuilder.eur(booking.getBasePricePerPerson()) + " / os", n, booking.getBasePricePerPerson() * n, false));
         if (booking.getAccommodationExtra() > 0)
             rows.append(priceRow(EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType()) + " upgrade", EmailHtmlBuilder.eur(booking.getAccommodationExtra()) + " / os", n, booking.getAccommodationExtra() * n, false));
-        if (Boolean.TRUE.equals(booking.getHasBreakfast()))
-            rows.append(priceRow("Doručak", PriceCalculatorImpl.BREAKFAST_PP + " € / os", n, PriceCalculatorImpl.BREAKFAST_PP * n, false));
+        if (Boolean.TRUE.equals(booking.getHasBreakfast())) {
+            int nights       = booking.getSelectedDate() != null ? booking.getSelectedDate().getNumberOfNights() : 1;
+            int bfstPP       = PriceCalculatorImpl.BREAKFAST_PP * nights;
+            rows.append(priceRow("Doručak (" + nights + " noći)", bfstPP + " € / os", n, bfstPP * n, false));
+        }
         if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))
             rows.append(priceRow("Sedišta zajedno (12 € × 2 smera)", PriceCalculatorImpl.SEATS_PP + " € / os", n, PriceCalculatorImpl.SEATS_PP * n, false));
         if (Boolean.TRUE.equals(booking.getHasInsurance()))
