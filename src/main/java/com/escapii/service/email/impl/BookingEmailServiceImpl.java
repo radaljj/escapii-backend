@@ -3,6 +3,7 @@ package com.escapii.service.email.impl;
 import com.escapii.model.Booking;
 import com.escapii.model.PassengerInfo;
 import com.escapii.util.LogUtils;
+import com.escapii.service.AppErrorService;
 import com.escapii.service.DestinationService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
@@ -10,7 +11,9 @@ import com.escapii.service.email.core.EmailSender;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +31,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     private final EmailSender sender;
     private final DestinationService destinationService;
+
+    /** @Lazy sprečava circular dependency: AppErrorService → emailAlert → BookingEmailServiceImpl */
+    @Autowired @Lazy
+    private AppErrorService appErrorService;
 
     @Value("${app.team-email}")
     private String teamEmail;
@@ -49,43 +56,77 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     @Override
     @Async
     public void sendTeamNotification(Booking booking) {
-        sender.send(
+        boolean ok = sender.send(
             teamEmail,
             "Novi upit %s — %s %s".formatted(booking.getBookingRef(), booking.getFirstName(), booking.getLastName()),
             buildTeamEmailHtml(booking)
         );
+        if (!ok) {
+            log.warn("[Email] Tim-notifikacija NIJE poslata za booking {}", booking.getBookingRef());
+            recordEmailError("EMAIL team-notification ref=" + booking.getBookingRef());
+        }
     }
 
     @Override
     @Async
     public void sendCustomerConfirmation(Booking booking) {
-        sender.send(
+        boolean ok = sender.send(
             booking.getEmail(),
             "Upit primljen — %s".formatted(booking.getBookingRef()),
             buildCustomerReceivedHtml(booking)
         );
+        if (!ok) {
+            log.warn("[Email] Potvrda korisniku NIJE poslata za booking {} ({})",
+                    booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
+            recordEmailError("EMAIL customer-confirmation ref=" + booking.getBookingRef());
+        }
     }
 
     @Override
     @Async
     public void sendBookingConfirmed(Booking booking) {
-        sender.send(
+        boolean ok = sender.send(
             booking.getEmail(),
             "Rezervacija potvrđena — %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, true)
         );
-        log.info("[Email] Poslat CONFIRMED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+        if (ok) {
+            log.info("[Email] Poslat CONFIRMED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+        } else {
+            log.warn("[Email] CONFIRMED email NIJE poslat za booking {} ({})",
+                    booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
+            recordEmailError("EMAIL booking-confirmed ref=" + booking.getBookingRef());
+        }
     }
 
     @Override
     @Async
     public void sendBookingCancelled(Booking booking) {
-        sender.send(
+        boolean ok = sender.send(
             booking.getEmail(),
             "Rezervacija otkazana — %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, false)
         );
-        log.info("[Email] Poslat CANCELLED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+        if (ok) {
+            log.info("[Email] Poslat CANCELLED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+        } else {
+            log.warn("[Email] CANCELLED email NIJE poslat za booking {} ({})",
+                    booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
+            recordEmailError("EMAIL booking-cancelled ref=" + booking.getBookingRef());
+        }
+    }
+
+    /**
+     * Snima grešku slanja emaila u AppError dashboard (vidljivo adminu u 🚨 Greške tabu).
+     * Koristi RuntimeException kao nosač poruke — stack trace nije relevantan za email greške.
+     */
+    private void recordEmailError(String context) {
+        try {
+            appErrorService.record(context, 0,
+                new RuntimeException("Email nije poslat — proveriti SMTP konfiguraciju i log"));
+        } catch (Exception ex) {
+            log.error("[Email] Nije moguće snimiti email grešku u AppErrorService: {}", ex.getMessage());
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

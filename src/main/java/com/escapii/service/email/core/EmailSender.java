@@ -20,7 +20,11 @@ public class EmailSender {
     @Value("${app.mail-from}")
     private String fromEmail;
 
-    public void send(String to, String subject, String html) {
+    /**
+     * Šalje email. Vraća {@code true} ako je email uspešno poslat, {@code false} ako je
+     * došlo do greške (greška je već logovana — caller odlučuje šta dalje).
+     */
+    public boolean send(String to, String subject, String html) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -30,12 +34,15 @@ public class EmailSender {
             helper.setText(html, true);
             mailSender.send(message);
             log.info("[EmailSender] Email poslan na {}", LogUtils.maskEmail(to));
+            return true;
         } catch (MessagingException e) {
             log.error("[EmailSender] MessagingException za {}: {}", LogUtils.maskEmail(to), e.getMessage(), e);
+            return false;
         } catch (Exception e) {
             // MailException (Spring, RuntimeException) — auth failure, connection refused, itd.
             log.error("[EmailSender] Greška pri slanju na {} — proveriti SMTP env vars (MAIL_USERNAME, MAIL_APP_PASSWORD): {}",
                     LogUtils.maskEmail(to), e.getMessage(), e);
+            return false;
         }
     }
 
