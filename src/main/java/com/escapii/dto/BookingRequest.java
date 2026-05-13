@@ -97,6 +97,14 @@ public class BookingRequest {
     @Size(max = 1000, message = "Napomene ne smeju biti duže od 1000 karaktera")
     private String notes;
 
+    // ── Anti-bot zaštita ──────────────────────────────────────────────
+
+    /** Honeypot — mora biti prazan. Bots ga popune, korisnici ne vide polje. */
+    private String website;
+
+    /** Vreme popunjavanja forme u sekundama. Ispod praga = bot. */
+    private Integer formDuration;
+
     /**
      * Normalizuje string polja pre čuvanja:
      *   - trim whitespace sa svih polja

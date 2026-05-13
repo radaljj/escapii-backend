@@ -65,6 +65,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     java.util.Optional<Booking> findByRevealToken(String revealToken);
 
     /**
+     * Duplikat check — isti email + isti termin kreiran u poslednjih 24h.
+     * Koristi se za anti-spam zaštitu pri kreiranju bookinga.
+     */
+    @Query("SELECT COUNT(b) > 0 FROM Booking b " +
+           "WHERE LOWER(b.email) = LOWER(:email) " +
+           "AND b.selectedDate.id = :dateId " +
+           "AND b.createdAt > :since")
+    boolean existsDuplicateBooking(
+            @Param("email")  String email,
+            @Param("dateId") Long dateId,
+            @Param("since")  LocalDateTime since);
+
+    /**
      * CONFIRMED bookingovi kojima:
      *   - assignedDestination je unesena
      *   - revealSentAt je null (još nije poslato)

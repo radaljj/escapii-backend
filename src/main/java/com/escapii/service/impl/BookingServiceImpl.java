@@ -42,6 +42,30 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createBooking(BookingRequest request) {
         request.normalize();
 
+        // ── Anti-bot provjere ─────────────────────────────────────────
+
+        // 0a. Honeypot — mora biti null ili prazan
+        if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
+            log.warn("[AntiBot] Honeypot popunjen — odbijen zahtev (website='{}')", request.getWebsite());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevažeći zahtev");
+        }
+
+        // 0b. Timing — forma popunjena za manje od 4 sekunde = bot
+        if (request.getFormDuration() != null && request.getFormDuration() < 4) {
+            log.warn("[AntiBot] Forma popunjena za {}s — odbijen zahtev", request.getFormDuration());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevažeći zahtev");
+        }
+
+        // 0c. Duplikat — isti email + isti termin u poslednjih 24h
+        if (bookingRepository.existsDuplicateBooking(
+                request.getEmail(),
+                request.getSelectedDateId(),
+                java.time.LocalDateTime.now().minusHours(24))) {
+            log.warn("[AntiBot] Duplikat booking — email='{}' dateId={}", request.getEmail(), request.getSelectedDateId());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Već imate aktivnu rezervaciju za ovaj termin sa ovom email adresom.");
+        }
+
         AvailableDate date  = findActiveDateOrThrow(request.getSelectedDateId());
 
         // 0. Datum polaska mora biti u budućnosti
