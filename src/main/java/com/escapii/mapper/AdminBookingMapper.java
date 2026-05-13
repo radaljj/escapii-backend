@@ -1,8 +1,9 @@
 package com.escapii.mapper;
 
 import com.escapii.dto.AdminBookingResponse;
+import com.escapii.dto.PassengerDetail;
 import com.escapii.model.Booking;
-import com.escapii.model.Destination;
+import com.escapii.model.PassengerInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,16 +19,23 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "airlineName",                 target = "airlineName")
     @Mapping(source = "airlineBookingCode",          target = "airlineBookingCode")
     @Mapping(target = "excludedDestinations", expression = "java(buildExclusionList(entity))")
-    @Mapping(target = "passengerNames",       expression = "java(buildPassengerNames(entity))")
+    @Mapping(target = "passengers",           expression = "java(buildPassengers(entity))")
     public abstract AdminBookingResponse toResponse(Booking entity);
 
     public List<AdminBookingResponse> toResponseList(List<Booking> entities) {
         return entities.stream().map(this::toResponse).toList();
     }
 
-    protected List<String> buildPassengerNames(Booking b) {
+    protected List<PassengerDetail> buildPassengers(Booking b) {
         return b.getPassengers().stream()
-                .map(p -> p.getName())
+                .map(p -> PassengerDetail.builder()
+                        .name(p.getName())
+                        .gender(p.getGender())
+                        .dateOfBirth(p.getDateOfBirth())
+                        .passportNumber(p.getPassportNumber())
+                        .hasValidPassport(p.getHasValidPassport())
+                        .visaInfo(p.getVisaInfo())
+                        .build())
                 .toList();
     }
 

@@ -46,8 +46,8 @@ public class AdminBookingResponse {
     private java.util.List<String> excludedDestinations;
     private Integer exclusionCostEur;
 
-    // Putnici
-    private java.util.List<String> passengerNames;
+    // Putnici — puni detalji
+    private java.util.List<PassengerDetail> passengers;
 
     // Admin (interno)
     private String adminNotes;
