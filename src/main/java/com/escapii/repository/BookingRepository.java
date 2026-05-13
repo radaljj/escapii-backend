@@ -64,6 +64,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Pronađi booking po reveal tokenu (za /api/reveal endpoint). */
     java.util.Optional<Booking> findByRevealToken(String revealToken);
 
+    /** Broj rezervacija vezanih za dati termin (koristi se pre brisanja termina). */
+    long countBySelectedDateId(Long selectedDateId);
+
     /**
      * Duplikat check — isti email + isti termin kreiran u poslednjih 24h.
      * Koristi se za anti-spam zaštitu pri kreiranju bookinga.
