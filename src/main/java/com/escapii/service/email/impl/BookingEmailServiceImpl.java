@@ -814,7 +814,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             rows.append(priceRow("Kabinski kofer (50 € × 2 smera)", "100 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 100, false));
         if (booking.getExclusionCostEur() > 0) {
             int paid = booking.getExclusionCount() - 1;
-            rows.append(priceRow(exclusionLabel(paid, booking.getDepartureAirport()), "—", null, booking.getExclusionCostEur(), true));
+            rows.append(priceRow(exclusionLabel(paid), "—", null, booking.getExclusionCostEur(), true));
         }
 
         return """
@@ -884,19 +884,14 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     /**
-     * Gradi label za red isključivanja u cenovniku — tačno odražava tiered pricing:
-     *   2. i 3. isključivanje: 10€ svako
-     *   4. i 5. isključivanje: 15€ svako
-     *   INI aerodrom: 2. isključivanje +15€ (max 2 ukupno)
+     * Gradi label za red isključivanja u cenovniku.
+     * Pricing: 1. isključivanje besplatno, svako naredno +15€/po osobi (max 3 plaćena).
      */
-    private String exclusionLabel(int paid, String airport) {
-        if ("INI".equalsIgnoreCase(airport)) return "Isključivanja (1× 15€)";
+    private String exclusionLabel(int paid) {
         return switch (paid) {
-            case 1 -> "Isključivanja (1× 10€)";
-            case 2 -> "Isključivanja (2× 10€)";
-            case 3 -> "Isključivanja (2× 10€ + 1× 15€)";
-            case 4 -> "Isključivanja (2× 10€ + 2× 15€)";
-            default -> "Isključivanja (%d plaćena)".formatted(paid);
+            case 1 -> "Isključivanje (1× 15€/os)";
+            case 2 -> "Isključivanja (2× 15€/os)";
+            default -> "Isključivanja (%d× 15€/os)".formatted(paid);
         };
     }
 }
