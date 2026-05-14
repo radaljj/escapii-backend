@@ -97,9 +97,20 @@ public class RevealServiceImpl implements RevealService {
         if (Boolean.TRUE.equals(booking.getHasInsurance()))      addons.add("🛡 Putno osiguranje");
         if (Boolean.TRUE.equals(booking.getHasBreakfast()))      addons.add("🍳 Doručak");
         if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))  addons.add("💺 Sedišta zajedno");
+        if (Boolean.TRUE.equals(booking.getHasConnectingFlights())) addons.add("✈✈ Presedanje");
         if (booking.getCabinSuitcaseCount() != null && booking.getCabinSuitcaseCount() > 0) {
             addons.add("🧳 " + booking.getCabinSuitcaseCount() + "× kabinski kofer");
         }
+
+        // Isključene destinacije
+        List<String> excluded = new java.util.ArrayList<>();
+        if (booking.getExcludedDestination1() != null) excluded.add(booking.getExcludedDestination1().getName());
+        if (booking.getExcludedDestination2() != null) excluded.add(booking.getExcludedDestination2().getName());
+        if (booking.getExcludedDestination3() != null) excluded.add(booking.getExcludedDestination3().getName());
+        if (!excluded.isEmpty()) {
+            addons.add("🚫 Isključeno: " + String.join(", ", excluded));
+        }
+
         return addons;
     }
 
