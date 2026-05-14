@@ -207,6 +207,30 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public void deleteBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+
+        BookingStatus status    = booking.getStatus();
+        BookingStatus oldStatus = booking.getOldStatus();
+
+        boolean wasPaidOrConfirmed = status    == BookingStatus.CONFIRMED
+                                  || oldStatus == BookingStatus.CONFIRMED;
+        if (wasPaidOrConfirmed) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Rezervacija " + booking.getBookingRef() +
+                    " ne može biti obrisana jer je bila potvrđena. " +
+                    "Otkaži je ako je to potrebno.");
+        }
+
+        bookingRepository.deleteById(id);
+        log.info("[ADMIN] Obrisana rezervacija id={} ref={} | status={} oldStatus={}",
+                id, booking.getBookingRef(), status, oldStatus);
+    }
+
+    @Override
+    @Transactional
     public AdminBookingResponse updateBookingStatus(Long id, BookingStatus status) {
         // findWithDetailsById — učitava sve LAZY asocijacije (excluded destinations, passengers)
         // da bi @Async email servis mogao da pristupi njima van transakcije

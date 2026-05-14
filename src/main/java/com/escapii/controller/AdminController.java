@@ -198,6 +198,18 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllBookings());
     }
 
+    /**
+     * DELETE /api/admin/bookings/{id} — trajno briše rezervaciju.
+     * Dozvoljeno samo ako rezervacija nikad nije bila CONFIRMED
+     * (status != CONFIRMED i oldStatus != CONFIRMED).
+     * PENDING i CANCELLED-bez-potvrde rezervacije su briš-eligible.
+     */
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<Map<String, String>> deleteBooking(@PathVariable Long id) {
+        adminService.deleteBooking(id);
+        return ResponseEntity.ok(Map.of("message", "Rezervacija obrisana"));
+    }
+
     /** POST /api/admin/scheduler/test — ručno okida jutarnji digest (samo za testiranje). */
     @PostMapping("/scheduler/test")
     public ResponseEntity<Map<String, String>> testScheduler() {

@@ -20,6 +20,7 @@ public class AdminBookingResponse {
     private Long id;
     private String bookingRef;
     private BookingStatus status;
+    private BookingStatus oldStatus;
     private LocalDateTime createdAt;
 
     // Kontakt

@@ -35,6 +35,7 @@ public interface AdminService {
     // ── Rezervacije ──
     List<AdminBookingResponse> getAllBookings();
     AdminBookingResponse updateBookingStatus(Long id, BookingStatus status);
+    void deleteBooking(Long id);
     AdminBookingResponse updateAdminNotes(Long id, String adminNotes);
     AdminBookingResponse setDestination(Long id, String destination);
     AdminBookingResponse setWeatherCity(Long id, String weatherCity);
