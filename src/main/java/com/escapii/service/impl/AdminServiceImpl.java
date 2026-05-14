@@ -174,10 +174,12 @@ public class AdminServiceImpl implements AdminService {
     public void deleteDate(Long id) {
         AvailableDate date = findDateOrThrow(id);
 
-        long bookingCount = bookingRepository.countBySelectedDateId(id);
+        long bookingCount = bookingRepository.countBySelectedDateIdAndStatusNot(
+                id, com.escapii.model.BookingStatus.CANCELLED);
         if (bookingCount > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Nije moguće obrisati termin koji ima " + bookingCount +
+                    " aktivn" + (bookingCount == 1 ? "u" : (bookingCount < 5 ? "e" : "ih")) +
                     " rezervaci" + (bookingCount == 1 ? "ju" : (bookingCount < 5 ? "je" : "ja")) +
                     ". Prvo otkažite sve rezervacije za ovaj termin.");
         }
