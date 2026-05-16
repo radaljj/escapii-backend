@@ -74,7 +74,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
            "WHERE LOWER(b.email) = LOWER(:email) " +
            "AND b.selectedDate.id = :dateId " +
-           "AND b.createdAt > :since")
+           "AND b.createdAt > :since " +
+           "AND b.status != 'CANCELED'")
     boolean existsDuplicateBooking(
             @Param("email")  String email,
             @Param("dateId") Long dateId,

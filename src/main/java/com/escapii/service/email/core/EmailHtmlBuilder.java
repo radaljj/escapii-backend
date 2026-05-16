@@ -81,63 +81,77 @@ public final class EmailHtmlBuilder {
 
         return """
             <!DOCTYPE html>
-            <html lang="sr" xmlns:v="urn:schemas-microsoft-com:vml">
+            <html lang="sr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
             <head>
               <meta charset="UTF-8">
               <meta name="x-apple-disable-message-reformatting">
               <meta name="viewport" content="width=device-width, initial-scale=1">
               <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-              <meta name="color-scheme" content="light">
+              <meta name="color-scheme" content="light only">
+              <meta name="supported-color-schemes" content="light">
               <!--[if mso]>
-              <noscript><xml><o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
+              <xml><o:OfficeDocumentSettings>
                 <o:PixelsPerInch>96</o:PixelsPerInch>
-              </o:OfficeDocumentSettings></xml></noscript>
-              <style>td,th,div,p,a,h1,h2,h3{font-family:"Segoe UI",sans-serif;mso-line-height-rule:exactly;}</style>
+              </o:OfficeDocumentSettings></xml>
+              <style>
+                td,th,div,p,a,h1,h2,h3 { font-family:"Segoe UI",Arial,sans-serif; mso-line-height-rule:exactly; }
+                body { background:#f3f4f6 !important; }
+              </style>
               <![endif]-->
               <style>
                 @media (max-width:620px) {
                   .mob-full { width:100%% !important; }
                   .mob-pad  { padding:20px !important; }
                 }
+                @media (prefers-color-scheme: dark) {
+                  .force-light-bg { background:#f3f4f6 !important; }
+                  .force-white-bg { background:#ffffff !important; }
+                  .force-footer-bg { background:%s !important; }
+                }
               </style>
             </head>
-            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;">
+            <body style="margin:0;padding:0;word-break:break-word;-webkit-font-smoothing:antialiased;background:#f3f4f6;" bgcolor="#f3f4f6">
 
               <!-- Preheader -->
               <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
                 %s &#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&zwnj;&nbsp;
               </div>
 
-              <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;">
+              <table width="100%%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background:#f3f4f6;" class="force-light-bg">
                 <tr><td align="center" style="padding:40px 16px;">
+                  <!--[if mso]><table width="640" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
                   <table class="mob-full" style="width:640px;max-width:640px;margin:0 auto;" cellpadding="0" cellspacing="0">
 
                     <!-- CARD -->
-                    <tr><td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+                    <tr><td bgcolor="#ffffff" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;" class="force-white-bg">
 
                       <!-- Accent bar -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="background:%s;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                        <tr><td bgcolor="%s" style="background:%s;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
                       </table>
 
                       <!-- Header -->
-                      <table width="100%%" cellpadding="0" cellspacing="0" style="background:%s;">
-                        <tr><td style="padding:28px 40px 26px;" class="mob-pad">
+                      <table width="100%%" cellpadding="0" cellspacing="0">
+                        <tr><td bgcolor="%s" style="background:%s;padding:28px 40px 26px;" class="mob-pad">
 
                           <!-- Logo + Badge row -->
                           <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                             <tr>
                               <td style="vertical-align:middle;">
-                                <img src="%s" alt="escapii" height="38"
-                                     style="display:block;border:0;height:38px;max-width:130px;"
-                                     onerror="this.style.display='none'">
+                                <!--[if mso]>
+                                <p style="margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:2px;">ESCAPII</p>
+                                <![endif]-->
+                                <!--[if !mso]><!-->
+                                <img src="%s" alt="ESCAPII" width="130" height="38"
+                                     style="display:block;border:0;height:38px;width:130px;max-width:130px;">
+                                <!--<![endif]-->
                               </td>
                               <td style="text-align:right;vertical-align:middle;">%s</td>
                             </tr>
                           </table>
 
                           <!-- Heading -->
-                          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#fff;line-height:1.3;margin:0;font-weight:normal;">%s</h1>
+                          <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#ffffff;line-height:1.3;margin:0;font-weight:normal;mso-line-height-rule:exactly;">%s</h1>
                           %s
                           %s
                         </td></tr>
@@ -148,28 +162,32 @@ public final class EmailHtmlBuilder {
 
                       <!-- Body -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="padding:28px 40px;background:#ffffff;" class="mob-pad">
+                        <tr><td bgcolor="#ffffff" style="padding:28px 40px;background:#ffffff;" class="mob-pad force-white-bg">
                           %s
                         </td></tr>
                       </table>
 
                       <!-- Footer -->
                       <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr><td style="background:%s;border-top:1px solid #e5e7eb;padding:16px 40px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.8;">
+                        <tr><td bgcolor="%s" style="background:%s;border-top:1px solid #e5e7eb;padding:16px 40px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.8;" class="force-footer-bg">
                           %s
                         </td></tr>
                       </table>
 
                     </td></tr>
                   </table>
+                  <!--[if mso]></td></tr></table><![endif]-->
                 </td></tr>
               </table>
             </body>
             </html>
             """.formatted(
+            footerBg,           // dark-mode CSS override for footer class
             headingText,        // preheader
-            accentBarColor,     // accent bar
-            headerBg,           // header bg
+            accentBarColor,     // accent bar bgcolor attr
+            accentBarColor,     // accent bar style attr
+            headerBg,           // header bgcolor attr
+            headerBg,           // header style attr
             LOGO_WHITE_URL,     // logo
             badgeHtml,          // badge (desno)
             headingText,        // h1
@@ -177,7 +195,8 @@ public final class EmailHtmlBuilder {
             refHtml,            // ref chip
             mysteryHtml,        // mystery strip
             bodyContent,        // body
-            footerBg,           // footer bg
+            footerBg,           // footer bgcolor attr
+            footerBg,           // footer style attr
             footerText          // footer text
         );
     }
@@ -185,9 +204,9 @@ public final class EmailHtmlBuilder {
     // ── Footer ────────────────────────────────────────────────────────────────────
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#08112a;">escapii</strong> — mystery travel<br>
+            <strong style="color:#08112a;">escapii</strong> — putovanja iznenađenja<br>
             Beograd, Srbija · <a href="mailto:%s" style="color:#6b7280;text-decoration:underline;">%s</a><br><br>
-            <a href="#" style="color:#6b7280;text-decoration:underline;">Politika privatnosti</a>
+            <a href="https://escapii.rs" style="color:#6b7280;text-decoration:underline;">escapii.rs</a>
             """.formatted(email, email);
     }
 
@@ -195,8 +214,8 @@ public final class EmailHtmlBuilder {
     public static String dRow(String label, String value) {
         return """
             <tr style="border-bottom:1px solid #f3f4f6;">
-              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
-              <td style="padding:7px 0;font-size:13px;color:#1f2937;font-weight:500;text-align:right;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:55%%;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#1f2937;font-weight:500;text-align:right;white-space:nowrap;">%s</td>
             </tr>
             """.formatted(label, value);
     }
@@ -204,8 +223,8 @@ public final class EmailHtmlBuilder {
     public static String dRowStrike(String label, String value) {
         return """
             <tr style="border-bottom:1px solid #f3f4f6;">
-              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:45%%;">%s</td>
-              <td style="padding:7px 0;font-size:13px;color:#9ca3af;font-weight:500;text-align:right;text-decoration:line-through;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;width:55%%;">%s</td>
+              <td style="padding:7px 0;font-size:13px;color:#9ca3af;font-weight:500;text-align:right;white-space:nowrap;text-decoration:line-through;">%s</td>
             </tr>
             """.formatted(label, value);
     }

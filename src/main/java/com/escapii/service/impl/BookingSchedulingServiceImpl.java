@@ -36,13 +36,13 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private final ForecastEmailService forecastEmailService;
     private final WeatherService       weatherService;
 
-    @Value("${app.cors-allowed-origin:https://escapii.com}")
+    @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
 
     @Value("${app.cors-extra-origins:}")
     private String corsExtraOrigins;
 
-    @Value("${app.frontend-url:https://escapii.com}")
+    @Value("${app.frontend-url:https://escapii.rs}")
     private String defaultFrontendUrl;
 
     @Override

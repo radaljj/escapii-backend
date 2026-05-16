@@ -18,7 +18,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
     private final EmailSender sender;
 
-    @Value("${app.frontend-url:https://escapii.com}")
+    @Value("${app.frontend-url:https://escapii.rs}")
     private String frontendUrl;
 
     @Value("${app.ops-email}")
@@ -85,7 +85,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "72 sata pre polaska — stiglo je vreme.",
             ref,
             body,
-            "Escapii · escapii.com · Srećan put!",
+            "Escapii · escapii.rs · Srećan put!",
             false
         );
 

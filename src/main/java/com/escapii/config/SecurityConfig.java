@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${app.cors-allowed-origin:https://escapii.com}")
+    @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
 
     /** Opciono: extra CORS origins odvojeni zarezom (samo za lokalni razvoj).

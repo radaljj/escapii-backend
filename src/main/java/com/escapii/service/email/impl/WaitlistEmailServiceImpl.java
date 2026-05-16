@@ -48,7 +48,7 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             "Na listi ste čekanja",
             "Bićete prvi koji će saznati čim se otvore novi termini.",
             "", body,
-            "Escapii · escapii.com",
+            "Escapii · escapii.rs",
             false
         );
         sender.send(email, "Na listi ste čekanja — Escapii", html);
@@ -70,7 +70,7 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
               Termini se brzo popunjavaju — rezervišite na vreme!
             </p>
             <div style="text-align:center;margin:24px 0;">
-              <a href="https://escapii.com" style="display:inline-block;background:#f97316;color:#fff;font-weight:700;font-size:15px;padding:14px 40px;border-radius:100px;text-decoration:none;letter-spacing:0.3px;">
+              <a href="https://escapii.rs" style="display:inline-block;background:#f97316;color:#fff;font-weight:700;font-size:15px;padding:14px 40px;border-radius:100px;text-decoration:none;letter-spacing:0.3px;">
                 Rezerviši sada &rarr;
               </a>
             </div>
@@ -86,7 +86,7 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             "Otvorili su se novi termini!",
             "Termini se brzo popunjavaju — rezervišite na vreme!",
             "", body,
-            "Escapii · escapii.com",
+            "Escapii · escapii.rs",
             false
         );
         sender.send(email, "Otvorili su se novi termini — Escapii", html);
