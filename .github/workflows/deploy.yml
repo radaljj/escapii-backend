@@ -1,0 +1,40 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      - name: Upload JAR to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 37.27.194.35
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: target/backend-0.0.1-SNAPSHOT.jar
+          target: /opt/escapii/backend/
+          strip_components: 1
+          rename: app.jar
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 37.27.194.35
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: systemctl restart escapii-backend
