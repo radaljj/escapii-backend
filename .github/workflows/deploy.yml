@@ -20,6 +20,14 @@ jobs:
       - name: Build JAR
         run: mvn clean package -DskipTests
 
+      - name: Upload JAR and restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 37.27.194.35
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: mkdir -p /opt/escapii/backend/
+
       - name: Upload JAR to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -29,12 +37,13 @@ jobs:
           source: target/backend-0.0.1-SNAPSHOT.jar
           target: /opt/escapii/backend/
           strip_components: 1
-          rename: app.jar
 
-      - name: Restart service
+      - name: Rename JAR and restart service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 37.27.194.35
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: systemctl restart escapii-backend
+          script: |
+            mv /opt/escapii/backend/backend-0.0.1-SNAPSHOT.jar /opt/escapii/backend/app.jar
+            systemctl restart escapii-backend
