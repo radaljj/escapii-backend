@@ -816,6 +816,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             int paid = booking.getExclusionCount() - 1;
             rows.append(priceRow(exclusionLabel(paid), "—", null, booking.getExclusionCostEur(), true));
         }
+        if (n == 1)
+            rows.append(priceRow("Doplata za solo putnika", "—", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
 
         return """
             <div style="margin-bottom:28px;">

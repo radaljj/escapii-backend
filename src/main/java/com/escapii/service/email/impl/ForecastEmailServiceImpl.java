@@ -68,6 +68,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                   <tr>
                     <td style="vertical-align:middle;">
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px;">Trenutno vreme</div>
                       <div style="font-size:72px;line-height:1;margin-bottom:4px;">%s</div>
                       <div style="font-family:Georgia,serif;font-size:48px;font-weight:300;color:#fff;line-height:1;">%d°</div>
                       <div style="font-size:15px;color:rgba(255,255,255,0.7);margin-top:8px;">%s</div>

@@ -134,19 +134,18 @@ public final class EmailHtmlBuilder {
                       <table width="100%%" cellpadding="0" cellspacing="0">
                         <tr><td bgcolor="%s" style="background:%s;padding:28px 40px 26px;" class="mob-pad">
 
-                          <!-- Logo + Badge row -->
+                          <!-- Logo centered -->
                           <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                             <tr>
-                              <td style="vertical-align:middle;">
+                              <td align="center" style="text-align:center;vertical-align:middle;">
                                 <!--[if mso]>
-                                <p style="margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:2px;">ESCAPII</p>
+                                <p style="margin:0;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:2px;text-align:center;">ESCAPII</p>
                                 <![endif]-->
                                 <!--[if !mso]><!-->
                                 <img src="%s" alt="ESCAPII" width="130" height="38"
-                                     style="display:block;border:0;height:38px;width:130px;max-width:130px;">
+                                     style="display:block;border:0;height:38px;width:130px;max-width:130px;margin:0 auto;">
                                 <!--<![endif]-->
                               </td>
-                              <td style="text-align:right;vertical-align:middle;">%s</td>
                             </tr>
                           </table>
 
@@ -189,7 +188,6 @@ public final class EmailHtmlBuilder {
             headerBg,           // header bgcolor attr
             headerBg,           // header style attr
             LOGO_WHITE_URL,     // logo
-            badgeHtml,          // badge (desno)
             headingText,        // h1
             subheadingHtml,     // subtitle
             refHtml,            // ref chip
