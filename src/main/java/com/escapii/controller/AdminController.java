@@ -14,6 +14,7 @@ import com.escapii.model.BookingStatus;
 import com.escapii.model.InquiryStatus;
 import com.escapii.config.DailyTaskScheduler;
 import com.escapii.service.AdminService;
+import com.escapii.service.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,8 +34,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final AdminService       adminService;
-    private final DailyTaskScheduler dailyTaskScheduler;
+    private final AdminService          adminService;
+    private final DailyTaskScheduler    dailyTaskScheduler;
+    private final NotificationService   notificationService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -68,7 +70,9 @@ public class AdminController {
     /** POST /api/admin/dates — dodaj novi termin. */
     @PostMapping("/dates")
     public ResponseEntity<AdminDateResponse> addDate(@Valid @RequestBody AdminDateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.addDate(request));
+        AdminDateResponse resp = adminService.addDate(request);
+        notificationService.newDate(resp.getDepartureAirport(), resp.getDepartureDate().toString());
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
     /** PUT /api/admin/dates/{id}/destinations — ažuriraj potencijalne destinacije. */
@@ -131,6 +135,7 @@ public class AdminController {
                 request.effectiveExpiry(),
                 request.pricePerPerson()
         );
+        notificationService.newPrivateLink(response.getDepartureAirport(), response.getDepartureDate().toString());
         return ResponseEntity.ok(response);
     }
 
@@ -154,8 +159,9 @@ public class AdminController {
     public ResponseEntity<AdminDateResponse> createPrivateDateFromInquiry(
             @PathVariable Long id,
             @Valid @RequestBody CreatePrivateDateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminService.createPrivateDateFromInquiry(id, request));
+        AdminDateResponse resp = adminService.createPrivateDateFromInquiry(id, request);
+        notificationService.newPrivateLink(resp.getDepartureAirport(), resp.getDepartureDate().toString());
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
     /**
@@ -222,7 +228,13 @@ public class AdminController {
     public ResponseEntity<AdminBookingResponse> updateBookingStatus(
             @PathVariable Long id,
             @RequestParam BookingStatus value) {
-        return ResponseEntity.ok(adminService.updateBookingStatus(id, value));
+        AdminBookingResponse resp = adminService.updateBookingStatus(id, value);
+        if (value == BookingStatus.CONFIRMED) {
+            notificationService.bookingConfirmed(resp.getBookingRef(), resp.getFirstName() + " " + resp.getLastName());
+        } else if (value == BookingStatus.CANCELLED) {
+            notificationService.bookingCancelled(resp.getBookingRef(), "admin akcija");
+        }
+        return ResponseEntity.ok(resp);
     }
 
     /** PATCH /api/admin/bookings/{id}/notes — sačuvaj internu napomenu (samo za admina). */

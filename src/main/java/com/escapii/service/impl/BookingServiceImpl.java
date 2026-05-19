@@ -16,6 +16,7 @@ import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.service.BookingService;
+import com.escapii.service.NotificationService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.PriceCalculator;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class BookingServiceImpl implements BookingService {
     private final PriceCalculator         priceCalculator;
     private final BookingEmailService     bookingEmailService;
     private final BookingMapper           bookingMapper;
+    private final NotificationService     notificationService;
 
     @Override
     @Transactional
@@ -119,6 +121,7 @@ public class BookingServiceImpl implements BookingService {
 
         bookingEmailService.sendTeamNotification(saved);
         bookingEmailService.sendCustomerConfirmation(saved);
+        notificationService.newBooking(saved.getBookingRef(), saved.getFirstName() + " " + saved.getLastName(), saved.getTotalPriceAll());
 
         return bookingMapper.toResponse(saved);
     }

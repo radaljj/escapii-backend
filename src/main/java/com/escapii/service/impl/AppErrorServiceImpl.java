@@ -3,6 +3,7 @@ package com.escapii.service.impl;
 import com.escapii.model.AppError;
 import com.escapii.repository.AppErrorRepository;
 import com.escapii.service.AppErrorService;
+import com.escapii.service.NotificationService;
 import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class AppErrorServiceImpl implements AppErrorService {
 
     private final AppErrorRepository repo;
     private final EmailSender emailSender;
+    private final NotificationService notificationService;
 
     @Value("${app.ops-email}")
     private String opsEmail;
@@ -65,6 +67,7 @@ public class AppErrorServiceImpl implements AppErrorService {
                 repo.save(err);
 
                 sendAlertEmail(err);
+                notificationService.appError(endpoint, statusCode);
                 log.info("[AppError] Nova greška zabeležena i email poslat: {} {}", exType, endpoint);
             }
         } catch (Exception recordEx) {
