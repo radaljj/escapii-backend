@@ -71,7 +71,7 @@ public final class EmailHtmlBuilder {
             <table width="100%%" cellpadding="0" cellspacing="0" style="background:#08112a;">
               <tr><td style="padding:10px 36px;font-size:11px;color:rgba(255,255,255,0.5);text-align:center;letter-spacing:1px;">
                 <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
-                &nbsp;&nbsp;Vaša destinacija ostaje tajna sve do 72h pre polaska&nbsp;&nbsp;
+                &nbsp;&nbsp;Vaša destinacija ostaje tajna sve do 48h pre polaska&nbsp;&nbsp;
                 <span style="color:#f97316;">&#9679; &#9679; &#9679;</span>
               </td></tr>
             </table>

@@ -61,7 +61,7 @@ public class AvailableDate {
 
     /**
      * Vreme isteka privatnog linka.
-     * Null za javne termine. Tipično NOW + 72 sata.
+     * Null za javne termine. Tipično NOW + 48 sata.
      */
     private LocalDateTime expiresAt;
 

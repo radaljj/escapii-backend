@@ -22,10 +22,10 @@ public record CreatePrivateDateRequest(
     @Max(value = 50, message = "Maksimalni broj putnika je 50.")
     Integer travelers,
 
-    /** Koliko sati je link validan. Podrazumevano: 72. */
+    /** Koliko sati je link validan. Podrazumevano: 48. */
     Integer expiresInHours
 ) {
     public int effectiveExpiry() {
-        return (expiresInHours != null && expiresInHours > 0) ? expiresInHours : 72;
+        return (expiresInHours != null && expiresInHours > 0) ? expiresInHours : 48;
     }
 }

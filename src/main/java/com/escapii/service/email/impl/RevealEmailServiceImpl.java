@@ -82,7 +82,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "#0f1f3d",
             EmailHtmlBuilder.statusBadge("Otkrij destinaciju", "blue"),
             "Tvoja destinacija te čeka!",
-            "72 sata pre polaska — stiglo je vreme.",
+            "48 sati pre polaska — stiglo je vreme.",
             ref,
             body,
             "Escapii · escapii.rs · Srećan put!",

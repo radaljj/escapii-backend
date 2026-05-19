@@ -18,7 +18,7 @@ public record MakePrivateRequest(
 
     /**
      * Koliko sati je link validan.
-     * Podrazumevano: 72 sata (3 dana).
+     * Podrazumevano: 48 sata (2 dana).
      */
     Integer expiresInHours,
 
@@ -30,8 +30,8 @@ public record MakePrivateRequest(
     @Min(value = 1, message = "Cena po osobi mora biti pozitivna.")
     Integer pricePerPerson
 ) {
-    /** Vraća expiresInHours ili podrazumevanu vrednost 72. */
+    /** Vraća expiresInHours ili podrazumevanu vrednost 48. */
     public int effectiveExpiry() {
-        return (expiresInHours != null && expiresInHours > 0) ? expiresInHours : 72;
+        return (expiresInHours != null && expiresInHours > 0) ? expiresInHours : 48;
     }
 }

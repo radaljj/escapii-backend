@@ -49,7 +49,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     @Transactional
     public void sendPendingReveals() {
         LocalDate today = LocalDate.now();
-        List<Booking> readyList = bookingRepository.findReadyForReveal(today.plusDays(3));
+        List<Booking> readyList = bookingRepository.findReadyForReveal(today.plusDays(2));
         sendReveals(readyList);
     }
 
