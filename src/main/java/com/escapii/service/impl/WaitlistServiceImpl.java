@@ -3,7 +3,6 @@ package com.escapii.service.impl;
 import com.escapii.model.WaitlistEntry;
 import com.escapii.repository.WaitlistRepository;
 import com.escapii.service.email.WaitlistEmailService;
-import com.escapii.service.NotificationService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ public class WaitlistServiceImpl implements WaitlistService {
 
     private final WaitlistRepository waitlistRepository;
     private final WaitlistEmailService waitlistEmailService;
-    private final NotificationService notificationService;
 
     @Override
     public boolean subscribe(String email, String airport) {
@@ -36,7 +34,6 @@ public class WaitlistServiceImpl implements WaitlistService {
             entry.setAirport(airport);
             waitlistRepository.save(entry);
             log.info("[Waitlist] Novi subscriber: {} za {}", LogUtils.maskEmail(email), airport);
-            notificationService.newWaitlist(email, airport);
             return true;
         } catch (DataIntegrityViolationException e) {
             // Race condition — već postoji

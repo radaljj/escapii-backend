@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.CustomDateInquiryService;
-import com.escapii.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,7 +24,6 @@ import java.util.List;
 public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
 
     private final CustomDateInquiryRepository inquiryRepository;
-    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -43,7 +41,6 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
                 saved.getId(), saved.getAirport(), saved.getTravelers(),
                 saved.getDesiredDepartureDate(), saved.getEmail());
 
-        notificationService.newInquiry(saved.getEmail(), saved.getAirport());
         return new CustomDateInquiryResponse(saved);
     }
 
