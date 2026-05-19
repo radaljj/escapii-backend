@@ -117,7 +117,7 @@ public class AdminController {
 
     /**
      * POST /api/admin/dates/{id}/make-private
-     * Body: { "travelers": 2, "expiresInHours": 72 }
+     * Body: { "travelers": 2, "expiresInHours": 48 }
      * Pretvara termin u privatni — generiše token, ograničava slots, postavlja expiresAt.
      * Odgovor sadrži privateToken koji admin kopira i šalje korisniku.
      */
@@ -148,7 +148,7 @@ public class AdminController {
      * POST /api/admin/inquiries/{id}/create-private-date
      * Kreira privatni termin direktno iz podataka upita (atomično, bez race conditiona).
      * Termin je privatan od prvog trenutka — nikad nije javno vidljiv.
-     * Body: { "pricePerPerson": 299, "travelers": 2, "expiresInHours": 72 }
+     * Body: { "pricePerPerson": 299, "travelers": 2, "expiresInHours": 48 }
      */
     @PostMapping("/inquiries/{id}/create-private-date")
     public ResponseEntity<AdminDateResponse> createPrivateDateFromInquiry(
@@ -237,7 +237,7 @@ public class AdminController {
     /**
      * PATCH /api/admin/bookings/{id}/destination
      * Body: { "destination": "Barcelona" }
-     * Admin unosi destinaciju — scheduler je šalje korisniku automatski na T-3.
+     * Admin unosi destinaciju — scheduler je šalje korisniku automatski na T-2 (48h pre polaska).
      */
     @PatchMapping("/bookings/{id}/destination")
     public ResponseEntity<AdminBookingResponse> setDestination(

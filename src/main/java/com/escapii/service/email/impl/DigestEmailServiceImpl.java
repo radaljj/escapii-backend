@@ -216,7 +216,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             String badgeCss    = daysLeft <= 5
                     ? "background:#fff7ed;color:#ea580c;"
                     : "background:#e0f2fe;color:#0369a1;";
-            String revealDate   = dep.minusDays(3).format(EmailHtmlBuilder.DATE_FMT);
+            String revealDate   = dep.minusDays(2).format(EmailHtmlBuilder.DATE_FMT);
             String forecastDate = dep.minusDays(4).format(EmailHtmlBuilder.DATE_FMT);
             boolean revealDone   = b.getRevealSentAt()   != null;
             boolean forecastDone = b.getForecastSentAt() != null;

@@ -85,7 +85,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * CONFIRMED bookingovi kojima:
      *   - assignedDestination je unesena
      *   - revealSentAt je null (još nije poslato)
-     *   - departureDate <= cutoff (T-3 od danas ili ranije ako propušteno)
+     *   - departureDate <= cutoff (T-2 od danas ili ranije ako propušteno)
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.assignedDestination IS NOT NULL " +
@@ -98,7 +98,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      *   - assignedDestination je unesena (potrebna za geocoding)
      *   - forecastSentAt je null (još nije poslato)
      *   - departureDate je između [from, until]:
-     *       from  = today+4  → nikad ne šaljemo ako je reveal već otišao (T-3)
+     *       from  = today+4  → nikad ne šaljemo ako je reveal već otišao (T-2)
      *       until = today+7  → primarni okidač na T-7; catch-up za propuštene dane T-4..T-6
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +

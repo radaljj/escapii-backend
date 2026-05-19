@@ -159,7 +159,7 @@ public class Booking {
 
     // ── Otkrivanje destinacije ────────────────────────────────────────
 
-    /** Destinacija koju admin dodjeljuje — šalje se korisniku T-3 dana prije polaska. */
+    /** Destinacija koju admin dodjeljuje — šalje se korisniku T-2 dana (48h) pre polaska. */
     @Column(name = "assigned_destination", length = 200)
     private String assignedDestination;
 

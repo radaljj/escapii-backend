@@ -346,7 +346,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private String buildConfirmedTimeline(Booking booking) {
         var dep         = booking.getSelectedDate().getDepartureDate();
         var weatherDate = dep.minusDays(7);
-        var revealDate  = dep.minusDays(3);
+        var revealDate  = dep.minusDays(2);
 
         String today      = java.time.LocalDate.now().format(EmailHtmlBuilder.DATE_FMT);
         String weatherStr = weatherDate.format(EmailHtmlBuilder.DATE_FMT);
@@ -372,7 +372,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
             EmailHtmlBuilder.timelineItem("✉", "#eff6ff", "#3b82f6",
                 "Koverta s destinacijom",
-                revealStr + " · 72h pre polaska",
+                revealStr + " · 48h pre polaska",
                 "Konačno — otkrivate gde idete!"),
             EmailHtmlBuilder.timelineItem("✈", "#f3f4f6", "#e5e7eb",
                 "Avantura počinje!",
@@ -488,7 +488,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                               <div style="font-size:13px;font-weight:600;color:#1a1410;
                                           margin-top:8px;">Iznenađenje</div>
                               <div style="font-size:11px;color:#a89888;margin-top:2px;">
-                                otkrij 72h pre polaska</div>
+                                otkrij 48h pre polaska</div>
                             </td>
                           </tr>
                         </table>
@@ -723,7 +723,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                       "Javićemo vam se sa svim detaljima — koracima za uplatu, pravilima putovanja i svim informacijama koje su vam potrebne pre polaska."),
             EmailHtmlBuilder.step("3", "Vremenska prognoza — <strong style='color:#2D5F6B;'>7 dana pre polaska</strong>",
                       "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
-            EmailHtmlBuilder.step("4", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>72h pre polaska</strong>",
+            EmailHtmlBuilder.step("4", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>48h pre polaska</strong>",
                       "Koverta otkriva gde putujete. ✉")
         );
     }
