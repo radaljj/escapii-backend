@@ -36,7 +36,6 @@ public class WaitlistServiceImpl implements WaitlistService {
             entry.setAirport(airport);
             waitlistRepository.save(entry);
             log.info("[Waitlist] Novi subscriber: {} za {}", LogUtils.maskEmail(email), airport);
-            waitlistEmailService.sendWaitlistConfirmation(email, airport);
             notificationService.newWaitlist(email, airport);
             return true;
         } catch (DataIntegrityViolationException e) {
