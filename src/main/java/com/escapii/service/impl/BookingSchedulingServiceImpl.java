@@ -69,7 +69,6 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         List<Booking> stale = bookingRepository.findStalePendingBefore(cutoff);
 
         if (stale.isEmpty()) {
-            log.info("[Scheduler] Auto-cancel: nema PENDING rezervacija starijih od 5 dana.");
             return;
         }
         for (Booking b : stale) {
@@ -78,6 +77,22 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
         }
         log.info("[Scheduler] Auto-cancel završen — otkazano {} rezervacija.", stale.size());
+    }
+
+    @Override
+    @Transactional
+    public void completeFinishedBookings() {
+        LocalDate today = LocalDate.now();
+        List<Booking> ready = bookingRepository.findReadyForCompletion(today);
+
+        if (ready.isEmpty()) {
+            return;
+        }
+        for (Booking b : ready) {
+            b.setStatus(BookingStatus.COMPLETED);
+            bookingRepository.save(b);
+        }
+        log.info("[Scheduler] Auto-complete završen — zatvoreno {} rezervacija.", ready.size());
     }
 
     @Override
@@ -92,11 +107,8 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     HttpStatus.CONFLICT,
                     "Reveal je već poslan " + booking.getRevealSentAt() + ".");
         }
-        if (booking.getAssignedDestination() == null || booking.getAssignedDestination().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Destinacija nije unesena — unesi je pre slanja reveal-a.");
-        }
+        validateIsAssignedDestination(booking.getAssignedDestination());
+
 
         // Validiraj X-Frontend-Url da nije open redirect — mora biti u dozvoljenim originima
         String validatedUrl = validateFrontendUrl(siteUrl);
@@ -125,11 +137,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     HttpStatus.CONFLICT,
                     "Prognoza je već poslata " + booking.getForecastSentAt() + ".");
         }
-        if (booking.getAssignedDestination() == null || booking.getAssignedDestination().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Destinacija nije unesena — unesi je pre slanja prognoze.");
-        }
+        validateIsAssignedDestination(booking.getAssignedDestination());
 
         String weatherQuery = resolveWeatherQuery(booking);
         Optional<List<DailyForecast>> forecast = weatherService.getForecast(weatherQuery);
@@ -262,5 +270,13 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             log.info("[Reveal] Ukupno poslato: {}/{}", sent.size(), readyList.size());
         }
         return sent;
+    }
+
+    private void validateIsAssignedDestination(String assignedDestination) {
+        if (assignedDestination == null || assignedDestination.isBlank()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Destinacija nije unesena — unesi je pre slanja prognoze.");
+        }
     }
 }

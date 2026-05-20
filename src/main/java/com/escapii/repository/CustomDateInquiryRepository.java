@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,7 @@ public interface CustomDateInquiryRepository extends JpaRepository<CustomDateInq
     List<CustomDateInquiry> findByStatusOrderByCreatedAtDesc(InquiryStatus status);
 
     /** Briše zatvorene upite čiji je closedAt stariji od zadatog trenutka. */
+    @Transactional
     @Modifying
     @Query("DELETE FROM CustomDateInquiry i WHERE i.status = com.escapii.model.InquiryStatus.CLOSED " +
            "AND i.closedAt IS NOT NULL AND i.closedAt < :cutoff")

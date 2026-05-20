@@ -27,11 +27,12 @@ public class DailyTaskScheduler {
     private final AvailableDateRepository      availableDateRepository;
     private final CustomDateInquiryRepository  inquiryRepository;
 
-    @Scheduled(cron = "0 0 7 * * *", zone = "Europe/Belgrade")
+    @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
         schedulingService.sendPendingReveals();
         schedulingService.sendPendingForecasts();
         schedulingService.cancelStalePendingBookings();
+        schedulingService.completeFinishedBookings();
         sendDigest();
         cleanupExpiredDates();
         cleanupClosedInquiries();
@@ -52,7 +53,6 @@ public class DailyTaskScheduler {
      * - bez rezervacija → briše se iz baze
      * - sa rezervacijama → deaktivira se (čuva istoriju)
      */
-    @org.springframework.transaction.annotation.Transactional
     public void cleanupExpiredDates() {
         LocalDate today = LocalDate.now();
         int deleted     = availableDateRepository.deleteExpiredWithNoBookings(today);
@@ -65,7 +65,6 @@ public class DailyTaskScheduler {
     /**
      * Briše zatvorene upite (status=CLOSED) koji su zatvoreni pre više od 24 sata.
      */
-    @org.springframework.transaction.annotation.Transactional
     public void cleanupClosedInquiries() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
         int deleted = inquiryRepository.deleteClosedBefore(cutoff);

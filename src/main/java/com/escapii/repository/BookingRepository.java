@@ -120,4 +120,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findForecastSentBetween(@Param("from") LocalDateTime from,
                                           @Param("until") LocalDateTime until);
 
+    /**
+     * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
+     * - reveal poslan (revealSentAt IS NOT NULL)
+     * - prognoza poslata (forecastSentAt IS NOT NULL)
+     * - airline booking code unet (nije null niti prazan string)
+     * Ovi bookingovi se automatski prebacuju u COMPLETED status.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.selectedDate.returnDate <= :today " +
+           "AND b.revealSentAt IS NOT NULL " +
+           "AND b.forecastSentAt IS NOT NULL " +
+           "AND b.airlineBookingCode IS NOT NULL " +
+           "AND b.airlineBookingCode != ''")
+    List<Booking> findReadyForCompletion(@Param("today") LocalDate today);
+
 }
