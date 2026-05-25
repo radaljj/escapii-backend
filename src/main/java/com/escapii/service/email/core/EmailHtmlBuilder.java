@@ -119,14 +119,20 @@ public final class EmailHtmlBuilder {
                         <tr><td bgcolor="#f5efe2" style="background:#f5efe2;padding:32px 40px 28px;border-bottom:1px solid #ebe1cf;" class="mob-pad force-sand">
 
                           <table cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-                            <tr><td>
+                            <tr><td align="center">
                               <!--[if !mso]><!-->
-                              <a href="https://escapii.rs" style="text-decoration:none;color:#1a1410;">
-                                <span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;color:#1a1410;letter-spacing:-0.5px;">escap<i style="font-style:italic;">ii</i><span style="color:#a85e44;">?</span></span>
+                              <a href="https://escapii.rs" style="text-decoration:none;display:block;">
+                                <img src="https://escapii.rs/wp-content/themes/escapii-theme/images/logo-black.png"
+                                     alt="escapii?"
+                                     width="120" height="40"
+                                     style="display:block;border:0;outline:0;width:120px;max-width:120px;height:auto;"
+                                     class="logo">
                               </a>
                               <!--<![endif]-->
                               <!--[if mso]>
-                              <span style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#1a1410;">escapii?</span>
+                              <a href="https://escapii.rs" style="text-decoration:none;color:#1a1410;">
+                                <span style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#1a1410;">escapii?</span>
+                              </a>
                               <![endif]-->
                             </td></tr>
                           </table>
