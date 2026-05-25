@@ -147,7 +147,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             "Putovanje · " + depDateStr,
             "",
             body,
-            EmailHtmlBuilder.customerFooter("podrska@escapii.com"),
+            EmailHtmlBuilder.customerFooter("escapii.team@gmail.com"),
             false
         );
     }
