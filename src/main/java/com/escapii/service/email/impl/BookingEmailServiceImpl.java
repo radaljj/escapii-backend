@@ -746,14 +746,17 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             String gender = "M".equals(p.getGender()) ? "Muški" : "Ženski";
             String visaInfo = (p.getVisaInfo() != null && !p.getVisaInfo().isBlank())
                     ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "—";
+            String passport = (p.getPassportNumber() != null && !p.getPassportNumber().isBlank())
+                    ? EmailHtmlBuilder.esc(p.getPassportNumber()) : "—";
             rows.append("""
                 <tr style="background:%s;">
                   <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#a89888;border-bottom:1px solid #ebe1cf;">Putnik %d</td>
                   <td style="padding:11px 16px;font-size:14px;font-weight:600;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">%s · %s</td>
+                  <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">Pasoš: %s</td>
                   <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">Vize: %s</td>
                 </tr>
-                """.formatted(bg, i + 1, name, gender, dob, visaInfo));
+                """.formatted(bg, i + 1, name, gender, dob, passport, visaInfo));
         }
 
         return """
@@ -765,6 +768,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Redni br.</th>
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Ime</th>
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Pol · Datum rođenja</th>
+                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Broj pasoša</th>
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Aktivne vize</th>
                   </tr>
                 </thead>
