@@ -184,19 +184,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;background:#faf6ee;border:1px solid #ebe1cf;border-radius:6px;">
               <tr>
-                <td style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Ref. broj</div>
                   <div style="font-size:14px;font-weight:700;color:#2D5F6B;">%s</div>
                 </td>
-                <td style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Primljeno</div>
                   <div style="font-size:13px;font-weight:600;color:#1a1410;">%s</div>
                 </td>
-                <td style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Ukupno</div>
                   <div style="font-size:14px;font-weight:700;color:#a85e44;">%s €</div>
                 </td>
-                <td style="padding:12px 16px;width:25%%;">
+                <td width="25%%" style="padding:12px 16px;width:25%%;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Rok odgovora</div>
                   <div style="font-size:13px;font-weight:700;color:#9b3a2a;">%s</div>
                 </td>
@@ -737,45 +737,61 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         List<PassengerInfo> passengers = booking.getPassengers();
         if (passengers == null || passengers.isEmpty()) return "";
 
-        StringBuilder rows = new StringBuilder();
+        StringBuilder cards = new StringBuilder();
         for (int i = 0; i < passengers.size(); i++) {
             PassengerInfo p = passengers.get(i);
-            String bg    = i % 2 == 0 ? "#faf6ee" : "#ffffff";
-            String name  = EmailHtmlBuilder.esc(p.getName());
-            String dob   = p.getDateOfBirth() != null ? p.getDateOfBirth().format(EmailHtmlBuilder.DATE_FMT) : "—";
-            String gender = "M".equals(p.getGender()) ? "Muški" : "Ženski";
-            String visaInfo = (p.getVisaInfo() != null && !p.getVisaInfo().isBlank())
-                    ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "—";
+            String name     = EmailHtmlBuilder.esc(p.getName());
+            String dob      = p.getDateOfBirth() != null ? p.getDateOfBirth().format(EmailHtmlBuilder.DATE_FMT) : "—";
+            String gender   = "M".equals(p.getGender()) ? "Muški" : "Ženski";
             String passport = (p.getPassportNumber() != null && !p.getPassportNumber().isBlank())
                     ? EmailHtmlBuilder.esc(p.getPassportNumber()) : "—";
-            rows.append("""
-                <tr style="background:%s;">
-                  <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#a89888;border-bottom:1px solid #ebe1cf;">Putnik %d</td>
-                  <td style="padding:11px 16px;font-size:14px;font-weight:600;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
-                  <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">%s · %s</td>
-                  <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">Pasoš: %s</td>
-                  <td style="padding:11px 16px;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;">Vize: %s</td>
-                </tr>
-                """.formatted(bg, i + 1, name, gender, dob, passport, visaInfo));
+            String visaInfo = (p.getVisaInfo() != null && !p.getVisaInfo().isBlank())
+                    ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "—";
+
+            cards.append("""
+                <table width="100%%" cellpadding="0" cellspacing="0"
+                       style="margin-bottom:8px;border:1px solid #ebe1cf;border-radius:6px;overflow:hidden;">
+                  <tr>
+                    <td colspan="2" width="100%%"
+                        style="padding:8px 14px;background:#f5efe2;font-size:10px;font-weight:700;
+                               letter-spacing:1.5px;text-transform:uppercase;color:#a89888;
+                               border-bottom:1px solid #ebe1cf;">
+                      Putnik %d
+                    </td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Ime</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;font-weight:600;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Pol</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Datum ro&#273;enja</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Pa&#353;o&#353;</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;">Vize</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;">%s</td>
+                  </tr>
+                </table>
+                """.formatted(i + 1, name, gender, dob, passport, visaInfo));
         }
 
         return """
             <div style="margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Putnici</div>
-              <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;border-radius:8px;overflow:hidden;">
-                <thead>
-                  <tr style="background:#f5efe2;">
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Redni br.</th>
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Ime</th>
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Pol · Datum rođenja</th>
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Broj pasoša</th>
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Aktivne vize</th>
-                  </tr>
-                </thead>
-                <tbody>%s</tbody>
-              </table>
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+                          color:#a89888;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">
+                Putnici
+              </div>
+              %s
             </div>
-            """.formatted(rows);
+            """.formatted(cards);
     }
 
     /**
@@ -830,10 +846,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;border-radius:8px;overflow:hidden;">
                 <thead>
                   <tr style="background:#f5efe2;">
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Stavka</th>
-                    <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Po osobi</th>
-                    <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">× Putnika</th>
-                    <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Ukupno</th>
+                    <th width="48%%" style="width:48%%;padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Stavka</th>
+                    <th width="19%%" style="width:19%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Po osobi</th>
+                    <th width="14%%" style="width:14%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Kom</th>
+                    <th width="19%%" style="width:19%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Ukupno</th>
                   </tr>
                 </thead>
                 <tbody>%s</tbody>
@@ -849,16 +865,16 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     private String priceRow(String label, String perPerson, Integer count, int total, boolean flat) {
-        String ppCell    = flat ? "<td style='padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;'>—</td>" :
-                                  "<td style='padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;'>" + perPerson + "</td>";
-        String countCell = flat ? "<td style='padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;'>flat</td>" :
-                                  "<td style='padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;'>" + count + "</td>";
+        String ppCell    = flat ? "<td width='19%%' style='width:19%%;padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;white-space:nowrap;'>—</td>" :
+                                  "<td width='19%%' style='width:19%%;padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;white-space:nowrap;'>" + perPerson + "</td>";
+        String countCell = flat ? "<td width='14%%' style='width:14%%;padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;white-space:nowrap;'>—</td>" :
+                                  "<td width='14%%' style='width:14%%;padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;white-space:nowrap;'>" + count + "</td>";
         return """
             <tr>
-              <td style="padding:11px 16px;font-size:14px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="48%%" style="width:48%%;padding:11px 16px;font-size:14px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
               %s
               %s
-              <td style="padding:11px 16px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="19%%" style="width:19%%;padding:11px 16px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;border-bottom:1px solid #ebe1cf;white-space:nowrap;">%s</td>
             </tr>
             """.formatted(label, ppCell, countCell, EmailHtmlBuilder.eur(total));
     }
