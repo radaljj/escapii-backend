@@ -218,8 +218,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private String tRow(String label, String value) {
         return """
             <tr>
-              <td style="padding:9px 0;font-size:13px;color:#a89888;font-weight:600;width:38%%;border-bottom:1px solid #ebe1cf;">%s</td>
-              <td style="padding:9px 0;font-size:14px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="38%%" style="width:38%%;padding:9px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="62%%" style="width:62%%;padding:9px 0;font-size:14px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
             </tr>
             """.formatted(label, value);
     }
@@ -702,8 +702,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String bg = shaded ? "background:#faf6ee;" : "";
         return """
             <tr style="%s">
-              <td style="padding:11px 20px;font-size:13px;color:#a89888;font-weight:600;width:40%%;border-bottom:1px solid #ebe1cf;">%s</td>
-              <td style="padding:11px 20px;font-size:14px;color:#1a1410;font-weight:500;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="40%%" style="width:40%%;padding:11px 20px;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="60%%" style="width:60%%;padding:11px 20px;font-size:14px;color:#1a1410;font-weight:500;border-bottom:1px solid #ebe1cf;">%s</td>
             </tr>
             """.formatted(bg, label, value);
     }

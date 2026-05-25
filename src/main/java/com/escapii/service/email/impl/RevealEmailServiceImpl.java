@@ -113,24 +113,24 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         String body = """
             <table width="100%%" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="padding:6px 0;font-size:13px;color:#1a1410;width:140px;font-weight:600;">Rezervacija</td>
-                <td style="padding:6px 0;font-size:13px;color:#2D5F6B;font-weight:800;">%s</td>
+                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Rezervacija</td>
+                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#2D5F6B;font-weight:800;border-bottom:1px solid #ebe1cf;">%s</td>
               </tr>
               <tr>
-                <td style="padding:6px 0;font-size:13px;color:#1a1410;font-weight:600;">Putnik</td>
-                <td style="padding:6px 0;font-size:13px;color:#2D5F6B;">%s</td>
+                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Putnik</td>
+                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
               </tr>
               <tr>
-                <td style="padding:6px 0;font-size:13px;color:#1a1410;font-weight:600;">Email</td>
-                <td style="padding:6px 0;font-size:13px;color:#2D5F6B;">%s</td>
+                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Email</td>
+                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
               </tr>
               <tr>
-                <td style="padding:6px 0;font-size:13px;color:#1a1410;font-weight:600;">Destinacija</td>
-                <td style="padding:6px 0;font-size:15px;color:#a85e44;font-weight:800;">%s</td>
+                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Destinacija</td>
+                <td width="62%%" style="width:62%%;padding:7px 0;font-size:15px;color:#a85e44;font-weight:800;border-bottom:1px solid #ebe1cf;">%s</td>
               </tr>
               <tr>
-                <td style="padding:6px 0;font-size:13px;color:#1a1410;font-weight:600;">Datum polaska</td>
-                <td style="padding:6px 0;font-size:13px;color:#2D5F6B;">%s</td>
+                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;">Datum polaska</td>
+                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;">%s</td>
               </tr>
             </table>
             """.formatted(ref, name, email, dest, departure);

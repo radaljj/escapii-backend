@@ -191,8 +191,8 @@ public final class EmailHtmlBuilder {
     public static String dRow(String label, String value) {
         return """
             <tr style="border-bottom:1px solid #ebe1cf;">
-              <td style="padding:8px 0;font-size:13px;color:#a89888;width:50%%;">%s</td>
-              <td style="padding:8px 0;font-size:13px;color:#1a1410;font-weight:600;text-align:right;white-space:nowrap;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#a89888;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#1a1410;font-weight:600;text-align:right;white-space:nowrap;">%s</td>
             </tr>
             """.formatted(label, value);
     }
@@ -200,8 +200,8 @@ public final class EmailHtmlBuilder {
     public static String dRowStrike(String label, String value) {
         return """
             <tr style="border-bottom:1px solid #ebe1cf;">
-              <td style="padding:8px 0;font-size:13px;color:#a89888;width:50%%;">%s</td>
-              <td style="padding:8px 0;font-size:13px;color:#a89888;font-weight:500;text-align:right;white-space:nowrap;text-decoration:line-through;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#a89888;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#a89888;font-weight:500;text-align:right;white-space:nowrap;text-decoration:line-through;">%s</td>
             </tr>
             """.formatted(label, value);
     }
@@ -209,8 +209,8 @@ public final class EmailHtmlBuilder {
     public static String dRowMystery(String label, String value) {
         return """
             <tr style="border-bottom:1px solid #ebe1cf;">
-              <td style="padding:8px 0;font-size:13px;color:#a89888;width:45%%;">%s</td>
-              <td style="padding:8px 0;font-size:13px;color:#a85e44;font-weight:600;font-style:italic;text-align:right;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#a89888;">%s</td>
+              <td width="50%%" style="width:50%%;padding:8px 0;font-size:13px;color:#a85e44;font-weight:600;font-style:italic;text-align:right;">%s</td>
             </tr>
             """.formatted(label, value);
     }

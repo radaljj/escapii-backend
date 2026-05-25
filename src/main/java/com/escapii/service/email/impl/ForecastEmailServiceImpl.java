@@ -67,13 +67,13 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <!-- Glavna temperatura -->
                 <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                   <tr>
-                    <td style="vertical-align:middle;">
+                    <td width="65%%" style="width:65%%;vertical-align:middle;">
                       <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:8px;">Trenutno vreme</div>
                       <div style="font-size:72px;line-height:1;margin-bottom:4px;">%s</div>
                       <div style="font-family:Georgia,serif;font-size:48px;font-weight:300;color:#1a1410;line-height:1;">%d°</div>
                       <div style="font-size:15px;color:#6b5d4f;margin-top:8px;">%s</div>
                     </td>
-                    <td style="text-align:right;vertical-align:top;">
+                    <td width="35%%" style="width:35%%;text-align:right;vertical-align:top;">
                       <div style="background:#ffffff;border:1px solid #ebe1cf;border-radius:12px;padding:12px 16px;display:inline-block;">
                         <div style="font-size:11px;color:#a89888;margin-bottom:6px;letter-spacing:0.5px;">POLAZAK</div>
                         <div style="font-size:13px;font-weight:700;color:#2D5F6B;">%s</div>
@@ -196,7 +196,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 : "font-size:12px;font-weight:700;";
 
             sb.append("""
-                <td style="text-align:center;padding:0 2px;">
+                <td width="60" style="text-align:center;padding:0 2px;">
                   <div style="%sborder-radius:12px;padding:10px 4px;">
                     <div style="%s">%s</div>
                     <div style="font-size:8px;color:#a89888;margin-bottom:5px;">%s</div>
@@ -259,12 +259,12 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
                 rows.append("""
                     <tr style="border-bottom:1px solid #ebe1cf;">
-                      <td style="padding:11px 0;width:28px;text-align:center;font-size:22px;vertical-align:middle;">%s</td>
+                      <td width="32" style="width:32px;padding:11px 0;text-align:center;font-size:22px;vertical-align:middle;">%s</td>
                       <td style="padding:11px 8px;vertical-align:middle;">
                         <div style="font-size:13px;font-weight:600;color:#1a1410;">%s %s%s</div>
                         <div style="font-size:11px;color:#a89888;margin-top:2px;">%s%s</div>
                       </td>
-                      <td style="padding:11px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
+                      <td width="80" style="width:80px;padding:11px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
                         <span style="font-size:14px;font-weight:700;color:#9b3a2a;">%d°</span>
                         <span style="font-size:12px;color:#a89888;margin:0 2px;">/</span>
                         <span style="font-size:13px;color:#1f4a57;">%d°</span>
