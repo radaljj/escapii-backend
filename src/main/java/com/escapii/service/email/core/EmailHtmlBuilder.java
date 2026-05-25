@@ -107,7 +107,7 @@ public final class EmailHtmlBuilder {
               <table width="100%%" cellpadding="0" cellspacing="0" bgcolor="#ebe4d4" style="background:#ebe4d4;" class="force-cream">
                 <tr><td align="center" style="padding:40px 16px;">
                   <!--[if mso]><table width="640" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
-                  <table class="mob-full" style="width:640px;max-width:640px;margin:0 auto;" cellpadding="0" cellspacing="0">
+                  <table width="640" class="mob-full" style="width:640px;max-width:640px;margin:0 auto;" cellpadding="0" cellspacing="0">
 
                     <tr><td bgcolor="#ffffff" style="background:#ffffff;border:1px solid #ebe1cf;border-radius:10px;overflow:hidden;" class="force-white">
 
@@ -218,10 +218,9 @@ public final class EmailHtmlBuilder {
     public static String detailsCard(String title, String rowsHtml, String borderColor) {
         String bc = (borderColor == null || borderColor.isBlank()) ? "#a85e44" : borderColor;
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-collapse:collapse;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">
               <tr>
-                <td width="3" style="width:3px;background:%s;font-size:0;line-height:0;">&nbsp;</td>
-                <td style="background:#faf6ee;border:1px solid #ebe1cf;border-left:none;padding:18px 20px;">
+                <td width="100%%" style="background:#faf6ee;border-top:1px solid #ebe1cf;border-right:1px solid #ebe1cf;border-bottom:1px solid #ebe1cf;border-left:3px solid %s;padding:18px 20px;">
                   <p style="margin:0 0 12px;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a89888;">%s</p>
                   <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
                 </td>

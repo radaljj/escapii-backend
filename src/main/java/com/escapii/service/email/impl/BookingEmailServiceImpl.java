@@ -210,10 +210,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
               <tr>
-                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">%s</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">%s</td>
               </tr>
               <tr>
-                <td style="padding-top:12px;">
+                <td width="100%%" style="padding-top:12px;">
                   <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">%s</table>
                 </td>
               </tr>
@@ -312,11 +312,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                   Draga/i <strong style="color:#1a1410;">%s</strong>,<br><br>%s
                 </p>
                 %s
-                <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-collapse:collapse;">
+                <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                   <tr>
-                    <td width="3" style="width:3px;background:#9b3a2a;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="background:#fbeeec;border:1px solid #e9c5bd;border-left:none;border-radius:0 6px 6px 0;padding:16px 20px;">
-                      <div style="font-size:13px;font-weight:700;color:#9b3a2a;margin-bottom:6px;">Pitanja ili žalba?</div>
+                    <td width="100%%" style="background:#fbeeec;border-top:1px solid #e9c5bd;border-right:1px solid #e9c5bd;border-bottom:1px solid #e9c5bd;border-left:3px solid #9b3a2a;padding:16px 20px;">
+                      <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#9b3a2a;">Pitanja ili žalba?</p>
                       <p style="margin:0;font-size:13px;color:#1a1410;line-height:1.7;">
                         Kontaktirajte nas na
                         <a href="mailto:%s" style="color:#9b3a2a;font-weight:600;text-decoration:none;">%s</a>.
@@ -367,10 +366,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
               <tr>
-                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:16px;">Šta vas čeka</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:16px;">Šta vas čeka</td>
               </tr>
               <tr>
-                <td>
+                <td width="100%%">
                   %s
                   %s
                   %s
@@ -708,10 +707,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (!cancelled) rows.append(EmailHtmlBuilder.dRowMystery("Destinacija", "✦ Iznenađenje!"));
 
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-collapse:collapse;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
               <tr>
-                <td width="3" style="width:3px;background:%s;font-size:0;line-height:0;">&nbsp;</td>
-                <td style="background:#faf6ee;border:1px solid #ebe1cf;border-left:none;padding:16px 18px;">
+                <td width="100%%" style="background:#faf6ee;border-top:1px solid #ebe1cf;border-right:1px solid #ebe1cf;border-bottom:1px solid #ebe1cf;border-left:3px solid %s;padding:16px 18px;">
                   <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;">%s</p>
                   <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
                 </td>
@@ -734,10 +732,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
               <tr>
-                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:14px;">Šta vas čeka</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:14px;">Šta vas čeka</td>
               </tr>
               <tr>
-                <td>
+                <td width="100%%">
                   %s
                   %s
                   %s
@@ -814,10 +812,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
               <tr>
-                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Putnici</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Putnici</td>
               </tr>
               <tr>
-                <td style="padding-top:12px;">%s</td>
+                <td width="100%%" style="padding-top:12px;">%s</td>
               </tr>
             </table>
             """.formatted(cards);
@@ -872,10 +870,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
               <tr>
-                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Pregled cene</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Pregled cene</td>
               </tr>
               <tr>
-                <td style="padding-top:12px;">
+                <td width="100%%" style="padding-top:12px;">
                   <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;border-radius:8px;overflow:hidden;">
                     <thead>
                       <tr style="background:#f5efe2;">
@@ -917,12 +915,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private String buildNotesBox(String notes) {
         if (notes == null || notes.isBlank()) return "";
         return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border-collapse:collapse;">
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
               <tr>
-                <td width="3" style="width:3px;background:#f59e0b;font-size:0;line-height:0;">&nbsp;</td>
-                <td style="background:#fffbeb;border:1px solid #fde68a;border-left:none;border-radius:0 6px 6px 0;padding:14px 18px;">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#b45309;margin-bottom:6px;">Napomena korisnika</div>
-                  <div style="font-size:14px;color:#78350f;line-height:1.6;">%s</div>
+                <td width="100%%" style="background:#fffbeb;border-top:1px solid #fde68a;border-right:1px solid #fde68a;border-bottom:1px solid #fde68a;border-left:3px solid #f59e0b;padding:14px 18px;">
+                  <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#b45309;">Napomena korisnika</p>
+                  <p style="margin:0;font-size:14px;color:#78350f;line-height:1.6;">%s</p>
                 </td>
               </tr>
             </table>
