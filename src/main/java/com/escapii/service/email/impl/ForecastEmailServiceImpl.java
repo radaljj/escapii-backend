@@ -55,28 +55,28 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         String travelDaysCard = buildTravelDaysCard(forecast, depDate, retDate);
 
         String body = """
-            <!-- Hero weather card -->
-            <table width="100%%" cellpadding="0" cellspacing="0" style="border-radius:16px;overflow:hidden;margin-bottom:16px;background:linear-gradient(160deg,#0a1628 0%%,#0d2d4f 50%%,#0a3d6b 100%%);">
+            <!-- Hero weather card — light -->
+            <table width="100%%" cellpadding="0" cellspacing="0" style="border-radius:16px;overflow:hidden;margin-bottom:16px;background:#faf6ee;border:1px solid #ebe1cf;">
               <tr><td style="padding:32px 28px 28px;">
 
                 <!-- Pozdrav -->
-                <p style="margin:0 0 24px;font-size:13px;color:rgba(255,255,255,0.55);letter-spacing:0.5px;">
-                  Zdravo, %s! Tvoje putovanje je za <strong style="color:#7dd3fc;">%d %s</strong> — evo šta te čeka.
+                <p style="margin:0 0 24px;font-size:13px;color:#6b5d4f;letter-spacing:0.5px;">
+                  Zdravo, %s! Tvoje putovanje je za <strong style="color:#2D5F6B;">%d %s</strong> — evo šta te čeka.
                 </p>
 
                 <!-- Glavna temperatura -->
                 <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                   <tr>
                     <td style="vertical-align:middle;">
-                      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px;">Trenutno vreme</div>
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:8px;">Trenutno vreme</div>
                       <div style="font-size:72px;line-height:1;margin-bottom:4px;">%s</div>
-                      <div style="font-family:Georgia,serif;font-size:48px;font-weight:300;color:#fff;line-height:1;">%d°</div>
-                      <div style="font-size:15px;color:rgba(255,255,255,0.7);margin-top:8px;">%s</div>
+                      <div style="font-family:Georgia,serif;font-size:48px;font-weight:300;color:#1a1410;line-height:1;">%d°</div>
+                      <div style="font-size:15px;color:#6b5d4f;margin-top:8px;">%s</div>
                     </td>
                     <td style="text-align:right;vertical-align:top;">
-                      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 16px;display:inline-block;">
-                        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:6px;letter-spacing:0.5px;">POLAZAK</div>
-                        <div style="font-size:13px;font-weight:700;color:#7dd3fc;">%s</div>
+                      <div style="background:#ffffff;border:1px solid #ebe1cf;border-radius:12px;padding:12px 16px;display:inline-block;">
+                        <div style="font-size:11px;color:#a89888;margin-bottom:6px;letter-spacing:0.5px;">POLAZAK</div>
+                        <div style="font-size:13px;font-weight:700;color:#2D5F6B;">%s</div>
                       </div>
                     </td>
                   </tr>
@@ -85,20 +85,20 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <!-- Min/Max bar -->
                 <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                   <tr>
-                    <td style="background:rgba(255,255,255,0.08);border-radius:100px;padding:5px 14px;margin-right:8px;">
-                      <span style="font-size:12px;color:rgba(255,255,255,0.5);">↑ </span>
-                      <span style="font-size:13px;font-weight:700;color:#fca5a5;">%d°</span>
+                    <td style="background:#ffffff;border:1px solid #ebe1cf;border-radius:100px;padding:5px 14px;margin-right:8px;">
+                      <span style="font-size:12px;color:#a89888;">↑ </span>
+                      <span style="font-size:13px;font-weight:700;color:#9b3a2a;">%d°</span>
                     </td>
                     <td style="width:8px;"></td>
-                    <td style="background:rgba(255,255,255,0.08);border-radius:100px;padding:5px 14px;">
-                      <span style="font-size:12px;color:rgba(255,255,255,0.5);">↓ </span>
-                      <span style="font-size:13px;font-weight:700;color:#93c5fd;">%d°</span>
+                    <td style="background:#ffffff;border:1px solid #ebe1cf;border-radius:100px;padding:5px 14px;">
+                      <span style="font-size:12px;color:#a89888;">↓ </span>
+                      <span style="font-size:13px;font-weight:700;color:#1f4a57;">%d°</span>
                     </td>
                   </tr>
                 </table>
 
                 <!-- Separator -->
-                <div style="height:1px;background:rgba(255,255,255,0.1);margin-bottom:20px;"></div>
+                <div style="height:1px;background:#ebe1cf;margin-bottom:20px;"></div>
 
                 <!-- Forecast strip (travel days only) -->
                 <table width="100%%" cellpadding="0" cellspacing="0">
@@ -113,10 +113,10 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
             <!-- Reveal note -->
             <table width="100%%" cellpadding="0" cellspacing="0"
-              style="background:#fff8f0;border:1px solid #fed7aa;border-left:3px solid #CA8A71;border-radius:8px;margin-bottom:12px;">
+              style="background:#faf6ee;border:1px solid #ebe1cf;border-left:3px solid #a85e44;border-radius:8px;margin-bottom:12px;">
               <tr><td style="padding:14px 18px;">
-                <div style="font-size:12px;font-weight:700;color:#CA8A71;margin-bottom:4px;">📬 Preporuka</div>
-                <div style="font-size:12px;color:#374151;line-height:1.6;">
+                <div style="font-size:12px;font-weight:700;color:#a85e44;margin-bottom:4px;">📬 Preporuka</div>
+                <div style="font-size:12px;color:#1a1410;line-height:1.6;">
                   Kada dobiješ email sa otkrićem destinacije,
                   <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju —
                   prognoza za toliko dana unapred može biti okvirna.
@@ -125,7 +125,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             </table>
 
             <!-- Footer note -->
-            <p style="font-size:11px;color:#9ca3af;text-align:center;margin:8px 0 0;line-height:1.6;">
+            <p style="font-size:11px;color:#a89888;text-align:center;margin:8px 0 0;line-height:1.6;">
               Prognoza se ažurira svakodnevno — moguća su manja odstupanja.<br>
               Srećan put! 🌍
             </p>
@@ -140,7 +140,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         );
 
         return EmailHtmlBuilder.wrapBase(
-            "#f97316",
+            "#a85e44",
             "#0a1628",
             EmailHtmlBuilder.statusBadge("Prognoza", "orange"),
             "Tvoja vremenska prognoza",
@@ -161,7 +161,6 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
         for (int i = 0; i < forecast.size(); i++) {
             DailyForecast d = forecast.get(i);
-            // Prikazujemo samo dane dok je putnik na putu
             if (d.date().isBefore(depDate) || d.date().isAfter(retDate)) continue;
 
             boolean isDep   = d.date().equals(depDate);
@@ -173,27 +172,24 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
             if (isDep) {
                 label = "✈ POLAZAK";
-                // zlatno-narandžasti highlight za dan polaska
-                bg = "background:rgba(251,191,36,0.18);border:1px solid rgba(251,191,36,0.45);";
+                bg = "background:#fff5eb;border:1px solid #e8c7b1;";
             } else if (isRet) {
                 label = "🏠 POVRATAK";
-                // zelenkasti highlight za dan povratka
-                bg = "background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.35);";
+                bg = "background:#eef6f0;border:1px solid #c3d8c9;";
             } else if (isToday) {
                 label = "Danas";
-                bg = "background:rgba(125,211,252,0.15);border:1px solid rgba(125,211,252,0.25);";
+                bg = "background:#eaf0f3;border:1px solid #bcd0d6;";
             } else {
                 label = d.date().getDayOfWeek().getDisplayName(TextStyle.SHORT, sr);
-                bg = "background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);";
+                bg = "background:#ffffff;border:1px solid #ebe1cf;";
             }
 
             String dayDate = d.date().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM"));
 
-            // Dan polaska i povratka su vizualno malo veći
             String labelStyle = (isDep || isRet)
                 ? "font-size:8px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;margin-bottom:2px;"
-                  + (isDep ? "color:#fbbf24;" : "color:#34d399;")
-                : "font-size:9px;color:rgba(255,255,255,0.5);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;";
+                  + (isDep ? "color:#a85e44;" : "color:#1d6042;")
+                : "font-size:9px;color:#a89888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;";
 
             String tempStyle = (isDep || isRet)
                 ? "font-size:13px;font-weight:800;"
@@ -203,10 +199,10 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <td style="text-align:center;padding:0 2px;">
                   <div style="%sborder-radius:12px;padding:10px 4px;">
                     <div style="%s">%s</div>
-                    <div style="font-size:8px;color:rgba(255,255,255,0.3);margin-bottom:5px;">%s</div>
+                    <div style="font-size:8px;color:#a89888;margin-bottom:5px;">%s</div>
                     <div style="font-size:20px;margin-bottom:5px;">%s</div>
-                    <div style="%scolor:#fca5a5;">%d°</div>
-                    <div style="font-size:10px;color:#93c5fd;margin-top:2px;">%d°</div>
+                    <div style="%scolor:#9b3a2a;">%d°</div>
+                    <div style="font-size:10px;color:#1f4a57;margin-top:2px;">%d°</div>
                     %s
                   </div>
                 </td>""".formatted(
@@ -218,27 +214,21 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                     d.maxTemp(),
                     d.minTemp(),
                     d.precipitation() > 0.5
-                        ? "<div style=\"font-size:9px;color:#7dd3fc;margin-top:3px;\">💧" + String.format("%.0f", d.precipitation()) + "mm</div>"
+                        ? "<div style=\"font-size:9px;color:#2D5F6B;margin-top:3px;\">💧" + String.format("%.0f", d.precipitation()) + "mm</div>"
                         : ""
             ));
         }
         return sb.toString();
     }
 
-    // ── Travel days breakdown (umesto packing tips) ───────────────────────────
+    // ── Travel days breakdown ─────────────────────────────────────────────────
 
-    /**
-     * Prikazuje vreme samo za dane putovanja (od polaska do povratka).
-     * Relevantno i specifično — za razliku od generičkih saveta koji se
-     * odnose na sve 11 dana prognoze.
-     */
     private String buildTravelDaysCard(List<DailyForecast> forecast, LocalDate depDate, LocalDate retDate) {
         Locale sr = new Locale("sr", "RS");
         java.time.format.DateTimeFormatter dayFmt = java.time.format.DateTimeFormatter.ofPattern("dd.MM.");
 
         LocalDate lastForecastDate = forecast.isEmpty() ? depDate : forecast.get(forecast.size() - 1).date();
 
-        // Mapa datum → prognoza za brzo traženje
         java.util.Map<LocalDate, DailyForecast> byDate = new java.util.HashMap<>();
         forecast.forEach(d -> byDate.put(d.date(), d));
 
@@ -246,7 +236,6 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
         StringBuilder rows = new StringBuilder();
 
-        // Prolazimo kroz sve dane putovanja (dep → ret)
         LocalDate cursor = depDate;
         while (!cursor.isAfter(retDate)) {
             boolean isDep = cursor.equals(depDate);
@@ -258,28 +247,27 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             String dayDate = cursor.format(dayFmt);
 
             String badge = "";
-            if (isDep) badge = "<span style=\"background:#fbbf24;color:#1f2937;font-size:9px;font-weight:700;"
+            if (isDep) badge = "<span style=\"background:#fff5eb;color:#a85e44;font-size:9px;font-weight:700;"
                     + "border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;\">✈ POLAZAK</span>";
-            else if (isRet) badge = "<span style=\"background:#34d399;color:#1f2937;font-size:9px;font-weight:700;"
+            else if (isRet) badge = "<span style=\"background:#eef6f0;color:#1d6042;font-size:9px;font-weight:700;"
                     + "border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;\">🏠 POVRATAK</span>";
 
             if (d != null) {
-                // Dan je unutar prognoze — prikaži vreme
                 String precipitation = d.precipitation() > 0.5
-                        ? "<span style=\"font-size:11px;color:#6b7280;\"> · 💧" + String.format("%.0f", d.precipitation()) + "mm</span>"
+                        ? "<span style=\"font-size:11px;color:#6b5d4f;\"> · 💧" + String.format("%.0f", d.precipitation()) + "mm</span>"
                         : "";
 
                 rows.append("""
-                    <tr style="border-bottom:1px solid #f3f4f6;">
+                    <tr style="border-bottom:1px solid #ebe1cf;">
                       <td style="padding:11px 0;width:28px;text-align:center;font-size:22px;vertical-align:middle;">%s</td>
                       <td style="padding:11px 8px;vertical-align:middle;">
-                        <div style="font-size:13px;font-weight:600;color:#111827;">%s %s%s</div>
-                        <div style="font-size:11px;color:#9ca3af;margin-top:2px;">%s%s</div>
+                        <div style="font-size:13px;font-weight:600;color:#1a1410;">%s %s%s</div>
+                        <div style="font-size:11px;color:#a89888;margin-top:2px;">%s%s</div>
                       </td>
                       <td style="padding:11px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
-                        <span style="font-size:14px;font-weight:700;color:#ef4444;">%d°</span>
-                        <span style="font-size:12px;color:#9ca3af;margin:0 2px;">/</span>
-                        <span style="font-size:13px;color:#3b82f6;">%d°</span>
+                        <span style="font-size:14px;font-weight:700;color:#9b3a2a;">%d°</span>
+                        <span style="font-size:12px;color:#a89888;margin:0 2px;">/</span>
+                        <span style="font-size:13px;color:#1f4a57;">%d°</span>
                       </td>
                     </tr>""".formatted(
                         d.emoji(),
@@ -288,16 +276,15 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                         d.maxTemp(), d.minTemp()
                 ));
             } else {
-                // Dan je van dosega prognoze — prikaži placeholder
                 rows.append("""
-                    <tr style="border-bottom:1px solid #f3f4f6;">
+                    <tr style="border-bottom:1px solid #ebe1cf;">
                       <td style="padding:11px 0;width:28px;text-align:center;font-size:22px;vertical-align:middle;opacity:0.35;">🌡️</td>
                       <td style="padding:11px 8px;vertical-align:middle;">
-                        <div style="font-size:13px;font-weight:600;color:#9ca3af;">%s %s%s</div>
-                        <div style="font-size:11px;color:#d1d5db;margin-top:2px;">Prognoza dostupna bliže datumu</div>
+                        <div style="font-size:13px;font-weight:600;color:#a89888;">%s %s%s</div>
+                        <div style="font-size:11px;color:#ebe1cf;margin-top:2px;">Prognoza dostupna bliže datumu</div>
                       </td>
                       <td style="padding:11px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
-                        <span style="font-size:12px;color:#d1d5db;">— / —</span>
+                        <span style="font-size:12px;color:#ebe1cf;">— / —</span>
                       </td>
                     </tr>""".formatted(dayName, dayDate, badge));
             }
@@ -305,21 +292,20 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             cursor = cursor.plusDays(1);
         }
 
-        // Napomena ako deo putovanja nije pokriven prognozom
         String caveat = "";
         if (retDate.isAfter(lastForecastDate)) {
             long missing = ChronoUnit.DAYS.between(lastForecastDate, retDate);
             caveat = """
-                <div style="margin-top:12px;font-size:11px;color:#9ca3af;line-height:1.5;">
+                <div style="margin-top:12px;font-size:11px;color:#a89888;line-height:1.5;">
                   ℹ️ Prognoza poslednja %d %s putovanja biće dostupna kako se datum polaska bude približavao.
                 </div>""".formatted(missing, missing == 1 ? "dan" : "dana");
         }
 
         return """
             <table width="100%%" cellpadding="0" cellspacing="0"
-              style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:16px;">
+              style="background:#fff;border:1px solid #ebe1cf;border-radius:12px;margin-bottom:16px;">
               <tr><td style="padding:20px 24px;">
-                <div style="font-size:12px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">
+                <div style="font-size:12px;font-weight:700;color:#a89888;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">
                   🗓 Tokom putovanja
                 </div>
                 <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
