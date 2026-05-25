@@ -218,10 +218,15 @@ public final class EmailHtmlBuilder {
     public static String detailsCard(String title, String rowsHtml, String borderColor) {
         String bc = (borderColor == null || borderColor.isBlank()) ? "#a85e44" : borderColor;
         return """
-            <div style="background:#faf6ee;border:1px solid #ebe1cf;border-left:3px solid %s;border-radius:8px;padding:20px 22px;margin:0 0 22px;">
-              <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a89888;margin-bottom:14px;">%s</div>
-              <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-collapse:collapse;">
+              <tr>
+                <td width="3" style="width:3px;background:%s;font-size:0;line-height:0;">&nbsp;</td>
+                <td style="background:#faf6ee;border:1px solid #ebe1cf;border-left:none;padding:18px 20px;">
+                  <p style="margin:0 0 12px;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a89888;">%s</p>
+                  <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
+                </td>
+              </tr>
+            </table>
             """.formatted(bc, title, rowsHtml);
     }
 

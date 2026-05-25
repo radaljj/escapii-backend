@@ -208,10 +208,16 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     private String teamSection(String title, String rows) {
         return """
-            <div style="margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">%s</div>
-              <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">%s</table>
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">%s</td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">%s</table>
+                </td>
+              </tr>
+            </table>
             """.formatted(title, rows);
     }
 
@@ -306,14 +312,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                   Draga/i <strong style="color:#1a1410;">%s</strong>,<br><br>%s
                 </p>
                 %s
-                <div style="background:#fbeeec;border:1px solid #e9c5bd;border-left:3px solid #9b3a2a;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
-                  <div style="font-size:13px;font-weight:700;color:#9b3a2a;margin-bottom:6px;">Pitanja ili žalba?</div>
-                  <p style="margin:0;font-size:13px;color:#1a1410;line-height:1.7;">
-                    Kontaktirajte nas na
-                    <a href="mailto:%s" style="color:#9b3a2a;font-weight:600;text-decoration:none;">%s</a>.
-                    Radujemo se vašem sledećem putovanju sa nama!
-                  </p>
-                </div>
+                <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-collapse:collapse;">
+                  <tr>
+                    <td width="3" style="width:3px;background:#9b3a2a;font-size:0;line-height:0;">&nbsp;</td>
+                    <td style="background:#fbeeec;border:1px solid #e9c5bd;border-left:none;border-radius:0 6px 6px 0;padding:16px 20px;">
+                      <div style="font-size:13px;font-weight:700;color:#9b3a2a;margin-bottom:6px;">Pitanja ili žalba?</div>
+                      <p style="margin:0;font-size:13px;color:#1a1410;line-height:1.7;">
+                        Kontaktirajte nas na
+                        <a href="mailto:%s" style="color:#9b3a2a;font-weight:600;text-decoration:none;">%s</a>.
+                        Radujemo se vašem sledećem putovanju sa nama!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
                 """.formatted(
                 EmailHtmlBuilder.esc(booking.getFirstName()),
                 subtitle,
@@ -354,13 +365,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String depStr     = dep.format(EmailHtmlBuilder.DATE_FMT);
 
         return """
-            <div style="margin-bottom:24px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:16px;">Šta vas čeka</div>
-              %s
-              %s
-              %s
-              %s
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:16px;">Šta vas čeka</td>
+              </tr>
+              <tr>
+                <td>
+                  %s
+                  %s
+                  %s
+                  %s
+                </td>
+              </tr>
+            </table>
             """.formatted(
             EmailHtmlBuilder.timelineItem("✓", "#eef6f0", "#1d6042",
                 "Rezervacija potvrđena",
@@ -691,10 +708,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (!cancelled) rows.append(EmailHtmlBuilder.dRowMystery("Destinacija", "✦ Iznenađenje!"));
 
         return """
-            <div style="background:#faf6ee;border:1px solid #ebe1cf;border-left:3px solid %s;border-radius:6px;padding:18px 20px;margin:0 0 20px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:14px;">%s</div>
-              <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-collapse:collapse;">
+              <tr>
+                <td width="3" style="width:3px;background:%s;font-size:0;line-height:0;">&nbsp;</td>
+                <td style="background:#faf6ee;border:1px solid #ebe1cf;border-left:none;padding:16px 18px;">
+                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;">%s</p>
+                  <table width="100%%" cellpadding="0" cellspacing="0">%s</table>
+                </td>
+              </tr>
+            </table>
             """.formatted(borderColor, cardTitle, rows);
     }
 
@@ -710,13 +732,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     private String nextStepsBlock() {
         return """
-            <div style="margin-bottom:24px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:14px;">Šta vas čeka</div>
-              %s
-              %s
-              %s
-              %s
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:14px;">Šta vas čeka</td>
+              </tr>
+              <tr>
+                <td>
+                  %s
+                  %s
+                  %s
+                  %s
+                </td>
+              </tr>
+            </table>
             """.formatted(
             EmailHtmlBuilder.step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#2D5F6B;'>24 sata</strong>",
                       "Proveravamo dostupnost i potvrđujemo vašu rezervaciju."),
@@ -784,13 +812,14 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         }
 
         return """
-            <div style="margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-                          color:#a89888;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">
-                Putnici
-              </div>
-              %s
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Putnici</td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;">%s</td>
+              </tr>
+            </table>
             """.formatted(cards);
     }
 
@@ -841,26 +870,32 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             rows.append(priceRow("Doplata za solo putnika", "—", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
 
         return """
-            <div style="margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Pregled cene</div>
-              <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;border-radius:8px;overflow:hidden;">
-                <thead>
-                  <tr style="background:#f5efe2;">
-                    <th width="48%%" style="width:48%%;padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Stavka</th>
-                    <th width="19%%" style="width:19%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Po osobi</th>
-                    <th width="14%%" style="width:14%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Kom</th>
-                    <th width="19%%" style="width:19%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Ukupno</th>
-                  </tr>
-                </thead>
-                <tbody>%s</tbody>
-                <tfoot>
-                  <tr style="background:#1a1410;">
-                    <td colspan="3" style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
-                    <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#e29070;">%s</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:8px;border-bottom:2px solid #ebe1cf;">Pregled cene</td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;border-radius:8px;overflow:hidden;">
+                    <thead>
+                      <tr style="background:#f5efe2;">
+                        <th width="48%%" style="width:48%%;padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Stavka</th>
+                        <th width="19%%" style="width:19%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Po osobi</th>
+                        <th width="14%%" style="width:14%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Kom</th>
+                        <th width="19%%" style="width:19%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;white-space:nowrap;">Ukupno</th>
+                      </tr>
+                    </thead>
+                    <tbody>%s</tbody>
+                    <tfoot>
+                      <tr style="background:#1a1410;">
+                        <td colspan="3" style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
+                        <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#e29070;">%s</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </td>
+              </tr>
+            </table>
             """.formatted(rows, EmailHtmlBuilder.eur(booking.getTotalPriceAll()));
     }
 
@@ -882,10 +917,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private String buildNotesBox(String notes) {
         if (notes == null || notes.isBlank()) return "";
         return """
-            <div style="background:#fffbeb;border-left:3px solid #f59e0b;border-radius:0 6px 6px 0;padding:14px 18px;margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#b45309;margin-bottom:6px;">Napomena korisnika</div>
-              <div style="font-size:14px;color:#78350f;line-height:1.6;">%s</div>
-            </div>
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border-collapse:collapse;">
+              <tr>
+                <td width="3" style="width:3px;background:#f59e0b;font-size:0;line-height:0;">&nbsp;</td>
+                <td style="background:#fffbeb;border:1px solid #fde68a;border-left:none;border-radius:0 6px 6px 0;padding:14px 18px;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#b45309;margin-bottom:6px;">Napomena korisnika</div>
+                  <div style="font-size:14px;color:#78350f;line-height:1.6;">%s</div>
+                </td>
+              </tr>
+            </table>
             """.formatted(EmailHtmlBuilder.esc(notes));
     }
 
