@@ -51,7 +51,7 @@ public class Booking {
     @JoinColumn(name = "selected_date_id", nullable = false)
     private AvailableDate selectedDate;
 
-    // ── Isključene destinacije (max 3) ────────────────────────────────
+    // ── Isključene destinacije (max 4) ────────────────────────────────
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest1_id")
@@ -64,6 +64,10 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "excluded_dest3_id")
     private Destination excludedDestination3; // +10€ flat
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "excluded_dest4_id")
+    private Destination excludedDestination4; // +10€ flat
 
     @Column(nullable = false)
     private Integer exclusionCount = 0;

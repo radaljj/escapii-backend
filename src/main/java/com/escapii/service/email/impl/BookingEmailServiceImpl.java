@@ -686,6 +686,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         }
         rows.append(EmailHtmlBuilder.dRow("Putnici",   passengerNamesList(booking)));
         rows.append(EmailHtmlBuilder.dRow("Smeštaj",   EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType())));
+        if (Boolean.TRUE.equals(booking.getHasConnectingFlights())) rows.append(EmailHtmlBuilder.dRow("Presedanje", "✔ Prihvaćeno"));
         if (booking.getExclusionCount() > 0) rows.append(EmailHtmlBuilder.dRow("Isključene dest.", buildExclusionsText(booking)));
         if (!cancelled) rows.append(EmailHtmlBuilder.dRowMystery("Destinacija", "✦ Iznenađenje!"));
 
@@ -873,7 +874,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         List<com.escapii.model.Destination> excl = Arrays.asList(
             booking.getExcludedDestination1(),
             booking.getExcludedDestination2(),
-            booking.getExcludedDestination3()
+            booking.getExcludedDestination3(),
+            booking.getExcludedDestination4()
         );
         for (com.escapii.model.Destination d : excl) {
             if (d == null) continue;

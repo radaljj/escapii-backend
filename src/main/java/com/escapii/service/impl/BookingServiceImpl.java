@@ -102,7 +102,8 @@ public class BookingServiceImpl implements BookingService {
         Destination   excl1 = resolveDestination(request.getExcludedDestination1Id());
         Destination   excl2 = resolveDestination(request.getExcludedDestination2Id());
         Destination   excl3 = resolveDestination(request.getExcludedDestination3Id());
-        int exclusionCount  = countNonNull(excl1, excl2, excl3);
+        Destination   excl4 = resolveDestination(request.getExcludedDestination4Id());
+        int exclusionCount  = countNonNull(excl1, excl2, excl3, excl4);
 
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
@@ -110,7 +111,7 @@ public class BookingServiceImpl implements BookingService {
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether()
         );
 
-        Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, exclusionCount, price));
+        Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price));
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",
                 saved.getBookingRef(), saved.getNumberOfTravelers(),
@@ -191,7 +192,7 @@ public class BookingServiceImpl implements BookingService {
 
     private Booking buildBooking(
             BookingRequest request, AvailableDate date,
-            Destination excl1, Destination excl2, Destination excl3,
+            Destination excl1, Destination excl2, Destination excl3, Destination excl4,
             int exclusionCount, PricePreviewResponse price
     ) {
         Booking b = new Booking();
@@ -203,6 +204,7 @@ public class BookingServiceImpl implements BookingService {
         b.setExcludedDestination1(excl1);
         b.setExcludedDestination2(excl2);
         b.setExcludedDestination3(excl3);
+        b.setExcludedDestination4(excl4);
         b.setExclusionCount(exclusionCount);
         b.setExclusionCostEur(price.getExclusionCostFlat());
 
