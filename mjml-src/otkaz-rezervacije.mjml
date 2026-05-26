@@ -1,0 +1,125 @@
+<mjml>
+  <mj-head>
+    <mj-preview>Informacija o otkazivanju vaše rezervacije &#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;&#847;</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Segoe UI',Arial,Helvetica,sans-serif" />
+      <mj-section padding="0" background-color="#ebe4d4" />
+    </mj-attributes>
+    <mj-style>
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #ebe4d4 !important; }
+        .force-sand td { background-color: #f5efe2 !important; }
+        .force-white td { background-color: #ffffff !important; }
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#ebe4d4" width="640px">
+
+    <!-- Top spacer -->
+    <mj-section padding="40px 16px 0">
+      <mj-column><mj-spacer height="1px" /></mj-column>
+    </mj-section>
+
+    <!-- Card header — sand bg, red accent top border -->
+    <mj-section padding="0 16px" css-class="force-sand">
+      <mj-column
+        background-color="#f5efe2"
+        border-top="4px solid #9b3a2a"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        border-bottom="1px solid #ebe1cf"
+        border-radius="10px 10px 0 0"
+        padding="32px 40px 28px">
+
+        <!-- Logo -->
+        <mj-image
+          src="https://escapii.rs/wp-content/themes/escapii-theme/images/logo-black.png"
+          alt="escapii" width="120px" align="center"
+          href="https://escapii.rs" padding="0 0 18px" />
+
+        <!-- Badge: Rezervacija otkazana -->
+        <mj-text align="center" padding="0 0 14px" font-size="14px">
+          <span style="display:inline-block;padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;background:#fbeeec;color:#9b3a2a;border:1px solid #e9c5bd;">REZERVACIJA OTKAZANA</span>
+        </mj-text>
+
+        <!-- Heading -->
+        <mj-text
+          font-family="Georgia,'Times New Roman',serif"
+          font-size="32px" color="#1a1410" line-height="1.2"
+          font-weight="400" padding="0 0 10px">
+          Rezervacija otkazana
+        </mj-text>
+
+        <!-- Subheading -->
+        <mj-text font-size="14px" color="#6b5d4f" line-height="1.6" padding="0 0 14px">
+          Nadamo se da ćemo vas videti na sledećem putovanju.
+        </mj-text>
+
+        <!-- Ref code -->
+        <mj-text padding="0" font-size="14px">
+          <div style="display:inline-block;background:rgba(168,94,68,0.08);border:1px solid rgba(168,94,68,0.25);color:#a85e44;font-family:'Courier New',monospace;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;">
+            &#10022; {{REF_CODE}}
+          </div>
+        </mj-text>
+
+      </mj-column>
+    </mj-section>
+
+    <!-- White body -->
+    <mj-section padding="0 16px" css-class="force-white">
+      <mj-column
+        background-color="#ffffff"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        padding="32px 40px">
+
+        <!-- Greeting + cancellation message -->
+        <mj-text font-size="15px" color="#1a1410" line-height="1.65" padding="0 0 20px">
+          Draga/i <strong style="color:#1a1410;">{{FIRST_NAME}}</strong>,<br /><br />
+          sa žaljenjem vam obaveštavamo da je vaša rezervacija otkazana.
+          Razumemo da su planovi nekad nepredvidivi — i nadamo se da ćete nam ponovo ukazati poverenje.<br /><br />
+          Vaša avantura nas čeka — kada budete spremni, mi ćemo biti tu. ✦
+        </mj-text>
+
+        <!-- Trip card — cancelled style (injected by Java) -->
+        <mj-raw>{{TRIP_CARD_HTML}}</mj-raw>
+
+        <!-- Contact box -->
+        <mj-raw>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <tr>
+              <td width="100%" style="background:#fbeeec;border-top:1px solid #e9c5bd;border-right:1px solid #e9c5bd;border-bottom:1px solid #e9c5bd;border-left:3px solid #9b3a2a;padding:16px 20px;">
+                <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#9b3a2a;">Pitanja ili žalba?</p>
+                <p style="margin:0;font-size:13px;color:#1a1410;line-height:1.7;">
+                  Kontaktirajte nas na
+                  <a href="mailto:{{CONTACT_EMAIL}}" style="color:#9b3a2a;font-weight:600;text-decoration:none;">{{CONTACT_EMAIL}}</a>.
+                  Radujemo se vašem sledećem putovanju sa nama!
+                </p>
+              </td>
+            </tr>
+          </table>
+        </mj-raw>
+
+      </mj-column>
+    </mj-section>
+
+    <!-- Sand footer -->
+    <mj-section padding="0 16px 40px" css-class="force-sand">
+      <mj-column
+        background-color="#f5efe2"
+        border-top="1px solid #ebe1cf"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        border-bottom="1px solid #ebe1cf"
+        border-radius="0 0 10px 10px"
+        padding="22px 40px">
+        <mj-text font-size="11px" color="#6b5d4f" line-height="1.8" align="center" padding="0">
+          <strong style="color:#1a1410;">escapii</strong> — putovanja iznenađenja<br />
+          Beograd, Srbija · <a href="mailto:{{SENDER_EMAIL}}" style="color:#a85e44;text-decoration:none;font-weight:600;">{{SENDER_EMAIL}}</a><br /><br />
+          <a href="https://escapii.rs" style="color:#a85e44;text-decoration:none;font-weight:600;">escapii.rs</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

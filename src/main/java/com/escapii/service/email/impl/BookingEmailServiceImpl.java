@@ -239,37 +239,14 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
 
-        String body = """
-            <p style="margin:0 0 24px;font-size:15px;color:#1a1410;line-height:1.65;">
-              Draga/i <strong style="color:#1a1410;">%s</strong>,<br><br>
-              uspešno smo primili vaš upit za putovanje. Naš tim pregledava vaše preference
-              i kontaktiraće vas u roku od <strong style="color:#1a1410;">24 sata</strong> sa svim detaljima i potvrdom rezervacije.
-            </p>
-            %s
-            %s
-            %s
-            %s
-            %s
-            """.formatted(
-            EmailHtmlBuilder.esc(booking.getFirstName()),
-            customerTripCard(booking, depDate, retDate, n),
-            buildPassengersSection(booking),
-            EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n),
-            buildPriceTable(booking, n),
-            nextStepsBlock()
-        );
-
-        return EmailHtmlBuilder.wrapBase(
-            "#a85e44",
-            "#1a1410",
-            EmailHtmlBuilder.statusBadge("Na čekanju", "orange"),
-            "Vaš upit je primljen",
-            "Hvala što ste nam se obratili — naš tim će vas kontaktirati u roku od 24 sata.",
-            booking.getBookingRef(),
-            body,
-            EmailHtmlBuilder.customerFooter(sender.getFrom()),
-            true
-        );
+        return loadEmailTemplate("upit-primljen.html")
+            .replace("{{FIRST_NAME}}",        EmailHtmlBuilder.esc(booking.getFirstName()))
+            .replace("{{REF_CODE}}",           EmailHtmlBuilder.esc(booking.getBookingRef()))
+            .replace("{{BOARDING_PASS_HTML}}", buildBoardingPassBlock(booking, depDate, retDate, n))
+            .replace("{{PASSENGERS_HTML}}",    buildPassengersSection(booking))
+            .replace("{{TOTAL_BOX_HTML}}",     EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
+            .replace("{{PRICE_TABLE_HTML}}",   buildPriceTable(booking, n))
+            .replace("{{SENDER_EMAIL}}",       EmailHtmlBuilder.esc(sender.getFrom()));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -281,72 +258,24 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
 
-        String heading     = confirmed ? "Rezervacija potvrđena!" : "Rezervacija otkazana";
-        String subtitle    = confirmed
-            ? "vaša rezervacija je zvanično potvrđena! Sve je spremno — vi samo spakujte stvari i prepustite se misteriji. ✦"
-            : "sa žaljenjem vam obaveštavamo da je vaša rezervacija otkazana. Razumemo da su planovi nekad nepredvidivi — i nadamo se da ćete nam ponovo ukazati poverenje.<br><br>Vaša avantura nas čeka — kada budete spremni, mi ćemo biti tu. ✦";
-
-        String content;
         if (confirmed) {
-            content = """
-                <p style="margin:0 0 20px;font-size:15px;color:#1a1410;line-height:1.65;">
-                  Draga/i <strong style="color:#1a1410;">%s</strong>,<br><br>%s
-                </p>
-                %s
-                %s
-                %s
-                %s
-                %s
-                """.formatted(
-                EmailHtmlBuilder.esc(booking.getFirstName()),
-                subtitle,
-                customerTripCardStyled(booking, depDate, retDate, n, false),
-                EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n),
-                buildConfirmedTimeline(booking),
-                buildPassengersSection(booking),
-                buildPriceTable(booking, n)
-            );
+            return loadEmailTemplate("potvrda-rezervacije.html")
+                .replace("{{FIRST_NAME}}",      EmailHtmlBuilder.esc(booking.getFirstName()))
+                .replace("{{REF_CODE}}",         EmailHtmlBuilder.esc(booking.getBookingRef()))
+                .replace("{{TRIP_CARD_HTML}}",   customerTripCardStyled(booking, depDate, retDate, n, false))
+                .replace("{{TOTAL_BOX_HTML}}",   EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
+                .replace("{{TIMELINE_HTML}}",    buildConfirmedTimeline(booking))
+                .replace("{{PASSENGERS_HTML}}", buildPassengersSection(booking))
+                .replace("{{PRICE_TABLE_HTML}}", buildPriceTable(booking, n))
+                .replace("{{SENDER_EMAIL}}",     EmailHtmlBuilder.esc(sender.getFrom()));
         } else {
-            content = """
-                <p style="margin:0 0 20px;font-size:15px;color:#1a1410;line-height:1.65;">
-                  Draga/i <strong style="color:#1a1410;">%s</strong>,<br><br>%s
-                </p>
-                %s
-                <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-                  <tr>
-                    <td width="100%%" style="background:#fbeeec;border-top:1px solid #e9c5bd;border-right:1px solid #e9c5bd;border-bottom:1px solid #e9c5bd;border-left:3px solid #9b3a2a;padding:16px 20px;">
-                      <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#9b3a2a;">Pitanja ili žalba?</p>
-                      <p style="margin:0;font-size:13px;color:#1a1410;line-height:1.7;">
-                        Kontaktirajte nas na
-                        <a href="mailto:%s" style="color:#9b3a2a;font-weight:600;text-decoration:none;">%s</a>.
-                        Radujemo se vašem sledećem putovanju sa nama!
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-                """.formatted(
-                EmailHtmlBuilder.esc(booking.getFirstName()),
-                subtitle,
-                customerTripCardStyled(booking, depDate, retDate, n, true),
-                sender.getFrom(), sender.getFrom()
-            );
+            return loadEmailTemplate("otkaz-rezervacije.html")
+                .replace("{{FIRST_NAME}}",     EmailHtmlBuilder.esc(booking.getFirstName()))
+                .replace("{{REF_CODE}}",        EmailHtmlBuilder.esc(booking.getBookingRef()))
+                .replace("{{TRIP_CARD_HTML}}",  customerTripCardStyled(booking, depDate, retDate, n, true))
+                .replace("{{CONTACT_EMAIL}}",   EmailHtmlBuilder.esc(sender.getFrom()))
+                .replace("{{SENDER_EMAIL}}",    EmailHtmlBuilder.esc(sender.getFrom()));
         }
-
-        return EmailHtmlBuilder.wrapBase(
-            confirmed ? "#1d6042" : "#9b3a2a",
-            confirmed ? "#064e3b" : "#450a0a",
-            confirmed
-                ? EmailHtmlBuilder.statusBadge("Rezervacija potvrđena", "green")
-                : EmailHtmlBuilder.statusBadge("Rezervacija Otkazana", "red"),
-            heading,
-            confirmed
-                ? "Vaše putovanje je zvanično u kalendaru. Jedino što ne znate — kuda idete! ✦"
-                : "Nadamo se da ćemo vas videti na sledećem putovanju.",
-            booking.getBookingRef(),
-            content,
-            EmailHtmlBuilder.customerFooter(sender.getFrom()),
-            confirmed
-        );
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -681,10 +610,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     // Shared content blocks
     // ═══════════════════════════════════════════════════════════════════════════
 
-    private String customerTripCard(Booking booking, String depDate, String retDate, int n) {
-        return customerTripCardStyled(booking, depDate, retDate, n, false);
-    }
-
     private String customerTripCardStyled(Booking booking, String depDate, String retDate, int n, boolean cancelled) {
         String borderColor = cancelled ? "#9b3a2a" : "#a85e44"; // purple for active, red for cancelled
         String cardTitle   = cancelled ? "Otkazano putovanje" : "Detalji putovanja";
@@ -716,43 +641,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               </tr>
             </table>
             """.formatted(borderColor, cardTitle, rows);
-    }
-
-    private String cRow(String label, String value, boolean shaded) {
-        String bg = shaded ? "background:#faf6ee;" : "";
-        return """
-            <tr style="%s">
-              <td width="40%%" style="width:40%%;padding:11px 20px;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">%s</td>
-              <td width="60%%" style="width:60%%;padding:11px 20px;font-size:14px;color:#1a1410;font-weight:500;border-bottom:1px solid #ebe1cf;">%s</td>
-            </tr>
-            """.formatted(bg, label, value);
-    }
-
-    private String nextStepsBlock() {
-        return """
-            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-              <tr>
-                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:14px;">Šta vas čeka</td>
-              </tr>
-              <tr>
-                <td width="100%%">
-                  %s
-                  %s
-                  %s
-                  %s
-                </td>
-              </tr>
-            </table>
-            """.formatted(
-            EmailHtmlBuilder.step("1", "Tim Escapii vam se javlja u roku od <strong style='color:#2D5F6B;'>24 sata</strong>",
-                      "Proveravamo dostupnost i potvrđujemo vašu rezervaciju."),
-            EmailHtmlBuilder.step("2", "Detalji rezervacije i uplata",
-                      "Javićemo vam se sa svim detaljima — koracima za uplatu, pravilima putovanja i svim informacijama koje su vam potrebne pre polaska."),
-            EmailHtmlBuilder.step("3", "Vremenska prognoza — <strong style='color:#2D5F6B;'>7 dana pre polaska</strong>",
-                      "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna. 🌤"),
-            EmailHtmlBuilder.step("4", "Koverta s destinacijom — <strong style='color:#2D5F6B;'>48h pre polaska</strong>",
-                      "Koverta otkriva gde putujete. ✉")
-        );
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -950,5 +838,24 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             case 2 -> "Isključivanja (2× 15€/os)";
             default -> "Isključivanja (%d× 15€/os)".formatted(paid);
         };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Template loader — učitava MJML-kompajlirani HTML iz classpath /email/
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Učitava pre-kompajlirani HTML email template iz src/main/resources/email/.
+     * Placeholders oblika {{TOKEN}} se potom zamenjuju dinamičkim vrednostima.
+     */
+    private static String loadEmailTemplate(String filename) {
+        try (var is = BookingEmailServiceImpl.class.getResourceAsStream("/email/" + filename)) {
+            if (is == null) {
+                throw new IllegalStateException("Email template nije pronađen: /email/" + filename);
+            }
+            return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Nije moguće učitati email template: " + filename, e);
+        }
     }
 }
