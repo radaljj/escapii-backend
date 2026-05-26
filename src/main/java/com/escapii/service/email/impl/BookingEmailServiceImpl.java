@@ -378,24 +378,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
               <tr>
                 <td style="background:linear-gradient(135deg,#a85e44 0%%,#c8775a 50%%,#e29070 100%%);
                            padding:22px 30px 60px;border-radius:18px 18px 0 0;">
-                  <table width="100%%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="vertical-align:middle;">
-                        <img src="%s" alt="escapii" height="34"
-                             style="display:block;border:0;height:34px;max-width:140px;"
-                             onerror="this.style.display='none'">
-                      </td>
-                      <td style="text-align:right;vertical-align:middle;">
-                        <span style="display:inline-block;font-size:9px;letter-spacing:3px;
-                                     font-weight:700;color:#fff;
-                                     background:rgba(255,255,255,0.14);
-                                     border:1px solid rgba(255,255,255,0.3);
-                                     padding:6px 14px;border-radius:100px;">
-                          ✦ BOARDING PASS
-                        </span>
-                      </td>
-                    </tr>
-                  </table>
                 </td>
               </tr>
 
@@ -594,7 +576,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             </table>
             <!-- ═══ END BOARDING PASS ════════════════════════════════════════════ -->
             """.formatted(
-            EmailHtmlBuilder.LOGO_WHITE_URL,   // logo src
             airportCode,                        // IATA (BEG)
             airportCity,                        // city name
             depDate,                            // Polazak
