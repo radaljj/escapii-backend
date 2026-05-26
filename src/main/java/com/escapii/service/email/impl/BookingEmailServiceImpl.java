@@ -336,7 +336,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             confirmed ? "#1d6042" : "#9b3a2a",
             confirmed ? "#064e3b" : "#450a0a",
             confirmed
-                ? EmailHtmlBuilder.statusBadge("Potvrđena", "green")
+                ? EmailHtmlBuilder.statusBadge("Rezervacija potvrđena", "green")
                 : EmailHtmlBuilder.statusBadge("Otkazana", "red"),
             heading,
             confirmed
