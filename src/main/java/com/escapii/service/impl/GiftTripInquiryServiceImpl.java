@@ -1,12 +1,17 @@
 package com.escapii.service.impl;
 
+import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.GiftTripInquiryRequest;
 import com.escapii.dto.GiftTripInquiryResponse;
+import com.escapii.model.AvailableDate;
 import com.escapii.model.GiftTripInquiry;
 import com.escapii.model.InquiryStatus;
+import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.GiftTripInquiryRepository;
 import com.escapii.service.GiftTripInquiryService;
 import com.escapii.service.email.GiftTripEmailService;
+import com.escapii.util.TokenUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +29,7 @@ import java.util.List;
 public class GiftTripInquiryServiceImpl implements GiftTripInquiryService {
 
     private final GiftTripInquiryRepository inquiryRepository;
+    private final AvailableDateRepository   availableDateRepository;
     private final GiftTripEmailService emailService;
 
     @Override
@@ -75,6 +81,39 @@ public class GiftTripInquiryServiceImpl implements GiftTripInquiryService {
         inquiry.setPrice(price);
         log.info("[GiftTrip] Cena upita id={} postavljena na {}", id, price);
         return new GiftTripInquiryResponse(inquiryRepository.save(inquiry));
+    }
+
+    @Override
+    @Transactional
+    public AdminDateResponse createPrivateDateFromGiftTrip(Long tripId, CreatePrivateDateRequest req) {
+        GiftTripInquiry inquiry = findOrThrow(tripId);
+
+        java.time.LocalDate depDate = inquiry.getDesiredDepartureDate();
+        java.time.LocalDate retDate = depDate.plusDays(inquiry.getNights());
+
+        AvailableDate date = new AvailableDate();
+        date.setDepartureDate(depDate);
+        date.setReturnDate(retDate);
+        date.setNumberOfNights(inquiry.getNights());
+        date.setDepartureAirport(inquiry.getAirport());
+        date.setAvailableSlots(req.travelers());
+        date.setBasePrice(req.pricePerPerson());
+        date.setActive(true);
+        date.setIsPrivate(true);
+        date.setPrivateToken(TokenUtils.generate());
+        date.setExpiresAt(java.time.LocalDateTime.now().plusHours(req.effectiveExpiry()));
+
+        AvailableDate saved = availableDateRepository.save(date);
+
+        // Automatski označi gift trip upit kao PRIVATE_SENT i sačuvaj token za admin panel
+        inquiry.setStatus(InquiryStatus.PRIVATE_SENT);
+        inquiry.setPrivateToken(saved.getPrivateToken());
+        inquiryRepository.save(inquiry);
+
+        log.info("[GiftTrip] Privatni termin kreiran za trip id={} | {} → {} | token={} | {}€/os",
+                tripId, depDate, retDate, saved.getPrivateToken(), req.pricePerPerson());
+
+        return new AdminDateResponse(saved);
     }
 
     private GiftTripInquiry findOrThrow(Long id) {

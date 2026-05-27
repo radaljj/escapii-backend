@@ -1,5 +1,7 @@
 package com.escapii.controller;
 
+import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.GiftTripInquiryResponse;
 import com.escapii.dto.GiftVoucherResponse;
 import com.escapii.model.InquiryStatus;
@@ -90,5 +92,17 @@ public class GiftAdminController {
             @PathVariable Long id,
             @RequestParam BigDecimal value) {
         return ResponseEntity.ok(tripService.updatePrice(id, value));
+    }
+
+    /**
+     * POST /api/admin/gifts/trips/{id}/create-private-date
+     * Kreira privatni booking termin iz gift trip upita.
+     * Identičan flow kao za /api/admin/inquiries/{id}/create-private-date.
+     */
+    @PostMapping("/trips/{id}/create-private-date")
+    public ResponseEntity<AdminDateResponse> createPrivateDateFromGiftTrip(
+            @PathVariable Long id,
+            @RequestBody CreatePrivateDateRequest request) {
+        return ResponseEntity.ok(tripService.createPrivateDateFromGiftTrip(id, request));
     }
 }

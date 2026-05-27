@@ -76,6 +76,13 @@ public class GiftTripInquiry {
     @Column(precision = 10, scale = 2)
     private BigDecimal price;
 
+    /**
+     * Token privatnog termina kreiranog za ovaj upit.
+     * Popunjava se u createPrivateDateFromGiftTrip() — admin može da kopira link i posle reload-a.
+     */
+    @Column(length = 64)
+    private String privateToken;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

@@ -20,6 +20,7 @@ public record GiftTripInquiryResponse(
         String giftMessage,
         InquiryStatus status,
         BigDecimal price,
+        String privateToken,
         LocalDateTime createdAt,
         LocalDateTime closedAt
 ) {
@@ -37,6 +38,7 @@ public record GiftTripInquiryResponse(
                 i.getGiftMessage(),
                 i.getStatus(),
                 i.getPrice(),
+                i.getPrivateToken(),
                 i.getCreatedAt(),
                 i.getClosedAt()
         );

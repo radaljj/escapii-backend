@@ -1,5 +1,7 @@
 package com.escapii.service;
 
+import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.GiftTripInquiryRequest;
 import com.escapii.dto.GiftTripInquiryResponse;
 import com.escapii.model.InquiryStatus;
@@ -20,4 +22,7 @@ public interface GiftTripInquiryService {
 
     /** Admin: postavlja cenu putovanja. */
     GiftTripInquiryResponse updatePrice(Long id, BigDecimal price);
+
+    /** Admin: kreira privatni termin iz gift trip upita (identičan flow kao za CustomDateInquiry). */
+    AdminDateResponse createPrivateDateFromGiftTrip(Long tripId, CreatePrivateDateRequest req);
 }
