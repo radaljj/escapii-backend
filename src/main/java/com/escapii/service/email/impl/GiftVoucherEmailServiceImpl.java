@@ -72,44 +72,51 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                   """.formatted(v.getGiftMessage())
                 : "";
 
+        String revealUrl = frontendUrl + "/poklon?k=" + v.getCode();
+
         String html = """
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0f2d35;color:#e8e0d5;border-radius:12px;padding:32px;">
                   <div style="text-align:center;margin-bottom:28px;">
-                    <div style="font-size:48px;margin-bottom:12px;">🎁</div>
-                    <h1 style="margin:0;font-size:24px;color:#CA8A71;">Neko ti je poklonio putovanje!</h1>
-                    <p style="margin:8px 0 0;font-size:15px;color:rgba(232,224,213,.7);">
-                      %s ti šalje gift vaučer za Escapii
+                    <div style="font-size:56px;margin-bottom:14px;">🎁</div>
+                    <h1 style="margin:0;font-size:24px;color:#CA8A71;line-height:1.3;">Neko ti je poklonio putovanje!</h1>
+                    <p style="margin:10px 0 0;font-size:15px;color:rgba(232,224,213,.65);">
+                      <strong style="color:rgba(232,224,213,.9);">%s</strong> ti šalje iznenađenje putem Escapii
                     </p>
                   </div>
 
                   %s
 
-                  <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:20px;text-align:center;margin:20px 0;">
-                    <p style="margin:0 0 8px;font-size:13px;color:#888;text-transform:uppercase;letter-spacing:.8px;">Tvoj vaučer kod</p>
-                    <p style="margin:0;font-size:28px;font-weight:700;letter-spacing:3px;color:#CA8A71;font-family:monospace;">%s</p>
-                    <p style="margin:8px 0 0;font-size:13px;color:#888;">Vrednost: <strong style="color:#e8e0d5;">%s EUR</strong></p>
+                  <div style="text-align:center;margin:28px 0;">
+                    <a href="%s"
+                       style="display:inline-block;padding:16px 36px;background:#CA8A71;color:#fff;
+                              text-decoration:none;border-radius:12px;font-size:16px;font-weight:700;
+                              letter-spacing:.3px;box-shadow:0 6px 24px rgba(202,138,113,.35);">
+                      🎁 Otkrij svoj poklon →
+                    </a>
+                    <p style="margin:12px 0 0;font-size:12px;color:#666;">
+                      Klikni da vidiš šta si dobio/la
+                    </p>
                   </div>
 
-                  <div style="margin:20px 0;padding:16px;background:rgba(255,255,255,.04);border-radius:8px;font-size:14px;color:rgba(232,224,213,.8);">
-                    <p style="margin:0 0 8px;font-weight:700;">Kako iskoristiti vaučer?</p>
-                    <ol style="margin:0;padding-left:20px;">
-                      <li style="margin-bottom:6px;">Poseti <a href="%s" style="color:#CA8A71;">escapii.rs</a> i odaberi termin koji ti odgovara</li>
-                      <li style="margin-bottom:6px;">Na kraju forme unesi vaučer kod</li>
-                      <li>Cena putovanja biće umanjena za %s EUR</li>
+                  <div style="margin:24px 0;padding:16px;background:rgba(255,255,255,.04);border-radius:8px;font-size:14px;color:rgba(232,224,213,.7);">
+                    <p style="margin:0 0 6px;font-weight:700;color:rgba(232,224,213,.9);">Kako iskoristiti poklon?</p>
+                    <ol style="margin:0;padding-left:20px;line-height:1.8;">
+                      <li>Klikni dugme iznad da otkriješ detalje svog poklona</li>
+                      <li>Poseti <a href="%s" style="color:#CA8A71;">escapii.rs</a> i odaberi termin koji ti odgovara</li>
+                      <li>U koraku 7 unesi vaučer kod — iznos se automatski oduzima od cene</li>
                     </ol>
                   </div>
 
-                  <p style="margin:16px 0 0;font-size:12px;color:#666;text-align:center;">
-                    Vaučer važi 1 godinu od danas. Za pitanja: <a href="mailto:escapii.team@gmail.com" style="color:#CA8A71;">escapii.team@gmail.com</a>
+                  <p style="margin:16px 0 0;font-size:12px;color:#555;text-align:center;line-height:1.6;">
+                    Vaučer važi 1 godinu od aktivacije.<br>
+                    Za pitanja: <a href="mailto:escapii.team@gmail.com" style="color:#CA8A71;">escapii.team@gmail.com</a>
                   </p>
                 </div>
                 """.formatted(
                         v.getBuyerName() != null && !v.getBuyerName().isBlank() ? v.getBuyerName() : "Neko poseban",
                         personalMessage,
-                        v.getCode(),
-                        v.getAmount().toPlainString(),
-                        frontendUrl,
-                        v.getAmount().toPlainString());
+                        revealUrl,
+                        frontendUrl);
 
         boolean ok = emailSender.send(
                 v.getRecipientEmail(),
