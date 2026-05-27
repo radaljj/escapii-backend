@@ -25,4 +25,7 @@ public interface GiftTripInquiryService {
 
     /** Admin: kreira privatni termin iz gift trip upita (identičan flow kao za CustomDateInquiry). */
     AdminDateResponse createPrivateDateFromGiftTrip(Long tripId, CreatePrivateDateRequest req);
+
+    /** Admin: briše gift trip upit (poziva se nakon slanja privatnog linka, isto kao za CustomDateInquiry). */
+    void deleteInquiry(Long id);
 }

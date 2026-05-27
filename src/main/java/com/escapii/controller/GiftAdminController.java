@@ -105,4 +105,14 @@ public class GiftAdminController {
             @RequestBody CreatePrivateDateRequest request) {
         return ResponseEntity.ok(tripService.createPrivateDateFromGiftTrip(id, request));
     }
+
+    /**
+     * DELETE /api/admin/gifts/trips/{id}
+     * Briše gift trip upit — poziva se nakon PRIVATE_SENT (identično kao za regular inquiries).
+     */
+    @DeleteMapping("/trips/{id}")
+    public ResponseEntity<Void> deleteTrip(@PathVariable Long id) {
+        tripService.deleteInquiry(id);
+        return ResponseEntity.noContent().build();
+    }
 }

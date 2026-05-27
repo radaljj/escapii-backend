@@ -116,6 +116,14 @@ public class GiftTripInquiryServiceImpl implements GiftTripInquiryService {
         return new AdminDateResponse(saved);
     }
 
+    @Override
+    @Transactional
+    public void deleteInquiry(Long id) {
+        GiftTripInquiry inquiry = findOrThrow(id);
+        inquiryRepository.delete(inquiry);
+        log.info("[GiftTrip] Upit id={} obrisan (PRIVATE_SENT flow).", id);
+    }
+
     private GiftTripInquiry findOrThrow(Long id) {
         return inquiryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
