@@ -54,7 +54,7 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
         String html = """
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0f2d35;color:#e8e0d5;border-radius:12px;padding:28px 32px;">
                   <h2 style="margin:0 0 20px;color:#CA8A71;font-size:20px;">📅 Nov prilagođeni upit</h2>
-                  <table style="width:100%;border-collapse:collapse;font-size:15px;">
+                  <table style="width:100%%;border-collapse:collapse;font-size:15px;">
                     <tr><td style="padding:6px 0;color:#888;width:130px;">ID</td><td style="padding:6px 0;">#%d</td></tr>
                     <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;">%s</td></tr>
                     <tr><td style="padding:6px 0;color:#888;">Aerodrom</td><td style="padding:6px 0;">%s</td></tr>
