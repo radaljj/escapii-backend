@@ -161,6 +161,16 @@ public class Booking {
     @Column(name = "admin_notes", columnDefinition = "TEXT")
     private String adminNotes;
 
+    // ── Vaučer ────────────────────────────────────────────────────────
+
+    /** Kod vaučera koji je primenjen pri rezervaciji. Null = bez vaučera. */
+    @Column(name = "applied_voucher_code", length = 20)
+    private String appliedVoucherCode;
+
+    /** Iznos popusta koji je primenjen putem gift vaučera (EUR). Null = 0. */
+    @Column(name = "voucher_discount")
+    private Integer voucherDiscount;
+
     // ── Otkrivanje destinacije ────────────────────────────────────────
 
     /** Destinacija koju admin dodjeljuje — šalje se korisniku T-2 dana (48h) pre polaska. */

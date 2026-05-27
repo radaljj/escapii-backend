@@ -14,4 +14,6 @@ public class BookingResponse {
     private BookingStatus status;
     private Integer totalPriceAll;
     private Integer numberOfTravelers;
+    private String appliedVoucherCode;
+    private Integer voucherDiscount;
 }

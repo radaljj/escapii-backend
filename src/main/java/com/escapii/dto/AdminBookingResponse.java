@@ -66,4 +66,8 @@ public class AdminBookingResponse {
     private Integer basePricePerPerson;
     private Integer totalPricePerPerson;
     private Integer totalPriceAll;
+
+    // Vaučer
+    private String  appliedVoucherCode;
+    private Integer voucherDiscount;
 }

@@ -9,12 +9,15 @@ import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.Destination;
+import com.escapii.model.GiftVoucher;
+import com.escapii.model.VoucherStatus;
 import java.util.List;
 
 import com.escapii.model.PassengerInfo;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
+import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.BookingService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.PriceCalculator;
@@ -33,6 +36,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository       bookingRepository;
     private final AvailableDateRepository availableDateRepository;
     private final DestinationRepository   destinationRepository;
+    private final GiftVoucherRepository   giftVoucherRepository;
     private final PriceCalculator         priceCalculator;
     private final BookingEmailService     bookingEmailService;
     private final BookingMapper           bookingMapper;
@@ -111,7 +115,37 @@ public class BookingServiceImpl implements BookingService {
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether()
         );
 
-        Booking saved = bookingRepository.save(buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price));
+        Booking booking = buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price);
+
+        // 5. Primeni vaučer popust (ako postoji validan aktivni vaučer)
+        GiftVoucher appliedVoucher = null;
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
+            String code = request.getVoucherCode().trim().toUpperCase();
+            GiftVoucher voucher = giftVoucherRepository.findByCode(code).orElse(null);
+            if (voucher != null
+                    && voucher.getStatus() == VoucherStatus.ACTIVE
+                    && (voucher.getExpiresAt() == null || voucher.getExpiresAt().isAfter(java.time.LocalDateTime.now()))) {
+                int discount = voucher.getAmount().intValue();
+                booking.setAppliedVoucherCode(code);
+                booking.setVoucherDiscount(discount);
+                booking.setTotalPriceAll(Math.max(0, booking.getTotalPriceAll() - discount));
+                appliedVoucher = voucher;
+                log.info("[Booking] Primenjen vaučer {} ({}€) — nova ukupna cena: {}€",
+                        code, discount, booking.getTotalPriceAll());
+            } else {
+                log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan — ignorisan", code);
+            }
+        }
+
+        Booking saved = bookingRepository.save(booking);
+
+        // Označi vaučer kao USED tek nakon uspešnog čuvanja booking-a
+        if (appliedVoucher != null) {
+            appliedVoucher.setStatus(VoucherStatus.USED);
+            appliedVoucher.setUsedAt(java.time.LocalDateTime.now());
+            appliedVoucher.setUsedInBookingRef(saved.getId());
+            giftVoucherRepository.save(appliedVoucher);
+        }
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",
                 saved.getBookingRef(), saved.getNumberOfTravelers(),
