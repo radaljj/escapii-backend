@@ -106,6 +106,15 @@ public class BookingRequest {
     private Integer formDuration;
 
     /**
+     * Opcioni gift vaučer kod koji korisnik unosi u koraku 7.
+     * Admin vidi kod i ručno primenjuje popust pri potvrdi rezervacije.
+     */
+    @Pattern(regexp = "ESC-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}",
+             message = "Neispravan format vaučer koda")
+    @Size(max = 20)
+    private String voucherCode;
+
+    /**
      * Normalizuje string polja pre čuvanja:
      *   - trim whitespace sa svih polja
      *   - email → lowercase

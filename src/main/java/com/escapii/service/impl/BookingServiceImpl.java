@@ -232,7 +232,13 @@ public class BookingServiceImpl implements BookingService {
         b.setLastName(request.getLastName());
         b.setEmail(request.getEmail());
         b.setPhone(request.getPhone());
-        b.setNotes(request.getNotes());
+        // Ako je korisnik uneo vaučer kod, dodaj ga uz napomenu — admin primenjuje popust ručno
+        String notes = request.getNotes();
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
+            String voucherNote = "[VAUČER: " + request.getVoucherCode().trim().toUpperCase() + "]";
+            notes = (notes != null && !notes.isBlank()) ? notes + " | " + voucherNote : voucherNote;
+        }
+        b.setNotes(notes);
 
         return b;
     }
