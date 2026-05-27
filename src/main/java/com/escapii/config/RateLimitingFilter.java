@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * - POST /api/reveal/confirm:        max 10 zahteva po IP na 15 minuta
  * - POST /api/inquiries/custom-date: max 3 zahteva po IP na sat
  * - GET  /api/dates/private:          max 20 zahteva po IP na sat
+ * - POST /api/gifts/vouchers:         max 3 zahteva po IP na sat
+ * - POST /api/gifts/vouchers/validate: max 5 zahteva po IP na 15 minuta
  *
  * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted proxy
  * (Render/Railway), pa korisnik ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
@@ -72,6 +74,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  PRIVATE_DATE_MAX    = 20;
     private static final long PRIVATE_DATE_WINDOW = 60 * 60 * 1000L;   // 1 sat
 
+    private static final int  GIFT_VOUCHER_MAX      = 3;
+    private static final long GIFT_VOUCHER_WINDOW   = 60 * 60 * 1000L; // 1 sat
+
+    private static final int  GIFT_VALIDATE_MAX     = 5;
+    private static final long GIFT_VALIDATE_WINDOW  = 15 * 60 * 1000L; // 15 minuta
+
+    private static final int  GIFT_TRIP_MAX         = 3;
+    private static final long GIFT_TRIP_WINDOW      = 60 * 60 * 1000L; // 1 sat
+
     // Maksimalni prozor — za cleanup: ne čuvamo ništa starije od ovoga
     private static final long MAX_WINDOW       = 60 * 60 * 1000L;      // 1 sat
 
@@ -83,8 +94,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> datesLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> destinationsLog = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> revealLog       = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> inquiryLog       = new ConcurrentHashMap<>();
-    private final Map<String, Queue<Long>> privateDateLog   = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> inquiryLog        = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> privateDateLog    = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> giftVoucherLog    = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> giftValidateLog   = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> giftTripLog       = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -169,6 +183,31 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
+        if (("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/vouchers/validate"))
+                || ("GET".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/vouchers/reveal"))) {
+            if (isRateLimited(giftValidateLog, ip, GIFT_VALIDATE_MAX, GIFT_VALIDATE_WINDOW)) {
+                log.warn("[RateLimit] Gift validate/reveal limit prekoračen za IP: {}", ip);
+                reject(response, "Previše pokušaja validacije. Pokušajte ponovo za 15 minuta.");
+                return;
+            }
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/vouchers")) {
+            if (isRateLimited(giftVoucherLog, ip, GIFT_VOUCHER_MAX, GIFT_VOUCHER_WINDOW)) {
+                log.warn("[RateLimit] Gift voucher limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Možete poslati maksimalno 3 upita po satu.");
+                return;
+            }
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/trips")) {
+            if (isRateLimited(giftTripLog, ip, GIFT_TRIP_MAX, GIFT_TRIP_WINDOW)) {
+                log.warn("[RateLimit] Gift trip limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Možete poslati maksimalno 3 upita po satu.");
+                return;
+            }
+        }
+
         if (uri.startsWith("/api/admin")) {
             if (isRateLimited(adminLog, ip, ADMIN_MAX, ADMIN_WINDOW)) {
                 log.warn("[RateLimit] Admin limit prekoračen za IP: {}", ip);
@@ -210,7 +249,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog, inquiryLog, privateDateLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();
@@ -223,8 +262,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 }
             }
         }
-        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}, dates={}, destinations={}, reveal={}, inquiry={}, privateDate={}",
+        log.debug("[RateLimit] Eviction završena. Aktivnih IP-ova: booking={}, preview={}, status={}, admin={}, waitlist={}, dates={}, destinations={}, reveal={}, inquiry={}, privateDate={}, giftVoucher={}, giftValidate={}, giftTrip={}",
                 bookingLog.size(), previewLog.size(), statusLog.size(), adminLog.size(), waitlistLog.size(),
-                datesLog.size(), destinationsLog.size(), revealLog.size(), inquiryLog.size(), privateDateLog.size());
+                datesLog.size(), destinationsLog.size(), revealLog.size(), inquiryLog.size(), privateDateLog.size(),
+                giftVoucherLog.size(), giftValidateLog.size(), giftTripLog.size());
     }
 }
