@@ -13,12 +13,15 @@ import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.CustomDateInquiry;
 import com.escapii.model.Destination;
+import com.escapii.model.GiftVoucher;
 import com.escapii.model.InquiryStatus;
 import com.escapii.model.RevealEvent;
+import com.escapii.model.VoucherStatus;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.repository.DestinationRepository;
+import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.AdminService;
 import com.escapii.service.AvailableDateService;
@@ -49,6 +52,7 @@ public class AdminServiceImpl implements AdminService {
     private final AvailableDateRepository    availableDateRepository;
     private final DestinationRepository      destinationRepository;
     private final BookingRepository          bookingRepository;
+    private final GiftVoucherRepository      giftVoucherRepository;
     private final RevealEventRepository      revealEventRepository;
     private final CustomDateInquiryRepository inquiryRepository;
     private final AdminBookingMapper         adminBookingMapper;
@@ -250,6 +254,25 @@ public class AdminServiceImpl implements AdminService {
         BookingStatus bookingStatus = booking.getStatus();
 
         updateAvailableSlotsForSelectedDate(id, numberOfTravelers, bookingStatus, oldStatus);
+
+        // ── Vaučer lifecycle ──────────────────────────────────────────────────
+        // PENDING/RESERVED → CONFIRMED  : vaučer postaje USED (plaćeno, konačno)
+        // bilo koji status → CANCELLED  : vaučer se vraća na ACTIVE (ako je bio RESERVED)
+        if (saved.getAppliedVoucherCode() != null) {
+            giftVoucherRepository.findByCode(saved.getAppliedVoucherCode()).ifPresent(v -> {
+                if (status == BookingStatus.CONFIRMED && v.getStatus() == VoucherStatus.RESERVED) {
+                    v.setStatus(VoucherStatus.USED);
+                    v.setUsedAt(LocalDateTime.now());
+                    giftVoucherRepository.save(v);
+                    log.info("[Voucher] {} → USED (booking {} CONFIRMED)", v.getCode(), saved.getBookingRef());
+                } else if (status == BookingStatus.CANCELLED && v.getStatus() == VoucherStatus.RESERVED) {
+                    v.setStatus(VoucherStatus.ACTIVE);
+                    v.setUsedInBookingRef(null);
+                    giftVoucherRepository.save(v);
+                    log.info("[Voucher] {} → ACTIVE (booking {} CANCELLED, vaučer oslobođen)", v.getCode(), saved.getBookingRef());
+                }
+            });
+        }
 
         // Slanje emaila korisniku na osnovu novog statusa
         if (status == BookingStatus.CONFIRMED) {

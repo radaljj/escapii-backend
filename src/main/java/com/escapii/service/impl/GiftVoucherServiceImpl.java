@@ -152,9 +152,9 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     @Transactional
     public GiftVoucherResponse markUsed(Long id, Long bookingRef) {
         GiftVoucher v = findOrThrow(id);
-        if (v.getStatus() != VoucherStatus.ACTIVE) {
+        if (v.getStatus() != VoucherStatus.ACTIVE && v.getStatus() != VoucherStatus.RESERVED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Vaučer id=" + id + " nije u ACTIVE statusu (trenutno: " + v.getStatus() + ")");
+                    "Vaučer id=" + id + " nije u ACTIVE/RESERVED statusu (trenutno: " + v.getStatus() + ")");
         }
         v.setStatus(VoucherStatus.USED);
         v.setUsedAt(LocalDateTime.now());

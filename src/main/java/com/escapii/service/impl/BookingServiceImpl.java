@@ -139,12 +139,14 @@ public class BookingServiceImpl implements BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Označi vaučer kao USED tek nakon uspešnog čuvanja booking-a
+        // Označi vaučer kao RESERVED — blokiran za dalje korišćenje,
+        // ali prelazi u USED tek kad rezervacija postane CONFIRMED
         if (appliedVoucher != null) {
-            appliedVoucher.setStatus(VoucherStatus.USED);
-            appliedVoucher.setUsedAt(java.time.LocalDateTime.now());
+            appliedVoucher.setStatus(VoucherStatus.RESERVED);
             appliedVoucher.setUsedInBookingRef(saved.getId());
+            // usedAt ostaje null dok rezervacija nije CONFIRMED
             giftVoucherRepository.save(appliedVoucher);
+            log.info("[Voucher] {} → RESERVED za booking {}", appliedVoucher.getCode(), saved.getBookingRef());
         }
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",
