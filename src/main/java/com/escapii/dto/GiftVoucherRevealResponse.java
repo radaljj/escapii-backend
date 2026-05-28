@@ -6,13 +6,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Javni reveal response — vraća se primaocu koji unese kod na /poklon stranici.
- * Sadrži samo informacije koje primalac sme da vidi (bez buyer emaila).
+ * Javni reveal response — vraća se korisniku koji unese kod na /poklon stranici.
  */
 public record GiftVoucherRevealResponse(
         boolean valid,
         BigDecimal amount,
-        String recipientName,
         String buyerName,
         String giftMessage,
         LocalDateTime expiresAt,
@@ -22,7 +20,6 @@ public record GiftVoucherRevealResponse(
         return new GiftVoucherRevealResponse(
                 true,
                 v.getAmount(),
-                v.getRecipientName(),
                 v.getBuyerName(),
                 v.getGiftMessage(),
                 v.getExpiresAt(),
@@ -31,7 +28,7 @@ public record GiftVoucherRevealResponse(
     }
 
     public static GiftVoucherRevealResponse invalid() {
-        return new GiftVoucherRevealResponse(false, null, null, null, null, null,
+        return new GiftVoucherRevealResponse(false, null, null, null, null,
                 "Vaučer kod nije validan ili nije aktivan.");
     }
 }

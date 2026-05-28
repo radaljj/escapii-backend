@@ -46,22 +46,6 @@ public class GiftVoucher {
     @Column(length = 200)
     private String buyerName;
 
-    // ── Legasi polja (v1 flow) — više se ne koriste ──────────────────────────
-
-    /**
-     * @deprecated Više se ne koristi — vaučer se šalje na buyerEmail.
-     *             Uvek se čuva "" radi NOT NULL constraint-a u bazi.
-     */
-    @Column(nullable = false, length = 200)
-    private String recipientEmail = "";
-
-    /**
-     * @deprecated Više se ne koristi — ime kupca (buyerName) piše se na vaučeru.
-     *             Uvek se čuva "" radi NOT NULL constraint-a u bazi.
-     */
-    @Column(nullable = false, length = 200)
-    private String recipientName = "";
-
     /** Lična poruka kupca — ispisuje se na PDF vaučeru. */
     @Column(length = 500)
     private String giftMessage;

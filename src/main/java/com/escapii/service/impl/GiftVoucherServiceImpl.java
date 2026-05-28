@@ -54,9 +54,6 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         v.setBuyerEmail(req.buyerEmail().trim().toLowerCase());
         v.setBuyerName(req.buyerName() != null ? req.buyerName().trim() : null);
         v.setGiftMessage(req.giftMessage() != null ? req.giftMessage().trim() : null);
-        // Legasi polja — čuvamo prazan string zbog NOT NULL constraint-a u bazi
-        v.setRecipientEmail("");
-        v.setRecipientName("");
 
         GiftVoucher saved = voucherRepository.save(v);
         log.info("[GiftVoucher] Nov vaučer: id={}, amount={}, buyerEmail={}",
