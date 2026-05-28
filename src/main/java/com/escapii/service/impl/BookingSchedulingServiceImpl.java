@@ -2,7 +2,9 @@ package com.escapii.service.impl;
 
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.VoucherStatus;
 import com.escapii.repository.BookingRepository;
+import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.ForecastEmailService;
 import com.escapii.service.email.RevealEmailService;
@@ -32,6 +34,7 @@ import java.util.Set;
 public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
     private final BookingRepository    bookingRepository;
+    private final GiftVoucherRepository giftVoucherRepository;
     private final RevealEmailService   revealEmailService;
     private final ForecastEmailService forecastEmailService;
     private final WeatherService       weatherService;
@@ -75,6 +78,18 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             b.setStatus(BookingStatus.CANCELLED);
             bookingRepository.save(b);
             log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
+
+            // Oslobodi vaučer ako je postojao
+            if (b.getAppliedVoucherCode() != null) {
+                giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
+                    if (v.getStatus() == VoucherStatus.RESERVED) {
+                        v.setStatus(VoucherStatus.ACTIVE);
+                        v.setUsedInBookingRef(null);
+                        giftVoucherRepository.save(v);
+                        log.info("[Voucher] {} → ACTIVE (auto-cancel booking {})", v.getCode(), b.getBookingRef());
+                    }
+                });
+            }
         }
         log.info("[Scheduler] Auto-cancel završen — otkazano {} rezervacija.", stale.size());
     }
@@ -91,6 +106,18 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         for (Booking b : ready) {
             b.setStatus(BookingStatus.COMPLETED);
             bookingRepository.save(b);
+
+            // Trajno označi vaučer kao iskorišćen — putovanje završeno
+            if (b.getAppliedVoucherCode() != null) {
+                giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
+                    if (v.getStatus() == VoucherStatus.RESERVED) {
+                        v.setStatus(VoucherStatus.USED);
+                        v.setUsedAt(java.time.LocalDateTime.now());
+                        giftVoucherRepository.save(v);
+                        log.info("[Voucher] {} → USED (auto-complete booking {})", v.getCode(), b.getBookingRef());
+                    }
+                });
+            }
         }
         log.info("[Scheduler] Auto-complete završen — zatvoreno {} rezervacija.", ready.size());
     }

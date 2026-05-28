@@ -6,12 +6,16 @@ public enum VoucherStatus {
     /** Plaćen — admin aktivirao. Spreman za korišćenje. */
     ACTIVE,
     /**
-     * Primenjen u pending rezervaciji — blokiran za dalje korišćenje,
-     * ali još nije konačno iskorišćen. Prelazi u USED kad rezervacija
-     * postane CONFIRMED, ili nazad u ACTIVE ako se rezervacija otkaže.
+     * Primenjen u aktivnoj rezervaciji (PENDING ili CONFIRMED) —
+     * blokiran za dalje korišćenje dok se rezervacija ne završi.
+     * Prelazi u USED tek kad rezervacija postane COMPLETED,
+     * ili nazad u ACTIVE ako se rezervacija otkaže ili obriše.
      */
     RESERVED,
-    /** Konačno iskorišćen — rezervacija potvrđena (CONFIRMED). */
+    /**
+     * Trajno iskorišćen — rezervacija završena (COMPLETED).
+     * Više se ne može koristiti ni za šta.
+     */
     USED,
     /** Prošao rok važenja (1 godina od aktivacije). */
     EXPIRED
