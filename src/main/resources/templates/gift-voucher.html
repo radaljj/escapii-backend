@@ -3,16 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <style>
-    /* ────────────────────────────────────────────────────────────────
-       Escapii — Poklon vaučer (boarding pass)  ·  openhtmltopdf template
-       PRAVILA:
-         • Samo TABLE layout (bez flexbox/grid)
-         • Fiksne px dimenzije (A4 landscape @96dpi = 1123 x 794 px)
-         • Samo numerički HTML entiteti (&#160; &#8212; &#183; &#8364; ...)
-         • Fontovi: 'GiftSerif' (Playfair Display), 'GiftSans' (Inter)
-         • Avion = CSS trougao (Playfair/Inter nemaju ✈ glyph)
-         • QR = <img th:attr="src=${qrDataUri}"/> (PNG data URI)
-       ──────────────────────────────────────────────────────────────── */
+    /* Escapii — Poklon vaucer (boarding pass) — openhtmltopdf */
     @page { size: 1123px 794px; margin: 0; }
     html, body { margin: 0; padding: 0; }
     body {
