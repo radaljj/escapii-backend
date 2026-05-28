@@ -15,6 +15,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.logging.Level;
 
@@ -72,7 +73,10 @@ public class VoucherPdfService {
             String redeemUrl = redeemBaseUrl + "?code=" + urlEncode(data.voucherCode());
             String qrDataUri = qrCodeGenerator.pngDataUri(redeemUrl, 480); // hi-res za štampu
 
-            // 2) Thymeleaf kontekst
+            // 2) Logo -> PNG data URI (logo-black na svetloj pozadini)
+            String logoDataUri = loadImageDataUri("static/images/logo-black.png", "image/png");
+
+            // 3) Thymeleaf kontekst
             Context ctx = new Context(new Locale("sr"));
             ctx.setVariable("amount",          data.amount());
             ctx.setVariable("amountFormatted", data.amount() + " €");
@@ -83,11 +87,12 @@ public class VoucherPdfService {
             ctx.setVariable("buyerName",       safe(data.buyerName()));
             ctx.setVariable("personalMessage", data.personalMessage()); // može null/prazno
             ctx.setVariable("qrDataUri",       qrDataUri);
+            ctx.setVariable("logoDataUri",     logoDataUri);
 
-            // 3) Render HTML
+            // 4) Render HTML
             String html = templateEngine.process("gift-voucher", ctx);
 
-            // 4) HTML -> PDF
+            // 5) HTML -> PDF
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 PdfRendererBuilder builder = new PdfRendererBuilder();
                 builder.useFastMode();
@@ -111,6 +116,16 @@ public class VoucherPdfService {
         // GiftSans = Inter
         builder.useFont(() -> classpath("fonts/Inter-Regular.ttf"), "GiftSans", 400, FontStyle.NORMAL, true);
         builder.useFont(() -> classpath("fonts/Inter-Bold.ttf"),    "GiftSans", 700, FontStyle.NORMAL, true);
+    }
+
+    /** Učitava sliku sa classpath-a i vraća je kao base64 data URI za inline ugrađivanje u HTML/PDF. */
+    private static String loadImageDataUri(String path, String mimeType) {
+        try (InputStream is = new ClassPathResource(path).getInputStream()) {
+            byte[] bytes = is.readAllBytes();
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Nedostaje resurs na classpath-u: " + path, e);
+        }
     }
 
     private static InputStream classpath(String path) {

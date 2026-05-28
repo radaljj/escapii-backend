@@ -17,20 +17,18 @@
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
+    /* main=773 + stub=350 = 1123 */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
-    .main { width: 763px; vertical-align: top; padding: 40px 44px; }
+    .main { width: 773px; vertical-align: top; padding: 38px 44px; }
     .stub {
-      width: 300px; vertical-align: top;
-      background-color: #1a1410; padding: 48px 34px;
+      width: 350px; vertical-align: top;
+      background-color: #1a1410; padding: 44px 36px;
       border-left: 2px dashed #d8cab2;
     }
 
     /* Header */
     .hdr { width: 100%; }
     .hdr td { vertical-align: middle; }
-    .logo { font-family: 'GiftSerif', serif; font-size: 32px; font-weight: 700; color: #1a1410; letter-spacing: -1px; }
-    .logo i { font-style: italic; }
-    .logo b { color: #a85e44; }
     .tag {
       font-family: 'GiftSans', sans-serif;
       font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
@@ -40,53 +38,52 @@
     }
 
     /* Title */
-    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 22px 0; margin-top: 26px; }
-    .eyebrow { font-family: 'GiftSerif', serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 10px; }
+    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 20px 0; margin-top: 20px; }
+    .eyebrow { font-family: 'GiftSerif', serif; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 10px; }
     .h1 { font-family: 'GiftSerif', serif; font-size: 46px; font-weight: 400; color: #1a1410; line-height: 1.08; letter-spacing: -1px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; }
 
     /* Route */
-    .route { width: 100%; margin-top: 26px; }
-    .route td { vertical-align: middle; }
-    .iata { font-family: 'GiftSerif', serif; font-size: 60px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
+    .route { width: 100%; margin-top: 20px; }
+    .route td { vertical-align: top; }
+    .iata { font-family: 'GiftSerif', serif; font-size: 58px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
     .iata.dest { color: #a85e44; font-style: italic; text-align: right; }
-    .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 6px; letter-spacing: 0.5px; }
-    .cap  { font-size: 10px; color: #a89888; padding-top: 2px; }
+    .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 10px; letter-spacing: 0.5px; }
+    .cap  { font-size: 10px; color: #a89888; padding-top: 5px; }
     .r-right { text-align: right; }
-    .r-mid { text-align: center; width: 130px; }
-    /* Avion = CSS trougao (desno) + isprekidana linija */
+    .r-mid { text-align: center; width: 120px; vertical-align: middle; padding-top: 16px; }
     .plane { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 14px solid #c8775a; margin: 0 auto; }
-    .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 90px; height: 0; font-size: 0; }
+    .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 80px; height: 0; font-size: 0; }
 
     /* Meta */
-    .meta { width: 100%; margin-top: 24px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 10px; }
-    .meta td { padding: 14px 18px; border-right: 1px solid #ebe1cf; vertical-align: top; }
+    .meta { width: 100%; margin-top: 20px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 10px; }
+    .meta td { padding: 13px 18px; border-right: 1px solid #ebe1cf; vertical-align: top; }
     .meta td.last { border-right: none; }
     .meta .k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; }
     .meta .v { font-family: 'GiftSans', sans-serif; font-size: 13px; font-weight: 700; color: #1a1410; padding-top: 6px; }
     .meta .v.terra { color: #a85e44; }
 
     /* Message */
-    .msg-box { width: 100%; margin-top: 24px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
-    .msg-box td { padding: 18px 22px; }
-    .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 8px; }
-    .msg-text { font-family: 'GiftSerif', serif; font-style: italic; font-size: 16px; color: #2b231b; line-height: 1.5; }
-    .msg-sig { font-size: 12px; color: #6b5d4f; padding-top: 10px; }
+    .msg-box { width: 100%; margin-top: 18px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
+    .msg-box td { padding: 14px 20px; }
+    .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 7px; }
+    .msg-text { font-family: 'GiftSerif', serif; font-style: italic; font-size: 15px; color: #2b231b; line-height: 1.5; }
+    .msg-sig { font-size: 12px; color: #6b5d4f; padding-top: 8px; }
     .msg-sig b { color: #1a1410; }
 
     /* Left footer */
-    .lfoot { width: 100%; margin-top: 18px; font-size: 10px; color: #a89888; }
+    .lfoot { width: 100%; margin-top: 14px; font-size: 10px; color: #a89888; }
     .lfoot td.right { text-align: right; color: #a85e44; }
 
     /* Stub */
-    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #8a8079; font-weight: 700; padding-bottom: 30px; }
+    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #8a8079; font-weight: 700; padding-bottom: 26px; }
     .stub-head b { color: #c8775a; }
     .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; padding-bottom: 8px; }
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
     .stub-amount .cur { color: #c8775a; font-size: 34px; font-style: italic; }
-    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 28px; }
-    .stub-code { font-family: 'GiftSans', sans-serif; font-size: 18px; font-weight: 700; color: #e29070; letter-spacing: 2px; text-align: center; background-color: #2a211a; border: 1px dashed #4a3f36; padding: 14px 8px; border-radius: 8px; margin-bottom: 28px; }
-    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 124px; height: 124px; margin: 0 auto 26px; }
+    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
+    .stub-code { font-family: 'GiftSans', sans-serif; font-size: 15px; font-weight: 700; color: #e29070; letter-spacing: 1.5px; text-align: center; background-color: #2a211a; border: 1px dashed #4a3f36; padding: 13px 10px; border-radius: 8px; margin-bottom: 24px; }
+    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 124px; height: 124px; margin: 0 auto 22px; }
     .qr-box img { width: 124px; height: 124px; display: block; }
     .stub-foot { font-size: 10px; color: #8a8079; line-height: 1.6; text-align: center; }
     .stub-foot b { color: #d6cfc9; }
@@ -101,13 +98,13 @@
         <td class="main">
           <table class="hdr">
             <tr>
-              <td><span class="logo">escap<i>ii</i><b>?</b></span></td>
+              <td><img th:attr="src=${logoDataUri}" alt="escapii" width="168" height="38" style="display:block;"/></td>
               <td style="text-align:right;"><span class="tag">&#43; Poklon vau&#269;er</span></td>
             </tr>
           </table>
 
           <div class="title-area">
-            <div class="eyebrow">&#8212; Putna karta za bilo gde &#8212;</div>
+            <div class="eyebrow">&#8212; Iskoristi vau&#269;er za Escapii putovanje &#8212;</div>
             <h1 class="h1">Tvoja slede&#263;a<br/><em>avantura te &#269;eka.</em></h1>
           </div>
 
