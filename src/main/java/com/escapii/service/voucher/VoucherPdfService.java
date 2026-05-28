@@ -4,6 +4,7 @@ import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.util.XRLog;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -33,6 +34,7 @@ import java.util.logging.Level;
  * Familije 'GiftSerif' (Playfair Display) i 'GiftSans' (Inter) moraju
  * da se poklope sa CSS-om u template-u.
  */
+@Lazy   // inicijalizuje se tek pri prvom PDF pozivu, ne blokira startup ako openhtmltopdf ima problem
 @Service
 public class VoucherPdfService {
 
