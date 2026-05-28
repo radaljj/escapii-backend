@@ -10,6 +10,8 @@ import com.escapii.model.VoucherStatus;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.GiftVoucherService;
 import com.escapii.service.email.GiftVoucherEmailService;
+import com.escapii.service.voucher.VoucherData;
+import com.escapii.service.voucher.VoucherPdfService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,6 +31,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
 
     private final GiftVoucherRepository voucherRepository;
     private final GiftVoucherEmailService emailService;
+    private final VoucherPdfService voucherPdfService;
 
     /**
      * Skup karaktera za generisanje koda.
@@ -49,9 +53,10 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         v.setAmount(req.amount());
         v.setBuyerEmail(req.buyerEmail().trim().toLowerCase());
         v.setBuyerName(req.buyerName() != null ? req.buyerName().trim() : null);
-        v.setRecipientEmail(req.recipientEmail().trim().toLowerCase());
-        v.setRecipientName(req.recipientName().trim());
         v.setGiftMessage(req.giftMessage() != null ? req.giftMessage().trim() : null);
+        // Legasi polja — čuvamo prazan string zbog NOT NULL constraint-a u bazi
+        v.setRecipientEmail("");
+        v.setRecipientName("");
 
         GiftVoucher saved = voucherRepository.save(v);
         log.info("[GiftVoucher] Nov vaučer: id={}, amount={}, buyerEmail={}",
@@ -59,7 +64,6 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
 
         emailService.sendTeamAlert(saved);
 
-        // Kod se ne vraća kupcu — vraćamo samo potvrdu da je upit primljen
         return toResponseWithoutCode(saved);
     }
 
@@ -70,14 +74,12 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
 
         return voucherRepository.findByCode(code)
                 .map(v -> {
-                    // Sve slučajeve odbijamo sa istom porukom — ne otkrivamo razlog
                     if (v.getStatus() != VoucherStatus.ACTIVE) {
                         log.info("[GiftVoucher] Validacija neuspešna (status={}) za kod={}", v.getStatus(), maskCode(code));
                         return GiftVoucherValidateResponse.invalid();
                     }
                     if (v.getExpiresAt() != null && LocalDateTime.now().isAfter(v.getExpiresAt())) {
                         log.info("[GiftVoucher] Validacija neuspešna (expired) za kod={}", maskCode(code));
-                        // Automatski označi kao EXPIRED u bazi
                         v.setStatus(VoucherStatus.EXPIRED);
                         voucherRepository.save(v);
                         return GiftVoucherValidateResponse.invalid();
@@ -86,7 +88,6 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                     return GiftVoucherValidateResponse.ok(v.getAmount());
                 })
                 .orElseGet(() -> {
-                    // Isti log level — ne otkrivamo da kod ne postoji
                     log.info("[GiftVoucher] Validacija neuspešna (not found) za kod={}", maskCode(code));
                     return GiftVoucherValidateResponse.invalid();
                 });
@@ -141,9 +142,23 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         v.setActivatedAt(LocalDateTime.now());
         v.setExpiresAt(LocalDateTime.now().plusYears(1));
         GiftVoucher saved = voucherRepository.save(v);
-        log.info("[GiftVoucher] Vaučer id={} aktiviran, šalje se email primaocu {}", id, saved.getRecipientEmail());
+        log.info("[GiftVoucher] Vaučer id={} aktiviran, generišem PDF i šaljem na {}", id, saved.getBuyerEmail());
 
-        emailService.sendVoucherToRecipient(saved);
+        // Generiši PDF vaučer i pošalji kupcu (asinhrono)
+        try {
+            VoucherData pdfData = VoucherData.of(
+                saved.getAmount().intValue(),
+                saved.getCode(),
+                LocalDate.now(),
+                saved.getBuyerName(),
+                saved.getGiftMessage()
+            );
+            byte[] pdf = voucherPdfService.generate(pdfData);
+            emailService.sendVoucherPdfToBuyer(saved, pdf);
+        } catch (Exception e) {
+            // PDF generisanje ne sme blokirati aktivaciju — logujemo grešku
+            log.error("[GiftVoucher] PDF generisanje/slanje nije uspelo za vaučer id={}: {}", id, e.getMessage(), e);
+        }
 
         return new GiftVoucherResponse(saved);
     }
@@ -166,11 +181,6 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    /**
-     * Generiše kriptografski siguran vaučer kod u formatu ESC-XXXX-XXXX-XXXX.
-     * Koristi SecureRandom + 31-character alphabet = 31^12 ≈ 1.6×10^17 kombinacija.
-     * U slučaju kolizije (ekstremno retko) pokušava ponovo, max 10 puta.
-     */
     private String generateUniqueCode() {
         for (int attempt = 0; attempt < 10; attempt++) {
             String code = buildCode();
@@ -199,21 +209,15 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                         "Vaučer sa ID=" + id + " nije pronađen."));
     }
 
-    /**
-     * Maskira vaučer kod za logove: ESC-XXXX-XXXX-XXXX → ESC-****-****-XXXX
-     * Prikazuje samo poslednji segment — dovoljan za debugovanje, ne otkriva kod.
-     */
     private String maskCode(String code) {
         if (code == null || code.length() < 4) return "***";
         return "ESC-****-****-" + code.substring(code.lastIndexOf('-') + 1);
     }
 
-    /** Vraća response bez koda — za javne endpointe. */
     private GiftVoucherResponse toResponseWithoutCode(GiftVoucher v) {
         return new GiftVoucherResponse(
                 v.getId(), v.getAmount(), v.getStatus(),
                 v.getBuyerEmail(), v.getBuyerName(),
-                v.getRecipientEmail(), v.getRecipientName(),
                 v.getGiftMessage(), v.getCreatedAt(),
                 v.getActivatedAt(), v.getExpiresAt(),
                 v.getUsedAt(), v.getUsedInBookingRef(),

@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * Zahtev za kupovinu gift vaučera.
- * Kupac bira iznos, unosi kontakt podatke i informacije o primaocu.
+ * Kupac bira iznos, unosi email i opciono ime koje će pisati na vaučeru,
+ * kao i ličnu poruku. PDF vaučer se šalje isključivo na buyerEmail —
+ * kupac ga sam prosljeđuje kome želi.
  */
 public record GiftVoucherRequest(
 
@@ -20,17 +22,8 @@ public record GiftVoucherRequest(
         @Size(max = 200)
         String buyerEmail,
 
-        @Size(max = 200, message = "Ime kupca ne sme biti duže od 200 karaktera")
+        @Size(max = 200, message = "Ime ne sme biti duže od 200 karaktera")
         String buyerName,
-
-        @NotBlank(message = "Email primaoca je obavezan")
-        @Email(message = "Email primaoca nije validan")
-        @Size(max = 200)
-        String recipientEmail,
-
-        @NotBlank(message = "Ime primaoca je obavezno")
-        @Size(max = 200, message = "Ime primaoca ne sme biti duže od 200 karaktera")
-        String recipientName,
 
         @Size(max = 500, message = "Poruka ne sme biti duža od 500 karaktera")
         String giftMessage

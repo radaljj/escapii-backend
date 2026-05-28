@@ -46,17 +46,23 @@ public class GiftVoucher {
     @Column(length = 200)
     private String buyerName;
 
-    // ── Primalac ─────────────────────────────────────────────────────────────
+    // ── Legasi polja (v1 flow) — više se ne koriste ──────────────────────────
 
-    /** Email primaoca — na koji šaljemo vaučer nakon aktivacije. */
+    /**
+     * @deprecated Više se ne koristi — vaučer se šalje na buyerEmail.
+     *             Uvek se čuva "" radi NOT NULL constraint-a u bazi.
+     */
     @Column(nullable = false, length = 200)
-    private String recipientEmail;
+    private String recipientEmail = "";
 
-    /** Ime primaoca — za personalizaciju reveal emaila. */
+    /**
+     * @deprecated Više se ne koristi — ime kupca (buyerName) piše se na vaučeru.
+     *             Uvek se čuva "" radi NOT NULL constraint-a u bazi.
+     */
     @Column(nullable = false, length = 200)
-    private String recipientName;
+    private String recipientName = "";
 
-    /** Poruka kupca primaocu (opciono, max 500 karaktera). */
+    /** Lična poruka kupca — ispisuje se na PDF vaučeru. */
     @Column(length = 500)
     private String giftMessage;
 

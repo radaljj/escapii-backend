@@ -9,7 +9,13 @@ public interface GiftVoucherEmailService {
     @Async
     void sendTeamAlert(GiftVoucher voucher);
 
-    /** Šalje primaocu email sa vaučer kodom nakon aktivacije (async). */
+    /**
+     * Šalje kupcu email sa PDF vaučerom u prilogu, nakon što admin aktivira vaučer (async).
+     * Kupac sam prosleđuje vaučer primaocu poklona.
+     *
+     * @param voucher aktivirani vaučer
+     * @param pdfBytes generisani PDF vaučer (boarding-pass)
+     */
     @Async
-    void sendVoucherToRecipient(GiftVoucher voucher);
+    void sendVoucherPdfToBuyer(GiftVoucher voucher, byte[] pdfBytes);
 }
