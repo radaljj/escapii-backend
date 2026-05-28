@@ -48,4 +48,15 @@ public class GiftAdminController {
             @RequestParam(required = false) Long bookingRef) {
         return ResponseEntity.ok(voucherService.markUsed(id, bookingRef));
     }
+
+    /**
+     * PATCH /api/admin/gifts/vouchers/{id}/reactivate
+     * Vraća vaučer u ACTIVE stanje (RESERVED/USED/EXPIRED → ACTIVE).
+     * Korisno kada vaučer ostane zarobljen zbog otkazane/obrisane rezervacije
+     * koja nije prošla kroz normalni CANCELLED flow.
+     */
+    @PatchMapping("/vouchers/{id}/reactivate")
+    public ResponseEntity<GiftVoucherResponse> reactivateVoucher(@PathVariable Long id) {
+        return ResponseEntity.ok(voucherService.reactivateVoucher(id));
+    }
 }

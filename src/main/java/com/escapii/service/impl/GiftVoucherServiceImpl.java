@@ -176,6 +176,23 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         return new GiftVoucherResponse(saved);
     }
 
+    @Override
+    @Transactional
+    public GiftVoucherResponse reactivateVoucher(Long id) {
+        GiftVoucher v = findOrThrow(id);
+        if (v.getStatus() == VoucherStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Vaučer id=" + id + " je PENDING — aktiviraj ga normalnim putem (uplata potvrđena).");
+        }
+        VoucherStatus oldStatus = v.getStatus();
+        v.setStatus(VoucherStatus.ACTIVE);
+        v.setUsedAt(null);
+        v.setUsedInBookingRef(null);
+        GiftVoucher saved = voucherRepository.save(v);
+        log.info("[GiftVoucher] Admin reaktivirao vaučer id={} ({} → ACTIVE)", id, oldStatus);
+        return new GiftVoucherResponse(saved);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private String generateUniqueCode() {

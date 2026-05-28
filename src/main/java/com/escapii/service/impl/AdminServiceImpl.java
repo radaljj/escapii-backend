@@ -228,16 +228,21 @@ public class AdminServiceImpl implements AdminService {
                     "Otkaži je ako je to potrebno.");
         }
 
-        // Oslobodi vaučer ako je postojao (booking nije bio CONFIRMED, pa je vaučer RESERVED)
-        if (booking.getAppliedVoucherCode() != null) {
-            giftVoucherRepository.findByCode(booking.getAppliedVoucherCode()).ifPresent(v -> {
-                if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.USED) {
+        // Oslobodi vaučer ako je booking bio vezan za njega.
+        // Vaučer se oslobađa samo ako je RESERVED (booking bio aktivan, nije završen) —
+        // USED vaučer se NE oslobađa jer to znači da je putovanje završeno pre brisanja.
+        // Provera i po appliedVoucherCode i po usedInBookingRef da pokrijemo sve edge caseove.
+        String voucherCode = booking.getAppliedVoucherCode();
+        if (voucherCode != null) {
+            giftVoucherRepository.findByCode(voucherCode).ifPresent(v -> {
+                if (v.getStatus() == VoucherStatus.RESERVED) {
                     v.setStatus(VoucherStatus.ACTIVE);
                     v.setUsedAt(null);
                     v.setUsedInBookingRef(null);
                     giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → ACTIVE (booking {} obrisan)", v.getCode(), booking.getBookingRef());
+                    log.info("[Voucher] {} → ACTIVE (booking {} obrisan, bio RESERVED)", v.getCode(), booking.getBookingRef());
                 }
+                // USED vaučer ostaje USED — putovanje je završeno, vaučer je trajno iskorišćen
             });
         }
 

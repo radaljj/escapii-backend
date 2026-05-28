@@ -36,8 +36,16 @@ public interface GiftVoucherService {
     GiftVoucherResponse activateVoucher(Long id);
 
     /**
-     * Admin: markira vaučer kao iskorišćen (ACTIVE → USED).
+     * Admin: markira vaučer kao iskorišćen (ACTIVE/RESERVED → USED).
      * Poziva se kada admin potvrdi booking u kome je primenjen vaučer.
      */
     GiftVoucherResponse markUsed(Long id, Long bookingRef);
+
+    /**
+     * Admin: vraća vaučer u ACTIVE stanje bez obzira na trenutni status.
+     * Korisno kada je vaučer ostao zarobljen u RESERVED/USED/EXPIRED
+     * (npr. test rezervacija, otkazana rezervacija koja nije prošla kroz CANCELLED flow).
+     * Resetuje usedAt i usedInBookingRef.
+     */
+    GiftVoucherResponse reactivateVoucher(Long id);
 }
