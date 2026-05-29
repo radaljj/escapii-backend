@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8"/>
   <style>
-    /* Escapii — Poklon vaučer (boarding pass) · openhtmltopdf
-       TABLE layout, fiksne px (1123x794), numerički entiteti,
-       fontovi 'GiftSerif'=Playfair, 'GiftSans'=Inter, avion=CSS trougao */
     @page { size: 1123px 794px; margin: 0; }
     html, body { margin: 0; padding: 0; }
     body { width: 1123px; height: 794px; font-family: 'GiftSans', sans-serif; color: #1a1410; }
@@ -15,23 +12,23 @@
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
-    /* main=617 + stub=506 = 1123  →  stub content area = 506-56 = 450px */
+    /* main=617 + stub=506 = 1123 */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
     .main { width: 617px; vertical-align: top; padding: 36px 40px; }
-    .stub { width: 506px; vertical-align: top; background-color: #1a1410; padding: 44px 28px; border-left: 2px dashed #d8cab2; text-align: center; }
+    .stub { width: 506px; vertical-align: top; background-color: #1a1410; border-left: 2px dashed #d8cab2; padding: 0; }
 
-    /* Header */
+    /* ── MAIN: Header ── */
     .hdr { width: 100%; }
     .hdr td { vertical-align: middle; }
     .tag { font-family: 'GiftSans', sans-serif; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 700; border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 7px 15px; border-radius: 100px; white-space: nowrap; }
 
-    /* Title */
+    /* ── MAIN: Title ── */
     .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 18px 0; margin-top: 18px; }
     .eyebrow { font-family: 'GiftSerif', serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 8px; }
     .h1 { font-family: 'GiftSerif', serif; font-size: 40px; font-weight: 400; color: #1a1410; line-height: 1.08; letter-spacing: -1px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; }
 
-    /* Route */
+    /* ── MAIN: Route ── */
     .route { width: 100%; margin-top: 18px; }
     .route td { vertical-align: middle; }
     .iata { font-family: 'GiftSerif', serif; font-size: 54px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
@@ -43,7 +40,7 @@
     .plane { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 14px solid #c8775a; margin: 0 auto; }
     .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 70px; height: 0; font-size: 0; }
 
-    /* Meta */
+    /* ── MAIN: Meta ── */
     .meta { width: 100%; margin-top: 16px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 10px; }
     .meta td { padding: 11px 16px; border-right: 1px solid #ebe1cf; vertical-align: top; }
     .meta td.last { border-right: none; }
@@ -51,7 +48,7 @@
     .meta .v { font-family: 'GiftSans', sans-serif; font-size: 12px; font-weight: 700; color: #1a1410; padding-top: 5px; }
     .meta .v.terra { color: #a85e44; }
 
-    /* Message */
+    /* ── MAIN: Message ── */
     .msg-box { width: 100%; table-layout: fixed; margin-top: 16px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
     .msg-box td { padding: 12px 18px; }
     .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 6px; }
@@ -59,33 +56,9 @@
     .msg-sig { font-size: 11px; color: #6b5d4f; padding-top: 7px; }
     .msg-sig b { color: #1a1410; }
 
-    /* Left footer */
+    /* ── MAIN: Footer ── */
     .lfoot { width: 100%; margin-top: 12px; font-size: 9px; color: #a89888; }
     .lfoot td.right { text-align: right; color: #a85e44; }
-
-    /* Stub — content area = 483 - 56 = 427px */
-    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 30px; text-align: center; }
-    .stub-head b { color: #d98a6a; }
-    .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 10px; text-align: center; }
-    .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; text-align: center; }
-    .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
-    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
-    .stub-code-cell {
-      font-family: 'GiftSans', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      color: #f2a684;
-      letter-spacing: 0;
-      white-space: nowrap;
-      background-color: #251d16;
-      border: 1px dashed #5a4d42;
-      padding: 12px 24px;
-      border-radius: 8px;
-    }
-    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 140px; height: 140px; margin: 0 auto; }
-    .qr-box img { width: 140px; height: 140px; display: block; }
-    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 16px; width: 100%; }
-    .stub-foot b { color: #e0d9d3; }
   </style>
 </head>
 <body>
@@ -93,7 +66,8 @@
     <table class="bar"><tr><td></td></tr></table>
     <table class="layout">
       <tr>
-        <!-- ===== MAIN ===== -->
+
+        <!-- ===== MAIN (cream) ===== -->
         <td class="main">
           <table class="hdr">
             <tr>
@@ -134,7 +108,7 @@
             </tr>
           </table>
 
-          <table class="msg-box" th:if="${personalMessage != null and !#strings.isEmpty(personalMessage)}">
+          <table class="msg-box" th:if="${not #strings.isEmpty(personalMessage)}">
             <tr><td>
               <div class="msg-k">Li&#269;na poruka</div>
               <div class="msg-text" th:text="${personalMessage}">Marko, &#269;estitam ti ro&#273;endan!</div>
@@ -150,47 +124,59 @@
           </table>
         </td>
 
-        <!-- ===== STUB ===== -->
+        <!-- ===== STUB (dark) ===== -->
+        <!-- Sve ćelije koriste align="center" direktno na <td> da bi
+             openhtmltopdf pouzdano centrirao sadržaj bez oslanjanja
+             na CSS nasleđivanje kroz div omotače. -->
         <td class="stub">
           <table width="100%" style="border-collapse:collapse;">
 
-            <tr><td align="center" style="padding-bottom:30px;">
-              <div class="stub-head">BOARDING PASS &#183; <b>GIFT</b></div>
+            <!-- BOARDING PASS label -->
+            <tr><td align="center" style="padding: 44px 28px 30px; font-family:'GiftSans',sans-serif; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:#948a82; font-weight:700;">
+              BOARDING PASS &#183; <span style="color:#d98a6a;">GIFT</span>
             </td></tr>
 
-            <tr><td align="center" style="padding-bottom:6px;">
-              <div class="stub-k">Vrednost</div>
+            <!-- VREDNOST label -->
+            <tr><td align="center" style="padding: 0 28px 8px; font-family:'GiftSans',sans-serif; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:#a89b90; font-weight:700;">
+              Vrednost
             </td></tr>
 
-            <tr><td align="center" style="padding-bottom:28px;">
-              <div class="stub-amount"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
+            <!-- Iznos -->
+            <tr><td align="center" style="padding: 0 28px 28px; font-family:'GiftSerif',serif; font-size:72px; font-weight:400; color:#ffffff; line-height:1; letter-spacing:-2px;">
+              <span th:text="${amount}">500</span><span style="color:#d98a6a; font-size:34px; font-style:italic;">&#160;&#8364;</span>
             </td></tr>
 
-            <tr><td align="center" style="padding-bottom:10px;">
-              <div class="stub-k">Vau&#269;er kod</div>
+            <!-- VAUČER KOD label -->
+            <tr><td align="center" style="padding: 0 28px 10px; font-family:'GiftSans',sans-serif; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:#a89b90; font-weight:700;">
+              Vau&#269;er kod
             </td></tr>
 
-            <tr><td align="center" style="padding-bottom:40px;">
-              <table style="margin:0 auto;">
-                <tr><td class="stub-code-cell" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+            <!-- Kod pilula — inner table sa margin:0 auto garantuje centriranje bloka -->
+            <tr><td align="center" style="padding: 0 28px 40px;">
+              <table style="margin:0 auto; border-collapse:collapse;">
+                <tr><td style="font-family:'GiftSans',sans-serif; font-size:13px; font-weight:700; color:#f2a684; letter-spacing:0; white-space:nowrap; background-color:#251d16; border:1px dashed #5a4d42; padding:12px 24px; border-radius:8px;"
+                    th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
               </table>
             </td></tr>
 
-            <tr><td align="center" style="padding-bottom:16px;">
-              <div class="qr-box">
-                <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
-              </div>
+            <!-- QR kod — inner table sa margin:0 auto -->
+            <tr><td align="center" style="padding: 0 28px 16px;">
+              <table style="margin:0 auto; border-collapse:collapse;">
+                <tr><td style="background-color:#ffffff; padding:10px; border-radius:10px; width:140px; height:140px;">
+                  <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140" style="display:block;"/>
+                </td></tr>
+              </table>
             </td></tr>
 
-            <tr><td align="center">
-              <div class="stub-foot">
-                <b>Skeniraj na escapii.rs/poklon</b><br/>
-                ili unesi kod ru&#269;no pri rezervaciji
-              </div>
+            <!-- Footer tekst -->
+            <tr><td align="center" style="padding: 0 28px 44px; font-family:'GiftSans',sans-serif; font-size:10px; color:#948a82; line-height:1.65;">
+              <span style="color:#e0d9d3; font-weight:700;">Skeniraj na escapii.rs/poklon</span><br/>
+              ili unesi kod ru&#269;no pri rezervaciji
             </td></tr>
 
           </table>
         </td>
+
       </tr>
     </table>
   </div>
