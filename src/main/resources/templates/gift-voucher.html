@@ -52,7 +52,7 @@
     .meta .v.terra { color: #a85e44; }
 
     /* Message */
-    .msg-box { width: 100%; table-layout: fixed; margin-top: 14px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
+    .msg-box { width: 100%; table-layout: fixed; margin-top: 16px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
     .msg-box td { padding: 12px 18px; }
     .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 6px; }
     .msg-text { font-family: 'GiftSerif', serif; font-style: italic; font-size: 14px; color: #2b231b; line-height: 1.5; word-wrap: break-word; word-break: break-word; }
@@ -70,8 +70,7 @@
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; text-align: center; }
     .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
     .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
-    .stub-code-wrap { margin: 0 auto 50px; }
-    .stub-code-wrap td {
+    .stub-code-cell {
       font-family: 'GiftSans', sans-serif;
       font-size: 13px;
       font-weight: 700;
@@ -153,31 +152,43 @@
 
         <!-- ===== STUB ===== -->
         <td class="stub">
-          <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-            <tr><td style="text-align: center; padding: 0;">
+          <table width="100%" style="border-collapse:collapse;">
 
+            <tr><td align="center" style="padding-bottom:30px;">
               <div class="stub-head">BOARDING PASS &#183; <b>GIFT</b></div>
+            </td></tr>
 
+            <tr><td align="center" style="padding-bottom:6px;">
               <div class="stub-k">Vrednost</div>
-              <div class="stub-amount" style="padding-bottom:24px;"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
+            </td></tr>
 
+            <tr><td align="center" style="padding-bottom:28px;">
+              <div class="stub-amount"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
+            </td></tr>
+
+            <tr><td align="center" style="padding-bottom:10px;">
               <div class="stub-k">Vau&#269;er kod</div>
-              <table class="stub-code-wrap" style="margin: 0 auto;">
-                <tr><td th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+            </td></tr>
+
+            <tr><td align="center" style="padding-bottom:40px;">
+              <table style="margin:0 auto;">
+                <tr><td class="stub-code-cell" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
               </table>
+            </td></tr>
 
-              <div style="height:40px; font-size:0; line-height:0;">&#160;</div>
-
+            <tr><td align="center" style="padding-bottom:16px;">
               <div class="qr-box">
                 <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
               </div>
+            </td></tr>
 
+            <tr><td align="center">
               <div class="stub-foot">
                 <b>Skeniraj na escapii.rs/poklon</b><br/>
                 ili unesi kod ru&#269;no pri rezervaciji
               </div>
-
             </td></tr>
+
           </table>
         </td>
       </tr>
