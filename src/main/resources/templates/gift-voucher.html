@@ -17,12 +17,12 @@
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
-    /* main=703 + stub=420 = 1123 */
+    /* main=803 + stub=320 = 1123 */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
-    .main { width: 703px; vertical-align: top; padding: 38px 40px; }
+    .main { width: 803px; vertical-align: top; padding: 38px 40px; }
     .stub {
-      width: 420px; vertical-align: top;
-      background-color: #1a1410; padding: 44px 10px 44px 36px;
+      width: 320px; vertical-align: top;
+      background-color: #1a1410; padding: 48px 30px;
       border-left: 2px dashed #d8cab2;
     }
 
@@ -46,7 +46,7 @@
     /* Route */
     .route { width: 100%; margin-top: 20px; }
     .route td { vertical-align: top; }
-    .iata { font-family: 'GiftSerif', serif; font-size: 58px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
+    .iata { font-family: 'GiftSerif', serif; font-size: 60px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
     .iata.dest { color: #a85e44; font-style: italic; text-align: right; }
     .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 10px; letter-spacing: 0.5px; }
     .cap  { font-size: 10px; color: #a89888; padding-top: 5px; }
@@ -76,17 +76,22 @@
     .lfoot td.right { text-align: right; color: #a85e44; }
 
     /* Stub */
-    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #8a8079; font-weight: 700; padding-bottom: 26px; }
-    .stub-head b { color: #c8775a; }
-    .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; padding-bottom: 8px; }
+    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 30px; }
+    .stub-head b { color: #d98a6a; }
+    .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 8px; }
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
-    .stub-amount .cur { color: #c8775a; font-size: 34px; font-style: italic; }
-    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
-    .stub-code { font-family: 'GiftSans', sans-serif; font-size: 12px; font-weight: 700; color: #f0ddd0; letter-spacing: 2px; text-align: center; background-color: #231b14; border: 1px solid #5a4535; padding: 13px 8px; border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
-    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 116px; height: 116px; margin: 0 auto 22px; }
-    .qr-box img { width: 124px; height: 124px; display: block; }
-    .stub-foot { font-size: 10px; color: #8a8079; line-height: 1.6; text-align: center; }
-    .stub-foot b { color: #d6cfc9; }
+    .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
+    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 30px; }
+    .stub-code {
+      font-family: 'GiftSans', sans-serif; font-size: 17px; font-weight: 700;
+      color: #f2a684; letter-spacing: 1px; text-align: center; white-space: nowrap;
+      background-color: #251d16; border: 1px dashed #5a4d42;
+      padding: 15px 6px; border-radius: 8px; margin-bottom: 30px;
+    }
+    .qr-box { background-color: #ffffff; padding: 11px; border-radius: 12px; width: 132px; height: 132px; margin: 0 auto; }
+    .qr-box img { width: 132px; height: 132px; display: block; }
+    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; }
+    .stub-foot b { color: #e0d9d3; }
   </style>
 </head>
 <body>
@@ -163,8 +168,9 @@
           <div class="stub-code" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</div>
 
           <div class="qr-box">
-            <img th:attr="src=${qrDataUri}" alt="QR" width="116" height="116"/>
+            <img th:attr="src=${qrDataUri}" alt="QR" width="132" height="132"/>
           </div>
+          <div style="height:22px; font-size:0; line-height:0;">&#160;</div>
 
           <div class="stub-foot">
             <b>Skeniraj na escapii.rs/poklon</b><br/>
