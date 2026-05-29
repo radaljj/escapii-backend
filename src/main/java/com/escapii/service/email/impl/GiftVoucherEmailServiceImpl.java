@@ -67,10 +67,6 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
     @Override
     @Async
     public void sendVoucherPdfToBuyer(GiftVoucher v, byte[] pdfBytes) {
-        String buyerGreeting = (v.getBuyerName() != null && !v.getBuyerName().isBlank())
-                ? "Dragi " + v.getBuyerName() + ","
-                : "Dragi kupče,";
-
         String html = """
                 <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0f2d35;
                             color:#e8e0d5;border-radius:12px;padding:36px 40px;">
@@ -79,11 +75,8 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                   <div style="text-align:center;margin-bottom:32px;">
                     <div style="font-size:48px;margin-bottom:12px;">🎁</div>
                     <h1 style="margin:0;font-size:26px;color:#CA8A71;line-height:1.3;">
-                      Tvoj poklon vaučer je spreman!
+                      Tvoj Escapii vaučer je spreman!
                     </h1>
-                    <p style="margin:10px 0 0;font-size:15px;color:rgba(232,224,213,.65);">
-                      %s tvoj Escapii poklon vaučer je generisan i čeka te u prilogu.
-                    </p>
                   </div>
 
                   <!-- Info box -->
@@ -101,7 +94,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                       </tr>
                       <tr>
                         <td style="padding:6px 0;color:rgba(232,224,213,.55);">Važi do</td>
-                        <td style="padding:6px 0;color:#e8e0d5;">1 godinu od danas</td>
+                        <td style="padding:6px 0;color:#e8e0d5;">1 godinu od aktivacije</td>
                       </tr>
                     </table>
                   </div>
@@ -109,16 +102,16 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                   <!-- Instructions -->
                   <div style="margin-bottom:28px;">
                     <p style="font-size:14px;font-weight:700;color:#e8e0d5;margin:0 0 12px;">
-                      📎 Vaučer je u prilogu ovog emaila kao PDF.
+                      📎 Vaučer je u prilogu kao PDF — možeš ga odštampati ili prikazati sa telefona.
                     </p>
                     <p style="font-size:14px;color:rgba(232,224,213,.75);line-height:1.7;margin:0 0 10px;">
-                      Prosledi PDF fajl osobi kojoj poklanjuješ — ona može da ga odštampa ili
-                      prikaže sa telefona. Vaučer sadrži QR kod i jedinstven kod koji se unosi
-                      pri rezervaciji na <a href="%s" style="color:#CA8A71;">escapii.rs</a>.
+                      Kod vaučera unosi se pri rezervaciji putovanja na
+                      <a href="%s" style="color:#CA8A71;">escapii.rs</a> —
+                      iznos se automatski odbija od cene putovanja.
                     </p>
                     <p style="font-size:14px;color:rgba(232,224,213,.75);line-height:1.7;margin:0;">
-                      Kod se unosi u <strong>koraku 7</strong> procesa rezervacije —
-                      iznos se automatski oduzima od ukupne cene putovanja.
+                      Vaučer važi za bilo koje Escapii putovanje iznenađenja i može se iskoristiti
+                      u celosti. Ne može se zameniti za gotovinu.
                     </p>
                   </div>
 
@@ -134,12 +127,10 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
 
                   <!-- Footer -->
                   <p style="margin:0;font-size:12px;color:#555;text-align:center;line-height:1.7;">
-                    Hvala što si izabrao/la Escapii za ovaj poseban poklon.<br>
                     Za pitanja: <a href="mailto:escapii.team@gmail.com" style="color:#CA8A71;">escapii.team@gmail.com</a>
                   </p>
                 </div>
                 """.formatted(
-                        buyerGreeting,
                         v.getAmount().toPlainString(),
                         v.getCode(),
                         frontendUrl,
