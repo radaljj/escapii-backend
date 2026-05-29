@@ -64,10 +64,10 @@
     .lfoot td.right { text-align: right; color: #a85e44; }
 
     /* Stub — content area = 483 - 56 = 427px */
-    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 30px; }
+    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 30px; text-align: center; }
     .stub-head b { color: #d98a6a; }
-    .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 10px; }
-    .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
+    .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 10px; text-align: center; }
+    .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; text-align: center; }
     .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
     .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
     .stub-code-wrap { margin: 0 auto 50px; }
@@ -85,7 +85,7 @@
     }
     .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 140px; height: 140px; margin: 0 auto; }
     .qr-box img { width: 140px; height: 140px; display: block; }
-    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 16px; }
+    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 16px; width: 100%; }
     .stub-foot b { color: #e0d9d3; }
   </style>
 </head>
@@ -153,26 +153,32 @@
 
         <!-- ===== STUB ===== -->
         <td class="stub">
-          <div class="stub-head">BOARDING PASS &#183; <b>GIFT</b></div>
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+            <tr><td style="text-align: center; padding: 0;">
 
-          <div class="stub-k">Vrednost</div>
-          <div class="stub-amount" style="padding-bottom:24px;"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
+              <div class="stub-head">BOARDING PASS &#183; <b>GIFT</b></div>
 
-          <div class="stub-k">Vau&#269;er kod</div>
-          <table class="stub-code-wrap" style="margin: 0 auto;">
-            <tr><td th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+              <div class="stub-k">Vrednost</div>
+              <div class="stub-amount" style="padding-bottom:24px;"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
+
+              <div class="stub-k">Vau&#269;er kod</div>
+              <table class="stub-code-wrap" style="margin: 0 auto;">
+                <tr><td th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+              </table>
+
+              <div style="height:40px; font-size:0; line-height:0;">&#160;</div>
+
+              <div class="qr-box">
+                <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
+              </div>
+
+              <div class="stub-foot">
+                <b>Skeniraj na escapii.rs/poklon</b><br/>
+                ili unesi kod ru&#269;no pri rezervaciji
+              </div>
+
+            </td></tr>
           </table>
-
-          <div style="height:40px; font-size:0; line-height:0;">&#160;</div>
-
-          <div class="qr-box">
-            <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
-          </div>
-
-          <div class="stub-foot">
-            <b>Skeniraj na escapii.rs/poklon</b><br/>
-            ili unesi kod ru&#269;no pri rezervaciji
-          </div>
         </td>
       </tr>
     </table>
