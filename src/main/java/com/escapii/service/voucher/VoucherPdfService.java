@@ -85,7 +85,7 @@ public class VoucherPdfService {
             ctx.setVariable("issuedAt",        data.issuedAt().format(DATE_FMT));
             ctx.setVariable("expiresAt",       data.expiresAt().format(DATE_FMT));
             ctx.setVariable("buyerName",       safe(data.buyerName()));
-            ctx.setVariable("personalMessage", data.personalMessage()); // može null/prazno
+            ctx.setVariable("personalMessage", wrapLongWords(data.personalMessage())); // sigurno prelamanje
             ctx.setVariable("qrDataUri",       qrDataUri);
             ctx.setVariable("logoDataUri",     logoDataUri);
 
@@ -141,6 +141,28 @@ public class VoucherPdfService {
     }
 
     private static String safe(String s) { return s == null ? "" : s; }
+
+    /**
+     * Ubacuje razmak svakih MAX_WORD_LEN karaktera unutar "reči" bez razmaka,
+     * jer openhtmltopdf ne podržava word-break:break-word za sasvim duge tokene.
+     */
+    private static final int MAX_WORD_LEN = 30;
+    static String wrapLongWords(String msg) {
+        if (msg == null || msg.isEmpty()) return msg;
+        String[] words = msg.split("(?<=\\s)|(?=\\s)");
+        StringBuilder sb = new StringBuilder(msg.length() + 8);
+        for (String w : words) {
+            if (w.length() > MAX_WORD_LEN) {
+                for (int i = 0; i < w.length(); i++) {
+                    sb.append(w.charAt(i));
+                    if ((i + 1) % MAX_WORD_LEN == 0 && (i + 1) < w.length()) sb.append(' ');
+                }
+            } else {
+                sb.append(w);
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * Iznos u rečima na srpskom — za podnaslov na vaučeru.
