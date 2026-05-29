@@ -70,19 +70,18 @@
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
     .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
     .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
-    .stub-code {
+    .stub-code-wrap { margin-bottom: 24px; }
+    .stub-code-wrap td {
       font-family: 'GiftSans', sans-serif;
       font-size: 13px;
       font-weight: 700;
       color: #f2a684;
       letter-spacing: 0;
-      text-align: center;
       white-space: nowrap;
       background-color: #251d16;
       border: 1px dashed #5a4d42;
-      padding: 12px 8px;
+      padding: 12px 20px;
       border-radius: 8px;
-      margin-bottom: 24px;
     }
     .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 140px; height: 140px; margin: 0 auto; }
     .qr-box img { width: 140px; height: 140px; display: block; }
@@ -160,7 +159,9 @@
           <div class="stub-amount" style="padding-bottom:24px;"><span th:text="${amount}">500</span><span class="cur">&#160;&#8364;</span></div>
 
           <div class="stub-k">Vau&#269;er kod</div>
-          <div class="stub-code" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</div>
+          <table class="stub-code-wrap" style="margin: 0 auto;">
+            <tr><td th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+          </table>
 
           <div class="qr-box">
             <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
