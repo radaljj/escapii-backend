@@ -3,55 +3,43 @@
 <head>
   <meta charset="UTF-8"/>
   <style>
-    /* Escapii — Poklon vaucer (boarding pass) — openhtmltopdf */
+    /* Escapii — Poklon vaučer (boarding pass) · openhtmltopdf
+       Samo TABLE layout, fiksne px (1123x794), numerički entiteti,
+       fontovi 'GiftSerif'=Playfair, 'GiftSans'=Inter, avion=CSS trougao */
     @page { size: 1123px 794px; margin: 0; }
     html, body { margin: 0; padding: 0; }
-    body {
-      width: 1123px; height: 794px;
-      font-family: 'GiftSans', sans-serif;
-      color: #1a1410;
-    }
+    body { width: 1123px; height: 794px; font-family: 'GiftSans', sans-serif; color: #1a1410; }
     .sheet { width: 1123px; height: 794px; background-color: #faf6ee; }
 
     table { border-collapse: collapse; }
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
-    /* main=703 + stub=420 = 1123 */
+    /* 763+320=1083 — openhtmltopdf raspoređuje ostatak do 1123px */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
-    .main { width: 703px; vertical-align: top; padding: 38px 40px; }
-    .stub {
-      width: 420px; vertical-align: top;
-      background-color: #1a1410; padding: 48px 44px;
-      border-left: 2px dashed #d8cab2;
-    }
+    .main { width: 763px; vertical-align: top; padding: 40px 44px; }
+    .stub { width: 320px; vertical-align: top; background-color: #1a1410; padding: 48px 30px; border-left: 2px dashed #d8cab2; }
 
     /* Header */
     .hdr { width: 100%; }
     .hdr td { vertical-align: middle; }
-    .tag {
-      font-family: 'GiftSans', sans-serif;
-      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-      color: #a85e44; font-weight: 700;
-      border: 1px solid #e0c3b2; background-color: #fbf1ea;
-      padding: 7px 15px; border-radius: 100px; white-space: nowrap;
-    }
+    .tag { font-family: 'GiftSans', sans-serif; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 700; border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 7px 15px; border-radius: 100px; white-space: nowrap; }
 
     /* Title */
-    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 20px 0; margin-top: 20px; }
-    .eyebrow { font-family: 'GiftSerif', serif; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 10px; }
+    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 22px 0; margin-top: 22px; }
+    .eyebrow { font-family: 'GiftSerif', serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 10px; }
     .h1 { font-family: 'GiftSerif', serif; font-size: 46px; font-weight: 400; color: #1a1410; line-height: 1.08; letter-spacing: -1px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; }
 
     /* Route */
-    .route { width: 100%; margin-top: 20px; }
-    .route td { vertical-align: top; }
+    .route { width: 100%; margin-top: 22px; }
+    .route td { vertical-align: middle; }
     .iata { font-family: 'GiftSerif', serif; font-size: 60px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
     .iata.dest { color: #a85e44; font-style: italic; text-align: right; }
-    .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 10px; letter-spacing: 0.5px; }
-    .cap  { font-size: 10px; color: #a89888; padding-top: 5px; }
+    .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 6px; letter-spacing: 0.5px; }
+    .cap  { font-size: 10px; color: #a89888; padding-top: 2px; }
     .r-right { text-align: right; }
-    .r-mid { text-align: center; width: 120px; vertical-align: middle; padding-top: 16px; }
+    .r-mid { text-align: center; width: 120px; }
     .plane { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 14px solid #c8775a; margin: 0 auto; }
     .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 80px; height: 0; font-size: 0; }
 
@@ -81,16 +69,16 @@
     .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 8px; }
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
     .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
-    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 30px; }
+    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 28px; }
     .stub-code {
-      font-family: 'GiftSans', sans-serif; font-size: 17px; font-weight: 700;
+      font-family: 'GiftSans', sans-serif; font-size: 15px; font-weight: 700;
       color: #f2a684; letter-spacing: 1px; text-align: center; white-space: nowrap;
-      background-color: #251d16; border: 1px dashed #5a4d42;
-      padding: 15px 6px; border-radius: 8px; margin-bottom: 30px; overflow: hidden;
+      background-color: #251d16; border: 1px dashed #5a4d42; overflow: hidden;
+      padding: 14px 8px; border-radius: 8px; margin-bottom: 28px;
     }
-    .qr-box { background-color: #ffffff; padding: 11px; border-radius: 12px; width: 132px; height: 132px; margin: 0 auto; }
-    .qr-box img { width: 132px; height: 132px; display: block; }
-    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; }
+    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 120px; height: 120px; margin: 0 auto; }
+    .qr-box img { width: 120px; height: 120px; display: block; }
+    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 18px; }
     .stub-foot b { color: #e0d9d3; }
   </style>
 </head>
@@ -103,7 +91,7 @@
         <td class="main">
           <table class="hdr">
             <tr>
-              <td><img th:attr="src=${logoDataUri}" alt="escapii" width="168" height="38" style="display:block;"/></td>
+              <td><img th:attr="src=${logoDataUri}" alt="escapii" width="160" height="36" style="display:block;"/></td>
               <td style="text-align:right;"><span class="tag">&#43; Poklon vau&#269;er</span></td>
             </tr>
           </table>
@@ -140,7 +128,7 @@
             </tr>
           </table>
 
-          <table class="msg-box" th:if="${personalMessage != null and !personalMessage.isEmpty()}">
+          <table class="msg-box" th:if="${personalMessage != null and !#strings.isEmpty(personalMessage)}">
             <tr><td>
               <div class="msg-k">Li&#269;na poruka</div>
               <div class="msg-text" th:text="${personalMessage}">Marko, &#269;estitam ti ro&#273;endan!</div>
@@ -168,9 +156,8 @@
           <div class="stub-code" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</div>
 
           <div class="qr-box">
-            <img th:attr="src=${qrDataUri}" alt="QR" width="132" height="132"/>
+            <img th:attr="src=${qrDataUri}" alt="QR" width="120" height="120"/>
           </div>
-          <div style="height:22px; font-size:0; line-height:0;">&#160;</div>
 
           <div class="stub-foot">
             <b>Skeniraj na escapii.rs/poklon</b><br/>
