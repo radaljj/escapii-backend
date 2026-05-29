@@ -151,17 +151,17 @@
               Vau&#269;er kod
             </td></tr>
 
-            <!-- Kod pilula — inner table sa margin:0 auto garantuje centriranje bloka -->
+            <!-- Kod pilula — align="center" na table elementu je jedini pouzdan način centriranja bloka u openhtmltopdf -->
             <tr><td align="center" style="padding: 0 28px 40px;">
-              <table style="margin:0 auto; border-collapse:collapse;">
+              <table align="center" style="border-collapse:collapse;">
                 <tr><td style="font-family:'GiftSans',sans-serif; font-size:13px; font-weight:700; color:#f2a684; letter-spacing:0; white-space:nowrap; background-color:#251d16; border:1px dashed #5a4d42; padding:12px 24px; border-radius:8px;"
                     th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
               </table>
             </td></tr>
 
-            <!-- QR kod — inner table sa margin:0 auto -->
+            <!-- QR kod — align="center" na table -->
             <tr><td align="center" style="padding: 0 28px 16px;">
-              <table style="margin:0 auto; border-collapse:collapse;">
+              <table align="center" style="border-collapse:collapse;">
                 <tr><td style="background-color:#ffffff; padding:10px; border-radius:10px; width:140px; height:140px;">
                   <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140" style="display:block;"/>
                 </td></tr>
