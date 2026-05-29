@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <style>
     /* Escapii — Poklon vaučer (boarding pass) · openhtmltopdf
-       Samo TABLE layout, fiksne px (1123x794), numerički entiteti,
+       TABLE layout, fiksne px (1123x794), numerički entiteti,
        fontovi 'GiftSerif'=Playfair, 'GiftSans'=Inter, avion=CSS trougao */
     @page { size: 1123px 794px; margin: 0; }
     html, body { margin: 0; padding: 0; }
@@ -15,10 +15,10 @@
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
-    /* 763+320=1083 — openhtmltopdf raspoređuje ostatak do 1123px */
+    /* main=640 + stub=483 = 1123 */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
-    .main { width: 763px; vertical-align: top; padding: 40px 44px; }
-    .stub { width: 320px; vertical-align: top; background-color: #1a1410; padding: 48px 20px; border-left: 2px dashed #d8cab2; }
+    .main { width: 640px; vertical-align: top; padding: 36px 40px; }
+    .stub { width: 483px; vertical-align: top; background-color: #1a1410; padding: 44px 28px; border-left: 2px dashed #d8cab2; }
 
     /* Header */
     .hdr { width: 100%; }
@@ -26,59 +26,67 @@
     .tag { font-family: 'GiftSans', sans-serif; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 700; border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 7px 15px; border-radius: 100px; white-space: nowrap; }
 
     /* Title */
-    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 22px 0; margin-top: 22px; }
-    .eyebrow { font-family: 'GiftSerif', serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 10px; }
-    .h1 { font-family: 'GiftSerif', serif; font-size: 46px; font-weight: 400; color: #1a1410; line-height: 1.08; letter-spacing: -1px; margin: 0; }
+    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 18px 0; margin-top: 18px; }
+    .eyebrow { font-family: 'GiftSerif', serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #6b5d4f; padding-bottom: 8px; }
+    .h1 { font-family: 'GiftSerif', serif; font-size: 40px; font-weight: 400; color: #1a1410; line-height: 1.08; letter-spacing: -1px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; }
 
     /* Route */
-    .route { width: 100%; margin-top: 22px; }
+    .route { width: 100%; margin-top: 18px; }
     .route td { vertical-align: middle; }
-    .iata { font-family: 'GiftSerif', serif; font-size: 60px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
+    .iata { font-family: 'GiftSerif', serif; font-size: 54px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -2px; }
     .iata.dest { color: #a85e44; font-style: italic; text-align: right; }
-    .city { font-size: 12px; color: #1a1410; font-weight: 700; padding-top: 12px; letter-spacing: 0.5px; }
-    .cap  { font-size: 10px; color: #a89888; padding-top: 4px; }
+    .city { font-size: 11px; color: #1a1410; font-weight: 700; padding-top: 12px; letter-spacing: 0.5px; }
+    .cap  { font-size: 9px; color: #a89888; padding-top: 4px; }
     .r-right { text-align: right; }
-    .r-mid { text-align: center; width: 120px; }
+    .r-mid { text-align: center; width: 100px; }
     .plane { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 14px solid #c8775a; margin: 0 auto; }
-    .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 80px; height: 0; font-size: 0; }
+    .plane-ln { border-top: 1.5px dashed #e29070; margin: 8px auto 0; width: 70px; height: 0; font-size: 0; }
 
     /* Meta */
-    .meta { width: 100%; margin-top: 20px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 10px; }
-    .meta td { padding: 13px 18px; border-right: 1px solid #ebe1cf; vertical-align: top; }
+    .meta { width: 100%; margin-top: 16px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 10px; }
+    .meta td { padding: 11px 16px; border-right: 1px solid #ebe1cf; vertical-align: top; }
     .meta td.last { border-right: none; }
     .meta .k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; }
-    .meta .v { font-family: 'GiftSans', sans-serif; font-size: 13px; font-weight: 700; color: #1a1410; padding-top: 6px; }
+    .meta .v { font-family: 'GiftSans', sans-serif; font-size: 12px; font-weight: 700; color: #1a1410; padding-top: 5px; }
     .meta .v.terra { color: #a85e44; }
 
     /* Message */
-    .msg-box { width: 100%; table-layout: fixed; margin-top: 18px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
-    .msg-box td { padding: 14px 20px; }
-    .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 7px; }
-    .msg-text { font-family: 'GiftSerif', serif; font-style: italic; font-size: 15px; color: #2b231b; line-height: 1.5; word-wrap: break-word; word-break: break-word; }
-    .msg-sig { font-size: 12px; color: #6b5d4f; padding-top: 8px; }
+    .msg-box { width: 100%; table-layout: fixed; margin-top: 14px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 10px; }
+    .msg-box td { padding: 12px 18px; }
+    .msg-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #a89888; font-weight: 700; padding-bottom: 6px; }
+    .msg-text { font-family: 'GiftSerif', serif; font-style: italic; font-size: 14px; color: #2b231b; line-height: 1.5; word-wrap: break-word; word-break: break-word; }
+    .msg-sig { font-size: 11px; color: #6b5d4f; padding-top: 7px; }
     .msg-sig b { color: #1a1410; }
 
     /* Left footer */
-    .lfoot { width: 100%; margin-top: 14px; font-size: 10px; color: #a89888; }
+    .lfoot { width: 100%; margin-top: 12px; font-size: 9px; color: #a89888; }
     .lfoot td.right { text-align: right; color: #a85e44; }
 
-    /* Stub */
-    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 30px; }
+    /* Stub — content area = 483 - 56 = 427px */
+    .stub-head { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #948a82; font-weight: 700; padding-bottom: 26px; }
     .stub-head b { color: #d98a6a; }
     .stub-k { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; padding-bottom: 8px; }
     .stub-amount { font-family: 'GiftSerif', serif; font-size: 72px; font-weight: 400; color: #ffffff; line-height: 1; letter-spacing: -2px; }
     .stub-amount .cur { color: #d98a6a; font-size: 34px; font-style: italic; }
-    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 28px; }
+    .stub-amount-sub { font-family: 'GiftSerif', serif; font-style: italic; font-size: 13px; color: #a59c94; padding: 6px 0 24px; }
     .stub-code {
-      font-family: 'GiftSans', sans-serif; font-size: 17px; font-weight: 700;
-      color: #f2a684; letter-spacing: 1px; text-align: center; white-space: nowrap;
-      background-color: #251d16; border: 1px dashed #5a4d42; overflow: hidden;
-      padding: 15px 6px; border-radius: 8px; margin-bottom: 28px;
+      font-family: 'GiftSans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f2a684;
+      letter-spacing: 0;
+      text-align: center;
+      white-space: nowrap;
+      background-color: #251d16;
+      border: 1px dashed #5a4d42;
+      padding: 14px 12px;
+      border-radius: 8px;
+      margin-bottom: 24px;
     }
-    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 120px; height: 120px; margin: 0 auto; }
-    .qr-box img { width: 120px; height: 120px; display: block; }
-    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 18px; }
+    .qr-box { background-color: #ffffff; padding: 10px; border-radius: 10px; width: 140px; height: 140px; margin: 0 auto; }
+    .qr-box img { width: 140px; height: 140px; display: block; }
+    .stub-foot { font-size: 10px; color: #948a82; line-height: 1.65; text-align: center; padding-top: 16px; }
     .stub-foot b { color: #e0d9d3; }
   </style>
 </head>
@@ -91,7 +99,7 @@
         <td class="main">
           <table class="hdr">
             <tr>
-              <td><img th:attr="src=${logoDataUri}" alt="escapii" width="160" height="36" style="display:block;"/></td>
+              <td><img th:attr="src=${logoDataUri}" alt="escapii" width="150" height="34" style="display:block;"/></td>
               <td style="text-align:right;"><span class="tag">&#43; Poklon vau&#269;er</span></td>
             </tr>
           </table>
@@ -156,7 +164,7 @@
           <div class="stub-code" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</div>
 
           <div class="qr-box">
-            <img th:attr="src=${qrDataUri}" alt="QR" width="120" height="120"/>
+            <img th:attr="src=${qrDataUri}" alt="QR" width="140" height="140"/>
           </div>
 
           <div class="stub-foot">
