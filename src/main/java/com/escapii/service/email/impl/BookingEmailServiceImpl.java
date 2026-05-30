@@ -749,7 +749,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             int subtotal = booking.getTotalPriceAll() + booking.getVoucherDiscount();
             subtotalHtml = """
                 <tr>
-                  <td colspan="3" style="padding:10px 16px;font-size:12px;color:#a89888;border-bottom:1px solid #ebe1cf;text-align:right;font-style:italic;">Međuzbir (pre popusta)</td>
+                  <td colspan="3" style="padding:10px 16px;font-size:12px;color:#a89888;border-bottom:1px solid #ebe1cf;text-align:right;font-style:italic;">Cena pre popusta</td>
                   <td style="padding:10px 16px;text-align:right;font-size:13px;color:#a89888;border-bottom:1px solid #ebe1cf;text-decoration:line-through;">%s</td>
                 </tr>
                 <tr>
