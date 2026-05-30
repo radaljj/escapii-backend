@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 
 /**
@@ -40,6 +41,14 @@ import java.util.logging.Level;
 public class VoucherPdfService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    /**
+     * Semafor: maksimalno 3 PDF-a simultano.
+     * openhtmltopdf je memorijski zahtevan (~50-80 MB po generisanju),
+     * pa ograničavamo paralelizam da ne potrošimo svu RAM na VPS-u.
+     * Ostali zahtevi čekaju u redu — ne odbijaju se.
+     */
+    private static final Semaphore PDF_SEMAPHORE = new Semaphore(3, true);
 
     private final TemplateEngine templateEngine;
     private final QrCodeGenerator qrCodeGenerator;
@@ -66,8 +75,15 @@ public class VoucherPdfService {
 
     /**
      * Glavni ulaz — generiše PDF kao byte[] (pogodno za prilog mejlu).
+     * Semafor ograničava na max 3 simultana generisanja — ostali čekaju.
      */
     public byte[] generate(VoucherData data) {
+        try {
+            PDF_SEMAPHORE.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("PDF generisanje prekinuto dok je čekalo na semafor", e);
+        }
         try {
             // 1) QR kod -> PNG data URI; link vodi na redeem stranicu sa kodom
             String redeemUrl = redeemBaseUrl + "?code=" + urlEncode(data.voucherCode());
@@ -85,7 +101,7 @@ public class VoucherPdfService {
             ctx.setVariable("issuedAt",        data.issuedAt().format(DATE_FMT));
             ctx.setVariable("expiresAt",       data.expiresAt().format(DATE_FMT));
             ctx.setVariable("buyerName",       safe(data.buyerName()));
-            ctx.setVariable("personalMessage", wrapLongWords(data.personalMessage())); // sigurno prelamanje
+            ctx.setVariable("personalMessage", wrapLongWords(data.personalMessage()));
             ctx.setVariable("qrDataUri",       qrDataUri);
             ctx.setVariable("logoDataUri",     logoDataUri);
 
@@ -104,6 +120,8 @@ public class VoucherPdfService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Neuspelo generisanje PDF vaučera: " + e.getMessage(), e);
+        } finally {
+            PDF_SEMAPHORE.release(); // uvek oslobodi permit, čak i ako je došlo do greške
         }
     }
 
