@@ -18,6 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import java.util.logging.Level;
 
 /**
@@ -36,6 +38,7 @@ import java.util.logging.Level;
  * Familije 'GiftSerif' (Playfair Display) i 'GiftSans' (Inter) moraju
  * da se poklope sa CSS-om u template-u.
  */
+@Slf4j
 @Lazy   // inicijalizuje se tek pri prvom PDF pozivu, ne blokira startup ako openhtmltopdf ima problem
 @Service
 public class VoucherPdfService {
@@ -79,7 +82,14 @@ public class VoucherPdfService {
      */
     public byte[] generate(VoucherData data) {
         try {
-            PDF_SEMAPHORE.acquire();
+            // Čekaj max 10 minuta — u normalnim uslovima PDF traje 2-5 sekundi,
+            // pa je 10 minuta čekanja signal da je nešto pošlo po krivu
+            boolean acquired = PDF_SEMAPHORE.tryAcquire(10, TimeUnit.MINUTES);
+            if (!acquired) {
+                log.error("[PDF] Timeout čekanja na semafor za vaučer kod={} — server je prezauzet",
+                        data.voucherCode());
+                throw new RuntimeException("PDF generisanje nije moglo da počne — server prezauzet");
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("PDF generisanje prekinuto dok je čekalo na semafor", e);

@@ -20,6 +20,10 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig implements AsyncConfigurer {
 
+    /**
+     * Glavni async executor — email slanje, notifikacije i ostalo.
+     * PDF generisanje ide u zasebni pdfExecutor da ne blokira ove threadove.
+     */
     @Override
     @Bean(name = "taskExecutor")
     public Executor getAsyncExecutor() {
@@ -30,6 +34,24 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setThreadNamePrefix("escapii-async-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
+        executor.initialize();
+        return executor;
+    }
+
+    /**
+     * Dedicated thread pool za PDF generisanje.
+     * Pool size = 3 (isto kao semafor) — threadovi se ne takmiče sa email threadovima.
+     * Queue capacity = 20 — ako je 20+ vaučera istovremeno u redu, nešto je sigurno pošlo po krivu.
+     */
+    @Bean(name = "pdfExecutor")
+    public Executor getPdfExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(3);
+        executor.setQueueCapacity(20);
+        executor.setThreadNamePrefix("escapii-pdf-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
         executor.initialize();
         return executor;
     }

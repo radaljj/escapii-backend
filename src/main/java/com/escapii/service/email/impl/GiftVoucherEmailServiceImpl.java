@@ -65,7 +65,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
     // ── PDF vaučer kupcu (nakon aktivacije) ─────────────────────────────────
 
     @Override
-    @Async
+    @Async("pdfExecutor")   // dedicated pool — ne blokira email threadove
     public void sendVoucherPdfToBuyer(GiftVoucher v, byte[] pdfBytes) {
         String html = """
                 <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0f2d35;
