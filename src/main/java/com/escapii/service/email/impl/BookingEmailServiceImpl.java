@@ -735,6 +735,34 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         }
         if (n == 1)
             rows.append(priceRow("Doplata za solo putnika", "—", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
+        if (Boolean.TRUE.equals(booking.getHasRevealBox()))
+            rows.append(priceRow("📦 Reveal Box (koverat na adresu)", "—", null, PriceCalculatorImpl.REVEAL_BOX_FLAT, true));
+
+        // ── Vaučer popust ──────────────────────────────────────────────
+        boolean hasVoucher = booking.getAppliedVoucherCode() != null
+                && booking.getVoucherDiscount() != null
+                && booking.getVoucherDiscount() > 0;
+
+        // Ako ima vaučer, prikazujemo međuzbir pre popusta
+        String subtotalHtml = "";
+        if (hasVoucher) {
+            int subtotal = booking.getTotalPriceAll() + booking.getVoucherDiscount();
+            subtotalHtml = """
+                <tr>
+                  <td colspan="3" style="padding:10px 16px;font-size:12px;color:#a89888;border-bottom:1px solid #ebe1cf;text-align:right;font-style:italic;">Međuzbir (pre popusta)</td>
+                  <td style="padding:10px 16px;text-align:right;font-size:13px;color:#a89888;border-bottom:1px solid #ebe1cf;text-decoration:line-through;">%s</td>
+                </tr>
+                <tr>
+                  <td colspan="3" style="padding:10px 16px;font-size:13px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">
+                    🎟 Poklon vaučer <span style="font-family:'Courier New',monospace;font-size:12px;background:#eef6f0;padding:2px 8px;border-radius:4px;color:#1d6042;letter-spacing:0.05em;">%s</span>
+                  </td>
+                  <td style="padding:10px 16px;text-align:right;font-size:14px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">− %s</td>
+                </tr>
+                """.formatted(
+                    EmailHtmlBuilder.eur(subtotal),
+                    EmailHtmlBuilder.esc(booking.getAppliedVoucherCode()),
+                    EmailHtmlBuilder.eur(booking.getVoucherDiscount()));
+        }
 
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
@@ -751,6 +779,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                       <td width="19%%" style="width:19%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Ukupno</td>
                     </tr>
                     %s
+                    %s
                     <tr bgcolor="#1a1410" style="background:#1a1410;">
                       <td colspan="3" style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
                       <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#e29070;">%s</td>
@@ -759,7 +788,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 </td>
               </tr>
             </table>
-            """.formatted(rows, EmailHtmlBuilder.eur(booking.getTotalPriceAll()));
+            """.formatted(rows, subtotalHtml, EmailHtmlBuilder.eur(booking.getTotalPriceAll()));
     }
 
     private String priceRow(String label, String perPerson, Integer count, int total, boolean flat) {
