@@ -133,7 +133,7 @@ public class BookingServiceImpl implements BookingService {
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether(),
-                request.isHasRevealBox()
+                request.isHasRevealBox(), request.getDepartureAirport()
         );
 
         Booking booking = buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price);
@@ -193,7 +193,7 @@ public class BookingServiceImpl implements BookingService {
         // accommodationType can be null for preview (default = STANDARD)
         AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
         return priceCalculator.calculate(date, n, accomType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false);
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, null);
     }
 
     @Override

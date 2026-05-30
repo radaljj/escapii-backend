@@ -38,7 +38,8 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType,
                                           int exclusionCount, int cabinSuitcaseCount,
                                           boolean hasInsurance, boolean hasBreakfast,
-                                          boolean hasSeatsTogether, boolean hasRevealBox) {
+                                          boolean hasSeatsTogether, boolean hasRevealBox,
+                                          String departureAirport) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
         int breakfast = hasBreakfast ? BREAKFAST_PP * date.getNumberOfNights() : 0;
@@ -46,7 +47,10 @@ public class PriceCalculatorImpl implements PriceCalculator {
         int insurance = hasInsurance ? INSURANCE_PP : 0;
 
         // Isključivanja: 1. gratis, 2. i 3. → 15€/pp svako
-        int exclusionCostFlat = calcExclusionCost(exclusionCount, n);
+        boolean isINI = "INI".equalsIgnoreCase(departureAirport);
+        int exclusionCostFlat = isINI
+                ? calcExclusionCostINI(exclusionCount, n)
+                : calcExclusionCost(exclusionCount, n);
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
         int revealBoxTotal = hasRevealBox ? REVEAL_BOX_FLAT : 0;
@@ -74,12 +78,21 @@ public class PriceCalculatorImpl implements PriceCalculator {
     }
 
     /**
-     * Sve aerodrome: max 4 isključivanja.
+     * BEG i ostali: max 4 isključivanja.
      * 1. → 0€ | 2. → +15€/pp | 3. → +15€/pp | 4. → +15€/pp
      */
     private int calcExclusionCost(int exclusionCount, int n) {
         if (exclusionCount <= 1) return 0;
         return Math.min(exclusionCount - 1, 3) * EXCLUSION_PP * n;
+    }
+
+    /**
+     * INI — max 1 isključivanje, nema besplatnog.
+     * 1. → +15€/pp
+     */
+    private int calcExclusionCostINI(int exclusionCount, int n) {
+        if (exclusionCount <= 0) return 0;
+        return EXCLUSION_PP * n; // uvek 15€/pp, max 1
     }
 
     private int resolveAccommodationExtra(AccommodationType type) {

@@ -19,6 +19,10 @@ public interface PriceCalculator {
      *   Kabinski kofer (selektivan po putniku):
      *     cabinSuitcaseCount × 100
      */
+    /**
+     * @param departureAirport  IATA kod aerodroma — utiče na pravila isključivanja
+     *                          (INI: max 1, sve plaćeno 15€/os; ostali: max 4, 1. gratis)
+     */
     PricePreviewResponse calculate(
             AvailableDate date,
             int n,
@@ -28,6 +32,7 @@ public interface PriceCalculator {
             boolean hasInsurance,
             boolean hasBreakfast,
             boolean hasSeatsTogether,
-            boolean hasRevealBox
+            boolean hasRevealBox,
+            String departureAirport
     );
 }
