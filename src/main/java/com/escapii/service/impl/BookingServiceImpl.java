@@ -60,7 +60,27 @@ public class BookingServiceImpl implements BookingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevažeći zahtev");
         }
 
-        // 0c. Duplikat — isti email + isti termin u poslednjih 24h
+        // 0c. Reveal Box — dostava obavezna ako je odabran (sprečava bots koji šalju hasRevealBox=true sa praznim poljima)
+        if (request.isHasRevealBox()) {
+            boolean addrMissing  = request.getDeliveryAddress() == null || request.getDeliveryAddress().isBlank();
+            boolean cityMissing  = request.getDeliveryCity()    == null || request.getDeliveryCity().isBlank();
+            boolean phoneMissing = request.getDeliveryPhone()   == null || request.getDeliveryPhone().isBlank();
+            if (addrMissing || cityMissing || phoneMissing) {
+                log.warn("[Validation] Reveal Box odabran ali adresa nije kompletna — addr={}, city={}, phone={}",
+                        !addrMissing, !cityMissing, !phoneMissing);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Adresa dostave je obavezna kada je Reveal Box odabran.");
+            }
+            // Osnovna dužina zaštita (blokira trivijalne bots koji šalju jedan karakter)
+            if (request.getDeliveryAddress().length() < 5) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Adresa nije validna.");
+            }
+            if (request.getDeliveryCity().length() < 2) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Grad nije validan.");
+            }
+        }
+
+        // 0d. Duplikat — isti email + isti termin u poslednjih 24h
         if (bookingRepository.existsDuplicateBooking(
                 request.getEmail(),
                 request.getSelectedDateId(),
