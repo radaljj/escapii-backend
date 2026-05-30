@@ -72,7 +72,7 @@ public class BookingServiceImpl implements BookingService {
                         "Adresa dostave je obavezna kada je Reveal Box odabran.");
             }
             // Osnovna dužina zaštita (blokira trivijalne bots koji šalju jedan karakter)
-            if (request.getDeliveryAddress().length() < 5) {
+            if (request.getDeliveryAddress().length() < 3) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Adresa nije validna.");
             }
             if (request.getDeliveryCity().length() < 2) {
