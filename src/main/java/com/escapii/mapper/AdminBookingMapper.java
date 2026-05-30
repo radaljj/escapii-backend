@@ -18,6 +18,11 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "exclusionCostEur",            target = "exclusionCostEur")
     @Mapping(source = "airlineName",                 target = "airlineName")
     @Mapping(source = "airlineBookingCode",          target = "airlineBookingCode")
+    @Mapping(source = "hasRevealBox",                target = "hasRevealBox")
+    @Mapping(source = "deliveryAddress",             target = "deliveryAddress")
+    @Mapping(source = "deliveryCity",                target = "deliveryCity")
+    @Mapping(source = "deliveryPhone",               target = "deliveryPhone")
+    @Mapping(source = "revealBoxSent",               target = "revealBoxSent")
     @Mapping(target = "excludedDestinations", expression = "java(buildExclusionList(entity))")
     @Mapping(target = "passengers",           expression = "java(buildPassengers(entity))")
     public abstract AdminBookingResponse toResponse(Booking entity);

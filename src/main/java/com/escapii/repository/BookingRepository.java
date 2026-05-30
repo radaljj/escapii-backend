@@ -121,6 +121,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                           @Param("until") LocalDateTime until);
 
     /**
+     * CONFIRMED bookingovi sa Reveal Box-om koji još nisu poslati,
+     * a polazak je za <= 5 dana — digest treba da podseti tim.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.hasRevealBox = true " +
+           "AND b.revealBoxSent = false " +
+           "AND b.selectedDate.departureDate >= :today " +
+           "AND b.selectedDate.departureDate <= :until " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findPendingRevealBoxes(@Param("today") LocalDate today,
+                                         @Param("until") LocalDate until);
+
+    /**
      * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
      * - reveal poslan (revealSentAt IS NOT NULL)
      * - prognoza poslata (forecastSentAt IS NOT NULL)

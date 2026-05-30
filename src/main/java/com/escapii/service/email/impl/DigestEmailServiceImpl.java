@@ -26,10 +26,11 @@ public class DigestEmailServiceImpl implements DigestEmailService {
     public void sendDailyDigest(LocalDate today,
                                 List<Booking> revealsSent,
                                 List<Booking> forecastDue,
-                                List<Booking> upcoming) {
+                                List<Booking> upcoming,
+                                List<Booking> revealBoxPending) {
 
         String todayStr  = today.format(EmailHtmlBuilder.DATE_FMT);
-        boolean hasToday = !revealsSent.isEmpty() || !forecastDue.isEmpty();
+        boolean hasToday = !revealsSent.isEmpty() || !forecastDue.isEmpty() || !revealBoxPending.isEmpty();
 
         StringBuilder body = new StringBuilder();
 
@@ -62,6 +63,16 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                 "#fff5eb", "#e8c7b1", "#a85e44",
                 forecastThead(),
                 forecastRows(today, forecastDue)
+            ));
+        }
+
+        // ── Reveal Box podsjetnik ─────────────────────────────────────────────
+        if (!revealBoxPending.isEmpty()) {
+            body.append(section(
+                "📦 Pošalji Reveal Box (" + revealBoxPending.size() + ") — polazak za ≤ 5 dana!",
+                "#fdf3e7", "#e8c7b1", "#a85e44",
+                revealBoxThead(),
+                revealBoxRows(today, revealBoxPending)
             ));
         }
 
@@ -243,6 +254,46 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                     forecastDone ? "#1d6042" : "#a89888",
                     forecastDone ? "700" : "400",
                     forecastDone ? "🌤 poslata" : forecastDate
+            ));
+        }
+        return sb.toString();
+    }
+
+    // ── Reveal Box sekcija ────────────────────────────────────────────────────
+
+    private String revealBoxThead() {
+        return thead("Putnik", "Ref", "Polazak", "Adresa dostave", "Telefon");
+    }
+
+    private String revealBoxRows(LocalDate today, List<Booking> bookings) {
+        StringBuilder sb = new StringBuilder();
+        for (Booking b : bookings) {
+            LocalDate dep  = b.getSelectedDate().getDepartureDate();
+            long daysLeft  = today.until(dep).getDays();
+            String daysLbl = daysLabel(daysLeft);
+            String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "—")
+                           + (b.getDeliveryCity() != null ? ", " + b.getDeliveryCity() : "");
+            String phone   = b.getDeliveryPhone() != null ? b.getDeliveryPhone() : "—";
+            sb.append("""
+                <tr style="border-bottom:1px solid #ebe1cf;">
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                    <strong style="color:#a85e44;">%s</strong>
+                    <div style="font-size:11px;color:#6b5d4f;margin-top:2px;">%s</div>
+                  </td>
+                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;vertical-align:middle;">
+                    <span style="font-size:12px;color:#1a1410;">%s</span>
+                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff5eb;color:#a85e44;">%s</span>
+                  </td>
+                  <td style="padding:9px 10px;font-size:12px;color:#2b231b;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:12px;color:#2b231b;vertical-align:middle;">%s</td>
+                </tr>""".formatted(
+                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
+                    EmailHtmlBuilder.esc(b.getEmail()),
+                    EmailHtmlBuilder.esc(b.getBookingRef()),
+                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
+                    EmailHtmlBuilder.esc(address),
+                    EmailHtmlBuilder.esc(phone)
             ));
         }
         return sb.toString();

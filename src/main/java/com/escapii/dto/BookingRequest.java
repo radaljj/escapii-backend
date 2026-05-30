@@ -105,6 +105,24 @@ public class BookingRequest {
     /** Vreme popunjavanja forme u sekundama. Ispod praga = bot. */
     private Integer formDuration;
 
+    // ── Reveal Box (opciono) ──────────────────────────────────────────
+
+    /** Korisnik želi fizički Reveal Box (+25€ flat). */
+    private boolean hasRevealBox = false;
+
+    /** Adresa dostave — obavezno ako hasRevealBox=true. */
+    @Size(max = 300, message = "Adresa ne sme biti duža od 300 karaktera")
+    private String deliveryAddress;
+
+    /** Grad dostave. */
+    @Size(max = 100, message = "Grad ne sme biti duži od 100 karaktera")
+    private String deliveryCity;
+
+    /** Telefon za dostavu. */
+    @Pattern(regexp = "^$|^[+]?[0-9\\-\\s]{6,20}$",
+             message = "Telefon za dostavu nije validan")
+    private String deliveryPhone;
+
     /**
      * Opcioni gift vaučer kod koji korisnik unosi u koraku 7.
      * Admin vidi kod i ručno primenjuje popust pri potvrdi rezervacije.
@@ -127,6 +145,9 @@ public class BookingRequest {
         if (email             != null) email             = email.trim().toLowerCase();
         if (phone             != null) phone             = phone.trim();
         if (notes             != null) notes             = notes.trim();
+        if (deliveryAddress   != null) deliveryAddress   = deliveryAddress.trim();
+        if (deliveryCity      != null) deliveryCity      = deliveryCity.trim();
+        if (deliveryPhone     != null) deliveryPhone     = deliveryPhone.trim();
         if (passengers != null) passengers.forEach(p -> {
             if (p.getName()    != null) p.setName(p.getName().trim());
             if (p.getGender()  != null) p.setGender(p.getGender().trim().toUpperCase());

@@ -38,3 +38,9 @@ build/
 application-local.properties
 application-local.yml
 application-dev.properties
+
+### Alati / tooling (ne trebaju backendu) ###
+node_modules/
+package.json
+package-lock.json
+.claude/

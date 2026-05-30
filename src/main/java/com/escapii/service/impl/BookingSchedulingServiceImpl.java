@@ -278,6 +278,11 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
         for (Booking booking : readyList) {
             try {
+                // Ako korisnik ima Reveal Box — preskačemo auto email reveal
+                if (Boolean.TRUE.equals(booking.getHasRevealBox())) {
+                    continue;
+                }
+
                 if (booking.getRevealToken() == null) {
                     booking.setRevealToken(TokenUtils.generate());
                 }

@@ -41,6 +41,7 @@ public interface AdminService {
     AdminBookingResponse setWeatherCity(Long id, String weatherCity);
     AdminBookingResponse setAirlineName(Long id, String name);
     AdminBookingResponse setAirlineBookingCode(Long id, String code);
+    AdminBookingResponse markRevealBoxSent(Long id);
 
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();

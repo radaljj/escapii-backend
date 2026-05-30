@@ -308,4 +308,14 @@ public class AdminController {
         return ResponseEntity.ok(dailyTaskScheduler.sendForecastForBooking(id));
     }
 
+    /**
+     * POST /api/admin/bookings/{id}/reveal-box-sent
+     * Označava da je Reveal Box fizički poslan korisniku.
+     * Nakon ovoga auto-reveal email se neće poslati.
+     */
+    @PostMapping("/bookings/{id}/reveal-box-sent")
+    public ResponseEntity<AdminBookingResponse> markRevealBoxSent(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.markRevealBoxSent(id));
+    }
+
 }

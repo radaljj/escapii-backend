@@ -86,17 +86,18 @@ public class DailyTaskScheduler {
     private void sendDigest() {
         LocalDate today = LocalDate.now();
 
-        // Bookings whose reveal was sent today
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay   = today.plusDays(1).atStartOfDay();
-        List<Booking> revealSent   = bookingRepository.findRevealSentBetween(startOfDay, endOfDay);
-        List<Booking> forecastSent = bookingRepository.findForecastSentBetween(startOfDay, endOfDay);
-        List<Booking> upcoming     = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
+        List<Booking> revealSent        = bookingRepository.findRevealSentBetween(startOfDay, endOfDay);
+        List<Booking> forecastSent      = bookingRepository.findForecastSentBetween(startOfDay, endOfDay);
+        List<Booking> upcoming          = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
+        // Reveal Box podsjetnik — polazak od danas do +5 dana
+        List<Booking> revealBoxPending  = bookingRepository.findPendingRevealBoxes(today, today.plusDays(5));
 
-        if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty()) {
-            digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming);
-            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}",
-                    revealSent.size(), forecastSent.size(), upcoming.size());
+        if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty() || !revealBoxPending.isEmpty()) {
+            digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming, revealBoxPending);
+            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}",
+                    revealSent.size(), forecastSent.size(), upcoming.size(), revealBoxPending.size());
         } else {
             log.info("[Scheduler] Nema aktivnih rezervacija — digest nije poslan.");
         }

@@ -70,4 +70,11 @@ public class AdminBookingResponse {
     // Vaučer
     private String  appliedVoucherCode;
     private Integer voucherDiscount;
+
+    // Reveal Box
+    private Boolean hasRevealBox;
+    private String  deliveryAddress;
+    private String  deliveryCity;
+    private String  deliveryPhone;
+    private Boolean revealBoxSent;
 }

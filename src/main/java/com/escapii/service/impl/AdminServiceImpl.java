@@ -415,6 +415,22 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public AdminBookingResponse markRevealBoxSent(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + id));
+        if (!Boolean.TRUE.equals(booking.getHasRevealBox())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Ova rezervacija nema Reveal Box.");
+        }
+        booking.setRevealBoxSent(true);
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Reveal Box označen kao poslan za {}", saved.getBookingRef());
+        return adminBookingMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public AdminBookingResponse setWeatherCity(Long id, String weatherCity) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

@@ -112,7 +112,8 @@ public class BookingServiceImpl implements BookingService {
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),
-                request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether()
+                request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether(),
+                request.isHasRevealBox()
         );
 
         Booking booking = buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price);
@@ -172,7 +173,7 @@ public class BookingServiceImpl implements BookingService {
         // accommodationType can be null for preview (default = STANDARD)
         AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
         return priceCalculator.calculate(date, n, accomType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether);
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false);
     }
 
     @Override
@@ -252,6 +253,14 @@ public class BookingServiceImpl implements BookingService {
         b.setHasBreakfast(request.isHasBreakfast());
         b.setHasSeatsTogether(request.isHasSeatsTogether());
         b.setHasConnectingFlights(request.isHasConnectingFlights());
+
+        // Reveal Box
+        b.setHasRevealBox(request.isHasRevealBox());
+        if (request.isHasRevealBox()) {
+            b.setDeliveryAddress(request.getDeliveryAddress());
+            b.setDeliveryCity(request.getDeliveryCity());
+            b.setDeliveryPhone(request.getDeliveryPhone());
+        }
 
         b.setPassengers(request.getPassengers().stream()
                 .map(p -> new com.escapii.model.PassengerInfo(

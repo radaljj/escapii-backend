@@ -27,6 +27,7 @@ public interface PriceCalculator {
             int cabinSuitcaseCount,
             boolean hasInsurance,
             boolean hasBreakfast,
-            boolean hasSeatsTogether
+            boolean hasSeatsTogether,
+            boolean hasRevealBox
     );
 }

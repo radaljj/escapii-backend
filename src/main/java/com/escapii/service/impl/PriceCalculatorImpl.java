@@ -32,9 +32,13 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public static final Integer SEATS_PP         = 24;   // 12€/smer × 2 smera, po osobi
     private static final Integer EXCLUSION_PP    = 15;   // po osobi, za 2., 3. i 4. isključivanje
     public static final Integer SOLO_SURCHARGE   = 60;   // doplata za solo putnika
+    public static final Integer REVEAL_BOX_FLAT  = 25;   // flat po rezervaciji
 
     @Override
-    public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType, int exclusionCount, int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether) {
+    public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType,
+                                          int exclusionCount, int cabinSuitcaseCount,
+                                          boolean hasInsurance, boolean hasBreakfast,
+                                          boolean hasSeatsTogether, boolean hasRevealBox) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
         int breakfast = hasBreakfast ? BREAKFAST_PP * date.getNumberOfNights() : 0;
@@ -45,9 +49,10 @@ public class PriceCalculatorImpl implements PriceCalculator {
         int exclusionCostFlat = calcExclusionCost(exclusionCount, n);
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
+        int revealBoxTotal = hasRevealBox ? REVEAL_BOX_FLAT : 0;
 
         int eurPerPerson = basePrice + accommodationExtra + breakfast + seatsTogether + insurance;
-        int totalEurAll = eurPerPerson * n + cabinSuitcaseTotal + exclusionCostFlat + soloSurcharge;
+        int totalEurAll = eurPerPerson * n + cabinSuitcaseTotal + exclusionCostFlat + soloSurcharge + revealBoxTotal;
 
         return PricePreviewResponse.builder()
             .basePricePerPerson(basePrice)
@@ -60,6 +65,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
             .soloSurcharge(soloSurcharge)
             .cabinSuitcaseCount(cabinSuitcaseCount)
             .cabinSuitcaseTotal(cabinSuitcaseTotal)
+            .revealBoxTotal(revealBoxTotal)
             .totalEurAll(totalEurAll)
             .exclusionCount(exclusionCount)
             .numberOfTravelers(n)

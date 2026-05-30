@@ -201,6 +201,31 @@ public class Booking {
     @Column(name = "forecast_sent_at")
     private LocalDateTime forecastSentAt;
 
+    // ── Reveal Box ────────────────────────────────────────────────────
+
+    /** Korisnik je odabrao fizički Reveal Box (25€ flat). */
+    @Column(name = "has_reveal_box", nullable = false)
+    private Boolean hasRevealBox = false;
+
+    /** Adresa dostave za Reveal Box. */
+    @Column(name = "delivery_address", length = 300)
+    private String deliveryAddress;
+
+    /** Grad dostave za Reveal Box. */
+    @Column(name = "delivery_city", length = 100)
+    private String deliveryCity;
+
+    /** Telefon za dostavu Reveal Box-a. */
+    @Column(name = "delivery_phone", length = 50)
+    private String deliveryPhone;
+
+    /**
+     * Admin označi da je Reveal Box fizički poslan korisniku.
+     * Ako je true → auto-reveal email se NE šalje (korisnik otvara kutiju).
+     */
+    @Column(name = "reveal_box_sent", nullable = false)
+    private Boolean revealBoxSent = false;
+
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();
