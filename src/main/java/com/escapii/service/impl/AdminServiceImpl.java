@@ -30,6 +30,8 @@ import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +73,10 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "destinations", allEntries = true),
+        @CacheEvict(value = "active-destinations", allEntries = true)
+    })
     @Transactional
     public void toggleDestinationActive(Long id, boolean active) {
         Destination dest = destinationRepository.findById(id)
@@ -94,6 +100,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public AdminDateResponse addDate(AdminDateRequest req) {
         if (!req.getReturnDate().isAfter(req.getDepartureDate())) {
@@ -149,6 +156,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public void toggleActive(Long id, boolean active) {
         AvailableDate date = findDateOrThrow(id);
@@ -160,6 +168,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public void updateSlots(Long id, int slots) {
         if (slots < 0) {
@@ -174,6 +183,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public void deleteDate(Long id) {
         AvailableDate date = findDateOrThrow(id);

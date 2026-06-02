@@ -5,6 +5,7 @@ import com.escapii.model.Destination;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.service.DestinationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -239,11 +240,13 @@ public class DestinationServiceImpl implements DestinationService {
     );
 
     @Override
+    @Cacheable("destinations")
     public List<Destination> getAllDestinations() {
         return destinationRepository.findAllByOrderByNameAsc();
     }
 
     @Override
+    @Cacheable(value = "active-destinations", key = "#airport ?: 'all'")
     public List<Destination> getActiveDestinations(String airport) {
         if (airport != null && !airport.isBlank()) {
             return destinationRepository.findByDepartureAirportAndActiveTrueOrderByNameAsc(airport.trim().toUpperCase());
@@ -252,6 +255,7 @@ public class DestinationServiceImpl implements DestinationService {
     }
 
     @Override
+    @Cacheable("countries")
     public List<CountryDto> fetchCountries() {
         return PASSPORTS;
     }
