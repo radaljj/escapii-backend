@@ -7,6 +7,7 @@ import com.escapii.dto.GiftVoucherValidateRequest;
 import com.escapii.dto.GiftVoucherValidateResponse;
 import com.escapii.model.GiftVoucher;
 import com.escapii.model.VoucherStatus;
+import com.escapii.repository.BookingRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.GiftVoucherService;
 import com.escapii.service.email.GiftVoucherEmailService;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,6 +32,7 @@ import java.util.List;
 public class GiftVoucherServiceImpl implements GiftVoucherService {
 
     private final GiftVoucherRepository voucherRepository;
+    private final BookingRepository bookingRepository;
     private final GiftVoucherEmailService emailService;
     private final VoucherPdfService voucherPdfService;
 
@@ -81,8 +84,9 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                         voucherRepository.save(v);
                         return GiftVoucherValidateResponse.invalid();
                     }
-                    log.info("[GiftVoucher] Validacija uspešna za kod={}, amount={}", maskCode(code), v.getAmount());
-                    return GiftVoucherValidateResponse.ok(v.getAmount());
+                    BigDecimal remaining = v.getAmount().subtract(v.getUsedAmount());
+                    log.info("[GiftVoucher] Validacija uspešna za kod={}, remaining={}", maskCode(code), remaining);
+                    return GiftVoucherValidateResponse.ok(remaining);
                 })
                 .orElseGet(() -> {
                     log.info("[GiftVoucher] Validacija neuspešna (not found) za kod={}", maskCode(code));
@@ -168,12 +172,37 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Vaučer id=" + id + " nije u ACTIVE/RESERVED statusu (trenutno: " + v.getStatus() + ")");
         }
-        v.setStatus(VoucherStatus.USED);
-        v.setUsedAt(LocalDateTime.now());
+
+        // Pročitaj koliki popust je primenjen na ovaj booking
+        BigDecimal applied = BigDecimal.ZERO;
+        if (bookingRef != null) {
+            applied = bookingRepository.findById(bookingRef)
+                    .map(b -> b.getVoucherDiscount() != null
+                            ? BigDecimal.valueOf(b.getVoucherDiscount())
+                            : BigDecimal.ZERO)
+                    .orElse(BigDecimal.ZERO);
+        }
+
+        // Akumuliraj ukupno potrošen iznos
+        BigDecimal newUsedAmount = v.getUsedAmount().add(applied);
+        v.setUsedAmount(newUsedAmount);
         v.setUsedInBookingRef(bookingRef);
-        GiftVoucher saved = voucherRepository.save(v);
-        log.info("[GiftVoucher] Vaučer id={} iskorišćen u booking ref={}", id, bookingRef);
-        return new GiftVoucherResponse(saved);
+
+        // Vaučer postaje USED tek kad je u potpunosti potrošen
+        if (newUsedAmount.compareTo(v.getAmount()) >= 0) {
+            v.setStatus(VoucherStatus.USED);
+            v.setUsedAt(LocalDateTime.now());
+            log.info("[GiftVoucher] Vaučer id={} u potpunosti iskorišćen ({}€ od {}€) u booking ref={}",
+                    id, newUsedAmount, v.getAmount(), bookingRef);
+        } else {
+            // Delimično iskorišćen — ostaje ACTIVE sa preostalim saldom
+            v.setStatus(VoucherStatus.ACTIVE);
+            BigDecimal remaining = v.getAmount().subtract(newUsedAmount);
+            log.info("[GiftVoucher] Vaučer id={} delimično iskorišćen ({}€ u booking ref={}), preostaje {}€",
+                    id, applied, bookingRef, remaining);
+        }
+
+        return new GiftVoucherResponse(voucherRepository.save(v));
     }
 
     @Override
@@ -235,7 +264,9 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                 v.getGiftMessage(), v.getCreatedAt(),
                 v.getActivatedAt(), v.getExpiresAt(),
                 v.getUsedAt(), v.getUsedInBookingRef(),
-                null // KOD SE NE VRAĆA JAVNO
+                null, // KOD SE NE VRAĆA JAVNO
+                v.getUsedAmount(),
+                v.getAmount().subtract(v.getUsedAmount())
         );
     }
 }

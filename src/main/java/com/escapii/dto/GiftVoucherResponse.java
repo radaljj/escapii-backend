@@ -23,7 +23,11 @@ public record GiftVoucherResponse(
         LocalDateTime usedAt,
         Long usedInBookingRef,
         // Kod se uključuje samo za admin pregled
-        String code
+        String code,
+        // Koliko je ukupno potrošeno (za prikaz u admin panelu)
+        BigDecimal usedAmount,
+        // Preostali saldo = amount - usedAmount
+        BigDecimal remainingAmount
 ) {
     public GiftVoucherResponse(GiftVoucher v) {
         this(
@@ -38,7 +42,9 @@ public record GiftVoucherResponse(
                 v.getExpiresAt(),
                 v.getUsedAt(),
                 v.getUsedInBookingRef(),
-                v.getCode()
+                v.getCode(),
+                v.getUsedAmount(),
+                v.getAmount().subtract(v.getUsedAmount())
         );
     }
 }

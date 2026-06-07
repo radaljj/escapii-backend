@@ -79,7 +79,17 @@ public class GiftVoucher {
     /**
      * Referenca na booking u kome je vaučer primenjen.
      * Null = nije primenjen, ili booking se prati ručno.
+     * Kod delimičnog korišćenja — čuva se poslednji booking koji ga je koristio.
      */
     @Column
     private Long usedInBookingRef;
+
+    /**
+     * Ukupan iznos vaučera koji je do sada zaista primenjen u završenim rezervacijama.
+     * Preostali saldo = amount - usedAmount.
+     * Povećava se samo u markUsed() kada rezervacija postane COMPLETED.
+     * Vaučer ostaje ACTIVE dok usedAmount < amount.
+     */
+    @Column(name = "used_amount", nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal usedAmount = java.math.BigDecimal.ZERO;
 }

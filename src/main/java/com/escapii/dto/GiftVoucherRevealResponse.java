@@ -18,9 +18,11 @@ public record GiftVoucherRevealResponse(
         String message
 ) {
     public static GiftVoucherRevealResponse ok(GiftVoucher v) {
+        // Prikazujemo preostali saldo (amount - usedAmount) jer vaučer može biti delimično iskorišćen
+        java.math.BigDecimal remaining = v.getAmount().subtract(v.getUsedAmount());
         return new GiftVoucherRevealResponse(
                 true,
-                v.getAmount(),
+                remaining,
                 v.getBuyerName(),
                 v.getGiftMessage(),
                 v.getActivatedAt(),
