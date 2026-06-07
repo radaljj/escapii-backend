@@ -146,13 +146,15 @@ public class BookingServiceImpl implements BookingService {
             if (voucher != null
                     && voucher.getStatus() == VoucherStatus.ACTIVE
                     && (voucher.getExpiresAt() == null || voucher.getExpiresAt().isAfter(java.time.LocalDateTime.now()))) {
-                int discount = voucher.getAmount().intValue();
+                // Preostali iznos vaučera (može biti manji od originalnog ako je delom iskorišćen)
+                java.math.BigDecimal remaining = voucher.getAmount().subtract(voucher.getUsedAmount());
+                int discount = Math.min(remaining.intValue(), booking.getTotalPriceAll());
                 booking.setAppliedVoucherCode(code);
                 booking.setVoucherDiscount(discount);
                 booking.setTotalPriceAll(Math.max(0, booking.getTotalPriceAll() - discount));
                 appliedVoucher = voucher;
-                log.info("[Booking] Primenjen vaučer {} ({}€) — nova ukupna cena: {}€",
-                        code, discount, booking.getTotalPriceAll());
+                log.info("[Booking] Primenjen vaučer {} (preostalo {}€, popust {}€) — nova ukupna cena: {}€",
+                        code, remaining, discount, booking.getTotalPriceAll());
             } else {
                 log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan — ignorisan", code);
             }
@@ -160,14 +162,25 @@ public class BookingServiceImpl implements BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Označi vaučer kao RESERVED — blokiran za dalje korišćenje,
-        // ali prelazi u USED tek kad rezervacija postane CONFIRMED
+        // Ažuriraj vaučer: usedAmount se povećava odmah za primenjeni popust.
+        // Ako je vaučer u potpunosti potrošen → RESERVED (čeka potvrdu).
+        // Ako preostaje iznos → ostaje ACTIVE (može se koristiti za druge rezervacije).
         if (appliedVoucher != null) {
-            appliedVoucher.setStatus(VoucherStatus.RESERVED);
+            java.math.BigDecimal newUsed = appliedVoucher.getUsedAmount()
+                    .add(java.math.BigDecimal.valueOf(saved.getVoucherDiscount()));
+            appliedVoucher.setUsedAmount(newUsed);
             appliedVoucher.setUsedInBookingRef(saved.getId());
-            // usedAt ostaje null dok rezervacija nije CONFIRMED
+            if (newUsed.compareTo(appliedVoucher.getAmount()) >= 0) {
+                appliedVoucher.setStatus(VoucherStatus.RESERVED); // u potpunosti potrošen, čeka potvrdu
+                log.info("[Voucher] {} → RESERVED ({}€ potrošeno od {}€) za booking {}",
+                        appliedVoucher.getCode(), newUsed, appliedVoucher.getAmount(), saved.getBookingRef());
+            } else {
+                // Delimično potrošen — ostaje ACTIVE sa preostalim iznosom
+                java.math.BigDecimal preostalo = appliedVoucher.getAmount().subtract(newUsed);
+                log.info("[Voucher] {} ostaje ACTIVE ({}€ potrošeno, preostaje {}€) za booking {}",
+                        appliedVoucher.getCode(), newUsed, preostalo, saved.getBookingRef());
+            }
             giftVoucherRepository.save(appliedVoucher);
-            log.info("[Voucher] {} → RESERVED za booking {}", appliedVoucher.getCode(), saved.getBookingRef());
         }
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",

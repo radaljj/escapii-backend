@@ -743,15 +743,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 && booking.getVoucherDiscount() != null
                 && booking.getVoucherDiscount() > 0;
 
-        // Ako ima vaučer, prikazujemo međuzbir pre popusta
+        // Vaučer red — samo popust, bez "Cena pre popusta"
         String subtotalHtml = "";
         if (hasVoucher) {
-            int subtotal = booking.getTotalPriceAll() + booking.getVoucherDiscount();
             subtotalHtml = """
-                <tr>
-                  <td colspan="3" style="padding:10px 16px;font-size:12px;color:#a89888;border-bottom:1px solid #ebe1cf;text-align:right;font-style:italic;">Cena pre popusta</td>
-                  <td style="padding:10px 16px;text-align:right;font-size:13px;color:#a89888;border-bottom:1px solid #ebe1cf;text-decoration:line-through;">%s</td>
-                </tr>
                 <tr>
                   <td colspan="3" style="padding:10px 16px;font-size:13px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">
                     🎟 Poklon vaučer <span style="font-family:'Courier New',monospace;font-size:12px;background:#eef6f0;padding:2px 8px;border-radius:4px;color:#1d6042;letter-spacing:0.05em;">%s</span>
@@ -759,7 +754,6 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                   <td style="padding:10px 16px;text-align:right;font-size:14px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">− %s</td>
                 </tr>
                 """.formatted(
-                    EmailHtmlBuilder.eur(subtotal),
                     EmailHtmlBuilder.esc(booking.getAppliedVoucherCode()),
                     EmailHtmlBuilder.eur(booking.getVoucherDiscount()));
         }

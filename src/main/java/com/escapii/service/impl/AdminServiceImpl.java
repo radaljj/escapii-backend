@@ -254,18 +254,28 @@ public class AdminServiceImpl implements AdminService {
         }
 
         // Oslobodi vaučer ako je booking bio vezan za njega.
-        // Vaučer se oslobađa samo ako je RESERVED (booking bio aktivan, nije završen) —
-        // USED vaučer se NE oslobađa jer to znači da je putovanje završeno pre brisanja.
-        // Provera i po appliedVoucherCode i po usedInBookingRef da pokrijemo sve edge caseove.
+        // Reversujemo usedAmount za iznos koji je bio primenjen u ovom bookingu.
+        // RESERVED → ACTIVE (u potpunosti oslobađamo reserve).
+        // ACTIVE sa usedAmount > 0 → smanjujemo usedAmount (delimično oslobađamo).
+        // USED vaučer se NE menja — putovanje je završeno pre brisanja.
         String voucherCode = booking.getAppliedVoucherCode();
         if (voucherCode != null) {
             giftVoucherRepository.findByCode(voucherCode).ifPresent(v -> {
-                if (v.getStatus() == VoucherStatus.RESERVED) {
-                    v.setStatus(VoucherStatus.ACTIVE);
-                    v.setUsedAt(null);
-                    v.setUsedInBookingRef(null);
+                if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
+                    Integer disc = booking.getVoucherDiscount();
+                    if (disc != null && disc > 0) {
+                        java.math.BigDecimal reversed = v.getUsedAmount()
+                                .subtract(java.math.BigDecimal.valueOf(disc));
+                        v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
+                                ? java.math.BigDecimal.ZERO : reversed);
+                    }
+                    if (v.getStatus() == VoucherStatus.RESERVED) {
+                        v.setStatus(VoucherStatus.ACTIVE);
+                        v.setUsedAt(null);
+                    }
                     giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → ACTIVE (booking {} obrisan, bio RESERVED)", v.getCode(), booking.getBookingRef());
+                    log.info("[Voucher] {} → usedAmount reversovano za {}€ (booking {} obrisan), novo usedAmount={}€",
+                            v.getCode(), booking.getVoucherDiscount(), booking.getBookingRef(), v.getUsedAmount());
                 }
                 // USED vaučer ostaje USED — putovanje je završeno, vaučer je trajno iskorišćen
             });
@@ -299,25 +309,39 @@ public class AdminServiceImpl implements AdminService {
         updateAvailableSlotsForSelectedDate(id, numberOfTravelers, bookingStatus, oldStatus);
 
         // ── Vaučer lifecycle ──────────────────────────────────────────────────
-        // CONFIRMED / PENDING  : vaučer ostaje RESERVED (putovanje još nije završeno)
-        // → COMPLETED          : vaučer trajno USED (putovanje završeno)
-        // → CANCELLED          : vaučer oslobođen → ACTIVE (bez obzira na prethodni status)
+        // usedAmount se upisuje odmah pri kreiranju rezervacije.
+        // COMPLETED : ako je vaučer u potpunosti potrošen (RESERVED) → postaje USED.
+        //             ako je delimično potrošen (ACTIVE) → ostaje ACTIVE, nema promene.
+        // CANCELLED : reversujemo usedAmount za ovaj booking; vaučer → ACTIVE.
+        // PENDING / CONFIRMED — nema promene.
         if (saved.getAppliedVoucherCode() != null) {
             giftVoucherRepository.findByCode(saved.getAppliedVoucherCode()).ifPresent(v -> {
-                if (status == BookingStatus.COMPLETED && v.getStatus() == VoucherStatus.RESERVED) {
-                    v.setStatus(VoucherStatus.USED);
-                    v.setUsedAt(LocalDateTime.now());
-                    giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → USED (booking {} COMPLETED)", v.getCode(), saved.getBookingRef());
-                } else if (status == BookingStatus.CANCELLED
-                        && (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.USED)) {
+                if (status == BookingStatus.COMPLETED) {
+                    if (v.getStatus() == VoucherStatus.RESERVED) {
+                        // Vaučer je bio u potpunosti potrošen — finalizuj kao USED
+                        v.setStatus(VoucherStatus.USED);
+                        v.setUsedAt(LocalDateTime.now());
+                        giftVoucherRepository.save(v);
+                        log.info("[Voucher] {} → USED (booking {} COMPLETED, {}€ od {}€ potrošeno)",
+                                v.getCode(), saved.getBookingRef(), v.getUsedAmount(), v.getAmount());
+                    }
+                    // Delimično potrošen (ACTIVE) — ostaje ACTIVE, usedAmount je već tačan
+                } else if (status == BookingStatus.CANCELLED) {
+                    // Reversiraj usedAmount za ovaj booking
+                    Integer disc = saved.getVoucherDiscount();
+                    if (disc != null && disc > 0) {
+                        java.math.BigDecimal reversed = v.getUsedAmount()
+                                .subtract(java.math.BigDecimal.valueOf(disc));
+                        v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
+                                ? java.math.BigDecimal.ZERO : reversed);
+                    }
                     v.setStatus(VoucherStatus.ACTIVE);
                     v.setUsedAt(null);
-                    v.setUsedInBookingRef(null);
                     giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → ACTIVE (booking {} CANCELLED)", v.getCode(), saved.getBookingRef());
+                    log.info("[Voucher] {} → ACTIVE (booking {} CANCELLED, reversovano {}€, novo usedAmount={}€)",
+                            v.getCode(), saved.getBookingRef(), saved.getVoucherDiscount(), v.getUsedAmount());
                 }
-                // PENDING / CONFIRMED — vaučer ostaje RESERVED, nema promene
+                // PENDING / CONFIRMED — nema promene
             });
         }
 
