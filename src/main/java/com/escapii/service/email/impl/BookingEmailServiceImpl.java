@@ -748,11 +748,12 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (hasVoucher) {
             subtotalHtml = """
                 <tr>
-                  <td colspan="3" style="padding:10px 16px;font-size:13px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">
+                  <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#1d6042;">
                     🎟 Poklon vaučer <span style="font-family:'Courier New',monospace;font-size:12px;background:#eef6f0;padding:2px 8px;border-radius:4px;color:#1d6042;letter-spacing:0.05em;">%s</span>
                   </td>
-                  <td style="padding:10px 16px;text-align:right;font-size:14px;font-weight:700;color:#1d6042;border-bottom:1px solid #ebe1cf;">− %s</td>
+                  <td style="padding:10px 16px;text-align:right;font-size:14px;font-weight:700;color:#1d6042;">− %s</td>
                 </tr>
+                <tr><td colspan="2" style="padding:0;height:1px;background:#ebe1cf;font-size:0;line-height:0;mso-line-height-rule:exactly;"></td></tr>
                 """.formatted(
                     EmailHtmlBuilder.esc(booking.getAppliedVoucherCode()),
                     EmailHtmlBuilder.eur(booking.getVoucherDiscount()));
@@ -767,15 +768,14 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 <td width="100%%" style="padding-top:12px;">
                   <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;">
                     <tr bgcolor="#f5efe2" style="background:#f5efe2;">
-                      <td width="48%%" style="width:48%%;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Stavka</td>
-                      <td width="19%%" style="width:19%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Po osobi</td>
-                      <td width="14%%" style="width:14%%;padding:10px 16px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Kom</td>
-                      <td width="19%%" style="width:19%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;border-bottom:1px solid #ebe1cf;">Ukupno</td>
+                      <td width="78%%" style="width:78%%;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Stavka</td>
+                      <td width="22%%" style="width:22%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Ukupno</td>
                     </tr>
+                    <tr><td colspan="2" style="padding:0;height:1px;background:#ebe1cf;font-size:0;line-height:0;mso-line-height-rule:exactly;"></td></tr>
                     %s
                     %s
                     <tr bgcolor="#1a1410" style="background:#1a1410;">
-                      <td colspan="3" style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
+                      <td style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
                       <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#e29070;">%s</td>
                     </tr>
                   </table>
@@ -786,18 +786,13 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     private String priceRow(String label, String perPerson, Integer count, int total, boolean flat) {
-        String ppCell    = flat ? "<td width='19%%' style='width:19%%;padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;'>—</td>" :
-                                  "<td width='19%%' style='width:19%%;padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;'>" + perPerson + "</td>";
-        String countCell = flat ? "<td width='14%%' style='width:14%%;padding:11px 16px;text-align:center;color:#d1d5db;border-bottom:1px solid #ebe1cf;'>—</td>" :
-                                  "<td width='14%%' style='width:14%%;padding:11px 16px;text-align:center;font-size:13px;color:#6b5d4f;border-bottom:1px solid #ebe1cf;'>" + count + "</td>";
         return """
             <tr>
-              <td width="48%%" style="width:48%%;padding:11px 16px;font-size:14px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
-              %s
-              %s
-              <td width="19%%" style="width:19%%;padding:11px 16px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+              <td width="78%%" style="width:78%%;padding:11px 16px;font-size:14px;color:#1a1410;">%s</td>
+              <td width="22%%" style="width:22%%;padding:11px 16px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;">%s</td>
             </tr>
-            """.formatted(label, ppCell, countCell, EmailHtmlBuilder.eur(total));
+            <tr><td colspan="2" style="padding:0;height:1px;background:#ebe1cf;font-size:0;line-height:0;mso-line-height-rule:exactly;"></td></tr>
+            """.formatted(label, EmailHtmlBuilder.eur(total));
     }
 
     private String buildNotesBox(String notes) {
