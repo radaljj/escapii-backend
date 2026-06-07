@@ -24,6 +24,7 @@ public interface AdminService {
     AdminDateResponse updateDestinations(Long id, List<Long> destinationIds);
     void toggleActive(Long id, boolean active);
     void updateSlots(Long id, int slots);
+    void updatePrice(Long id, int price);
     void deleteDate(Long id);
 
     /**

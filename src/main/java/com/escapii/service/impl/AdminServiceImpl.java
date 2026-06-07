@@ -185,6 +185,21 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
+    public void updatePrice(Long id, int price) {
+        if (price < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cena mora biti pozitivna");
+        }
+        AvailableDate date = findDateOrThrow(id);
+        int oldPrice = date.getBasePrice();
+        date.setBasePrice(price);
+        availableDateRepository.save(date);
+        log.info("[ADMIN] Termin id={} | cena: {}€ → {}€", id, oldPrice, price);
+    }
+
+    @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
+    @Transactional
     public void deleteDate(Long id) {
         AvailableDate date = findDateOrThrow(id);
 

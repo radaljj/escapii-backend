@@ -108,6 +108,22 @@ public class AdminController {
         ));
     }
 
+    /** PATCH /api/admin/dates/{id}/price?value=299 — izmeni osnovnu cenu termina. */
+    @PatchMapping("/dates/{id}/price")
+    public ResponseEntity<Map<String, Object>> updatePrice(
+            @PathVariable Long id,
+            @RequestParam int value) {
+        if (value < 1 || value > 9999) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cena mora biti između 1 i 9999€."));
+        }
+        adminService.updatePrice(id, value);
+        return ResponseEntity.ok(Map.of(
+                "id", id,
+                "basePrice", value,
+                "message", "Cena ažurirana na " + value + "€"
+        ));
+    }
+
     /** DELETE /api/admin/dates/{id} — trajno obriši termin. */
     @DeleteMapping("/dates/{id}")
     public ResponseEntity<Map<String, String>> deleteDate(@PathVariable Long id) {
