@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,15 @@ public class GlobalExceptionHandler {
     @Autowired
     @Lazy
     private AppErrorService appErrorService;
+
+    /** 404 - nepostojeći endpoint (uglavnom bot skenovi). Nema email alerta. */
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(NoHandlerFoundException ex, HttpServletRequest request) {
+        log.warn("[API] 404 - {}", request.getMethod() + " " + request.getRequestURI());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Endpoint ne postoji"));
+    }
 
     /** Pogrešan HTTP metod (npr. GET na /api/booking). */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
