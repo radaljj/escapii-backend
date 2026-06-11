@@ -44,3 +44,4 @@ node_modules/
 package.json
 package-lock.json
 .claude/
+PROJECT_CONTEXT.md
