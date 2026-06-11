@@ -48,25 +48,25 @@ public class BookingServiceImpl implements BookingService {
 
         // ── Anti-bot provjere ─────────────────────────────────────────
 
-        // 0a. Honeypot — mora biti null ili prazan
+        // 0a. Honeypot - mora biti null ili prazan
         if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
-            log.warn("[AntiBot] Honeypot popunjen — odbijen zahtev (website='{}')", request.getWebsite());
+            log.warn("[AntiBot] Honeypot popunjen - odbijen zahtev (website='{}')", request.getWebsite());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevažeći zahtev");
         }
 
-        // 0b. Timing — forma popunjena za manje od 4 sekunde = bot
+        // 0b. Timing - forma popunjena za manje od 4 sekunde = bot
         if (request.getFormDuration() != null && request.getFormDuration() < 4) {
-            log.warn("[AntiBot] Forma popunjena za {}s — odbijen zahtev", request.getFormDuration());
+            log.warn("[AntiBot] Forma popunjena za {}s - odbijen zahtev", request.getFormDuration());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevažeći zahtev");
         }
 
-        // 0c. Reveal Box — dostava obavezna ako je odabran (sprečava bots koji šalju hasRevealBox=true sa praznim poljima)
+        // 0c. Reveal Box - dostava obavezna ako je odabran (sprečava bots koji šalju hasRevealBox=true sa praznim poljima)
         if (request.isHasRevealBox()) {
             boolean addrMissing  = request.getDeliveryAddress() == null || request.getDeliveryAddress().isBlank();
             boolean cityMissing  = request.getDeliveryCity()    == null || request.getDeliveryCity().isBlank();
             boolean phoneMissing = request.getDeliveryPhone()   == null || request.getDeliveryPhone().isBlank();
             if (addrMissing || cityMissing || phoneMissing) {
-                log.warn("[Validation] Reveal Box odabran ali adresa nije kompletna — addr={}, city={}, phone={}",
+                log.warn("[Validation] Reveal Box odabran ali adresa nije kompletna - addr={}, city={}, phone={}",
                         !addrMissing, !cityMissing, !phoneMissing);
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Adresa dostave je obavezna kada je Reveal Box odabran.");
@@ -80,12 +80,12 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // 0d. Duplikat — isti email + isti termin u poslednjih 24h
+        // 0d. Duplikat - isti email + isti termin u poslednjih 24h
         if (bookingRepository.existsDuplicateBooking(
                 request.getEmail(),
                 request.getSelectedDateId(),
                 java.time.LocalDateTime.now().minusHours(24))) {
-            log.warn("[AntiBot] Duplikat booking — email='{}' dateId={}", request.getEmail(), request.getSelectedDateId());
+            log.warn("[AntiBot] Duplikat booking - email='{}' dateId={}", request.getEmail(), request.getSelectedDateId());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Već imate aktivnu rezervaciju za ovaj termin sa ovom email adresom.");
         }
@@ -153,10 +153,10 @@ public class BookingServiceImpl implements BookingService {
                 booking.setVoucherDiscount(discount);
                 booking.setTotalPriceAll(Math.max(0, booking.getTotalPriceAll() - discount));
                 appliedVoucher = voucher;
-                log.info("[Booking] Primenjen vaučer {} (preostalo {}€, popust {}€) — nova ukupna cena: {}€",
+                log.info("[Booking] Primenjen vaučer {} (preostalo {}€, popust {}€) - nova ukupna cena: {}€",
                         code, remaining, discount, booking.getTotalPriceAll());
             } else {
-                log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan — ignorisan", code);
+                log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan - ignorisan", code);
             }
         }
 
@@ -175,7 +175,7 @@ public class BookingServiceImpl implements BookingService {
                 log.info("[Voucher] {} → RESERVED ({}€ potrošeno od {}€) za booking {}",
                         appliedVoucher.getCode(), newUsed, appliedVoucher.getAmount(), saved.getBookingRef());
             } else {
-                // Delimično potrošen — ostaje ACTIVE sa preostalim iznosom
+                // Delimično potrošen - ostaje ACTIVE sa preostalim iznosom
                 java.math.BigDecimal preostalo = appliedVoucher.getAmount().subtract(newUsed);
                 log.info("[Voucher] {} ostaje ACTIVE ({}€ potrošeno, preostaje {}€) za booking {}",
                         appliedVoucher.getCode(), newUsed, preostalo, saved.getBookingRef());
@@ -310,7 +310,7 @@ public class BookingServiceImpl implements BookingService {
         b.setLastName(request.getLastName());
         b.setEmail(request.getEmail());
         b.setPhone(request.getPhone());
-        // Ako je korisnik uneo vaučer kod, dodaj ga uz napomenu — admin primenjuje popust ručno
+        // Ako je korisnik uneo vaučer kod, dodaj ga uz napomenu - admin primenjuje popust ručno
         String notes = request.getNotes();
         if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
             String voucherNote = "[VAUČER: " + request.getVoucherCode().trim().toUpperCase() + "]";

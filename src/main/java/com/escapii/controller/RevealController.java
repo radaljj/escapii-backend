@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Javni endpoint za otkrivanje destinacije.
- * NIJE zaštićen admin ključem — dostupan svima sa validnim tokenom.
+ * NIJE zaštićen admin ključem - dostupan svima sa validnim tokenom.
  */
 @Slf4j
 @RestController
@@ -29,7 +29,7 @@ public class RevealController {
      *  3. assignedDestination nije null/prazan
      *  4. Datum polaska nije prošao (link važi do dana polaska)
      *
-     * Vraća samo destinaciju i ime putnika — ništa osjetljivo.
+     * Vraća samo destinaciju i ime putnika - ništa osjetljivo.
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> reveal(@RequestParam String token) {
@@ -39,7 +39,7 @@ public class RevealController {
     /**
      * POST /api/reveal/confirm?token=abc123
      *
-     * Korisnik je ogrebaо scratch karticu — beležimo timestamp.
+     * Korisnik je ogrebaо scratch karticu - beležimo timestamp.
      * Idempotentno: pozivi posle prvog nemaju efekta.
      * Vraća 200 OK bez body-ja (fire-and-forget sa frontenda).
      */

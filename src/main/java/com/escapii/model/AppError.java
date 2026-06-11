@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * Čuva neočekivane greške (5xx) koje se dogode u aplikaciji.
- * Iste greške (isti endpoint + tip exceptiona) se grupišu — ne pravi se novi red, samo se povećava count.
+ * Iste greške (isti endpoint + tip exceptiona) se grupišu - ne pravi se novi red, samo se povećava count.
  */
 @Entity
 @Table(name = "app_errors")

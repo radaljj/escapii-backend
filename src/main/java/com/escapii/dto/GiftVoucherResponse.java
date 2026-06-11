@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 /**
  * Odgovor za gift vaučer.
- * Kod se vraća SAMO admin endpointima — javni endpointima nikad ne vraća kod.
+ * Kod se vraća SAMO admin endpointima - javni endpointima nikad ne vraća kod.
  */
 public record GiftVoucherResponse(
         Long id,

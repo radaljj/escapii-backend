@@ -21,7 +21,7 @@ public class DateController {
      * GET /api/dates?airport=BEG
      *
      * Vraća aktivne termine za izabrani aerodrom polaska (Korak 3 forme).
-     * Vraća DateResponse DTO — potentialDestinations nisu exposovane.
+     * Vraća DateResponse DTO - potentialDestinations nisu exposovane.
      */
     @GetMapping
     public ResponseEntity<List<DateResponse>> getDatesByAirport(@RequestParam String airport) {

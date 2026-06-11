@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Response za admin prikaz termina — uključuje potencijalne destinacije.
+ * Response za admin prikaz termina - uključuje potencijalne destinacije.
  * Nikad se ne šalje korisnicima.
  */
 @Getter

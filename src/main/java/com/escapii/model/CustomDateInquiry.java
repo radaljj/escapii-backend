@@ -36,7 +36,7 @@ public class CustomDateInquiry {
     @Column(nullable = false)
     private Integer nights;
 
-    /** Email korisnika — na koji šaljemo privatni link. */
+    /** Email korisnika - na koji šaljemo privatni link. */
     @Column(nullable = false, length = 200)
     private String email;
 

@@ -27,7 +27,7 @@ public class PassengerInfo {
     private LocalDate dateOfBirth;
 
     /**
-     * Slobodan tekst — putnik upisuje za koje države ima aktivnu vizu
+     * Slobodan tekst - putnik upisuje za koje države ima aktivnu vizu
      * (npr. "SAD, Kanada, Ujedinjeno Kraljevstvo"). Opciono.
      */
     @Column(name = "visa_info", length = 500)
@@ -37,7 +37,7 @@ public class PassengerInfo {
     @Column(name = "has_valid_passport", nullable = false)
     private Boolean hasValidPassport = true;
 
-    /** Broj pasoša kojim putnik putuje — unosi se pri rezervaciji. Opciono. */
+    /** Broj pasoša kojim putnik putuje - unosi se pri rezervaciji. Opciono. */
     @Column(name = "passport_number", length = 50)
     private String passportNumber;
 }

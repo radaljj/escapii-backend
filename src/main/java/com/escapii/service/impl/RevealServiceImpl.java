@@ -30,7 +30,7 @@ public class RevealServiceImpl implements RevealService {
 
         Booking booking = bookingRepository.findByRevealToken(token)
                 .orElseThrow(() -> {
-                    // Logujemo samo prvih 8 karaktera tokena — sprečava curenje punog tokena u logove
+                    // Logujemo samo prvih 8 karaktera tokena - sprečava curenje punog tokena u logove
                     String safeToken = (token != null && token.length() > 8)
                             ? token.substring(0, 8) + "..." : token;
                     log.warn("[Reveal] Nepostojeci token: {}", safeToken);
@@ -53,13 +53,13 @@ public class RevealServiceImpl implements RevealService {
                     "Destinacija još nije dostupna.");
         }
 
-        // Link važi do dana polaska — nakon toga putovanje je počelo, link više nema smisla
+        // Link važi do dana polaska - nakon toga putovanje je počelo, link više nema smisla
         LocalDate departureDate = booking.getSelectedDate().getDepartureDate();
         if (LocalDate.now().isAfter(departureDate)) {
             log.warn("[Reveal] Token istekao za rezervaciju {} (polazak bio: {})",
                     booking.getBookingRef(), departureDate);
             throw new ResponseStatusException(HttpStatus.GONE,
-                    "Link je istekao — putovanje je već počelo. Srećan put! ✈");
+                    "Link je istekao - putovanje je već počelo. Srećan put! ✈");
         }
 
         // Izvuci imena svih putnika; ako lista prazna, koristi nosioca rezervacije
@@ -117,7 +117,7 @@ public class RevealServiceImpl implements RevealService {
     @Override
     public void confirmRevealed(String token) {
         bookingRepository.findByRevealToken(token).ifPresent(booking -> {
-            // Idempotentno — samo prvi put, ne menjamo ako event već postoji
+            // Idempotentno - samo prvi put, ne menjamo ako event već postoji
             if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
                 revealEventRepository.save(new RevealEvent(booking.getBookingRef()));
                 log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());

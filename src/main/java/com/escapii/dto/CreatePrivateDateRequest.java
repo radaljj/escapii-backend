@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
  * Request za kreiranje privatnog termina direktno iz upita.
  * POST /api/admin/inquiries/{id}/create-private-date
  *
- * Backend čita datume iz CustomDateInquiry — nema race conditiona,
+ * Backend čita datume iz CustomDateInquiry - nema race conditiona,
  * termin se kreira kao privatan od prvog trenutka.
  */
 public record CreatePrivateDateRequest(

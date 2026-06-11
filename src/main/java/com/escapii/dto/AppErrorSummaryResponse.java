@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 /**
  * Javni DTO za listu grešaka u admin panelu.
- * Izostavlja stackTrace — vraća se samo na zahtev (detalji jedne greške).
+ * Izostavlja stackTrace - vraća se samo na zahtev (detalji jedne greške).
  * Ovo sprečava curenje internih putanja, dependency verzija i stack frames-a
  * u slučaju da admin API bude kompromitovan.
  */

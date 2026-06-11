@@ -23,7 +23,7 @@ public class EmailSender {
 
     /**
      * Šalje email. Vraća {@code true} ako je email uspešno poslat, {@code false} ako je
-     * došlo do greške (greška je već logovana — caller odlučuje šta dalje).
+     * došlo do greške (greška je već logovana - caller odlučuje šta dalje).
      */
     public boolean send(String to, String subject, String html) {
         try {
@@ -40,8 +40,8 @@ public class EmailSender {
             log.error("[EmailSender] MessagingException za {}: {}", LogUtils.maskEmail(to), e.getMessage(), e);
             return false;
         } catch (Exception e) {
-            // MailException (Spring, RuntimeException) — auth failure, connection refused, itd.
-            log.error("[EmailSender] Greška pri slanju na {} — proveriti SMTP env vars (MAIL_USERNAME, MAIL_APP_PASSWORD): {}",
+            // MailException (Spring, RuntimeException) - auth failure, connection refused, itd.
+            log.error("[EmailSender] Greška pri slanju na {} - proveriti SMTP env vars (MAIL_USERNAME, MAIL_APP_PASSWORD): {}",
                     LogUtils.maskEmail(to), e.getMessage(), e);
             return false;
         }

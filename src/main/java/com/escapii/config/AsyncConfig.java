@@ -21,7 +21,7 @@ import java.util.concurrent.Executor;
 public class AsyncConfig implements AsyncConfigurer {
 
     /**
-     * Glavni async executor — email slanje, notifikacije i ostalo.
+     * Glavni async executor - email slanje, notifikacije i ostalo.
      * PDF generisanje ide u zasebni pdfExecutor da ne blokira ove threadove.
      */
     @Override
@@ -40,8 +40,8 @@ public class AsyncConfig implements AsyncConfigurer {
 
     /**
      * Dedicated thread pool za PDF generisanje.
-     * Pool size = 3 (isto kao semafor) — threadovi se ne takmiče sa email threadovima.
-     * Queue capacity = 20 — ako je 20+ vaučera istovremeno u redu, nešto je sigurno pošlo po krivu.
+     * Pool size = 3 (isto kao semafor) - threadovi se ne takmiče sa email threadovima.
+     * Queue capacity = 20 - ako je 20+ vaučera istovremeno u redu, nešto je sigurno pošlo po krivu.
      */
     @Bean(name = "pdfExecutor")
     public Executor getPdfExecutor() {

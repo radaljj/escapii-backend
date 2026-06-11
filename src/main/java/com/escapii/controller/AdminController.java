@@ -38,13 +38,13 @@ public class AdminController {
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
-    /** GET /api/admin/destinations — sve destinacije (uključujući neaktivne). */
+    /** GET /api/admin/destinations - sve destinacije (uključujući neaktivne). */
     @GetMapping("/destinations")
     public ResponseEntity<List<DestinationResponse>> getAllDestinations() {
         return ResponseEntity.ok(adminService.getAllDestinations());
     }
 
-    /** PATCH /api/admin/destinations/{id}/active?value=false — aktiviraj/deaktiviraj destinaciju. */
+    /** PATCH /api/admin/destinations/{id}/active?value=false - aktiviraj/deaktiviraj destinaciju. */
     @PatchMapping("/destinations/{id}/active")
     public ResponseEntity<Map<String, Object>> toggleDestinationActive(
             @PathVariable Long id,
@@ -59,19 +59,19 @@ public class AdminController {
 
     // ══ TERMINI ══════════════════════════════════════════════════════════════
 
-    /** GET /api/admin/dates — svi termini sa potencijalnim destinacijama. */
+    /** GET /api/admin/dates - svi termini sa potencijalnim destinacijama. */
     @GetMapping("/dates")
     public ResponseEntity<List<AdminDateResponse>> getAllDates() {
         return ResponseEntity.ok(adminService.getAllDates());
     }
 
-    /** POST /api/admin/dates — dodaj novi termin. */
+    /** POST /api/admin/dates - dodaj novi termin. */
     @PostMapping("/dates")
     public ResponseEntity<AdminDateResponse> addDate(@Valid @RequestBody AdminDateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.addDate(request));
     }
 
-    /** PUT /api/admin/dates/{id}/destinations — ažuriraj potencijalne destinacije. */
+    /** PUT /api/admin/dates/{id}/destinations - ažuriraj potencijalne destinacije. */
     @PutMapping("/dates/{id}/destinations")
     public ResponseEntity<AdminDateResponse> updateDestinations(
             @PathVariable Long id,
@@ -79,7 +79,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateDestinations(id, destinationIds));
     }
 
-    /** PATCH /api/admin/dates/{id}/active?value=false — aktiviraj/deaktiviraj termin. */
+    /** PATCH /api/admin/dates/{id}/active?value=false - aktiviraj/deaktiviraj termin. */
     @PatchMapping("/dates/{id}/active")
     public ResponseEntity<Map<String, Object>> toggleActive(
             @PathVariable Long id,
@@ -92,7 +92,7 @@ public class AdminController {
         ));
     }
 
-    /** PATCH /api/admin/dates/{id}/slots?value=50 — izmeni broj dostupnih mesta. */
+    /** PATCH /api/admin/dates/{id}/slots?value=50 - izmeni broj dostupnih mesta. */
     @PatchMapping("/dates/{id}/slots")
     public ResponseEntity<Map<String, Object>> updateSlots(
             @PathVariable Long id,
@@ -108,7 +108,7 @@ public class AdminController {
         ));
     }
 
-    /** PATCH /api/admin/dates/{id}/price?value=299 — izmeni osnovnu cenu termina. */
+    /** PATCH /api/admin/dates/{id}/price?value=299 - izmeni osnovnu cenu termina. */
     @PatchMapping("/dates/{id}/price")
     public ResponseEntity<Map<String, Object>> updatePrice(
             @PathVariable Long id,
@@ -124,7 +124,7 @@ public class AdminController {
         ));
     }
 
-    /** DELETE /api/admin/dates/{id} — trajno obriši termin. */
+    /** DELETE /api/admin/dates/{id} - trajno obriši termin. */
     @DeleteMapping("/dates/{id}")
     public ResponseEntity<Map<String, String>> deleteDate(@PathVariable Long id) {
         adminService.deleteDate(id);
@@ -134,7 +134,7 @@ public class AdminController {
     /**
      * POST /api/admin/dates/{id}/make-private
      * Body: { "travelers": 2, "expiresInHours": 48 }
-     * Pretvara termin u privatni — generiše token, ograničava slots, postavlja expiresAt.
+     * Pretvara termin u privatni - generiše token, ograničava slots, postavlja expiresAt.
      * Odgovor sadrži privateToken koji admin kopira i šalje korisniku.
      */
     @PostMapping("/dates/{id}/make-private")
@@ -153,7 +153,7 @@ public class AdminController {
     // ══ UPITI ZA CUSTOM TERMINE ══════════════════════════════════════════════
 
     /**
-     * GET /api/admin/inquiries — svi upiti za custom termine, najnoviji prvi.
+     * GET /api/admin/inquiries - svi upiti za custom termine, najnoviji prvi.
      */
     @GetMapping("/inquiries")
     public ResponseEntity<List<CustomDateInquiryResponse>> getAllInquiries() {
@@ -163,7 +163,7 @@ public class AdminController {
     /**
      * POST /api/admin/inquiries/{id}/create-private-date
      * Kreira privatni termin direktno iz podataka upita (atomično, bez race conditiona).
-     * Termin je privatan od prvog trenutka — nikad nije javno vidljiv.
+     * Termin je privatan od prvog trenutka - nikad nije javno vidljiv.
      * Body: { "pricePerPerson": 299, "travelers": 2, "expiresInHours": 48 }
      */
     @PostMapping("/inquiries/{id}/create-private-date")
@@ -175,7 +175,7 @@ public class AdminController {
     }
 
     /**
-     * DELETE /api/admin/inquiries/{id} — trajno obriši upit.
+     * DELETE /api/admin/inquiries/{id} - trajno obriši upit.
      * Poziva se automatski sa fronta kada se status postavi na PRIVATE_SENT.
      */
     @DeleteMapping("/inquiries/{id}")
@@ -185,7 +185,7 @@ public class AdminController {
     }
 
     /**
-     * PATCH /api/admin/inquiries/{id}/status?value=PRIVATE_SENT — promeni status upita.
+     * PATCH /api/admin/inquiries/{id}/status?value=PRIVATE_SENT - promeni status upita.
      * Dozvoljene vrednosti: PENDING, PRIVATE_SENT
      */
     @PatchMapping("/inquiries/{id}/status")
@@ -196,7 +196,7 @@ public class AdminController {
     }
 
     /**
-     * PATCH /api/admin/inquiries/{id}/price?value=279.00 — postavi cenu putovanja.
+     * PATCH /api/admin/inquiries/{id}/price?value=279.00 - postavi cenu putovanja.
      * Vrednost u EUR (ukupno za sve putnike). Null vrednost briše cenu.
      */
     @PatchMapping("/inquiries/{id}/price")
@@ -208,14 +208,14 @@ public class AdminController {
 
     // ══ REZERVACIJE ══════════════════════════════════════════════════════════
 
-    /** GET /api/admin/bookings — sve rezervacije sortirane po datumu (najnovije prve). */
+    /** GET /api/admin/bookings - sve rezervacije sortirane po datumu (najnovije prve). */
     @GetMapping("/bookings")
     public ResponseEntity<List<AdminBookingResponse>> getAllBookings() {
         return ResponseEntity.ok(adminService.getAllBookings());
     }
 
     /**
-     * DELETE /api/admin/bookings/{id} — trajno briše rezervaciju.
+     * DELETE /api/admin/bookings/{id} - trajno briše rezervaciju.
      * Dozvoljeno samo ako rezervacija nikad nije bila CONFIRMED
      * (status != CONFIRMED i oldStatus != CONFIRMED).
      * PENDING i CANCELLED-bez-potvrde rezervacije su briš-eligible.
@@ -226,14 +226,14 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Rezervacija obrisana"));
     }
 
-    /** POST /api/admin/scheduler/test — ručno okida jutarnji digest (samo za testiranje). */
+    /** POST /api/admin/scheduler/test - ručno okida jutarnji digest (samo za testiranje). */
     @PostMapping("/scheduler/test")
     public ResponseEntity<Map<String, String>> testScheduler() {
         dailyTaskScheduler.triggerDigest();
-        return ResponseEntity.ok(Map.of("status", "Digest je poslan — proveri email."));
+        return ResponseEntity.ok(Map.of("status", "Digest je poslan - proveri email."));
     }
 
-    /** PATCH /api/admin/bookings/{id}/status?value=CONFIRMED — promeni status rezervacije. */
+    /** PATCH /api/admin/bookings/{id}/status?value=CONFIRMED - promeni status rezervacije. */
     @PatchMapping("/bookings/{id}/status")
     public ResponseEntity<AdminBookingResponse> updateBookingStatus(
             @PathVariable Long id,
@@ -241,7 +241,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateBookingStatus(id, value));
     }
 
-    /** PATCH /api/admin/bookings/{id}/notes — sačuvaj internu napomenu (samo za admina). */
+    /** PATCH /api/admin/bookings/{id}/notes - sačuvaj internu napomenu (samo za admina). */
     @PatchMapping("/bookings/{id}/notes")
     public ResponseEntity<AdminBookingResponse> updateAdminNotes(
             @PathVariable Long id,
@@ -253,7 +253,7 @@ public class AdminController {
     /**
      * PATCH /api/admin/bookings/{id}/destination
      * Body: { "destination": "Barcelona" }
-     * Admin unosi destinaciju — scheduler je šalje korisniku automatski na T-2 (48h pre polaska).
+     * Admin unosi destinaciju - scheduler je šalje korisniku automatski na T-2 (48h pre polaska).
      */
     @PatchMapping("/bookings/{id}/destination")
     public ResponseEntity<AdminBookingResponse> setDestination(
@@ -266,7 +266,7 @@ public class AdminController {
     /**
      * PATCH /api/admin/bookings/{id}/weather-city
      * Body: { "weatherCity": "Santa Cruz de Tenerife, Spain" }
-     * Opcionalni geocoding hint — ako je destinacija ambigvitetna (npr. "Tenerife"),
+     * Opcionalni geocoding hint - ako je destinacija ambigvitetna (npr. "Tenerife"),
      * ovde se upiše precizniji naziv za vremensku prognozu.
      * Prazno polje → brisanje overridea, koristi se assignedDestination.
      */
@@ -280,7 +280,7 @@ public class AdminController {
     /**
      * PATCH /api/admin/bookings/{id}/airline-name
      * Body: { "name": "Wizz Air" }
-     * Naziv avio kompanije — prikazuje se korisniku na reveal stranici.
+     * Naziv avio kompanije - prikazuje se korisniku na reveal stranici.
      */
     @PatchMapping("/bookings/{id}/airline-name")
     public ResponseEntity<AdminBookingResponse> setAirlineName(
@@ -292,7 +292,7 @@ public class AdminController {
     /**
      * PATCH /api/admin/bookings/{id}/airline-code
      * Body: { "code": "ABC123" }
-     * Kod avio kompanije za check-in — prikazuje se korisniku na reveal stranici.
+     * Kod avio kompanije za check-in - prikazuje se korisniku na reveal stranici.
      */
     @PatchMapping("/bookings/{id}/airline-code")
     public ResponseEntity<AdminBookingResponse> setAirlineBookingCode(

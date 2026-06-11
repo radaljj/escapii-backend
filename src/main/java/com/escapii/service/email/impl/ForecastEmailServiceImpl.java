@@ -34,7 +34,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             String depDateStr = depDate.format(EmailHtmlBuilder.DATE_FMT);
 
             DailyForecast today = forecast.get(0);
-            String subject = "🌤 Tvoja prognoza za putovanje — " + depDateStr + " | Escapii";
+            String subject = "🌤 Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
             long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
             String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
 
@@ -55,13 +55,13 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         String travelDaysCard = buildTravelDaysCard(forecast, depDate, retDate);
 
         String body = """
-            <!-- Hero weather card — light -->
+            <!-- Hero weather card - light -->
             <table width="100%%" cellpadding="0" cellspacing="0" style="border-radius:16px;overflow:hidden;margin-bottom:16px;background:#faf6ee;border:1px solid #ebe1cf;">
               <tr><td style="padding:32px 28px 28px;">
 
                 <!-- Pozdrav -->
                 <p style="margin:0 0 24px;font-size:13px;color:#6b5d4f;letter-spacing:0.5px;">
-                  Zdravo, %s! Tvoje putovanje je za <strong style="color:#2D5F6B;">%d %s</strong> — evo šta te čeka.
+                  Zdravo, %s! Tvoje putovanje je za <strong style="color:#2D5F6B;">%d %s</strong> - evo šta te čeka.
                 </p>
 
                 <!-- Glavna temperatura -->
@@ -118,7 +118,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <div style="font-size:12px;font-weight:700;color:#a85e44;margin-bottom:4px;">📬 Preporuka</div>
                 <div style="font-size:12px;color:#1a1410;line-height:1.6;">
                   Kada dobiješ email sa otkrićem destinacije,
-                  <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju —
+                  <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju -
                   prognoza za toliko dana unapred može biti okvirna.
                 </div>
               </td></tr>
@@ -126,7 +126,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
             <!-- Footer note -->
             <p style="font-size:11px;color:#a89888;text-align:center;margin:8px 0 0;line-height:1.6;">
-              Prognoza se ažurira svakodnevno — moguća su manja odstupanja.<br>
+              Prognoza se ažurira svakodnevno - moguća su manja odstupanja.<br>
               Srećan put! 🌍
             </p>
             """.formatted(
@@ -284,7 +284,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                         <div style="font-size:11px;color:#ebe1cf;margin-top:2px;">Prognoza dostupna bliže datumu</div>
                       </td>
                       <td style="padding:11px 0;text-align:right;vertical-align:middle;white-space:nowrap;">
-                        <span style="font-size:12px;color:#ebe1cf;">— / —</span>
+                        <span style="font-size:12px;color:#ebe1cf;">- / -</span>
                       </td>
                     </tr>""".formatted(dayName, dayDate, badge));
             }

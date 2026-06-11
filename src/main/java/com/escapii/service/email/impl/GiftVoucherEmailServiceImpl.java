@@ -47,7 +47,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                     %s
                   </table>
                   <p style="margin:20px 0 0;font-size:13px;color:#888;">
-                    Nakon uplate, aktiviraj vaučer u admin panelu — sistem će automatski generisati PDF i poslati ga kupcu.
+                    Nakon uplate, aktiviraj vaučer u admin panelu - sistem će automatski generisati PDF i poslati ga kupcu.
                   </p>
                 </div>
                 """.formatted(
@@ -57,7 +57,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                         messageRow);
 
         boolean ok = emailSender.send(teamEmail,
-                "🎁 Nov gift vaučer #" + v.getId() + " — " + v.getAmount().toPlainString() + " EUR",
+                "🎁 Nov gift vaučer #" + v.getId() + " - " + v.getAmount().toPlainString() + " EUR",
                 html);
         if (!ok) log.warn("[GiftVoucher] Tim notifikacija nije poslata za vaučer id={}", v.getId());
     }
@@ -65,7 +65,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
     // ── PDF vaučer kupcu (nakon aktivacije) ─────────────────────────────────
 
     @Override
-    @Async("pdfExecutor")   // dedicated pool — ne blokira email threadove
+    @Async("pdfExecutor")   // dedicated pool - ne blokira email threadove
     public void sendVoucherPdfToBuyer(GiftVoucher v, byte[] pdfBytes) {
         String html = """
                 <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0f2d35;
@@ -102,11 +102,11 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                   <!-- Instructions -->
                   <div style="margin-bottom:28px;">
                     <p style="font-size:14px;font-weight:700;color:#e8e0d5;margin:0 0 12px;">
-                      📎 Vaučer je u prilogu kao PDF — možeš ga odštampati ili prikazati sa telefona.
+                      📎 Vaučer je u prilogu kao PDF - možeš ga odštampati ili prikazati sa telefona.
                     </p>
                     <p style="font-size:14px;color:rgba(232,224,213,.75);line-height:1.7;margin:0 0 10px;">
                       Kod vaučera unosi se pri rezervaciji putovanja na
-                      <a href="%s" style="color:#CA8A71;">escapii.rs</a> —
+                      <a href="%s" style="color:#CA8A71;">escapii.rs</a> -
                       iznos se automatski odbija od cene putovanja.
                     </p>
                     <p style="font-size:14px;color:rgba(232,224,213,.75);line-height:1.7;margin:0;">
@@ -139,7 +139,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
         String attachmentName = "escapii-poklon-" + v.getCode() + ".pdf";
         boolean ok = emailSender.sendWithAttachment(
                 v.getBuyerEmail(),
-                "🎁 Tvoj Escapii poklon vaučer — " + v.getAmount().toPlainString() + " EUR",
+                "🎁 Tvoj Escapii poklon vaučer - " + v.getAmount().toPlainString() + " EUR",
                 html,
                 attachmentName,
                 pdfBytes,

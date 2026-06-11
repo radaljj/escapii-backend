@@ -20,7 +20,7 @@ public class AppErrorController {
 
     private final AppErrorService appErrorService;
 
-    /** Sve greške, najnovije prve — bez stackTrace (zaštita od curenja internih detalja). */
+    /** Sve greške, najnovije prve - bez stackTrace (zaštita od curenja internih detalja). */
     @GetMapping
     public ResponseEntity<List<AppErrorSummaryResponse>> getAll() {
         return ResponseEntity.ok(
@@ -30,7 +30,7 @@ public class AppErrorController {
         );
     }
 
-    /** Broj nerešenih grešaka — za badge. */
+    /** Broj nerešenih grešaka - za badge. */
     @GetMapping("/count")
     public ResponseEntity<Map<String, Long>> countUnresolved() {
         return ResponseEntity.ok(Map.of("count", appErrorService.countUnresolved()));

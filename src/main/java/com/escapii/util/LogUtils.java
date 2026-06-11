@@ -1,7 +1,7 @@
 package com.escapii.util;
 
 /**
- * Utility metode za bezbedno logovanje — sprečava curenje PII u log fajlove (GDPR).
+ * Utility metode za bezbedno logovanje - sprečava curenje PII u log fajlove (GDPR).
  */
 public final class LogUtils {
 

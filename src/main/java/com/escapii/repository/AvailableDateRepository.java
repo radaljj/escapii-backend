@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface AvailableDateRepository extends JpaRepository<AvailableDate, Long> {
 
-    /** Javni termini — isključuje privatne (isPrivate=true) */
+    /** Javni termini - isključuje privatne (isPrivate=true) */
     List<AvailableDate> findByDepartureAirportAndActiveTrueAndIsPrivateFalseOrderByDepartureDateAsc(String departureAirport);
 
     List<AvailableDate> findAllByOrderByDepartureDateAsc();
@@ -37,7 +37,7 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
 
     /**
      * Briše prošle termine koji NEMAJU nijednu rezervaciju.
-     * Sigurno — ne narušava FK constraints.
+     * Sigurno - ne narušava FK constraints.
      */
     @Transactional
     @Modifying
@@ -46,7 +46,7 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
     int deleteExpiredWithNoBookings(@Param("today") LocalDate today);
 
     /**
-     * Deaktivira prošle termine koji IMAJU rezervacije — ne brišemo ih, čuvamo istoriju.
+     * Deaktivira prošle termine koji IMAJU rezervacije - ne brišemo ih, čuvamo istoriju.
      */
     @Transactional
     @Modifying

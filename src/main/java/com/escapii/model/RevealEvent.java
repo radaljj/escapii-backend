@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 /**
  * Beleži trenutak kad je korisnik ogrebaо scratch karticu.
- * Namerno odvojena od Booking entiteta — Booking ne treba da zna za ovo.
+ * Namerno odvojena od Booking entiteta - Booking ne treba da zna za ovo.
  * bookingRef je jedini link (ne FK) pa nema kaskadnog uticaja.
  */
 @Getter
@@ -21,7 +21,7 @@ public class RevealEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Referenca rezervacije — npr. "ESC-6db0f0bb". Unique: samo jedan event po rezervaciji. */
+    /** Referenca rezervacije - npr. "ESC-6db0f0bb". Unique: samo jedan event po rezervaciji. */
     @Column(name = "booking_ref", nullable = false, unique = true, length = 20)
     private String bookingRef;
 

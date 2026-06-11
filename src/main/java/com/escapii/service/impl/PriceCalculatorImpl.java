@@ -87,7 +87,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
     }
 
     /**
-     * INI — max 1 isključivanje, nema besplatnog.
+     * INI - max 1 isključivanje, nema besplatnog.
      * 1. → +15€/pp
      */
     private int calcExclusionCostINI(int exclusionCount, int n) {

@@ -57,7 +57,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             <div style="background:#faf6ee;border:1px solid #ebe1cf;border-left:3px solid #a85e44;border-radius:6px;padding:16px 20px;margin-bottom:28px;">
               <div style="font-size:13px;font-weight:700;color:#a85e44;margin-bottom:6px;">Šta dalje?</div>
               <div style="font-size:13px;color:#1a1410;line-height:1.7;">
-                Klikni dugme ispod i otkrij svoju destinaciju — čeka te dramatično otvaranje koverte.<br>
+                Klikni dugme ispod i otkrij svoju destinaciju - čeka te dramatično otvaranje koverte.<br>
                 <span style="color:#a89888;font-size:12px;">Link je personalan i važi do dana polaska.</span>
               </div>
             </div>
@@ -82,7 +82,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "#0f1f3d",
             EmailHtmlBuilder.statusBadge("Otkrij destinaciju", "orange"),
             "Tvoja destinacija te čeka!",
-            "48 sati pre polaska — stiglo je vreme.",
+            "48 sati pre polaska - stiglo je vreme.",
             ref,
             body,
             "Escapii · escapii.rs · Srećan put!",
@@ -91,7 +91,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
         sender.send(
             booking.getEmail(),
-            "✉ Tvoja destinacija je spremna — otkrij je! | Escapii",
+            "✉ Tvoja destinacija je spremna - otkrij je! | Escapii",
             html
         );
 

@@ -38,7 +38,7 @@ public class DailyTaskScheduler {
         cleanupClosedInquiries();
     }
 
-    /** Ručno okidanje iz AdminController-a — okida iste taskove kao i automatski. */
+    /** Ručno okidanje iz AdminController-a - okida iste taskove kao i automatski. */
     public void triggerDigest() {
         schedulingService.sendPendingReveals();
         schedulingService.sendPendingForecasts();
@@ -91,7 +91,7 @@ public class DailyTaskScheduler {
         List<Booking> revealSent        = bookingRepository.findRevealSentBetween(startOfDay, endOfDay);
         List<Booking> forecastSent      = bookingRepository.findForecastSentBetween(startOfDay, endOfDay);
         List<Booking> upcoming          = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
-        // Reveal Box podsjetnik — polazak od danas do +5 dana
+        // Reveal Box podsjetnik - polazak od danas do +5 dana
         List<Booking> revealBoxPending  = bookingRepository.findPendingRevealBoxes(today, today.plusDays(5));
 
         if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty() || !revealBoxPending.isEmpty()) {
@@ -99,7 +99,7 @@ public class DailyTaskScheduler {
             log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}",
                     revealSent.size(), forecastSent.size(), upcoming.size(), revealBoxPending.size());
         } else {
-            log.info("[Scheduler] Nema aktivnih rezervacija — digest nije poslan.");
+            log.info("[Scheduler] Nema aktivnih rezervacija - digest nije poslan.");
         }
     }
 }

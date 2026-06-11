@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Javni endpointi za gift vaučer sistem.
  *
- * POST /api/gifts/vouchers         — kreiranje vaučer upita (rate limited: 3/sat)
- * POST /api/gifts/vouchers/validate — validacija koda (rate limited: 5/15min)
+ * POST /api/gifts/vouchers         - kreiranje vaučer upita (rate limited: 3/sat)
+ * POST /api/gifts/vouchers/validate - validacija koda (rate limited: 5/15min)
  *
  * SIGURNOST:
- * - Kreiranje vraća response BEZ koda — kod ide isključivo emailom primaocu nakon aktivacije
+ * - Kreiranje vraća response BEZ koda - kod ide isključivo emailom primaocu nakon aktivacije
  * - Validacija vraća samo amount ako je validan, uniformna greška ako nije
  * - Admin endpointi (lista, aktivacija, mark-used) su u GiftAdminController-u (X-Admin-Key)
  */
@@ -58,7 +58,7 @@ public class GiftVoucherController {
     /**
      * GET /api/gifts/vouchers/reveal?code=ESC-XXXX-XXXX-XXXX
      * Reveal endpoint za primaoca na /poklon stranici.
-     * Vraća: iznos, ime davaoca, poruku — bez email adrese kupca.
+     * Vraća: iznos, ime davaoca, poruku - bez email adrese kupca.
      * Rate limited: isti limit kao validate (5/15min po IP).
      */
     @GetMapping("/vouchers/reveal")

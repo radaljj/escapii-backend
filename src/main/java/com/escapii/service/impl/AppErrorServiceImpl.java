@@ -44,14 +44,14 @@ public class AppErrorServiceImpl implements AppErrorService {
                     repo.findByEndpointAndExceptionTypeAndResolvedFalse(endpoint, exType);
 
             if (existing.isPresent()) {
-                // Ista greška — samo povećaj brojač
+                // Ista greška - samo povećaj brojač
                 AppError err = existing.get();
                 err.setCount(err.getCount() + 1);
                 err.setLastSeenAt(LocalDateTime.now());
                 repo.save(err);
-                log.debug("[AppError] Ponavljanje #{} — {} {}", err.getCount(), exType, endpoint);
+                log.debug("[AppError] Ponavljanje #{} - {} {}", err.getCount(), exType, endpoint);
             } else {
-                // Nova greška — sačuvaj i pošalji email
+                // Nova greška - sačuvaj i pošalji email
                 AppError err = new AppError();
                 err.setEndpoint(endpoint);
                 err.setExceptionType(exType);
@@ -144,7 +144,7 @@ public class AppErrorServiceImpl implements AppErrorService {
                 <pre style="margin:0;font-size:11px;color:#a5d6ff;white-space:pre-wrap;word-break:break-word;">%s</pre>
               </div>
               <p style="margin-top:16px;color:#8b949e;font-size:12px;font-family:sans-serif;">
-                Pogledaj sve greške u <strong>Admin panelu → tab Greške</strong>. Ista greška se grupiše — nećeš dobiti duplikate.
+                Pogledaj sve greške u <strong>Admin panelu → tab Greške</strong>. Ista greška se grupiše - nećeš dobiti duplikate.
               </p>
             </div>
             """.formatted(

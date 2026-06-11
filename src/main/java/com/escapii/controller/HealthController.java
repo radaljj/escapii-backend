@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * Javni health check endpoint — ne zahteva autentifikaciju.
+ * Javni health check endpoint - ne zahteva autentifikaciju.
  * Koristi se za UptimeRobot monitoring i load balancer health probe.
  *
  * GET /api/health → 200 {"status":"UP","timestamp":"..."}

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Admin DTO za pregled rezervacija — sadrži sve relevantne informacije.
+ * Admin DTO za pregled rezervacija - sadrži sve relevantne informacije.
  */
 @Getter
 @Setter
@@ -47,7 +47,7 @@ public class AdminBookingResponse {
     private java.util.List<String> excludedDestinations;
     private Integer exclusionCostEur;
 
-    // Putnici — puni detalji
+    // Putnici - puni detalji
     private java.util.List<PassengerDetail> passengers;
 
     // Admin (interno)

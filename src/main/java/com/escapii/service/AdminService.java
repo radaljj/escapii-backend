@@ -28,7 +28,7 @@ public interface AdminService {
     void deleteDate(Long id);
 
     /**
-     * Pretvara termin u privatni — generiše token, postavlja slots i expiresAt.
+     * Pretvara termin u privatni - generiše token, postavlja slots i expiresAt.
      * Vraća ažuriran AdminDateResponse sa privateToken poljem.
      */
     AdminDateResponse makePrivate(Long dateId, int travelers, int expiresInHours, Integer pricePerPerson);
@@ -51,7 +51,7 @@ public interface AdminService {
     void deleteInquiry(Long id);
 
     /**
-     * Kreira privatni termin direktno iz podataka upita (atomično — bez race conditiona).
+     * Kreira privatni termin direktno iz podataka upita (atomično - bez race conditiona).
      * Termin je privatan od prvog trenutka; nikad nije javno vidljiv.
      */
     AdminDateResponse createPrivateDateFromInquiry(Long inquiryId, CreatePrivateDateRequest request);

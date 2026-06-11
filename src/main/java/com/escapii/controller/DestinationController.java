@@ -22,7 +22,7 @@ public class DestinationController {
      * GET /api/destinations
      * GET /api/destinations?airport=BEG
      *
-     * Vraća DestinationResponse DTO — ne exposuje interna polja (active, region).
+     * Vraća DestinationResponse DTO - ne exposuje interna polja (active, region).
      */
     @GetMapping
     public ResponseEntity<List<DestinationResponse>> getActiveDestinations(
@@ -32,7 +32,7 @@ public class DestinationController {
         );
     }
 
-    /** GET /api/destinations/all — sve destinacije uključujući neaktivne (za carousel). */
+    /** GET /api/destinations/all - sve destinacije uključujući neaktivne (za carousel). */
     @GetMapping("/all")
     public ResponseEntity<List<DestinationResponse>> getAllDestinations() {
         return ResponseEntity.ok(

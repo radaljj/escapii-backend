@@ -38,7 +38,7 @@ public class GiftVoucher {
 
     // ── Kupac ────────────────────────────────────────────────────────────────
 
-    /** Email kupca — na koji šaljemo instrukcije za uplatu. */
+    /** Email kupca - na koji šaljemo instrukcije za uplatu. */
     @Column(nullable = false, length = 200)
     private String buyerEmail;
 
@@ -46,7 +46,7 @@ public class GiftVoucher {
     @Column(length = 200)
     private String buyerName;
 
-    /** Lična poruka kupca — ispisuje se na PDF vaučeru. */
+    /** Lična poruka kupca - ispisuje se na PDF vaučeru. */
     @Column(length = 500)
     private String giftMessage;
 
@@ -79,7 +79,7 @@ public class GiftVoucher {
     /**
      * Referenca na booking u kome je vaučer primenjen.
      * Null = nije primenjen, ili booking se prati ručno.
-     * Kod delimičnog korišćenja — čuva se poslednji booking koji ga je koristio.
+     * Kod delimičnog korišćenja - čuva se poslednji booking koji ga je koristio.
      */
     @Column
     private Long usedInBookingRef;

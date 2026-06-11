@@ -9,7 +9,7 @@ import java.math.BigDecimal;
  * Ako nije validan: valid=false, amount=null, message=uniformna poruka greške.
  *
  * SIGURNOST: Ista poruka greške za sve slučajeve (ne postoji, PENDING, USED, EXPIRED)
- * — ne otkriva informacije o stanju koda napadaču.
+ * - ne otkriva informacije o stanju koda napadaču.
  */
 public record GiftVoucherValidateResponse(
         boolean valid,

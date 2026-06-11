@@ -49,7 +49,7 @@ public class VoucherPdfService {
      * Semafor: maksimalno 3 PDF-a simultano.
      * openhtmltopdf je memorijski zahtevan (~50-80 MB po generisanju),
      * pa ograničavamo paralelizam da ne potrošimo svu RAM na VPS-u.
-     * Ostali zahtevi čekaju u redu — ne odbijaju se.
+     * Ostali zahtevi čekaju u redu - ne odbijaju se.
      */
     private static final Semaphore PDF_SEMAPHORE = new Semaphore(3, true);
 
@@ -77,18 +77,18 @@ public class VoucherPdfService {
     }
 
     /**
-     * Glavni ulaz — generiše PDF kao byte[] (pogodno za prilog mejlu).
-     * Semafor ograničava na max 3 simultana generisanja — ostali čekaju.
+     * Glavni ulaz - generiše PDF kao byte[] (pogodno za prilog mejlu).
+     * Semafor ograničava na max 3 simultana generisanja - ostali čekaju.
      */
     public byte[] generate(VoucherData data) {
         try {
-            // Čekaj max 10 minuta — u normalnim uslovima PDF traje 2-5 sekundi,
+            // Čekaj max 10 minuta - u normalnim uslovima PDF traje 2-5 sekundi,
             // pa je 10 minuta čekanja signal da je nešto pošlo po krivu
             boolean acquired = PDF_SEMAPHORE.tryAcquire(10, TimeUnit.MINUTES);
             if (!acquired) {
-                log.error("[PDF] Timeout čekanja na semafor za vaučer kod={} — server je prezauzet",
+                log.error("[PDF] Timeout čekanja na semafor za vaučer kod={} - server je prezauzet",
                         data.voucherCode());
-                throw new RuntimeException("PDF generisanje nije moglo da počne — server prezauzet");
+                throw new RuntimeException("PDF generisanje nije moglo da počne - server prezauzet");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -135,7 +135,7 @@ public class VoucherPdfService {
         }
     }
 
-    /** Registruje fontove — familije i weight/style moraju da prate CSS template-a. */
+    /** Registruje fontove - familije i weight/style moraju da prate CSS template-a. */
     private void registerFonts(PdfRendererBuilder builder) {
         // GiftSerif = Playfair Display
         builder.useFont(() -> classpath("fonts/PlayfairDisplay-Regular.ttf"), "GiftSerif", 400, FontStyle.NORMAL, true);
@@ -193,7 +193,7 @@ public class VoucherPdfService {
     }
 
     /**
-     * Iznos u rečima na srpskom — za podnaslov na vaučeru.
+     * Iznos u rečima na srpskom - za podnaslov na vaučeru.
      * Pokriva tipične iznose; za ostale vraća "{n} evra".
      */
     static String amountInWords(int amount) {

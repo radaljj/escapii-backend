@@ -128,14 +128,14 @@ public class Booking {
 
     /**
      * Naziv avio kompanije (npr. "Wizz Air").
-     * Unosi admin — prikazuje se korisniku na reveal stranici.
+     * Unosi admin - prikazuje se korisniku na reveal stranici.
      */
     @Column(name = "airline_name", length = 100)
     private String airlineName;
 
     /**
      * Kod avio kompanije za check-in (npr. "ABC123").
-     * Unosi admin nakon potvrde rezervacije — prikazuje se korisniku na reveal stranici.
+     * Unosi admin nakon potvrde rezervacije - prikazuje se korisniku na reveal stranici.
      */
     @Column(name = "airline_booking_code", length = 20)
     private String airlineBookingCode;
@@ -157,7 +157,7 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    /** Interna napomena admina — nije vidljiva korisniku. */
+    /** Interna napomena admina - nije vidljiva korisniku. */
     @Column(name = "admin_notes", columnDefinition = "TEXT")
     private String adminNotes;
 
@@ -173,7 +173,7 @@ public class Booking {
 
     // ── Otkrivanje destinacije ────────────────────────────────────────
 
-    /** Destinacija koju admin dodjeljuje — šalje se korisniku T-2 dana (48h) pre polaska. */
+    /** Destinacija koju admin dodjeljuje - šalje se korisniku T-2 dana (48h) pre polaska. */
     @Column(name = "assigned_destination", length = 200)
     private String assignedDestination;
 
@@ -193,11 +193,11 @@ public class Booking {
     @Column(name = "reveal_token", unique = true, length = 64)
     private String revealToken;
 
-    /** Trenutak kad je reveal email poslan korisniku — null znači još nije poslan. */
+    /** Trenutak kad je reveal email poslan korisniku - null znači još nije poslan. */
     @Column(name = "reveal_sent_at")
     private LocalDateTime revealSentAt;
 
-    /** Trenutak kad je weather forecast email poslan korisniku — null znači još nije poslan. */
+    /** Trenutak kad je weather forecast email poslan korisniku - null znači još nije poslan. */
     @Column(name = "forecast_sent_at")
     private LocalDateTime forecastSentAt;
 

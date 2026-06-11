@@ -12,4 +12,4 @@ Ovaj direktorijum mora da sadrži sledeće TTF fajlove pre deploy-a:
 
 Fajlove postavi direktno u ovaj direktorijum (`src/main/resources/fonts/`).
 
-openhtmltopdf renderuje SAMO eksplicitno registrovane fontove — sistemski Georgia/Arial ne rade u PDF-u.
+openhtmltopdf renderuje SAMO eksplicitno registrovane fontove - sistemski Georgia/Arial ne rade u PDF-u.

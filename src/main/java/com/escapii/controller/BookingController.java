@@ -34,7 +34,7 @@ public class BookingController {
 
     /**
      * GET /api/booking/status?ref=ESC-xxx&lastName=Markovic
-     * Javni endpoint — korisnik provjerava status rezervacije bez login-a.
+     * Javni endpoint - korisnik provjerava status rezervacije bez login-a.
      */
     @GetMapping("/status")
     public ResponseEntity<BookingStatusResponse> getStatus(

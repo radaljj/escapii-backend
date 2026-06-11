@@ -42,7 +42,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             body.append("""
                 <div style="background:#eef6f0;border:1px solid #c3d8c9;border-left:4px solid #1d6042;\
                 border-radius:8px;padding:16px 20px;margin-bottom:20px;">
-                  <p style="margin:0;font-size:14px;color:#1d6042;font-weight:700;">✅ Danas nema akcija — sve je u redu!</p>
+                  <p style="margin:0;font-size:14px;color:#1d6042;font-weight:700;">✅ Danas nema akcija - sve je u redu!</p>
                 </div>""");
         }
 
@@ -69,7 +69,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         // ── Reveal Box podsjetnik ─────────────────────────────────────────────
         if (!revealBoxPending.isEmpty()) {
             body.append(section(
-                "📦 Pošalji Reveal Box (" + revealBoxPending.size() + ") — polazak za ≤ 5 dana!",
+                "📦 Pošalji Reveal Box (" + revealBoxPending.size() + ") - polazak za ≤ 5 dana!",
                 "#fdf3e7", "#e8c7b1", "#a85e44",
                 revealBoxThead(),
                 revealBoxRows(today, revealBoxPending)
@@ -104,7 +104,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             false
         );
 
-        sender.send(opsEmail, "📋 Escapii — " + todayStr, html);
+        sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
                 revealsSent.size(), forecastDue.size(), preview.size());
     }
@@ -271,9 +271,9 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             LocalDate dep  = b.getSelectedDate().getDepartureDate();
             long daysLeft  = today.until(dep).getDays();
             String daysLbl = daysLabel(daysLeft);
-            String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "—")
+            String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "-")
                            + (b.getDeliveryCity() != null ? ", " + b.getDeliveryCity() : "");
-            String phone   = b.getDeliveryPhone() != null ? b.getDeliveryPhone() : "—";
+            String phone   = b.getDeliveryPhone() != null ? b.getDeliveryPhone() : "-";
             sb.append("""
                 <tr style="border-bottom:1px solid #ebe1cf;">
                   <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">

@@ -39,7 +39,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     /**
      * Skup karaktera za generisanje koda.
      * Namerno isključeni: 0 (nula), O (veliko o), 1 (jedan), I (veliko i), L (malo l)
-     * — da bi kod bio čitljiv i bez zabune pri unosu.
+     * - da bi kod bio čitljiv i bez zabune pri unosu.
      */
     private static final String CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final int SEGMENT_LENGTH = 4;
@@ -157,7 +157,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
             byte[] pdf = voucherPdfService.generate(pdfData);
             emailService.sendVoucherPdfToBuyer(saved, pdf);
         } catch (Exception e) {
-            // PDF generisanje ne sme blokirati aktivaciju — logujemo grešku
+            // PDF generisanje ne sme blokirati aktivaciju - logujemo grešku
             log.error("[GiftVoucher] PDF generisanje/slanje nije uspelo za vaučer id={}: {}", id, e.getMessage(), e);
         }
 
@@ -195,7 +195,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
             log.info("[GiftVoucher] Vaučer id={} u potpunosti iskorišćen ({}€ od {}€) u booking ref={}",
                     id, newUsedAmount, v.getAmount(), bookingRef);
         } else {
-            // Delimično iskorišćen — ostaje ACTIVE sa preostalim saldom
+            // Delimično iskorišćen - ostaje ACTIVE sa preostalim saldom
             v.setStatus(VoucherStatus.ACTIVE);
             BigDecimal remaining = v.getAmount().subtract(newUsedAmount);
             log.info("[GiftVoucher] Vaučer id={} delimično iskorišćen ({}€ u booking ref={}), preostaje {}€",
@@ -211,7 +211,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         GiftVoucher v = findOrThrow(id);
         if (v.getStatus() == VoucherStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Vaučer id=" + id + " je PENDING — aktiviraj ga normalnim putem (uplata potvrđena).");
+                    "Vaučer id=" + id + " je PENDING - aktiviraj ga normalnim putem (uplata potvrđena).");
         }
         VoucherStatus oldStatus = v.getStatus();
         v.setStatus(VoucherStatus.ACTIVE);
@@ -232,7 +232,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
             }
             log.warn("[GiftVoucher] Kolizija koda pri generisanju (pokušaj {})", attempt + 1);
         }
-        throw new IllegalStateException("Ne može se generisati jedinstven vaučer kod — sistem greška");
+        throw new IllegalStateException("Ne može se generisati jedinstven vaučer kod - sistem greška");
     }
 
     private String buildCode() {

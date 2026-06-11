@@ -58,7 +58,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     public void sendTeamNotification(Booking booking) {
         boolean ok = sender.send(
             teamEmail,
-            "Novi upit %s — %s %s".formatted(booking.getBookingRef(), booking.getFirstName(), booking.getLastName()),
+            "Novi upit %s - %s %s".formatted(booking.getBookingRef(), booking.getFirstName(), booking.getLastName()),
             buildTeamEmailHtml(booking)
         );
         if (!ok) {
@@ -72,7 +72,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     public void sendCustomerConfirmation(Booking booking) {
         boolean ok = sender.send(
             booking.getEmail(),
-            "Upit primljen — %s".formatted(booking.getBookingRef()),
+            "Upit primljen - %s".formatted(booking.getBookingRef()),
             buildCustomerReceivedHtml(booking)
         );
         if (!ok) {
@@ -87,7 +87,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     public void sendBookingConfirmed(Booking booking) {
         boolean ok = sender.send(
             booking.getEmail(),
-            "Rezervacija potvrđena — %s".formatted(booking.getBookingRef()),
+            "Rezervacija potvrđena - %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, true)
         );
         if (ok) {
@@ -104,7 +104,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     public void sendBookingCancelled(Booking booking) {
         boolean ok = sender.send(
             booking.getEmail(),
-            "Rezervacija otkazana — %s".formatted(booking.getBookingRef()),
+            "Rezervacija otkazana - %s".formatted(booking.getBookingRef()),
             buildCustomerStatusHtml(booking, false)
         );
         if (ok) {
@@ -118,19 +118,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     /**
      * Snima grešku slanja emaila u AppError dashboard (vidljivo adminu u 🚨 Greške tabu).
-     * Koristi RuntimeException kao nosač poruke — stack trace nije relevantan za email greške.
+     * Koristi RuntimeException kao nosač poruke - stack trace nije relevantan za email greške.
      */
     private void recordEmailError(String context) {
         try {
             appErrorService.record(context, 0,
-                new RuntimeException("Email nije poslat — proveriti SMTP konfiguraciju i log"));
+                new RuntimeException("Email nije poslat - proveriti SMTP konfiguraciju i log"));
         } catch (Exception ex) {
             log.error("[Email] Nije moguće snimiti email grešku u AppErrorService: {}", ex.getMessage());
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Tim — interni email
+    // Tim - interni email
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildTeamEmailHtml(Booking booking) {
@@ -158,7 +158,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 tRow("Putnici", passengerNamesList(booking)) +
                 tRow("Smeštaj", EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType())) +
                 tRow("Isključene dest.", buildExclusionsText(booking)) +
-                tRow("Presedanje OK", Boolean.TRUE.equals(booking.getHasConnectingFlights()) ? "✔ Da" : "✘ Ne — samo direktni letovi")
+                tRow("Presedanje OK", Boolean.TRUE.equals(booking.getHasConnectingFlights()) ? "✔ Da" : "✘ Ne - samo direktni letovi")
             ),
             buildPassengersSection(booking),
             buildPriceTable(booking, n)
@@ -174,7 +174,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             depDate + " → " + retDate + " · " + n + (n == 1 ? " putnik" : " putnika"),
             booking.getBookingRef(),
             body + notes,
-            "Interni email — escapii ops tim · Nije za prosleđivanje",
+            "Interni email - escapii ops tim · Nije za prosleđivanje",
             false
         );
     }
@@ -231,7 +231,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Korisnički — upit primljen
+    // Korisnički - upit primljen
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildCustomerReceivedHtml(Booking booking) {
@@ -250,7 +250,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Korisnički — CONFIRMED / CANCELLED
+    // Korisnički - CONFIRMED / CANCELLED
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildCustomerStatusHtml(Booking booking, boolean confirmed) {
@@ -310,7 +310,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("✓", "#eef6f0", "#1d6042",
                 "Rezervacija potvrđena",
                 "Danas · " + today,
-                "Sve je rezervisano — letovi, smeštaj, transfer. Možete se opustiti — doslovno."),
+                "Sve je rezervisano - letovi, smeštaj, transfer. Možete se opustiti - doslovno."),
             EmailHtmlBuilder.timelineItem("🌤", "#fff5eb", "#a85e44",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
@@ -318,7 +318,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("✉", "#eaf0f3", "#2D5F6B",
                 "Koverta s destinacijom",
                 revealStr + " · 48h pre polaska",
-                "Konačno — otkrivate gde idete!"),
+                "Konačno - otkrivate gde idete!"),
             EmailHtmlBuilder.timelineItem("✈", "#f5efe2", "#ebe1cf",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
@@ -327,7 +327,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Boarding pass block — replaces customerTripCard in customer-received email
+    // Boarding pass block - replaces customerTripCard in customer-received email
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
@@ -339,7 +339,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String airportCode = EmailHtmlBuilder.esc(booking.getDepartureAirport());
         String airportCity = EmailHtmlBuilder.resolveAirportName(booking.getDepartureAirport());
 
-        // Passenger names — show actual passengers, fall back to booking holder
+        // Passenger names - show actual passengers, fall back to booking holder
         List<PassengerInfo> pax = booking.getPassengers();
         String passengerNamesHtml;
         String avatarInitials;
@@ -381,7 +381,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 </td>
               </tr>
 
-              <!-- White body — pulled up with negative margin simulation via inner table -->
+              <!-- White body - pulled up with negative margin simulation via inner table -->
               <tr>
                 <td style="background:#f5efe2;padding:0 20px 0;">
                   <table width="100%%" cellpadding="0" cellspacing="0"
@@ -528,7 +528,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                         <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
                                     color:#a89888;font-weight:700;">Gate</div>
                         <div style="font-size:16px;font-weight:700;color:#1a1410;margin-top:4px;
-                                    font-family:'Courier New',monospace;">—</div>
+                                    font-family:'Courier New',monospace;">-</div>
                       </td>
                       <td style="width:28%%;">
                         <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
@@ -540,7 +540,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                         <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;
                                     color:#a89888;font-weight:700;">Sedište</div>
                         <div style="font-size:16px;font-weight:700;color:#1a1410;margin-top:4px;
-                                    font-family:'Courier New',monospace;">—</div>
+                                    font-family:'Courier New',monospace;">-</div>
                       </td>
                       <td style="text-align:right;vertical-align:bottom;">
                         <!-- Decorative barcode -->
@@ -636,12 +636,12 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         for (int i = 0; i < passengers.size(); i++) {
             PassengerInfo p = passengers.get(i);
             String name     = EmailHtmlBuilder.esc(p.getName());
-            String dob      = p.getDateOfBirth() != null ? p.getDateOfBirth().format(EmailHtmlBuilder.DATE_FMT) : "—";
+            String dob      = p.getDateOfBirth() != null ? p.getDateOfBirth().format(EmailHtmlBuilder.DATE_FMT) : "-";
             String gender   = "M".equals(p.getGender()) ? "Muški" : "Ženski";
             String passport = (p.getPassportNumber() != null && !p.getPassportNumber().isBlank())
-                    ? EmailHtmlBuilder.esc(p.getPassportNumber()) : "—";
+                    ? EmailHtmlBuilder.esc(p.getPassportNumber()) : "-";
             String visaInfo = (p.getVisaInfo() != null && !p.getVisaInfo().isBlank())
-                    ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "—";
+                    ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "-";
 
             cards.append("""
                 <table width="100%%" cellpadding="0" cellspacing="0"
@@ -731,19 +731,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             rows.append(priceRow("Kabinski kofer (50 € × 2 smera)", "100 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 100, false));
         if (booking.getExclusionCostEur() > 0) {
             int paid = booking.getExclusionCount() - 1;
-            rows.append(priceRow(exclusionLabel(paid), "—", null, booking.getExclusionCostEur(), true));
+            rows.append(priceRow(exclusionLabel(paid), "-", null, booking.getExclusionCostEur(), true));
         }
         if (n == 1)
-            rows.append(priceRow("Doplata za solo putnika", "—", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
+            rows.append(priceRow("Doplata za solo putnika", "-", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
         if (Boolean.TRUE.equals(booking.getHasRevealBox()))
-            rows.append(priceRow("📦 Reveal Box (koverat na adresu)", "—", null, PriceCalculatorImpl.REVEAL_BOX_FLAT, true));
+            rows.append(priceRow("📦 Reveal Box (koverat na adresu)", "-", null, PriceCalculatorImpl.REVEAL_BOX_FLAT, true));
 
         // ── Vaučer popust ──────────────────────────────────────────────
         boolean hasVoucher = booking.getAppliedVoucherCode() != null
                 && booking.getVoucherDiscount() != null
                 && booking.getVoucherDiscount() > 0;
 
-        // Vaučer red — samo popust, bez "Cena pre popusta"
+        // Vaučer red - samo popust, bez "Cena pre popusta"
         String subtotalHtml = "";
         if (hasVoucher) {
             subtotalHtml = """
@@ -840,7 +840,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Template loader — učitava MJML-kompajlirani HTML iz classpath /email/
+    // Template loader - učitava MJML-kompajlirani HTML iz classpath /email/
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**

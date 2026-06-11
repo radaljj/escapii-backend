@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 /**
- * Javni DTO za AvailableDate. Ne sadrži potentialDestinations — to je admin-only.
+ * Javni DTO za AvailableDate. Ne sadrži potentialDestinations - to je admin-only.
  */
 @Getter
 @Builder

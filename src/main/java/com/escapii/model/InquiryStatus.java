@@ -1,7 +1,7 @@
 package com.escapii.model;
 
 public enum InquiryStatus {
-    /** Novi upit — čeka pregled. */
+    /** Novi upit - čeka pregled. */
     PENDING,
     /** Admin pregledao, u toku je analiza termina. */
     IN_REVIEW,

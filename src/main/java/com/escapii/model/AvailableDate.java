@@ -46,7 +46,7 @@ public class AvailableDate {
     private Boolean active = true;
 
     /**
-     * Privatni termin — kreiran samo za određenog korisnika na osnovu upita.
+     * Privatni termin - kreiran samo za određenog korisnika na osnovu upita.
      * Vidljiv samo putem privateToken linka; ne pojavljuje se u javnom listingu.
      */
     @Column(nullable = false)
@@ -66,9 +66,9 @@ public class AvailableDate {
     private LocalDateTime expiresAt;
 
     /**
-     * Optimistic locking — štiti od race condition-a kada više korisnika
+     * Optimistic locking - štiti od race condition-a kada više korisnika
      * istovremeno pokušava da rezerviše isti termin.
-     * Primitive long (ne Long) — JDBC getLong() vraća 0 za SQL NULL,
+     * Primitive long (ne Long) - JDBC getLong() vraća 0 za SQL NULL,
      * čime se izbegava NPE pri Hibernate version increment-u.
      */
     @Version
@@ -76,7 +76,7 @@ public class AvailableDate {
 
     /**
      * Potencijalne destinacije koje admin vezuje za ovaj termin.
-     * Vidljivo samo adminu — korisnici ne vide ove informacije.
+     * Vidljivo samo adminu - korisnici ne vide ove informacije.
      */
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

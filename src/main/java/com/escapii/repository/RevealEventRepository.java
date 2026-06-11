@@ -12,6 +12,6 @@ public interface RevealEventRepository extends JpaRepository<RevealEvent, Long> 
 
     Optional<RevealEvent> findByBookingRef(String bookingRef);
 
-    /** Batch fetch za admin panel — svi eventi za datu listu referenci. */
+    /** Batch fetch za admin panel - svi eventi za datu listu referenci. */
     List<RevealEvent> findAllByBookingRefIn(List<String> bookingRefs);
 }

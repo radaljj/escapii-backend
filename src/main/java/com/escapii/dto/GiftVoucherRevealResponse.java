@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Javni reveal response — vraća se korisniku koji unese kod na /poklon stranici.
+ * Javni reveal response - vraća se korisniku koji unese kod na /poklon stranici.
  */
 public record GiftVoucherRevealResponse(
         boolean valid,

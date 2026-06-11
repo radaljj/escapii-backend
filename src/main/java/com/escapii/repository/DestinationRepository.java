@@ -19,7 +19,7 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
            "WHERE d.active = true AND a = :airport ORDER BY d.name ASC")
     List<Destination> findByDepartureAirportAndActiveTrueOrderByNameAsc(@Param("airport") String airport);
 
-    /** Sve destinacije sortiane po imenu (admin — uključuje i neaktivne). */
+    /** Sve destinacije sortiane po imenu (admin - uključuje i neaktivne). */
     List<Destination> findAllByOrderByNameAsc();
 
     boolean existsByName(String name);

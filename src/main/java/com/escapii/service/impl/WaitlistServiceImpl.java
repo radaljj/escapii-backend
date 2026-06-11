@@ -36,12 +36,12 @@ public class WaitlistServiceImpl implements WaitlistService {
             log.info("[Waitlist] Novi subscriber: {} za {}", LogUtils.maskEmail(email), airport);
             return true;
         } catch (DataIntegrityViolationException e) {
-            // Race condition — već postoji
+            // Race condition - već postoji
             return false;
         }
     }
 
-    // Gornja granica za findAll — sprečava OOM ako lista poraste
+    // Gornja granica za findAll - sprečava OOM ako lista poraste
     private static final int WAITLIST_FETCH_LIMIT = 1000;
 
     @Override

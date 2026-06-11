@@ -17,22 +17,22 @@ public class DestinationServiceImpl implements DestinationService {
     private final DestinationRepository destinationRepository;
 
     /**
-     * Final passport list — only sovereign states and special territories
+     * Final passport list - only sovereign states and special territories
      * that issue their own passports. Territories using the passport of their
      * administering country (e.g. French overseas, British overseas, US territories)
      * are excluded.
      *
      * Special cases kept:
-     *   HK — HKSAR passport (distinct from CN)
-     *   MO — MSAR passport (distinct from CN)
-     *   TW — ROC passport
-     *   XK — Kosovo passport
-     *   PS — Palestinian Authority passport
-     *   FO — Faroese passport (distinct from DK)
-     *   GG — Guernsey passport
-     *   IM — Isle of Man passport
-     *   JE — Jersey passport
-     *   VA — Vatican passport
+     *   HK - HKSAR passport (distinct from CN)
+     *   MO - MSAR passport (distinct from CN)
+     *   TW - ROC passport
+     *   XK - Kosovo passport
+     *   PS - Palestinian Authority passport
+     *   FO - Faroese passport (distinct from DK)
+     *   GG - Guernsey passport
+     *   IM - Isle of Man passport
+     *   JE - Jersey passport
+     *   VA - Vatican passport
      */
     private static final List<CountryDto> PASSPORTS = List.of(
         new CountryDto("AD", "Andorra",                   "Andora"),

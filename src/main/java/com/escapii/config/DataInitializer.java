@@ -54,7 +54,7 @@ public class DataInitializer implements ApplicationRunner {
 
         List<Destination> destinations = List.of(
 
-            // ── BEG — Air Serbia ───────────────────────────────────────────────
+            // ── BEG - Air Serbia ───────────────────────────────────────────────
 
             dest("Atina",         "ATH", "Grčka",               "Jugoistočna Evropa",  "BEG"),
                 dest("Beč",           "VIE", "Austrija",            "Centralna Evropa",    "BEG", "INI"),
@@ -84,7 +84,7 @@ public class DataInitializer implements ApplicationRunner {
                 dest("Zagreb",        "ZAG", "Hrvatska",            "Centralna Evropa",    "BEG"),
                 dest("Ženeva",        "GVA", "Švajcarska",          "Centralna Evropa",    "BEG"),
 
-                // ── BEG — Wizz Air (bez duplikata gradova) ─────────────────────────
+                // ── BEG - Wizz Air (bez duplikata gradova) ─────────────────────────
 
             dest("Alikante",      "ALC", "Španija",             "Mediteran",           "BEG"),
             dest("Fridrihshafen", "FDH", "Nemačka",             "Centralna Evropa",    "BEG"),

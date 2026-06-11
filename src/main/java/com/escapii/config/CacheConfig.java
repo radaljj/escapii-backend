@@ -19,13 +19,13 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         SimpleCacheManager manager = new SimpleCacheManager();
         manager.setCaches(List.of(
-            // statična lista pasosa — ne menja se nikad
+            // statična lista pasosa - ne menja se nikad
             buildCache("countries",           24, TimeUnit.HOURS),
-            // sve destinacije — admin menja retko, keš duži da prvi korisnik ne čeka
+            // sve destinacije - admin menja retko, keš duži da prvi korisnik ne čeka
             buildCache("destinations",        30, TimeUnit.MINUTES),
             // aktivne destinacije po aerodromu
             buildCache("active-destinations", 30, TimeUnit.MINUTES),
-            // aktivni termini — admin menja retko, @CacheEvict čisti odmah kad se promeni
+            // aktivni termini - admin menja retko, @CacheEvict čisti odmah kad se promeni
             buildCache("active-dates",        15, TimeUnit.MINUTES)
         ));
         return manager;

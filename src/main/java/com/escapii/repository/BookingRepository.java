@@ -20,7 +20,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /**
      * Učitava sve bookinge zajedno sa svim isključenim destinacijama (JOIN FETCH)
-     * i putnicima (@BatchSize) — ukupno 2 SQL upita bez obzira na N rezervacija.
+     * i putnicima (@BatchSize) - ukupno 2 SQL upita bez obzira na N rezervacija.
      *
      * @EntityGraph JOIN-uje 3 excluded destination kolone u jednom SELECT-u.
      * Passengers se učitavaju batch-om (50 po upitu) zahvaljujući @BatchSize na entitetu.
@@ -31,7 +31,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findAllByOrderByCreatedAtDesc();
 
     /**
-     * Učitava jedan booking sa svim asocijacijama potrebnim za slanje emaila —
+     * Učitava jedan booking sa svim asocijacijama potrebnim za slanje emaila -
      * isključene destinacije (JOIN FETCH) + putnici (@BatchSize).
      * Koristiti uvek pre prosleđivanja Bookinga u email servis.
      */
@@ -54,7 +54,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.status = 'PENDING' AND b.createdAt < :before")
     List<Booking> findStalePendingBefore(@Param("before") LocalDateTime before);
 
-    /** Pregled statusa — case-insensitive i za ref i za prezime. */
+    /** Pregled statusa - case-insensitive i za ref i za prezime. */
     @Query("SELECT b FROM Booking b WHERE LOWER(b.bookingRef) = LOWER(TRIM(:ref)) AND LOWER(TRIM(b.lastName)) = LOWER(TRIM(:lastName))")
     java.util.Optional<Booking> findByRefAndLastName(
             @Param("ref")      String ref,
@@ -64,11 +64,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Pronađi booking po reveal tokenu (za /api/reveal endpoint). */
     java.util.Optional<Booking> findByRevealToken(String revealToken);
 
-    /** Ukupan broj rezervacija za dati termin (sve statuse) — koristi se pre brisanja. */
+    /** Ukupan broj rezervacija za dati termin (sve statuse) - koristi se pre brisanja. */
     long countBySelectedDateId(Long selectedDateId);
 
     /**
-     * Duplikat check — isti email + isti termin kreiran u poslednjih 24h.
+     * Duplikat check - isti email + isti termin kreiran u poslednjih 24h.
      * Koristi se za anti-spam zaštitu pri kreiranju bookinga.
      */
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
@@ -110,19 +110,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findReadyForForecast(@Param("from") LocalDate from,
                                        @Param("until") LocalDate until);
 
-    /** Bookings kojima je revealSentAt između zadatih trenutaka (za digest — šta je danas poslato). */
+    /** Bookings kojima je revealSentAt između zadatih trenutaka (za digest - šta je danas poslato). */
     @Query("SELECT b FROM Booking b WHERE b.revealSentAt >= :from AND b.revealSentAt < :until")
     List<Booking> findRevealSentBetween(@Param("from") LocalDateTime from,
                                         @Param("until") LocalDateTime until);
 
-    /** Bookings kojima je forecastSentAt između zadatih trenutaka (za digest — šta je danas poslato). */
+    /** Bookings kojima je forecastSentAt između zadatih trenutaka (za digest - šta je danas poslato). */
     @Query("SELECT b FROM Booking b WHERE b.forecastSentAt >= :from AND b.forecastSentAt < :until")
     List<Booking> findForecastSentBetween(@Param("from") LocalDateTime from,
                                           @Param("until") LocalDateTime until);
 
     /**
      * CONFIRMED bookingovi sa Reveal Box-om koji još nisu poslati,
-     * a polazak je za <= 5 dana — digest treba da podseti tim.
+     * a polazak je za <= 5 dana - digest treba da podseti tim.
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.hasRevealBox = true " +
@@ -137,7 +137,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
      * - reveal poslan (revealSentAt IS NOT NULL)
      * - airline booking code unet (nije null niti prazan string)
-     * Napomena: forecastSentAt nije uslov — forecast može biti propušten ako je
+     * Napomena: forecastSentAt nije uslov - forecast može biti propušten ako je
      * booking potvrđen unutar T-4 dana pre polaska (scheduler ga ne stigne poslati).
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +

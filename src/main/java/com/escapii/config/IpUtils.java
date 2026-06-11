@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 /**
  * Zajednička logika za ekstrakciju pravog client IP-a.
  *
- * Uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted reverse proxy
+ * Uzima POSLEDNJI unos iz X-Forwarded-For - taj dodaje naš trusted reverse proxy
  * (Render/Railway), pa klijent ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
  *
  * Primer: klijent šalje "X-Forwarded-For: fake-ip"
@@ -21,7 +21,7 @@ public final class IpUtils {
     private static final Pattern IPV4 = Pattern.compile(
             "^(\\d{1,3}\\.){3}\\d{1,3}$");
 
-    /** IPv6: kompletna forma i skraćena forma s :: — max 45 znakova */
+    /** IPv6: kompletna forma i skraćena forma s :: - max 45 znakova */
     private static final Pattern IPV6 = Pattern.compile(
             "^[0-9a-fA-F:]{2,45}$");
 

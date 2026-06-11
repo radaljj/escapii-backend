@@ -42,14 +42,14 @@ public class WaitlistController {
                     .body(Map.of("error", "Nepoznat aerodrom."));
         }
 
-        // Uvek vraćamo isti odgovor — sprečava enumeraciju registrovanih email adresa
+        // Uvek vraćamo isti odgovor - sprečava enumeraciju registrovanih email adresa
         waitlistService.subscribe(email, airport);
         return ResponseEntity.ok(Map.of("status", "subscribed"));
     }
 
     // ── Admin endpointi ───────────────────────────────────────────────────────
 
-    /** GET /api/admin/waitlist — lista svih čekajućih po aerodromu. */
+    /** GET /api/admin/waitlist - lista svih čekajućih po aerodromu. */
     @GetMapping("/api/admin/waitlist")
     public ResponseEntity<Map<String, Object>> getWaitlist() {
         return ResponseEntity.ok(waitlistService.getWaitlistSummary());

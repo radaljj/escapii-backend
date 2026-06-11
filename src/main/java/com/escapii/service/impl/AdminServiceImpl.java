@@ -108,7 +108,7 @@ public class AdminServiceImpl implements AdminService {
                     "Datum povratka mora biti posle datuma polaska");
         }
 
-        // Izračunaj numberOfNights automatski — ne primamo od klijenta da ne bi bilo nekonzistentnosti
+        // Izračunaj numberOfNights automatski - ne primamo od klijenta da ne bi bilo nekonzistentnosti
         int calculatedNights = (int) java.time.temporal.ChronoUnit.DAYS.between(
                 req.getDepartureDate(), req.getReturnDate());
 
@@ -224,7 +224,7 @@ public class AdminServiceImpl implements AdminService {
         List<AdminBookingResponse> responses = adminBookingMapper.toResponseList(
                 bookingRepository.findAllByOrderByCreatedAtDesc());
 
-        // Batch fetch reveal events — jedan upit za sve rezervacije
+        // Batch fetch reveal events - jedan upit za sve rezervacije
         List<String> refs = responses.stream().map(AdminBookingResponse::getBookingRef).toList();
         Map<String, java.time.LocalDateTime> revealedMap = revealEventRepository
                 .findAllByBookingRefIn(refs).stream()
@@ -257,7 +257,7 @@ public class AdminServiceImpl implements AdminService {
         // Reversujemo usedAmount za iznos koji je bio primenjen u ovom bookingu.
         // RESERVED → ACTIVE (u potpunosti oslobađamo reserve).
         // ACTIVE sa usedAmount > 0 → smanjujemo usedAmount (delimično oslobađamo).
-        // USED vaučer se NE menja — putovanje je završeno pre brisanja.
+        // USED vaučer se NE menja - putovanje je završeno pre brisanja.
         String voucherCode = booking.getAppliedVoucherCode();
         if (voucherCode != null) {
             giftVoucherRepository.findByCode(voucherCode).ifPresent(v -> {
@@ -277,7 +277,7 @@ public class AdminServiceImpl implements AdminService {
                     log.info("[Voucher] {} → usedAmount reversovano za {}€ (booking {} obrisan), novo usedAmount={}€",
                             v.getCode(), booking.getVoucherDiscount(), booking.getBookingRef(), v.getUsedAmount());
                 }
-                // USED vaučer ostaje USED — putovanje je završeno, vaučer je trajno iskorišćen
+                // USED vaučer ostaje USED - putovanje je završeno, vaučer je trajno iskorišćen
             });
         }
 
@@ -289,7 +289,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AdminBookingResponse updateBookingStatus(Long id, BookingStatus status) {
-        // findWithDetailsById — učitava sve LAZY asocijacije (excluded destinations, passengers)
+        // findWithDetailsById - učitava sve LAZY asocijacije (excluded destinations, passengers)
         // da bi @Async email servis mogao da pristupi njima van transakcije
         Booking booking = bookingRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -313,19 +313,19 @@ public class AdminServiceImpl implements AdminService {
         // COMPLETED : ako je vaučer u potpunosti potrošen (RESERVED) → postaje USED.
         //             ako je delimično potrošen (ACTIVE) → ostaje ACTIVE, nema promene.
         // CANCELLED : reversujemo usedAmount za ovaj booking; vaučer → ACTIVE.
-        // PENDING / CONFIRMED — nema promene.
+        // PENDING / CONFIRMED - nema promene.
         if (saved.getAppliedVoucherCode() != null) {
             giftVoucherRepository.findByCode(saved.getAppliedVoucherCode()).ifPresent(v -> {
                 if (status == BookingStatus.COMPLETED) {
                     if (v.getStatus() == VoucherStatus.RESERVED) {
-                        // Vaučer je bio u potpunosti potrošen — finalizuj kao USED
+                        // Vaučer je bio u potpunosti potrošen - finalizuj kao USED
                         v.setStatus(VoucherStatus.USED);
                         v.setUsedAt(LocalDateTime.now());
                         giftVoucherRepository.save(v);
                         log.info("[Voucher] {} → USED (booking {} COMPLETED, {}€ od {}€ potrošeno)",
                                 v.getCode(), saved.getBookingRef(), v.getUsedAmount(), v.getAmount());
                     }
-                    // Delimično potrošen (ACTIVE) — ostaje ACTIVE, usedAmount je već tačan
+                    // Delimično potrošen (ACTIVE) - ostaje ACTIVE, usedAmount je već tačan
                 } else if (status == BookingStatus.CANCELLED) {
                     // Reversiraj usedAmount za ovaj booking
                     Integer disc = saved.getVoucherDiscount();
@@ -341,7 +341,7 @@ public class AdminServiceImpl implements AdminService {
                     log.info("[Voucher] {} → ACTIVE (booking {} CANCELLED, reversovano {}€, novo usedAmount={}€)",
                             v.getCode(), saved.getBookingRef(), saved.getVoucherDiscount(), v.getUsedAmount());
                 }
-                // PENDING / CONFIRMED — nema promene
+                // PENDING / CONFIRMED - nema promene
             });
         }
 
@@ -551,7 +551,7 @@ public class AdminServiceImpl implements AdminService {
         date.setAvailableSlots(req.travelers());
         date.setBasePrice(req.pricePerPerson());
         date.setActive(true);
-        // Odmah privatan — nikad nije javno vidljiv
+        // Odmah privatan - nikad nije javno vidljiv
         date.setIsPrivate(true);
         date.setPrivateToken(TokenUtils.generate());
         date.setExpiresAt(LocalDateTime.now().plusHours(req.effectiveExpiry()));

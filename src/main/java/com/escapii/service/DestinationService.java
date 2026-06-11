@@ -10,7 +10,7 @@ public interface DestinationService {
     /** Sve aktivne destinacije, opciono filtrirane po aerodromu polaska. */
     List<Destination> getActiveDestinations(String airport);
 
-    /** Sve destinacije (uključuje i neaktivne) — za carousel. */
+    /** Sve destinacije (uključuje i neaktivne) - za carousel. */
     List<Destination> getAllDestinations();
 
     List<CountryDto> fetchCountries();

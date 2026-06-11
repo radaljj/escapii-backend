@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - POST /api/gifts/vouchers:         max 3 zahteva po IP na sat
  * - POST /api/gifts/vouchers/validate: max 5 zahteva po IP na 15 minuta
  *
- * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For — taj dodaje naš trusted proxy
+ * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For - taj dodaje naš trusted proxy
  * (Render/Railway), pa korisnik ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
  */
 @Slf4j
@@ -83,7 +83,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  GIFT_TRIP_MAX         = 3;
     private static final long GIFT_TRIP_WINDOW      = 60 * 60 * 1000L; // 1 sat
 
-    // Maksimalni prozor — za cleanup: ne čuvamo ništa starije od ovoga
+    // Maksimalni prozor - za cleanup: ne čuvamo ništa starije od ovoga
     private static final long MAX_WINDOW       = 60 * 60 * 1000L;      // 1 sat
 
     private final Map<String, Queue<Long>> bookingLog      = new ConcurrentHashMap<>();
@@ -243,7 +243,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Periodično čisti stare unose iz rate-limit mapa — svakih sat vremena.
+     * Periodično čisti stare unose iz rate-limit mapa - svakih sat vremena.
      * Sprečava neograničen rast memorije pri velikom broju unikatnih IP-ova.
      */
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena

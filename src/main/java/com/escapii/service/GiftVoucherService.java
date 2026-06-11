@@ -14,14 +14,14 @@ public interface GiftVoucherService {
     GiftVoucherResponse createVoucher(GiftVoucherRequest request);
 
     /**
-     * Validira vaučer kod — javni endpoint.
+     * Validira vaučer kod - javni endpoint.
      * Vraća amount ako je ACTIVE i nije istekao, inače uniformnu grešku.
      * Nikad ne otkriva razlog neuspešne validacije.
      */
     GiftVoucherValidateResponse validate(GiftVoucherValidateRequest request);
 
     /**
-     * Reveal za primaoca — vraća detalje vaučera ako je ACTIVE.
+     * Reveal za primaoca - vraća detalje vaučera ako je ACTIVE.
      * Javni endpoint, rate limited. Vraća ime davaoca i poruku ali NE email.
      */
     GiftVoucherRevealResponse reveal(String code);

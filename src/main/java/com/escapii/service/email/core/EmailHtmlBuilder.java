@@ -5,7 +5,7 @@ import com.escapii.model.AccommodationType;
 import java.time.format.DateTimeFormatter;
 
 /**
- * v2 — Light-first email shell (cream header, dark text).
+ * v2 - Light-first email shell (cream header, dark text).
  */
 public final class EmailHtmlBuilder {
 
@@ -31,7 +31,7 @@ public final class EmailHtmlBuilder {
 
     public static String wrapBase(
         String accentBarColor,
-        String headerBg,      // ignorisano u v2 — uvek cream
+        String headerBg,      // ignorisano u v2 - uvek cream
         String badgeHtml,
         String headingText,
         String subheading,
@@ -182,7 +182,7 @@ public final class EmailHtmlBuilder {
 
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#1a1410;">escapii</strong> — putovanja iznenađenja<br>
+            <strong style="color:#1a1410;">escapii</strong> - putovanja iznenađenja<br>
             Beograd, Srbija · <a href="mailto:%s" style="color:#a85e44;text-decoration:none;font-weight:600;">%s</a><br><br>
             <a href="https://escapii.rs" style="color:#a85e44;text-decoration:none;font-weight:600;">escapii.rs</a>
             """.formatted(email, email);

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Javni endpoint za slanje upita o custom terminu.
- * Korisnik bira datum koji ne postoji u ponudi — upit stiže adminu na pregled.
+ * Korisnik bira datum koji ne postoji u ponudi - upit stiže adminu na pregled.
  */
 @RestController
 @RequestMapping("/api/inquiries")

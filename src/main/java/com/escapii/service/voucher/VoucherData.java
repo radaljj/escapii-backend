@@ -9,8 +9,8 @@ import java.time.LocalDate;
  * @param voucherCode     Jedinstveni kod (npr. "ESC-A3KM-P2HT-X9QR")
  * @param issuedAt        Datum izdavanja (aktivacije)
  * @param expiresAt       Datum isteka (issuedAt + 12 meseci)
- * @param buyerName       Ime kupca — ispisuje se na vaučeru
- * @param personalMessage Lična poruka kupca (može biti null/prazno — blok se sakriva)
+ * @param buyerName       Ime kupca - ispisuje se na vaučeru
+ * @param personalMessage Lična poruka kupca (može biti null/prazno - blok se sakriva)
  */
 public record VoucherData(
     int amount,

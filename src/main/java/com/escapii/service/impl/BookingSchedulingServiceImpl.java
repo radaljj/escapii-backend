@@ -91,7 +91,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 });
             }
         }
-        log.info("[Scheduler] Auto-cancel završen — otkazano {} rezervacija.", stale.size());
+        log.info("[Scheduler] Auto-cancel završen - otkazano {} rezervacija.", stale.size());
     }
 
     @Override
@@ -107,7 +107,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             b.setStatus(BookingStatus.COMPLETED);
             bookingRepository.save(b);
 
-            // Trajno označi vaučer kao iskorišćen — putovanje završeno
+            // Trajno označi vaučer kao iskorišćen - putovanje završeno
             if (b.getAppliedVoucherCode() != null) {
                 giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
                     if (v.getStatus() == VoucherStatus.RESERVED) {
@@ -119,7 +119,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 });
             }
         }
-        log.info("[Scheduler] Auto-complete završen — zatvoreno {} rezervacija.", ready.size());
+        log.info("[Scheduler] Auto-complete završen - zatvoreno {} rezervacija.", ready.size());
     }
 
     @Override
@@ -137,7 +137,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         validateIsAssignedDestination(booking.getAssignedDestination());
 
 
-        // Validiraj X-Frontend-Url da nije open redirect — mora biti u dozvoljenim originima
+        // Validiraj X-Frontend-Url da nije open redirect - mora biti u dozvoljenim originima
         String validatedUrl = validateFrontendUrl(siteUrl);
 
         if (booking.getRevealToken() == null) {
@@ -215,7 +215,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             return normalized;
         }
 
-        log.warn("[Security] X-Frontend-Url '{}' nije u dozvoljenim originima — koristi se default", siteUrl);
+        log.warn("[Security] X-Frontend-Url '{}' nije u dozvoljenim originima - koristi se default", siteUrl);
         return defaultFrontendUrl;
     }
 
@@ -278,7 +278,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
         for (Booking booking : readyList) {
             try {
-                // Ako korisnik ima Reveal Box — preskačemo auto email reveal
+                // Ako korisnik ima Reveal Box - preskačemo auto email reveal
                 if (Boolean.TRUE.equals(booking.getHasRevealBox())) {
                     continue;
                 }
@@ -308,7 +308,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         if (assignedDestination == null || assignedDestination.isBlank()) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Destinacija nije unesena — unesi je pre slanja prognoze.");
+                "Destinacija nije unesena - unesi je pre slanja prognoze.");
         }
     }
 }

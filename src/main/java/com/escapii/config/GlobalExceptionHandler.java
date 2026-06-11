@@ -37,13 +37,13 @@ public class GlobalExceptionHandler {
     /** Pogrešan HTTP metod (npr. GET na /api/booking). */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
-        log.warn("[API] Pogrešan metod: {} — dozvoljeno: {}", ex.getMethod(), ex.getSupportedMethods());
+        log.warn("[API] Pogrešan metod: {} - dozvoljeno: {}", ex.getMethod(), ex.getSupportedMethods());
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(Map.of("error", "HTTP metod nije podržan: " + ex.getMethod()));
     }
 
-    /** Validacione greške — @Valid na BookingRequest. */
+    /** Validacione greške - @Valid na BookingRequest. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Race condition — dva korisnika istovremeno menjaju isti termin.
+     * Race condition - dva korisnika istovremeno menjaju isti termin.
      * Hibernate baca ovo kada @Version kolona ne odgovara.
      */
     @ExceptionHandler({
@@ -76,10 +76,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Termin je upravo izmenjen od strane drugog korisnika. Molimo osvežite stranicu i pokušajte ponovo."));
     }
 
-    /** Poslovne greške — termin ne postoji, destinacija ne postoji, itd. */
+    /** Poslovne greške - termin ne postoji, destinacija ne postoji, itd. */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleBusinessException(ResponseStatusException ex) {
-        log.warn("[Poslovna greška] {} — {}", ex.getStatusCode(), ex.getReason());
+        log.warn("[Poslovna greška] {} - {}", ex.getStatusCode(), ex.getReason());
         return ResponseEntity
                 .status(ex.getStatusCode())
                 .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Greška"));
@@ -100,10 +100,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Neispravan parametar: " + message));
     }
 
-    /** Nepredviđene greške — 500. Beleži u bazu i šalje email (samo nova pojava). */
+    /** Nepredviđene greške - 500. Beleži u bazu i šalje email (samo nova pojava). */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex, HttpServletRequest request) {
-        // Endpoint izvlačimo SINHRONO — request se reciklira pre nego što async thread počne
+        // Endpoint izvlačimo SINHRONO - request se reciklira pre nego što async thread počne
         String endpoint = request.getMethod() + " " + request.getRequestURI();
         log.error("[GREŠKA] Neočekivana greška na {}: {}", endpoint, ex.getMessage(), ex);
         if (appErrorService != null) {

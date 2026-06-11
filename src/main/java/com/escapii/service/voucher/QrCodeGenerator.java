@@ -23,7 +23,7 @@ import java.util.Map;
 public class QrCodeGenerator {
 
     // Brand boje QR koda
-    private static final int DARK  = 0xFF0F2D35; // ARGB — tamnoplava Escapii
+    private static final int DARK  = 0xFF0F2D35; // ARGB - tamnoplava Escapii
     private static final int LIGHT = 0xFFFFFFFF;
 
     /**

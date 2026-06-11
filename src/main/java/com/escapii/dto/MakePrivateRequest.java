@@ -23,7 +23,7 @@ public record MakePrivateRequest(
     Integer expiresInHours,
 
     /**
-     * Cena po osobi u EUR — ako je postavljeno, prepisuje basePrice termina.
+     * Cena po osobi u EUR - ako je postavljeno, prepisuje basePrice termina.
      * Admin unosi cenu iz upita (inquiry.price / travelers).
      * Null = zadržati originalnu cenu termina.
      */

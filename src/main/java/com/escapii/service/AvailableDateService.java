@@ -16,7 +16,7 @@ public interface AvailableDateService {
     AvailableDate getPrivateDateByToken(String token);
 
     /**
-     * Pravi termin privatnim — generiše token, postavlja availableSlots i expiresAt.
+     * Pravi termin privatnim - generiše token, postavlja availableSlots i expiresAt.
      * Koristi se iz admin panela kada admin prihvati upit i hoće da pošalje link.
      */
     /**

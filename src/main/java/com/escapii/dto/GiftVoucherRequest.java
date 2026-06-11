@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 /**
  * Zahtev za kupovinu gift vaučera.
  * Kupac bira iznos, unosi email i opciono ime koje će pisati na vaučeru,
- * kao i ličnu poruku. PDF vaučer se šalje isključivo na buyerEmail —
+ * kao i ličnu poruku. PDF vaučer se šalje isključivo na buyerEmail -
  * kupac ga sam prosljeđuje kome želi.
  */
 public record GiftVoucherRequest(

@@ -20,7 +20,7 @@ public interface PriceCalculator {
      *     cabinSuitcaseCount × 100
      */
     /**
-     * @param departureAirport  IATA kod aerodroma — utiče na pravila isključivanja
+     * @param departureAirport  IATA kod aerodroma - utiče na pravila isključivanja
      *                          (INI: max 1, sve plaćeno 15€/os; ostali: max 4, 1. gratis)
      */
     PricePreviewResponse calculate(

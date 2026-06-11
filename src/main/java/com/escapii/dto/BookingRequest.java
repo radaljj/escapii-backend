@@ -63,7 +63,7 @@ public class BookingRequest {
     private boolean hasInsurance         = false; // +20€/pp
     private boolean hasBreakfast         = false; // +15€/pp
     private boolean hasSeatsTogether     = false; // +24€/pp (12€/smer × 2 smera)
-    private boolean hasConnectingFlights = false; // besplatno — saglasnost na presedanje
+    private boolean hasConnectingFlights = false; // besplatno - saglasnost na presedanje
 
     // ── Korak 7: Putnici (ime + pasoš) ───────────────────────────────
 
@@ -99,7 +99,7 @@ public class BookingRequest {
 
     // ── Anti-bot zaštita ──────────────────────────────────────────────
 
-    /** Honeypot — mora biti prazan. Bots ga popune, korisnici ne vide polje. */
+    /** Honeypot - mora biti prazan. Bots ga popune, korisnici ne vide polje. */
     private String website;
 
     /** Vreme popunjavanja forme u sekundama. Ispod praga = bot. */
@@ -110,7 +110,7 @@ public class BookingRequest {
     /** Korisnik želi fizički Reveal Box (+25€ flat). */
     private boolean hasRevealBox = false;
 
-    /** Adresa dostave — obavezno ako hasRevealBox=true. */
+    /** Adresa dostave - obavezno ako hasRevealBox=true. */
     @Size(max = 300, message = "Adresa ne sme biti duža od 300 karaktera")
     private String deliveryAddress;
 
@@ -175,7 +175,7 @@ public class BookingRequest {
         private LocalDate dateOfBirth;
 
         /**
-         * Slobodan tekst — za koje države putnik ima aktivnu vizu.
+         * Slobodan tekst - za koje države putnik ima aktivnu vizu.
          * Opciono (prazno = nema vize osim standardnih srpskih).
          */
         @Size(max = 500, message = "Informacija o vizi ne sme biti duža od 500 karaktera")

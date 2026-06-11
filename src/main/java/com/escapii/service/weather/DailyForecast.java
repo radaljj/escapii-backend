@@ -3,7 +3,7 @@ package com.escapii.service.weather;
 import java.time.LocalDate;
 
 /**
- * Prognoza za jedan dan — bez ikakvog podatka o destinaciji.
+ * Prognoza za jedan dan - bez ikakvog podatka o destinaciji.
  */
 public record DailyForecast(
         LocalDate date,

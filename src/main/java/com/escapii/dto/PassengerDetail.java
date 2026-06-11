@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 /**
- * Detalji jednog putnika — koristi se u AdminBookingResponse.
+ * Detalji jednog putnika - koristi se u AdminBookingResponse.
  * Sadrži sve podatke koje putnik unosi pri rezervaciji.
  */
 @Getter

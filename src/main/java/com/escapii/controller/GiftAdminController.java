@@ -13,8 +13,8 @@ import java.util.List;
  * Zaštićeni X-Admin-Key headerom (AdminKeyFilter).
  *
  * GET    /api/admin/gifts/vouchers
- * PATCH  /api/admin/gifts/vouchers/{id}/activate   — PENDING → ACTIVE, šalje email primaocu
- * PATCH  /api/admin/gifts/vouchers/{id}/mark-used  — ACTIVE → USED
+ * PATCH  /api/admin/gifts/vouchers/{id}/activate   - PENDING → ACTIVE, šalje email primaocu
+ * PATCH  /api/admin/gifts/vouchers/{id}/mark-used  - ACTIVE → USED
  */
 @RestController
 @RequestMapping("/api/admin/gifts")
@@ -23,7 +23,7 @@ public class GiftAdminController {
 
     private final GiftVoucherService voucherService;
 
-    /** GET /api/admin/gifts/vouchers — svi vaučeri, sortirano po datumu kreiranja desc. */
+    /** GET /api/admin/gifts/vouchers - svi vaučeri, sortirano po datumu kreiranja desc. */
     @GetMapping("/vouchers")
     public ResponseEntity<List<GiftVoucherResponse>> getAllVouchers() {
         return ResponseEntity.ok(voucherService.getAllVouchers());
