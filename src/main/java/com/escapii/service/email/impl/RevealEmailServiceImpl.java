@@ -87,12 +87,15 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             false
         );
 
-        sender.send(
+        boolean sent = sender.send(
             booking.getEmail(),
             "✉ Tvoja destinacija je spremna - otkrij je! | Escapii",
             html
         );
 
+        if (!sent) {
+            throw new RuntimeException("[Reveal] Email slanje nije uspelo za " + booking.getBookingRef());
+        }
         log.info("[Reveal] Email poslan korisniku {} za rezervaciju {}",
                 LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
     }

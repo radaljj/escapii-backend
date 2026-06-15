@@ -142,7 +142,7 @@ public class BookingServiceImpl implements BookingService {
         GiftVoucher appliedVoucher = null;
         if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
             String code = request.getVoucherCode().trim().toUpperCase();
-            GiftVoucher voucher = giftVoucherRepository.findByCode(code).orElse(null);
+            GiftVoucher voucher = giftVoucherRepository.findByCodeForUpdate(code).orElse(null);
             if (voucher != null
                     && voucher.getStatus() == VoucherStatus.ACTIVE
                     && (voucher.getExpiresAt() == null || voucher.getExpiresAt().isAfter(java.time.LocalDateTime.now()))) {

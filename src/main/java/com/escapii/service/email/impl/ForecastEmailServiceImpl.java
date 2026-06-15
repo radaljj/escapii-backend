@@ -35,7 +35,10 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
         String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
 
-        sender.send(booking.getEmail(), subject, html);
+        boolean sent = sender.send(booking.getEmail(), subject, html);
+        if (!sent) {
+            throw new RuntimeException("[Forecast] Email slanje nije uspelo za " + booking.getBookingRef());
+        }
         log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
     }
 
