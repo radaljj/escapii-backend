@@ -79,14 +79,22 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             bookingRepository.save(b);
             log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
 
-            // Oslobodi vaučer ako je postojao
+            // Oslobodi vaučer ako je postojao - reversiraj usedAmount i postavi ACTIVE
             if (b.getAppliedVoucherCode() != null) {
                 giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
-                    if (v.getStatus() == VoucherStatus.RESERVED) {
+                    if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
+                        Integer disc = b.getVoucherDiscount();
+                        if (disc != null && disc > 0) {
+                            java.math.BigDecimal reversed = v.getUsedAmount()
+                                    .subtract(java.math.BigDecimal.valueOf(disc));
+                            v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
+                                    ? java.math.BigDecimal.ZERO : reversed);
+                        }
                         v.setStatus(VoucherStatus.ACTIVE);
                         v.setUsedInBookingRef(null);
                         giftVoucherRepository.save(v);
-                        log.info("[Voucher] {} → ACTIVE (auto-cancel booking {})", v.getCode(), b.getBookingRef());
+                        log.info("[Voucher] {} → ACTIVE (auto-cancel booking {}, reversovano {}€)",
+                                v.getCode(), b.getBookingRef(), disc);
                     }
                 });
             }
