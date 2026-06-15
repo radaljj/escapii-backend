@@ -252,11 +252,10 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     continue;
                 }
 
-                booking.setForecastSentAt(LocalDateTime.now());
-                bookingRepository.save(booking);
-
                 forecastEmailService.sendForecastEmail(booking, forecast.get());
 
+                booking.setForecastSentAt(LocalDateTime.now());
+                bookingRepository.save(booking);
                 sent.add(booking);
                 log.info("[Forecast] {} → dest='{}' dana={}",
                         booking.getBookingRef(),
@@ -285,12 +284,12 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
                 if (booking.getRevealToken() == null) {
                     booking.setRevealToken(TokenUtils.generate());
+                    bookingRepository.saveAndFlush(booking); // token mora biti u bazi pre nego korisnik klikne link
                 }
-                booking.setRevealSentAt(LocalDateTime.now());
-                bookingRepository.save(booking);
-
                 revealEmailService.sendRevealEmail(booking);
 
+                booking.setRevealSentAt(LocalDateTime.now());
+                bookingRepository.save(booking);
                 sent.add(booking);
                 log.info("[Reveal] {} → {}", booking.getBookingRef(), booking.getAssignedDestination());
             } catch (Exception e) {

@@ -27,13 +27,11 @@ public class RevealEmailServiceImpl implements RevealEmailService {
     // ── Reveal email korisniku ───────────────────────────────────────────────
 
     @Override
-    @Async
     public void sendRevealEmail(Booking booking) {
         sendRevealEmail(booking, frontendUrl);
     }
 
     @Override
-    @Async
     public void sendRevealEmail(Booking booking, String siteUrl) {
         String usedUrl   = (siteUrl != null && !siteUrl.isBlank()) ? siteUrl : frontendUrl;
         String firstName = EmailHtmlBuilder.esc(booking.getFirstName());

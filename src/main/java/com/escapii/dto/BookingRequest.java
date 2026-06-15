@@ -132,6 +132,14 @@ public class BookingRequest {
     @Size(max = 20)
     private String voucherCode;
 
+    @AssertTrue(message = "Adresa, grad i telefon za dostavu su obavezni kada je Reveal Box odabran")
+    public boolean isDeliveryComplete() {
+        if (!hasRevealBox) return true;
+        return deliveryAddress != null && !deliveryAddress.isBlank()
+            && deliveryCity    != null && !deliveryCity.isBlank()
+            && deliveryPhone   != null && !deliveryPhone.isBlank();
+    }
+
     /**
      * Normalizuje string polja pre čuvanja:
      *   - trim whitespace sa svih polja
