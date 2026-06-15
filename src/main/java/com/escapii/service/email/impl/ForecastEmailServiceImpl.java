@@ -25,22 +25,18 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
     @Override
     public void sendForecastEmail(Booking booking, List<DailyForecast> forecast) {
-        try {
-            String firstName = EmailHtmlBuilder.esc(booking.getFirstName());
-            LocalDate depDate = booking.getSelectedDate().getDepartureDate();
-            LocalDate retDate = booking.getSelectedDate().getReturnDate();
-            String depDateStr = depDate.format(EmailHtmlBuilder.DATE_FMT);
+        String firstName = EmailHtmlBuilder.esc(booking.getFirstName());
+        LocalDate depDate = booking.getSelectedDate().getDepartureDate();
+        LocalDate retDate = booking.getSelectedDate().getReturnDate();
+        String depDateStr = depDate.format(EmailHtmlBuilder.DATE_FMT);
 
-            DailyForecast today = forecast.get(0);
-            String subject = "🌤 Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
-            long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
-            String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
+        DailyForecast today = forecast.get(0);
+        String subject = "🌤 Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
+        long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
+        String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
 
-            sender.send(booking.getEmail(), subject, html);
-            log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
-        } catch (Exception e) {
-            log.error("[Forecast] ❌ Greška pri slanju za {}: {}", booking.getBookingRef(), e.getMessage(), e);
-        }
+        sender.send(booking.getEmail(), subject, html);
+        log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
     }
 
     // ── HTML template ─────────────────────────────────────────────────────────
