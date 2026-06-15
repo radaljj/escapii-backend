@@ -129,6 +129,11 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Booking nije pronađen."));
 
+        if (Boolean.TRUE.equals(booking.getHasRevealBox())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ova rezervacija ima Reveal Box - destinacija se ne otkriva emailom.");
+        }
         if (booking.getRevealSentAt() != null) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
