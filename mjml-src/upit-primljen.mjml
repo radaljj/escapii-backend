@@ -156,8 +156,8 @@
                     <div style="width:30px;height:30px;background:#a85e44;border-radius:50%;text-align:center;line-height:30px;font-size:13px;font-weight:800;color:#fff;">4</div>
                   </td>
                   <td style="padding-left:12px;vertical-align:top;">
-                    <div style="font-size:14px;color:#1a1410;font-weight:600;margin-bottom:2px;">Koverta s destinacijom — <strong style="color:#2D5F6B;">48h pre polaska</strong></div>
-                    <div style="font-size:13px;color:#6b5d4f;line-height:1.55;">Koverta otkriva gde putujete. ✉</div>
+                    <div style="font-size:14px;color:#1a1410;font-weight:600;margin-bottom:2px;">{{REVEAL_STEP_TITLE}} — <strong style="color:#2D5F6B;">48h pre polaska</strong></div>
+                    <div style="font-size:13px;color:#6b5d4f;line-height:1.55;">{{REVEAL_STEP_DESC}}</div>
                   </td>
                 </tr>
               </table>

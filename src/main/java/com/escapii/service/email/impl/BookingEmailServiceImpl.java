@@ -239,10 +239,18 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
 
+        boolean revealBox = Boolean.TRUE.equals(booking.getHasRevealBox());
+        String revealTitle = revealBox ? "Iznenađenje na tvojoj adresi" : "Koverta s destinacijom";
+        String revealDesc  = revealBox
+            ? "Reveal Box stiže na tvoju adresu i otkriva gde putuješ. 📦"
+            : "Koverta otkriva gde putujete. ✉";
+
         return loadEmailTemplate("upit-primljen.html")
             .replace("{{FIRST_NAME}}",        EmailHtmlBuilder.esc(booking.getFirstName()))
             .replace("{{REF_CODE}}",           EmailHtmlBuilder.esc(booking.getBookingRef()))
             .replace("{{BOARDING_PASS_HTML}}", buildBoardingPassBlock(booking, depDate, retDate, n))
+            .replace("{{REVEAL_STEP_TITLE}}",  revealTitle)
+            .replace("{{REVEAL_STEP_DESC}}",   revealDesc)
             .replace("{{PASSENGERS_HTML}}",    buildPassengersSection(booking))
             .replace("{{TOTAL_BOX_HTML}}",     EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
             .replace("{{PRICE_TABLE_HTML}}",   buildPriceTable(booking, n))
@@ -316,9 +324,12 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 weatherStr + " · 7 dana pre polaska",
                 "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
             EmailHtmlBuilder.timelineItem("✉", "#eaf0f3", "#2D5F6B",
-                "Koverta s destinacijom",
+                Boolean.TRUE.equals(booking.getHasRevealBox())
+                    ? "Iznenađenje na tvojoj adresi" : "Koverta s destinacijom",
                 revealStr + " · 48h pre polaska",
-                "Konačno - otkrivate gde idete!"),
+                Boolean.TRUE.equals(booking.getHasRevealBox())
+                    ? "Reveal Box stiže na tvoju adresu i otkriva gde putujete! 📦"
+                    : "Konačno - otkrivate gde idete!"),
             EmailHtmlBuilder.timelineItem("✈", "#f5efe2", "#ebe1cf",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
