@@ -736,7 +736,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (n == 1)
             rows.append(priceRow("Doplata za solo putnika", "-", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));
         if (Boolean.TRUE.equals(booking.getHasRevealBox()))
-            rows.append(priceRow("📦 Reveal Box (koverat na adresu)", "-", null, PriceCalculatorImpl.REVEAL_BOX_FLAT, true));
+            rows.append(priceRow("📦 Reveal Box (iznenađenje na tvojoj adresi)", "-", null, PriceCalculatorImpl.REVEAL_BOX_FLAT, true));
 
         // ── Vaučer popust ──────────────────────────────────────────────
         boolean hasVoucher = booking.getAppliedVoucherCode() != null
