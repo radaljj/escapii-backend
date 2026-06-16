@@ -134,6 +134,34 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                          @Param("until") LocalDate until);
 
     /**
+     * CONFIRMED bookingovi kojima je reveal email poslan i korisnik je otvorio reveal stranicu
+     * (RevealEvent postoji) — tim treba da pošalje potvrdu leta i smeštaja.
+     * Isključeni: Reveal Box rezervacije (oni dobijaju fizičku kutiju, ne email reveal).
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.revealSentAt IS NOT NULL " +
+           "AND b.hasRevealBox = false " +
+           "AND b.selectedDate.returnDate >= :today " +
+           "AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r) " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findRevealedAndViewed(@Param("today") LocalDate today);
+
+    /**
+     * CONFIRMED bookingovi kojima je reveal email poslan ALI korisnik NIJE otvorio reveal stranicu,
+     * a polazak je za <= 2 dana — hitno upozorenje u digestu.
+     * Isključeni: Reveal Box rezervacije.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.revealSentAt IS NOT NULL " +
+           "AND b.hasRevealBox = false " +
+           "AND b.selectedDate.departureDate >= :today " +
+           "AND b.selectedDate.departureDate <= :cutoff " +
+           "AND b.bookingRef NOT IN (SELECT r.bookingRef FROM RevealEvent r) " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findRevealedButNotViewed(@Param("today") LocalDate today,
+                                            @Param("cutoff") LocalDate cutoff);
+
+    /**
      * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
      * - reveal poslan (revealSentAt IS NOT NULL)
      * - airline booking code unet (nije null niti prazan string)

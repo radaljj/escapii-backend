@@ -8,15 +8,19 @@ import java.util.List;
 public interface DigestEmailService {
 
     /**
-     * @param today            današnji datum
-     * @param revealsSent      booking-ovi kojima je reveal email poslan danas
-     * @param forecastDue      booking-ovi kojima je prognoza danas
-     * @param upcoming         sve CONFIRMED rezervacije u narednih 14 dana
-     * @param revealBoxPending booking-ovi sa Reveal Box-om koji još nisu poslati (polazak ≤ 5 dana)
+     * @param today              današnji datum
+     * @param revealsSent        booking-ovi kojima je reveal email poslan danas
+     * @param forecastDue        booking-ovi kojima je prognoza danas
+     * @param upcoming           sve CONFIRMED rezervacije u narednih 14 dana
+     * @param revealBoxPending   booking-ovi sa Reveal Box-om koji još nisu poslati (polazak ≤ 5 dana)
+     * @param revealedAndViewed  booking-ovi kojima je korisnik otvorio reveal stranicu — tim treba da pošalje potvrdu leta/smeštaja
+     * @param notViewedUrgent    booking-ovi kojima je reveal poslan ali korisnik nije otvorio stranicu, polazak ≤ 2 dana
      */
     void sendDailyDigest(LocalDate today,
                          List<Booking> revealsSent,
                          List<Booking> forecastDue,
                          List<Booking> upcoming,
-                         List<Booking> revealBoxPending);
+                         List<Booking> revealBoxPending,
+                         List<Booking> revealedAndViewed,
+                         List<Booking> notViewedUrgent);
 }

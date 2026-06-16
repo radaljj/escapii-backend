@@ -27,10 +27,13 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                                 List<Booking> revealsSent,
                                 List<Booking> forecastDue,
                                 List<Booking> upcoming,
-                                List<Booking> revealBoxPending) {
+                                List<Booking> revealBoxPending,
+                                List<Booking> revealedAndViewed,
+                                List<Booking> notViewedUrgent) {
 
         String todayStr  = today.format(EmailHtmlBuilder.DATE_FMT);
-        boolean hasToday = !revealsSent.isEmpty() || !forecastDue.isEmpty() || !revealBoxPending.isEmpty();
+        boolean hasToday = !revealsSent.isEmpty() || !forecastDue.isEmpty() || !revealBoxPending.isEmpty()
+                        || !revealedAndViewed.isEmpty() || !notViewedUrgent.isEmpty();
 
         StringBuilder body = new StringBuilder();
 
@@ -73,6 +76,26 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                 "#fdf3e7", "#e8c7b1", "#a85e44",
                 revealBoxThead(),
                 revealBoxRows(today, revealBoxPending)
+            ));
+        }
+
+        // ── Korisnik video destinaciju - pošalji potvrdu leta/smeštaja ────────
+        if (!revealedAndViewed.isEmpty()) {
+            body.append(section(
+                "✅ Korisnik video destinaciju - pošalji potvrdu leta i smeštaja (" + revealedAndViewed.size() + ")",
+                "#eef6f0", "#c3d8c9", "#1d6042",
+                viewedThead(),
+                viewedRows(today, revealedAndViewed)
+            ));
+        }
+
+        // ── Hitno: nije video destinaciju, polazak za ≤ 2 dana ───────────────
+        if (!notViewedUrgent.isEmpty()) {
+            body.append(section(
+                "🚨 HITNO: Nije otvorio reveal, polazak za ≤ 2 dana (" + notViewedUrgent.size() + ")",
+                "#fff0f0", "#f5c6c6", "#9b3a2a",
+                notViewedThead(),
+                notViewedRows(today, notViewedUrgent)
             ));
         }
 
@@ -294,6 +317,84 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                     dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
                     EmailHtmlBuilder.esc(address),
                     EmailHtmlBuilder.esc(phone)
+            ));
+        }
+        return sb.toString();
+    }
+
+    // ── Viewed sekcija (korisnik otvorio reveal) ─────────────────────────────
+
+    private String viewedThead() {
+        return thead("Putnik", "Ref", "Aerodrom", "Polazak", "Destinacija", "Email");
+    }
+
+    private String viewedRows(LocalDate today, List<Booking> bookings) {
+        StringBuilder sb = new StringBuilder();
+        for (Booking b : bookings) {
+            LocalDate dep  = b.getSelectedDate().getDepartureDate();
+            long daysLeft  = today.until(dep).getDays();
+            String daysLbl = daysLabel(daysLeft);
+            sb.append("""
+                <tr style="border-bottom:1px solid #ebe1cf;">
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                    <strong style="color:#1d6042;">%s</strong>
+                  </td>
+                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;vertical-align:middle;">
+                    <span style="font-size:12px;color:#1a1410;">%s</span>
+                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#eef6f0;color:#1d6042;">%s</span>
+                  </td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#1d6042;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                    <a href="mailto:%s" style="color:#6b5d4f;text-decoration:none;">%s</a>
+                  </td>
+                </tr>""".formatted(
+                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
+                    EmailHtmlBuilder.esc(b.getBookingRef()),
+                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
+                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
+                    EmailHtmlBuilder.esc(b.getAssignedDestination()),
+                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail())
+            ));
+        }
+        return sb.toString();
+    }
+
+    // ── Not-viewed urgent sekcija ─────────────────────────────────────────────
+
+    private String notViewedThead() {
+        return thead("Putnik", "Ref", "Aerodrom", "Polazak", "Destinacija", "Email");
+    }
+
+    private String notViewedRows(LocalDate today, List<Booking> bookings) {
+        StringBuilder sb = new StringBuilder();
+        for (Booking b : bookings) {
+            LocalDate dep  = b.getSelectedDate().getDepartureDate();
+            long daysLeft  = today.until(dep).getDays();
+            String daysLbl = daysLeft == 0 ? "DANAS!" : daysLeft == 1 ? "SUTRA!" : "za " + daysLeft + " dana";
+            sb.append("""
+                <tr style="border-bottom:1px solid #f5c6c6;background:#fff8f8;">
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                    <strong style="color:#9b3a2a;">%s</strong>
+                  </td>
+                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;vertical-align:middle;">
+                    <span style="font-size:12px;color:#1a1410;">%s</span>
+                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff0f0;color:#9b3a2a;">%s</span>
+                  </td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#9b3a2a;vertical-align:middle;">%s</td>
+                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                    <a href="mailto:%s" style="color:#9b3a2a;text-decoration:none;">%s</a>
+                  </td>
+                </tr>""".formatted(
+                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
+                    EmailHtmlBuilder.esc(b.getBookingRef()),
+                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
+                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
+                    EmailHtmlBuilder.esc(b.getAssignedDestination()),
+                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail())
             ));
         }
         return sb.toString();

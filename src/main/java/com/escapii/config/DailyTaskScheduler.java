@@ -91,13 +91,20 @@ public class DailyTaskScheduler {
         List<Booking> revealSent        = bookingRepository.findRevealSentBetween(startOfDay, endOfDay);
         List<Booking> forecastSent      = bookingRepository.findForecastSentBetween(startOfDay, endOfDay);
         List<Booking> upcoming          = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
-        // Reveal Box podsjetnik - polazak od danas do +5 dana
+        // Reveal Box podsetnik - polazak od danas do +5 dana
         List<Booking> revealBoxPending  = bookingRepository.findPendingRevealBoxes(today, today.plusDays(5));
+        // Korisnik otvorio reveal stranicu - tim treba da pošalje potvrdu leta/smeštaja
+        List<Booking> revealedAndViewed = bookingRepository.findRevealedAndViewed(today);
+        // Korisnik NIJE otvorio reveal, a polazak je za <= 2 dana - hitno upozorenje
+        List<Booking> notViewedUrgent   = bookingRepository.findRevealedButNotViewed(today, today.plusDays(2));
 
-        if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty() || !revealBoxPending.isEmpty()) {
-            digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming, revealBoxPending);
-            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}",
-                    revealSent.size(), forecastSent.size(), upcoming.size(), revealBoxPending.size());
+        if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty()
+                || !revealBoxPending.isEmpty() || !revealedAndViewed.isEmpty() || !notViewedUrgent.isEmpty()) {
+            digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming,
+                    revealBoxPending, revealedAndViewed, notViewedUrgent);
+            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}, Viewed: {}, NotViewed urgent: {}",
+                    revealSent.size(), forecastSent.size(), upcoming.size(),
+                    revealBoxPending.size(), revealedAndViewed.size(), notViewedUrgent.size());
         } else {
             log.info("[Scheduler] Nema aktivnih rezervacija - digest nije poslan.");
         }
