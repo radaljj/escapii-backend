@@ -168,7 +168,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep   = b.getSelectedDate().getDepartureDate();
-            long daysLeft   = today.until(dep).getDays();
+            long daysLeft   = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl  = daysLabel(daysLeft);
             sb.append("""
                 <tr style="border-bottom:1px solid #ebe1cf;">
@@ -207,7 +207,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = today.until(dep).getDays();
+            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl = daysLabel(daysLeft);
             sb.append("""
                 <tr style="border-bottom:1px solid #ebe1cf;">
@@ -245,7 +245,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep      = b.getSelectedDate().getDepartureDate();
-            long daysLeft      = today.until(dep).getDays();
+            long daysLeft      = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl     = daysLabel(daysLeft);
             String badgeCss    = daysLeft <= 5
                     ? "background:#fff5eb;color:#a85e44;"
@@ -292,7 +292,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = today.until(dep).getDays();
+            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl = daysLabel(daysLeft);
             String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "-")
                            + (b.getDeliveryApartment() != null && !b.getDeliveryApartment().isBlank()
@@ -334,7 +334,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = today.until(dep).getDays();
+            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl = daysLabel(daysLeft);
             sb.append("""
                 <tr style="border-bottom:1px solid #ebe1cf;">
@@ -373,7 +373,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
             LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = today.until(dep).getDays();
+            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
             String daysLbl = daysLeft == 0 ? "DANAS!" : daysLeft == 1 ? "SUTRA!" : "za " + daysLeft + " dana";
             sb.append("""
                 <tr style="border-bottom:1px solid #f5c6c6;background:#fff8f8;">
