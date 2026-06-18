@@ -219,6 +219,10 @@ public class Booking {
     @Column(name = "delivery_phone", length = 50)
     private String deliveryPhone;
 
+    /** Dodatne info za dostavu (stan, sprat, interfon...). Opciono. */
+    @Column(name = "delivery_apartment", length = 150)
+    private String deliveryApartment;
+
     /**
      * Admin označi da je Reveal Box fizički poslan korisniku.
      * Ako je true → auto-reveal email se NE šalje (korisnik otvara kutiju).

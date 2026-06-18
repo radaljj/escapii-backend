@@ -293,6 +293,7 @@ public class BookingServiceImpl implements BookingService {
             b.setDeliveryAddress(request.getDeliveryAddress());
             b.setDeliveryCity(request.getDeliveryCity());
             b.setDeliveryPhone(request.getDeliveryPhone());
+            b.setDeliveryApartment(request.getDeliveryApartment());
         }
 
         b.setPassengers(request.getPassengers().stream()

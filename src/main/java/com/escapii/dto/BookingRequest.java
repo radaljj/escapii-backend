@@ -123,6 +123,10 @@ public class BookingRequest {
              message = "Telefon za dostavu nije validan")
     private String deliveryPhone;
 
+    /** Dodatne info za dostavu (stan, sprat, interfon...). Opciono. */
+    @Size(max = 150, message = "Dodatne info ne smeju biti duže od 150 karaktera")
+    private String deliveryApartment;
+
     /**
      * Opcioni gift vaučer kod koji korisnik unosi u koraku 7.
      * Admin vidi kod i ručno primenjuje popust pri potvrdi rezervacije.
@@ -156,6 +160,7 @@ public class BookingRequest {
         if (deliveryAddress   != null) deliveryAddress   = deliveryAddress.trim();
         if (deliveryCity      != null) deliveryCity      = deliveryCity.trim();
         if (deliveryPhone     != null) deliveryPhone     = deliveryPhone.trim();
+        if (deliveryApartment != null) deliveryApartment = deliveryApartment.trim();
         if (passengers != null) passengers.forEach(p -> {
             if (p.getName()    != null) p.setName(p.getName().trim());
             if (p.getGender()  != null) p.setGender(p.getGender().trim().toUpperCase());

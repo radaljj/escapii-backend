@@ -295,6 +295,8 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             long daysLeft  = today.until(dep).getDays();
             String daysLbl = daysLabel(daysLeft);
             String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "-")
+                           + (b.getDeliveryApartment() != null && !b.getDeliveryApartment().isBlank()
+                                ? " (" + b.getDeliveryApartment() + ")" : "")
                            + (b.getDeliveryCity() != null ? ", " + b.getDeliveryCity() : "");
             String phone   = b.getDeliveryPhone() != null ? b.getDeliveryPhone() : "-";
             sb.append("""
