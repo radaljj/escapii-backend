@@ -20,6 +20,7 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "airlineBookingCode",          target = "airlineBookingCode")
     @Mapping(source = "hasRevealBox",                target = "hasRevealBox")
     @Mapping(source = "deliveryAddress",             target = "deliveryAddress")
+    @Mapping(source = "deliveryApartment",           target = "deliveryApartment")
     @Mapping(source = "deliveryCity",                target = "deliveryCity")
     @Mapping(source = "deliveryPhone",               target = "deliveryPhone")
     @Mapping(source = "revealBoxSent",               target = "revealBoxSent")

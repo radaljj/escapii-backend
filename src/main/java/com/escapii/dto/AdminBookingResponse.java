@@ -74,6 +74,7 @@ public class AdminBookingResponse {
     // Reveal Box
     private Boolean hasRevealBox;
     private String  deliveryAddress;
+    private String  deliveryApartment;
     private String  deliveryCity;
     private String  deliveryPhone;
     private Boolean revealBoxSent;
