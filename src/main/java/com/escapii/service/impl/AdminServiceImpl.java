@@ -288,6 +288,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "active-dates", allEntries = true)
     public AdminBookingResponse updateBookingStatus(Long id, BookingStatus status) {
         // findWithDetailsById - učitava sve LAZY asocijacije (excluded destinations, passengers)
         // da bi @Async email servis mogao da pristupi njima van transakcije
