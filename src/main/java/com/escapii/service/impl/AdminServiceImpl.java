@@ -143,6 +143,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public AdminDateResponse updateDestinations(Long id, List<Long> destinationIds) {
         AvailableDate date = findDateOrThrow(id);
