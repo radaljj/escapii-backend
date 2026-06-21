@@ -554,30 +554,34 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                                     font-family:'Courier New',monospace;">-</div>
                       </td>
                       <td style="text-align:right;vertical-align:bottom;">
-                        <!-- Decorative barcode -->
-                        <div style="display:inline-flex;gap:2px;height:38px;
-                                    align-items:stretch;vertical-align:bottom;">
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:5px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:5px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:4px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:3px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:1px;background:#1a1410;border-radius:1px;"></div>
-                          <div style="width:2px;background:#1a1410;border-radius:1px;"></div>
-                        </div>
+                        <!-- Decorative barcode - table-based (flexbox se ne renderuje u Gmail desktop) -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;">
+                          <tr>
+                            <td width="2" height="38" bgcolor="#1a1410" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="4" height="38" bgcolor="#1a1410" style="width:4px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="1" height="38" bgcolor="#1a1410" style="width:1px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="3" height="38" bgcolor="#1a1410" style="width:3px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="5" height="38" bgcolor="#1a1410" style="width:5px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="1" height="38" bgcolor="#1a1410" style="width:1px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="3" height="38" bgcolor="#1a1410" style="width:3px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="4" height="38" bgcolor="#1a1410" style="width:4px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" bgcolor="#1a1410" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="5" height="38" bgcolor="#1a1410" style="width:5px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="1" height="38" bgcolor="#1a1410" style="width:1px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="2" height="38" style="width:2px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td width="3" height="38" bgcolor="#1a1410" style="width:3px;height:38px;font-size:0;line-height:0;">&nbsp;</td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>
