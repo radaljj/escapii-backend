@@ -142,9 +142,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.revealSentAt IS NOT NULL " +
            "AND b.hasRevealBox = false " +
            "AND b.selectedDate.returnDate >= :today " +
+           "AND b.selectedDate.departureDate <= :cutoff " +
            "AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r) " +
            "ORDER BY b.selectedDate.departureDate ASC")
-    List<Booking> findRevealedAndViewed(@Param("today") LocalDate today);
+    List<Booking> findRevealedAndViewed(@Param("today") LocalDate today,
+                                        @Param("cutoff") LocalDate cutoff);
 
     /**
      * CONFIRMED bookingovi kojima je reveal email poslan ALI korisnik NIJE otvorio reveal stranicu,
