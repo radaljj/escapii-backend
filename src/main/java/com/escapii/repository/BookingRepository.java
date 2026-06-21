@@ -2,8 +2,10 @@ package com.escapii.repository;
 
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -63,6 +65,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /** Pronađi booking po reveal tokenu (za /api/reveal endpoint). */
     java.util.Optional<Booking> findByRevealToken(String revealToken);
+
+    /**
+     * Učitava booking sa pesimističkim lock-om - serijalizuje istovremene admin akcije
+     * (npr. dvostruki klik na "Pošalji Reveal"/"Pošalji Prognozu") da se ne pošalje duplo.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForUpdate(@Param("id") Long id);
 
     /** Ukupan broj rezervacija za dati termin (sve statuse) - koristi se pre brisanja. */
     long countBySelectedDateId(Long selectedDateId);

@@ -48,8 +48,11 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     @Value("${app.frontend-url:https://escapii.rs}")
     private String defaultFrontendUrl;
 
+    // NAPOMENA: bez @Transactional na nivou metode - svaki booking se čuva u
+    // sopstvenoj transakciji (save = zaseban commit). Tako pad obrade jednog
+    // bookinga ne poništava "sentAt" flag onih kojima je mejl već uspešno poslat
+    // (sprečava dvostruko slanje pri retku grešku batch transakcije).
     @Override
-    @Transactional
     public void sendPendingReveals() {
         LocalDate today = LocalDate.now();
         List<Booking> readyList = bookingRepository.findReadyForReveal(today.plusDays(2));
@@ -57,7 +60,6 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     }
 
     @Override
-    @Transactional
     public void sendPendingForecasts() {
         LocalDate today = LocalDate.now();
         List<Booking> readyList = bookingRepository.findReadyForForecast(
@@ -133,7 +135,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     @Override
     @Transactional
     public Map<String, String> sendRevealForBooking(Long bookingId, String siteUrl) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Booking nije pronađen."));
 
@@ -168,7 +170,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     @Override
     @Transactional
     public Map<String, String> sendForecastForBooking(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Booking nije pronađen."));
 
