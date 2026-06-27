@@ -43,7 +43,7 @@ public class Destination {
      * Vrednosti: "BEG", "INI" (može biti više).
      * Koristi se za filtriranje u /api/destinations?airport=BEG.
      */
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "destination_departure_airports",
         joinColumns = @JoinColumn(name = "destination_id")
