@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import net.coobird.thumbnailator.Thumbnails;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -171,16 +172,15 @@ public class AdminServiceImpl implements AdminService {
                         "Destinacija ne postoji: " + id));
         deleteImageFile(d.getImageUrl());
         try {
-            String extension = switch (contentType) {
-                case "image/jpeg" -> ".jpg";
-                case "image/png"  -> ".png";
-                case "image/webp" -> ".webp";
-                default -> "";
-            };
-            String filename  = UUID.randomUUID() + extension;
-            Path destDir     = Paths.get(uploadsDir, "destinations");
+            String filename = UUID.randomUUID() + ".jpg";
+            Path destDir    = Paths.get(uploadsDir, "destinations");
             Files.createDirectories(destDir);
-            Files.copy(file.getInputStream(), destDir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            Thumbnails.of(file.getInputStream())
+                    .size(1200, 1200)
+                    .keepAspectRatio(true)
+                    .outputFormat("jpg")
+                    .outputQuality(0.85f)
+                    .toFile(destDir.resolve(filename).toFile());
             d.setImageUrl(backendUrl + "/uploads/destinations/" + filename);
             log.info("[ADMIN] Slika uploadovana za destinaciju id={}: {}", id, filename);
             return destinationMapper.toResponse(destinationRepository.save(d));

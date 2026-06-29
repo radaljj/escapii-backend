@@ -141,6 +141,13 @@
 			<artifactId>javase</artifactId>
 			<version>3.5.3</version>
 		</dependency>
+
+		<!-- Image resize/compress pri uploadu destinacija -->
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.20</version>
+		</dependency>
 	</dependencies>
 
 	<build>
