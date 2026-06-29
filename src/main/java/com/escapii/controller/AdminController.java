@@ -7,6 +7,7 @@ import com.escapii.dto.AdminDestinationRequest;
 import com.escapii.dto.AdminNotesRequest;
 import com.escapii.dto.AdminWeatherCityRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
+import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.MakePrivateRequest;
@@ -17,8 +18,10 @@ import com.escapii.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -42,6 +45,39 @@ public class AdminController {
     @GetMapping("/destinations")
     public ResponseEntity<List<DestinationResponse>> getAllDestinations() {
         return ResponseEntity.ok(adminService.getAllDestinations());
+    }
+
+    /** POST /api/admin/destinations - kreiraj novu destinaciju. */
+    @PostMapping("/destinations")
+    public ResponseEntity<DestinationResponse> createDestination(
+            @Valid @RequestBody DestinationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createDestination(request));
+    }
+
+    /** PUT /api/admin/destinations/{id} - ažuriraj destinaciju. */
+    @PutMapping("/destinations/{id}")
+    public ResponseEntity<DestinationResponse> updateDestination(
+            @PathVariable Long id,
+            @Valid @RequestBody DestinationRequest request) {
+        return ResponseEntity.ok(adminService.updateDestination(id, request));
+    }
+
+    /** DELETE /api/admin/destinations/{id} - trajno obriši destinaciju. */
+    @DeleteMapping("/destinations/{id}")
+    public ResponseEntity<Map<String, String>> deleteDestination(@PathVariable Long id) {
+        adminService.deleteDestination(id);
+        return ResponseEntity.ok(Map.of("message", "Destinacija obrisana"));
+    }
+
+    /** POST /api/admin/destinations/{id}/image - upload slike destinacije (multipart). */
+    @PostMapping(value = "/destinations/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DestinationResponse> uploadDestinationImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(adminService.uploadDestinationImage(id, file));
     }
 
     /** PATCH /api/admin/destinations/{id}/active?value=false - aktiviraj/deaktiviraj destinaciju. */

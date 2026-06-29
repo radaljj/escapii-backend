@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .anyRequest().denyAll()
             )
 

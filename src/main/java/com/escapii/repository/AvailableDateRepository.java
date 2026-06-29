@@ -36,6 +36,13 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
     Optional<AvailableDate> findByPrivateTokenAndIsPrivateTrue(String privateToken);
 
     /**
+     * Pronalazi termine koji imaju zadatu destinaciju u potencijalnim destinacijama.
+     * Koristi se pri brisanju destinacije - potrebno je ukloniti FK reference.
+     */
+    @Query("SELECT ad FROM AvailableDate ad JOIN ad.potentialDestinations pd WHERE pd.id = :destinationId")
+    List<AvailableDate> findByPotentialDestinationId(@Param("destinationId") Long destinationId);
+
+    /**
      * Briše prošle termine koji NEMAJU nijednu rezervaciju.
      * Sigurno - ne narušava FK constraints.
      */

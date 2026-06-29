@@ -5,9 +5,11 @@ import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
+import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.InquiryStatus;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +18,10 @@ public interface AdminService {
 
     // ── Destinacije ──
     List<DestinationResponse> getAllDestinations();
+    DestinationResponse createDestination(DestinationRequest request);
+    DestinationResponse updateDestination(Long id, DestinationRequest request);
+    void deleteDestination(Long id);
+    DestinationResponse uploadDestinationImage(Long id, MultipartFile file);
     void toggleDestinationActive(Long id, boolean active);
 
     // ── Termini ──

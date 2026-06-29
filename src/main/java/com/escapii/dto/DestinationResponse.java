@@ -15,6 +15,7 @@ public class DestinationResponse {
     private Long id;
     private String name;
     private String country;
+    private String region;
     private String airportCode;
     private String imageUrl;
     private Set<String> departureAirports;

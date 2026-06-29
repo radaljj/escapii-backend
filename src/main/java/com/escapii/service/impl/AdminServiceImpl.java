@@ -5,6 +5,7 @@ import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
+import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
 import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
@@ -38,18 +39,33 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.escapii.util.TokenUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
+
+    @Value("${app.uploads.dir:uploads}")
+    private String uploadsDir;
+
+    @Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
 
     private final AvailableDateRepository    availableDateRepository;
     private final DestinationRepository      destinationRepository;
@@ -86,6 +102,112 @@ public class AdminServiceImpl implements AdminService {
         destinationRepository.save(dest);
         log.info("[ADMIN] Destinacija '{}' (id={}) {}", dest.getName(), id,
                 active ? "aktivirana" : "deaktivirana");
+    }
+
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "destinations", allEntries = true),
+        @CacheEvict(value = "active-destinations", allEntries = true)
+    })
+    @Transactional
+    public DestinationResponse createDestination(DestinationRequest request) {
+        if (destinationRepository.existsByName(request.name())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Destinacija sa imenom '" + request.name() + "' već postoji");
+        }
+        Destination d = new Destination();
+        d.setName(request.name());
+        d.setAirportCode(request.airportCode().toUpperCase());
+        d.setCountry(request.country());
+        d.setRegion(request.region());
+        d.setDepartureAirports(request.departureAirports().stream()
+                .map(String::toUpperCase).collect(Collectors.toSet()));
+        d.setActive(true);
+        Destination saved = destinationRepository.save(d);
+        log.info("[ADMIN] Nova destinacija kreirana: '{}' (id={})", saved.getName(), saved.getId());
+        return destinationMapper.toResponse(saved);
+    }
+
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "destinations", allEntries = true),
+        @CacheEvict(value = "active-destinations", allEntries = true)
+    })
+    @Transactional
+    public DestinationResponse updateDestination(Long id, DestinationRequest request) {
+        Destination d = destinationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija ne postoji: " + id));
+        d.setName(request.name());
+        d.setAirportCode(request.airportCode().toUpperCase());
+        d.setCountry(request.country());
+        d.setRegion(request.region());
+        d.setDepartureAirports(request.departureAirports().stream()
+                .map(String::toUpperCase).collect(Collectors.toSet()));
+        log.info("[ADMIN] Destinacija '{}' (id={}) ažurirana", d.getName(), id);
+        return destinationMapper.toResponse(destinationRepository.save(d));
+    }
+
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "destinations", allEntries = true),
+        @CacheEvict(value = "active-destinations", allEntries = true)
+    })
+    @Transactional
+    public void deleteDestination(Long id) {
+        Destination d = destinationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija ne postoji: " + id));
+        // Ukloni iz join tabele potential_destinations da ne dođe do FK violation
+        availableDateRepository.findByPotentialDestinationId(id).forEach(date -> {
+            date.getPotentialDestinations().removeIf(pd -> pd.getId().equals(id));
+            availableDateRepository.save(date);
+        });
+        // Obriši sliku s diska ako postoji
+        deleteImageFile(d.getImageUrl());
+        destinationRepository.delete(d);
+        log.info("[ADMIN] Destinacija '{}' (id={}) obrisana", d.getName(), id);
+    }
+
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "destinations", allEntries = true),
+        @CacheEvict(value = "active-destinations", allEntries = true)
+    })
+    @Transactional
+    public DestinationResponse uploadDestinationImage(Long id, MultipartFile file) {
+        Destination d = destinationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija ne postoji: " + id));
+        // Obriši staru sliku ako postoji
+        deleteImageFile(d.getImageUrl());
+        try {
+            String original  = StringUtils.cleanPath(file.getOriginalFilename() != null
+                    ? file.getOriginalFilename() : "image");
+            String extension = original.contains(".")
+                    ? original.substring(original.lastIndexOf('.')) : "";
+            String filename  = UUID.randomUUID() + extension;
+            Path destDir     = Paths.get(uploadsDir, "destinations");
+            Files.createDirectories(destDir);
+            Files.copy(file.getInputStream(), destDir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            d.setImageUrl(backendUrl + "/uploads/destinations/" + filename);
+            log.info("[ADMIN] Slika uploadovana za destinaciju id={}: {}", id, filename);
+            return destinationMapper.toResponse(destinationRepository.save(d));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Greška pri čuvanju slike: " + e.getMessage());
+        }
+    }
+
+    private void deleteImageFile(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) return;
+        try {
+            String filename = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+            Path path = Paths.get(uploadsDir, "destinations", filename);
+            Files.deleteIfExists(path);
+        } catch (Exception e) {
+            log.warn("[ADMIN] Nije moguće obrisati sliku: {}", e.getMessage());
+        }
     }
 
     // ══ TERMINI ══════════════════════════════════════════════════════════════
