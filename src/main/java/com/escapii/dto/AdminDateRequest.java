@@ -36,7 +36,7 @@ public class AdminDateRequest {
     @Min(value = 1, message = "Cena mora biti pozitivna")
     private Integer basePrice;
 
-    /** ID-evi potencijalnih destinacija - opciono, max 10. */
-    @Size(max = 10, message = "Maksimalno 10 potencijalnih destinacija")
-    private List<Long> potentialDestinationIds = new ArrayList<>();
+    /** ID-evi destinacija za ovaj termin - opciono, max 20. */
+    @Size(max = 20, message = "Maksimalno 20 destinacija po terminu")
+    private List<Long> destinationIds = new ArrayList<>();
 }

@@ -236,8 +236,8 @@ public class AdminServiceImpl implements AdminService {
 
         // Inicijalne destinacije (ako su prosleđene pri kreiranju termina)
         AvailableDate saved = availableDateRepository.save(date);
-        if (req.getPotentialDestinationIds() != null && !req.getPotentialDestinationIds().isEmpty()) {
-            List<Destination> destinations = destinationRepository.findAllById(req.getPotentialDestinationIds());
+        if (req.getDestinationIds() != null && !req.getDestinationIds().isEmpty()) {
+            List<Destination> destinations = destinationRepository.findAllById(req.getDestinationIds());
             destinations.forEach(dest -> saved.getTermDestinations().add(new TermDestination(saved, dest)));
             availableDateRepository.save(saved);
         }
