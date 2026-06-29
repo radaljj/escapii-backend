@@ -279,6 +279,11 @@ public class AdminServiceImpl implements AdminService {
         TermDestination td = termDestinationRepository.findByDateIdAndDestinationId(dateId, destinationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Destinacija nije u ovom terminu"));
+        long totalInTerm = termDestinationRepository.findByDateIdOrderByDestinationNameAsc(dateId).size();
+        if (totalInTerm <= 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Termin mora imati bar jednu destinaciju");
+        }
         termDestinationRepository.delete(td);
         log.info("[ADMIN] Destinacija id={} uklonjena iz termina id={}", destinationId, dateId);
     }
@@ -289,6 +294,13 @@ public class AdminServiceImpl implements AdminService {
         TermDestination td = termDestinationRepository.findByDateIdAndDestinationId(dateId, destinationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Destinacija nije u ovom terminu"));
+        if (!active) {
+            long activeCount = termDestinationRepository.findActiveByDateId(dateId).size();
+            if (activeCount <= 1) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Termin mora imati bar jednu aktivnu destinaciju");
+            }
+        }
         td.setActive(active);
         TermDestination saved = termDestinationRepository.save(td);
         log.info("[ADMIN] Destinacija '{}' {} za termin id={}",
