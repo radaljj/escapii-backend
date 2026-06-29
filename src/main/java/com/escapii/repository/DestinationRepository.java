@@ -11,15 +11,11 @@ import java.util.List;
 @Repository
 public interface DestinationRepository extends JpaRepository<Destination, Long> {
 
-    /** Sve aktivne destinacije (bez filtera po aerodromu). */
-    List<Destination> findByActiveTrueOrderByNameAsc();
+    /** Sve destinacije po aerodromu polaska (bez active filtera — per-termin logika). */
+    @Query("SELECT d FROM Destination d JOIN d.departureAirports a WHERE a = :airport ORDER BY d.name ASC")
+    List<Destination> findByDepartureAirportOrderByNameAsc(@Param("airport") String airport);
 
-    /** Aktivne destinacije dostupne iz konkretnog aerodroma polaska (npr. "BEG"). */
-    @Query("SELECT d FROM Destination d JOIN d.departureAirports a " +
-           "WHERE d.active = true AND a = :airport ORDER BY d.name ASC")
-    List<Destination> findByDepartureAirportAndActiveTrueOrderByNameAsc(@Param("airport") String airport);
-
-    /** Sve destinacije sortiane po imenu (admin - uključuje i neaktivne). */
+    /** Sve destinacije sortirane po imenu. */
     List<Destination> findAllByOrderByNameAsc();
 
     boolean existsByName(String name);

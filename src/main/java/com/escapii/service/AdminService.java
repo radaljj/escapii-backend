@@ -7,6 +7,7 @@ import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
+import com.escapii.dto.TermDestinationResponse;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.InquiryStatus;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,13 +23,17 @@ public interface AdminService {
     DestinationResponse updateDestination(Long id, DestinationRequest request);
     void deleteDestination(Long id);
     DestinationResponse uploadDestinationImage(Long id, MultipartFile file);
-    void toggleDestinationActive(Long id, boolean active);
 
     // ── Termini ──
     List<AdminDateResponse> getAllDates();
     AdminDateResponse addDate(AdminDateRequest request);
-    AdminDateResponse updateDestinations(Long id, List<Long> destinationIds);
     void toggleActive(Long id, boolean active);
+
+    // ── Per-termin destinacije ──
+    List<TermDestinationResponse> getTermDestinations(Long dateId);
+    TermDestinationResponse addDestinationToTerm(Long dateId, Long destinationId);
+    void removeDestinationFromTerm(Long dateId, Long destinationId);
+    TermDestinationResponse toggleTermDestination(Long dateId, Long destinationId, boolean active);
     void updateSlots(Long id, int slots);
     void updatePrice(Long id, int price);
     void deleteDate(Long id);

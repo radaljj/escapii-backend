@@ -246,12 +246,12 @@ public class DestinationServiceImpl implements DestinationService {
     }
 
     @Override
-    @Cacheable(value = "active-destinations", key = "#airport ?: 'all'")
-    public List<Destination> getActiveDestinations(String airport) {
+    @Cacheable(value = "destinations-by-airport", key = "#airport ?: 'all'")
+    public List<Destination> getDestinationsByAirport(String airport) {
         if (airport != null && !airport.isBlank()) {
-            return destinationRepository.findByDepartureAirportAndActiveTrueOrderByNameAsc(airport.trim().toUpperCase());
+            return destinationRepository.findByDepartureAirportOrderByNameAsc(airport.trim().toUpperCase());
         }
-        return destinationRepository.findByActiveTrueOrderByNameAsc();
+        return destinationRepository.findAllByOrderByNameAsc();
     }
 
     @Override

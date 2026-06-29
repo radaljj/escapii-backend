@@ -22,13 +22,14 @@ public class DestinationController {
      * GET /api/destinations
      * GET /api/destinations?airport=BEG
      *
-     * Vraća DestinationResponse DTO - ne exposuje interna polja (active, region).
+     * Vraća destinacije po aerodromu (za carousel/prikaz). Booking forma koristi
+     * GET /api/dates/{id}/destinations za per-termin aktivne destinacije.
      */
     @GetMapping
-    public ResponseEntity<List<DestinationResponse>> getActiveDestinations(
+    public ResponseEntity<List<DestinationResponse>> getDestinations(
             @RequestParam(required = false) String airport) {
         return ResponseEntity.ok(
-                destinationMapper.toResponseList(destinationService.getActiveDestinations(airport))
+                destinationMapper.toResponseList(destinationService.getDestinationsByAirport(airport))
         );
     }
 

@@ -9,6 +9,7 @@ import com.escapii.dto.AdminWeatherCityRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
+import com.escapii.dto.TermDestinationResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.MakePrivateRequest;
 import com.escapii.model.BookingStatus;
@@ -80,22 +81,9 @@ public class AdminController {
         return ResponseEntity.ok(adminService.uploadDestinationImage(id, file));
     }
 
-    /** PATCH /api/admin/destinations/{id}/active?value=false - aktiviraj/deaktiviraj destinaciju. */
-    @PatchMapping("/destinations/{id}/active")
-    public ResponseEntity<Map<String, Object>> toggleDestinationActive(
-            @PathVariable Long id,
-            @RequestParam boolean value) {
-        adminService.toggleDestinationActive(id, value);
-        return ResponseEntity.ok(Map.of(
-                "id", id,
-                "active", value,
-                "message", value ? "Destinacija aktivirana" : "Destinacija deaktivirana"
-        ));
-    }
-
     // ══ TERMINI ══════════════════════════════════════════════════════════════
 
-    /** GET /api/admin/dates - svi termini sa potencijalnim destinacijama. */
+    /** GET /api/admin/dates - svi termini. */
     @GetMapping("/dates")
     public ResponseEntity<List<AdminDateResponse>> getAllDates() {
         return ResponseEntity.ok(adminService.getAllDates());
@@ -107,12 +95,34 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.addDate(request));
     }
 
-    /** PUT /api/admin/dates/{id}/destinations - ažuriraj potencijalne destinacije. */
-    @PutMapping("/dates/{id}/destinations")
-    public ResponseEntity<AdminDateResponse> updateDestinations(
-            @PathVariable Long id,
-            @RequestBody List<Long> destinationIds) {
-        return ResponseEntity.ok(adminService.updateDestinations(id, destinationIds));
+    // ══ PER-TERMIN DESTINACIJE ════════════════════════════════════════════════
+
+    /** GET /api/admin/dates/{id}/destinations - sve destinacije za termin (sa active flagom). */
+    @GetMapping("/dates/{id}/destinations")
+    public ResponseEntity<List<TermDestinationResponse>> getTermDestinations(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.getTermDestinations(id));
+    }
+
+    /** POST /api/admin/dates/{id}/destinations/{destId} - dodaj destinaciju u termin. */
+    @PostMapping("/dates/{id}/destinations/{destId}")
+    public ResponseEntity<TermDestinationResponse> addDestinationToTerm(
+            @PathVariable Long id, @PathVariable Long destId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.addDestinationToTerm(id, destId));
+    }
+
+    /** DELETE /api/admin/dates/{id}/destinations/{destId} - ukloni destinaciju iz termina. */
+    @DeleteMapping("/dates/{id}/destinations/{destId}")
+    public ResponseEntity<Map<String, String>> removeDestinationFromTerm(
+            @PathVariable Long id, @PathVariable Long destId) {
+        adminService.removeDestinationFromTerm(id, destId);
+        return ResponseEntity.ok(Map.of("message", "Destinacija uklonjena iz termina"));
+    }
+
+    /** PATCH /api/admin/dates/{id}/destinations/{destId}/active?value=false - aktiviraj/deaktiviraj per termin. */
+    @PatchMapping("/dates/{id}/destinations/{destId}/active")
+    public ResponseEntity<TermDestinationResponse> toggleTermDestination(
+            @PathVariable Long id, @PathVariable Long destId, @RequestParam boolean value) {
+        return ResponseEntity.ok(adminService.toggleTermDestination(id, destId, value));
     }
 
     /** PATCH /api/admin/dates/{id}/active?value=false - aktiviraj/deaktiviraj termin. */

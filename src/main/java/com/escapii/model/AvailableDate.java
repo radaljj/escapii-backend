@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -75,14 +76,9 @@ public class AvailableDate {
     private long version;
 
     /**
-     * Potencijalne destinacije koje admin vezuje za ovaj termin.
-     * Vidljivo samo adminu - korisnici ne vide ove informacije.
+     * Per-termin destinacije sa individualnim active flagom.
+     * Zamjena za stari @ManyToMany potentialDestinations.
      */
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "available_date_destinations",
-        joinColumns = @JoinColumn(name = "available_date_id"),
-        inverseJoinColumns = @JoinColumn(name = "destination_id")
-    )
-    private List<Destination> potentialDestinations = new ArrayList<>();
+    @OneToMany(mappedBy = "date", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<TermDestination> termDestinations = new ArrayList<>();
 }

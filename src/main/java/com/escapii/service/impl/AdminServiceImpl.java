@@ -14,9 +14,11 @@ import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.CustomDateInquiry;
 import com.escapii.model.Destination;
+import com.escapii.dto.TermDestinationResponse;
 import com.escapii.model.GiftVoucher;
 import com.escapii.model.InquiryStatus;
 import com.escapii.model.RevealEvent;
+import com.escapii.model.TermDestination;
 import com.escapii.model.VoucherStatus;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
@@ -24,6 +26,7 @@ import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.repository.RevealEventRepository;
+import com.escapii.repository.TermDestinationRepository;
 import com.escapii.service.AdminService;
 import com.escapii.service.AvailableDateService;
 import com.escapii.service.CustomDateInquiryService;
@@ -53,6 +56,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,18 +71,19 @@ public class AdminServiceImpl implements AdminService {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
-    private final AvailableDateRepository    availableDateRepository;
-    private final DestinationRepository      destinationRepository;
-    private final BookingRepository          bookingRepository;
-    private final GiftVoucherRepository      giftVoucherRepository;
-    private final RevealEventRepository      revealEventRepository;
+    private final AvailableDateRepository     availableDateRepository;
+    private final DestinationRepository       destinationRepository;
+    private final TermDestinationRepository   termDestinationRepository;
+    private final BookingRepository           bookingRepository;
+    private final GiftVoucherRepository       giftVoucherRepository;
+    private final RevealEventRepository       revealEventRepository;
     private final CustomDateInquiryRepository inquiryRepository;
-    private final AdminBookingMapper         adminBookingMapper;
-    private final DestinationMapper          destinationMapper;
-    private final BookingEmailService        bookingEmailService;
-    private final WaitlistService            waitlistService;
-    private final AvailableDateService       availableDateService;
-    private final CustomDateInquiryService   inquiryService;
+    private final AdminBookingMapper          adminBookingMapper;
+    private final DestinationMapper           destinationMapper;
+    private final BookingEmailService         bookingEmailService;
+    private final WaitlistService             waitlistService;
+    private final AvailableDateService        availableDateService;
+    private final CustomDateInquiryService    inquiryService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -86,22 +91,6 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(readOnly = true)
     public List<DestinationResponse> getAllDestinations() {
         return destinationMapper.toResponseList(destinationRepository.findAllByOrderByNameAsc());
-    }
-
-    @Override
-    @Caching(evict = {
-        @CacheEvict(value = "destinations", allEntries = true),
-        @CacheEvict(value = "active-destinations", allEntries = true)
-    })
-    @Transactional
-    public void toggleDestinationActive(Long id, boolean active) {
-        Destination dest = destinationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Destinacija ne postoji: " + id));
-        dest.setActive(active);
-        destinationRepository.save(dest);
-        log.info("[ADMIN] Destinacija '{}' (id={}) {}", dest.getName(), id,
-                active ? "aktivirana" : "deaktivirana");
     }
 
     @Override
@@ -158,12 +147,8 @@ public class AdminServiceImpl implements AdminService {
         Destination d = destinationRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Destinacija ne postoji: " + id));
-        // Ukloni iz join tabele potential_destinations da ne dođe do FK violation
-        availableDateRepository.findByPotentialDestinationId(id).forEach(date -> {
-            date.getPotentialDestinations().removeIf(pd -> pd.getId().equals(id));
-            availableDateRepository.save(date);
-        });
-        // Obriši sliku s diska ako postoji
+        // Ukloni FK reference iz term_destination tabele
+        termDestinationRepository.deleteByDestinationId(id);
         deleteImageFile(d.getImageUrl());
         destinationRepository.delete(d);
         log.info("[ADMIN] Destinacija '{}' (id={}) obrisana", d.getName(), id);
@@ -176,16 +161,22 @@ public class AdminServiceImpl implements AdminService {
     })
     @Transactional
     public DestinationResponse uploadDestinationImage(Long id, MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null || !Set.of("image/jpeg", "image/png", "image/webp").contains(contentType)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                    "Dozvoljeni formati: JPG, PNG, WebP");
+        }
         Destination d = destinationRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Destinacija ne postoji: " + id));
-        // Obriši staru sliku ako postoji
         deleteImageFile(d.getImageUrl());
         try {
-            String original  = StringUtils.cleanPath(file.getOriginalFilename() != null
-                    ? file.getOriginalFilename() : "image");
-            String extension = original.contains(".")
-                    ? original.substring(original.lastIndexOf('.')) : "";
+            String extension = switch (contentType) {
+                case "image/jpeg" -> ".jpg";
+                case "image/png"  -> ".png";
+                case "image/webp" -> ".webp";
+                default -> "";
+            };
             String filename  = UUID.randomUUID() + extension;
             Path destDir     = Paths.get(uploadsDir, "destinations");
             Files.createDirectories(destDir);
@@ -243,39 +234,66 @@ public class AdminServiceImpl implements AdminService {
         date.setBasePrice(req.getBasePrice());
         date.setActive(true);
 
+        // Inicijalne destinacije (ako su prosleđene pri kreiranju termina)
+        AvailableDate saved = availableDateRepository.save(date);
         if (req.getPotentialDestinationIds() != null && !req.getPotentialDestinationIds().isEmpty()) {
             List<Destination> destinations = destinationRepository.findAllById(req.getPotentialDestinationIds());
-            date.setPotentialDestinations(destinations);
+            destinations.forEach(dest -> saved.getTermDestinations().add(new TermDestination(saved, dest)));
+            availableDateRepository.save(saved);
         }
 
-        AvailableDate saved = availableDateRepository.save(date);
-        log.info("[ADMIN] Dodat termin id={} | {} → {} | aerodrom={} | destinacije={}",
-                saved.getId(), saved.getDepartureDate(), saved.getReturnDate(),
-                saved.getDepartureAirport(),
-                saved.getPotentialDestinations().stream().map(Destination::getName).toList());
-
-        // Automatski notifikuj waitlist korisnike za ovaj aerodrom
-//        int notified = waitlistService.notifyAndClear(saved.getDepartureAirport());
-//        if (notified > 0) {
-//            log.info("[ADMIN] Waitlist notifikacija poslata za {} korisnika (aerodrom={})",
-//                    notified, saved.getDepartureAirport());
-//        }
+        log.info("[ADMIN] Dodat termin id={} | {} → {} | aerodrom={}",
+                saved.getId(), saved.getDepartureDate(), saved.getReturnDate(), saved.getDepartureAirport());
 
         return new AdminDateResponse(saved);
     }
 
+    // ══ PER-TERMIN DESTINACIJE ════════════════════════════════════════════════
+
     @Override
-    @CacheEvict(value = "active-dates", allEntries = true)
+    @Transactional(readOnly = true)
+    public List<TermDestinationResponse> getTermDestinations(Long dateId) {
+        findDateOrThrow(dateId);
+        return termDestinationRepository.findByDateIdOrderByDestinationNameAsc(dateId)
+                .stream().map(TermDestinationResponse::new).toList();
+    }
+
+    @Override
     @Transactional
-    public AdminDateResponse updateDestinations(Long id, List<Long> destinationIds) {
-        AvailableDate date = findDateOrThrow(id);
-        List<Destination> destinations = destinationRepository.findAllById(destinationIds);
-        date.getPotentialDestinations().clear();
-        date.getPotentialDestinations().addAll(destinations);
-        AvailableDate saved = availableDateRepository.save(date);
-        log.info("[ADMIN] Azurirane destinacije za termin id={} → {}",
-                id, destinations.stream().map(Destination::getName).toList());
-        return new AdminDateResponse(saved);
+    public TermDestinationResponse addDestinationToTerm(Long dateId, Long destinationId) {
+        AvailableDate date = findDateOrThrow(dateId);
+        if (termDestinationRepository.existsByDateIdAndDestinationId(dateId, destinationId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Destinacija već postoji u ovom terminu");
+        }
+        Destination dest = destinationRepository.findById(destinationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija ne postoji: " + destinationId));
+        TermDestination td = termDestinationRepository.save(new TermDestination(date, dest));
+        log.info("[ADMIN] Destinacija '{}' dodana u termin id={}", dest.getName(), dateId);
+        return new TermDestinationResponse(td);
+    }
+
+    @Override
+    @Transactional
+    public void removeDestinationFromTerm(Long dateId, Long destinationId) {
+        TermDestination td = termDestinationRepository.findByDateIdAndDestinationId(dateId, destinationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija nije u ovom terminu"));
+        termDestinationRepository.delete(td);
+        log.info("[ADMIN] Destinacija id={} uklonjena iz termina id={}", destinationId, dateId);
+    }
+
+    @Override
+    @Transactional
+    public TermDestinationResponse toggleTermDestination(Long dateId, Long destinationId, boolean active) {
+        TermDestination td = termDestinationRepository.findByDateIdAndDestinationId(dateId, destinationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija nije u ovom terminu"));
+        td.setActive(active);
+        TermDestination saved = termDestinationRepository.save(td);
+        log.info("[ADMIN] Destinacija '{}' {} za termin id={}",
+                saved.getDestination().getName(), active ? "aktivirana" : "deaktivirana", dateId);
+        return new TermDestinationResponse(saved);
     }
 
     @Override

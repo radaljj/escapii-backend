@@ -17,7 +17,8 @@
       "Bash(where scp *)",
       "Bash(where ssh *)",
       "Bash(where pscp *)",
-      "Bash(scp -o StrictHostKeyChecking=no -o PasswordAuthentication=yes \"C:/Users/user/Local Sites/escapii/app/public/robots.txt\" root@37.27.194.35:/var/www/escapii/robots.txt)"
+      "Bash(scp -o StrictHostKeyChecking=no -o PasswordAuthentication=yes \"C:/Users/user/Local Sites/escapii/app/public/robots.txt\" root@37.27.194.35:/var/www/escapii/robots.txt)",
+      "Bash(ls -la \"C:\\\\Users\\\\user\\\\Local Sites\\\\escapii\\\\app\")"
     ]
   }
 }

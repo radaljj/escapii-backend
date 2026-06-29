@@ -33,7 +33,7 @@ public class Destination {
     private String region;
 
     @Column(nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 
     @Column(length = 255)
     private String imageUrl;

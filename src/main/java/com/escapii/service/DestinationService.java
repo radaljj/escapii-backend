@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface DestinationService {
 
-    /** Sve aktivne destinacije, opciono filtrirane po aerodromu polaska. */
-    List<Destination> getActiveDestinations(String airport);
+    /** Sve destinacije filtrirane po aerodromu (za carousel i stari fallback). */
+    List<Destination> getDestinationsByAirport(String airport);
 
-    /** Sve destinacije (uključuje i neaktivne) - za carousel. */
+    /** Sve destinacije sortirane po imenu - za carousel. */
     List<Destination> getAllDestinations();
 
     List<CountryDto> fetchCountries();
