@@ -96,7 +96,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "destinations", allEntries = true),
-        @CacheEvict(value = "active-destinations", allEntries = true)
+        @CacheEvict(value = "destinations-by-airport", allEntries = true)
     })
     @Transactional
     public DestinationResponse createDestination(DestinationRequest request) {
@@ -120,7 +120,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "destinations", allEntries = true),
-        @CacheEvict(value = "active-destinations", allEntries = true)
+        @CacheEvict(value = "destinations-by-airport", allEntries = true)
     })
     @Transactional
     public DestinationResponse updateDestination(Long id, DestinationRequest request) {
@@ -140,7 +140,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "destinations", allEntries = true),
-        @CacheEvict(value = "active-destinations", allEntries = true)
+        @CacheEvict(value = "destinations-by-airport", allEntries = true)
     })
     @Transactional
     public void deleteDestination(Long id) {
@@ -157,7 +157,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Caching(evict = {
         @CacheEvict(value = "destinations", allEntries = true),
-        @CacheEvict(value = "active-destinations", allEntries = true)
+        @CacheEvict(value = "destinations-by-airport", allEntries = true)
     })
     @Transactional
     public DestinationResponse uploadDestinationImage(Long id, MultipartFile file) {
