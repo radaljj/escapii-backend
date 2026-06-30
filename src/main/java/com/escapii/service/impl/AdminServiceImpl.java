@@ -384,6 +384,19 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toMap(RevealEvent::getBookingRef, RevealEvent::getRevealedAt));
 
         responses.forEach(r -> r.setDestinationRevealedAt(revealedMap.get(r.getBookingRef())));
+
+        // Popuni termDestinations per booking (destinacije dostupne za taj termin)
+        responses.forEach(r -> {
+            if (r.getSelectedDateId() != null) {
+                List<com.escapii.dto.TermDestinationResponse> termDests =
+                        termDestinationRepository.findByDateIdOrderByDestinationNameAsc(r.getSelectedDateId())
+                                .stream()
+                                .map(com.escapii.dto.TermDestinationResponse::new)
+                                .toList();
+                r.setTermDestinations(termDests);
+            }
+        });
+
         return responses;
     }
 

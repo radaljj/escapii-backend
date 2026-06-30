@@ -2,6 +2,7 @@ package com.escapii.dto;
 
 import com.escapii.model.AccommodationType;
 import com.escapii.model.BookingStatus;
+import com.escapii.dto.TermDestinationResponse;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,6 +67,11 @@ public class AdminBookingResponse {
     private Integer basePricePerPerson;
     private Integer totalPricePerPerson;
     private Integer totalPriceAll;
+
+    // Termin i isključene destinacije (IDs za dropdown)
+    private Long selectedDateId;
+    private java.util.List<Long> excludedDestinationIds;
+    private java.util.List<TermDestinationResponse> termDestinations;
 
     // Vaučer
     private String  appliedVoucherCode;

@@ -2,7 +2,9 @@ package com.escapii.mapper;
 
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.PassengerDetail;
+import com.escapii.dto.TermDestinationResponse;
 import com.escapii.model.Booking;
+import com.escapii.model.Destination;
 import com.escapii.model.PassengerInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -15,6 +17,7 @@ public abstract class AdminBookingMapper {
 
     @Mapping(source = "selectedDate.departureDate",  target = "departureDate")
     @Mapping(source = "selectedDate.returnDate",     target = "returnDate")
+    @Mapping(source = "selectedDate.id",             target = "selectedDateId")
     @Mapping(source = "exclusionCostEur",            target = "exclusionCostEur")
     @Mapping(source = "airlineName",                 target = "airlineName")
     @Mapping(source = "airlineBookingCode",          target = "airlineBookingCode")
@@ -24,8 +27,10 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "deliveryCity",                target = "deliveryCity")
     @Mapping(source = "deliveryPhone",               target = "deliveryPhone")
     @Mapping(source = "revealBoxSent",               target = "revealBoxSent")
-    @Mapping(target = "excludedDestinations", expression = "java(buildExclusionList(entity))")
-    @Mapping(target = "passengers",           expression = "java(buildPassengers(entity))")
+    @Mapping(target = "excludedDestinations",    expression = "java(buildExclusionList(entity))")
+    @Mapping(target = "excludedDestinationIds",  expression = "java(buildExclusionIdList(entity))")
+    @Mapping(target = "termDestinations",        ignore = true)
+    @Mapping(target = "passengers",              expression = "java(buildPassengers(entity))")
     public abstract AdminBookingResponse toResponse(Booking entity);
 
     public List<AdminBookingResponse> toResponseList(List<Booking> entities) {
@@ -51,6 +56,15 @@ public abstract class AdminBookingMapper {
         if (b.getExcludedDestination2() != null) list.add(b.getExcludedDestination2().getName());
         if (b.getExcludedDestination3() != null) list.add(b.getExcludedDestination3().getName());
         if (b.getExcludedDestination4() != null) list.add(b.getExcludedDestination4().getName());
+        return list;
+    }
+
+    protected List<Long> buildExclusionIdList(Booking b) {
+        List<Long> list = new ArrayList<>();
+        if (b.getExcludedDestination1() != null) list.add(b.getExcludedDestination1().getId());
+        if (b.getExcludedDestination2() != null) list.add(b.getExcludedDestination2().getId());
+        if (b.getExcludedDestination3() != null) list.add(b.getExcludedDestination3().getId());
+        if (b.getExcludedDestination4() != null) list.add(b.getExcludedDestination4().getId());
         return list;
     }
 }
