@@ -1,6 +1,7 @@
 package com.escapii.service.email.core;
 
 import com.escapii.model.AccommodationType;
+import com.escapii.model.Booking;
 
 import java.time.format.DateTimeFormatter;
 
@@ -16,6 +17,14 @@ public final class EmailHtmlBuilder {
     public static volatile String LOGO_BLACK_URL = "";
 
     private EmailHtmlBuilder() {}
+
+    /** "Dragi" ili "Draga" na osnovu pola nosioca rezervacije. Fallback: "Dragi/a" za stare rezervacije. */
+    public static String salutation(Booking booking) {
+        String g = booking.getLeadPassengerGender();
+        if ("M".equals(g)) return "Dragi";
+        if ("F".equals(g)) return "Draga";
+        return "Dragi/a";
+    }
 
     public static String statusBadge(String label, String type) {
         String style = switch (type) {

@@ -142,6 +142,10 @@ public class Booking {
 
     // ── Kontakt ───────────────────────────────────────────────────────
 
+    /** Pol prvog putnika (M/F) - koristi se za pozdrav u mejlovima. Nullable za stare rezervacije. */
+    @Column(name = "lead_passenger_gender", length = 1)
+    private String leadPassengerGender;
+
     @Column(nullable = false, length = 100)
     private String firstName;
 
