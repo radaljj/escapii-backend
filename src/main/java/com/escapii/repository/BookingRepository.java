@@ -28,7 +28,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Passengers se učitavaju batch-om (50 po upitu) zahvaljujući @BatchSize na entitetu.
      */
     @EntityGraph(attributePaths = {
-        "excludedDestination1", "excludedDestination2", "excludedDestination3"
+        "excludedDestination1", "excludedDestination2", "excludedDestination3", "excludedDestination4"
     })
     List<Booking> findAllByOrderByCreatedAtDesc();
 
@@ -38,7 +38,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Koristiti uvek pre prosleđivanja Bookinga u email servis.
      */
     @EntityGraph(attributePaths = {
-        "excludedDestination1", "excludedDestination2", "excludedDestination3",
+        "excludedDestination1", "excludedDestination2", "excludedDestination3", "excludedDestination4",
         "passengers"
     })
     Optional<Booking> findWithDetailsById(Long id);
@@ -175,14 +175,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /**
      * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
-     * - reveal poslan (revealSentAt IS NOT NULL)
+     * - reveal poslan (revealSentAt IS NOT NULL) ILI Reveal Box (destinacija se otkriva fizički)
      * - airline booking code unet (nije null niti prazan string)
      * Napomena: forecastSentAt nije uslov - forecast može biti propušten ako je
      * booking potvrđen unutar T-4 dana pre polaska (scheduler ga ne stigne poslati).
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.selectedDate.returnDate <= :today " +
-           "AND b.revealSentAt IS NOT NULL " +
+           "AND (b.revealSentAt IS NOT NULL OR b.hasRevealBox = true) " +
            "AND b.airlineBookingCode IS NOT NULL " +
            "AND b.airlineBookingCode != ''")
     List<Booking> findReadyForCompletion(@Param("today") LocalDate today);

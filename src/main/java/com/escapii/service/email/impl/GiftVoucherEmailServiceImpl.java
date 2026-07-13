@@ -2,6 +2,7 @@ package com.escapii.service.email.impl;
 
 import com.escapii.model.GiftVoucher;
 import com.escapii.service.email.GiftVoucherEmailService;
+import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +30,11 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
     public void sendTeamAlert(GiftVoucher v) {
         String buyerNameRow = (v.getBuyerName() != null && !v.getBuyerName().isBlank())
                 ? "<tr><td style='padding:6px 0;color:#888;'>Ime kupca</td><td style='padding:6px 0;'>"
-                  + v.getBuyerName() + "</td></tr>"
+                  + EmailHtmlBuilder.esc(v.getBuyerName()) + "</td></tr>"
                 : "";
         String messageRow = (v.getGiftMessage() != null && !v.getGiftMessage().isBlank())
                 ? "<tr><td style='padding:6px 0;color:#888;'>Poruka</td><td style='padding:6px 0;'>"
-                  + v.getGiftMessage() + "</td></tr>"
+                  + EmailHtmlBuilder.esc(v.getGiftMessage()) + "</td></tr>"
                 : "";
 
         String html = """
