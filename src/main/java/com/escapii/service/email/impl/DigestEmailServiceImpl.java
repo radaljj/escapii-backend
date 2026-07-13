@@ -9,8 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,6 +26,8 @@ public class DigestEmailServiceImpl implements DigestEmailService {
     @Value("${app.ops-email}")
     private String opsEmail;
 
+    private static final DateTimeFormatter SHORT_FMT = DateTimeFormatter.ofPattern("d. MM.");
+
     @Override
     public void sendDailyDigest(LocalDate today,
                                 List<Booking> revealsSent,
@@ -31,17 +37,24 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                                 List<Booking> revealedAndViewed,
                                 List<Booking> notViewedUrgent) {
 
-        String todayStr  = today.format(EmailHtmlBuilder.DATE_FMT);
-        boolean hasToday = !revealsSent.isEmpty() || !forecastDue.isEmpty() || !revealBoxPending.isEmpty()
-                        || !revealedAndViewed.isEmpty() || !notViewedUrgent.isEmpty();
+        String todayStr = today.format(EmailHtmlBuilder.DATE_FMT);
+
+        Set<Long> revealIds   = ids(revealsSent);
+        Set<Long> forecastIds = ids(forecastDue);
+        Set<Long> boxIds      = ids(revealBoxPending);
+        Set<Long> viewedIds   = ids(revealedAndViewed);
+        Set<Long> urgentIds   = ids(notViewedUrgent);
+
+        boolean hasActions = !revealsSent.isEmpty() || !forecastDue.isEmpty()
+                          || !revealBoxPending.isEmpty() || !revealedAndViewed.isEmpty()
+                          || !notViewedUrgent.isEmpty();
 
         StringBuilder body = new StringBuilder();
 
-        // ── Meta bar ──────────────────────────────────────────────────────────
-        body.append(metaBar(upcoming.size(), revealsSent.size(), forecastDue.size()));
+        body.append(metaBar(upcoming.size(), revealsSent.size(), forecastDue.size(),
+                            revealBoxPending.size(), notViewedUrgent.size()));
 
-        // ── Danas nema akcija ─────────────────────────────────────────────────
-        if (!hasToday) {
+        if (!hasActions) {
             body.append("""
                 <div style="background:#eef6f0;border:1px solid #c3d8c9;border-left:4px solid #1d6042;\
                 border-radius:8px;padding:16px 20px;margin-bottom:20px;">
@@ -49,75 +62,16 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                 </div>""");
         }
 
-        // ── Reveal poslan danas ───────────────────────────────────────────────
-        if (!revealsSent.isEmpty()) {
-            body.append(section(
-                "✉ Reveal poslan danas (" + revealsSent.size() + ")",
-                "#eef6f0", "#c3d8c9", "#1d6042",
-                revealThead(),
-                revealRows(today, revealsSent)
-            ));
-        }
-
-        // ── Prognoza poslata danas ─────────────────────────────────────────────
-        if (!forecastDue.isEmpty()) {
-            body.append(section(
-                "🌤 Prognoza poslata danas (" + forecastDue.size() + ")",
-                "#fff5eb", "#e8c7b1", "#a85e44",
-                forecastThead(),
-                forecastRows(today, forecastDue)
-            ));
-        }
-
-        // ── Reveal Box podsjetnik ─────────────────────────────────────────────
-        if (!revealBoxPending.isEmpty()) {
-            body.append(section(
-                "📦 Pošalji Reveal Box (" + revealBoxPending.size() + ") - polazak za ≤ 5 dana!",
-                "#fdf3e7", "#e8c7b1", "#a85e44",
-                revealBoxThead(),
-                revealBoxRows(today, revealBoxPending)
-            ));
-        }
-
-        // ── Korisnik video destinaciju - pošalji potvrdu leta/smeštaja ────────
-        if (!revealedAndViewed.isEmpty()) {
-            body.append(section(
-                "✅ Korisnik video destinaciju - pošalji potvrdu leta i smeštaja (" + revealedAndViewed.size() + ")",
-                "#eef6f0", "#c3d8c9", "#1d6042",
-                viewedThead(),
-                viewedRows(today, revealedAndViewed)
-            ));
-        }
-
-        // ── Hitno: nije video destinaciju, polazak za ≤ 2 dana ───────────────
         if (!notViewedUrgent.isEmpty()) {
-            body.append(section(
-                "🚨 HITNO: Nije otvorio reveal, polazak za ≤ 2 dana (" + notViewedUrgent.size() + ")",
-                "#fff0f0", "#f5c6c6", "#9b3a2a",
-                notViewedThead(),
-                notViewedRows(today, notViewedUrgent)
-            ));
+            body.append(urgentAlert(notViewedUrgent, today));
         }
 
-        // ── Narednih 14 dana (preview) ────────────────────────────────────────
-        // Isključi booking-e koji su već obrađeni danas da ne dupliramo
-        List<Booking> preview = upcoming.stream()
-                .filter(b -> revealsSent.stream().noneMatch(r -> r.getId().equals(b.getId())))
-                .filter(b -> forecastDue.stream().noneMatch(f -> f.getId().equals(b.getId())))
-                .toList();
-
-        if (!preview.isEmpty()) {
-            body.append(section(
-                "📅 Narednih 14 dana (" + preview.size() + ")",
-                "#eaf0f3", "#bcd0d6", "#1f4a57",
-                previewThead(),
-                previewRows(today, preview)
-            ));
+        if (!upcoming.isEmpty()) {
+            body.append(timeline(today, upcoming, revealIds, forecastIds, boxIds, viewedIds, urgentIds));
         }
 
         String html = EmailHtmlBuilder.wrapBase(
-            "#2D5F6B",
-            "#1e1b4b",
+            "#2D5F6B", "#1e1b4b",
             EmailHtmlBuilder.statusBadge("Jutarnji pregled", "blue"),
             "Jutarnji pregled",
             todayStr + " &middot; " + upcoming.size() + " aktivnih rezervacija",
@@ -129,307 +83,220 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
         sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
-                revealsSent.size(), forecastDue.size(), preview.size());
+                revealsSent.size(), forecastDue.size(), upcoming.size());
     }
 
     // ── Meta bar ──────────────────────────────────────────────────────────────
 
-    private String metaBar(int total, int reveals, int forecasts) {
+    private String metaBar(int total, int reveals, int forecasts, int boxes, int urgent) {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" \
             style="background:#faf6ee;border:1px solid #ebe1cf;border-radius:8px;margin-bottom:20px;">
               <tr>
-                <td style="padding:12px 16px;border-right:1px solid #ebe1cf;">
-                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Aktivnih rezervacija</div>
-                  <div style="font-size:16px;font-weight:700;color:#1a1410;">%d</div>
+                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">Aktivnih</div>
+                  <div style="font-size:20px;font-weight:700;color:#1a1410;">%d</div>
                 </td>
-                <td style="padding:12px 16px;border-right:1px solid #ebe1cf;">
-                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">✉ Reveal danas</div>
-                  <div style="font-size:16px;font-weight:700;color:%s;">%d</div>
+                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">✉ Reveal</div>
+                  <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
-                <td style="padding:12px 16px;">
-                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">🌤 Prognoza danas</div>
-                  <div style="font-size:16px;font-weight:700;color:%s;">%d</div>
+                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">🌤 Prognoza</div>
+                  <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
+                </td>
+                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">📦 Kutija</div>
+                  <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
+                </td>
+                <td style="padding:12px 14px;text-align:center;">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">🚨 Hitno</div>
+                  <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
               </tr>
             </table>""".formatted(
                 total,
-                reveals > 0 ? "#1d6042" : "#1a1410", reveals,
-                forecasts > 0 ? "#a85e44" : "#1a1410", forecasts);
+                reveals  > 0 ? "#1d6042" : "#a89888", reveals,
+                forecasts > 0 ? "#a85e44" : "#a89888", forecasts,
+                boxes    > 0 ? "#a85e44" : "#a89888", boxes,
+                urgent   > 0 ? "#9b3a2a" : "#a89888", urgent);
     }
 
-    // ── Reveal sekcija ────────────────────────────────────────────────────────
+    // ── Urgent alert ──────────────────────────────────────────────────────────
 
-    private String revealThead() {
-        return thead("Putnik", "Email", "Ref", "Aerodrom", "Polazak", "Destinacija");
-    }
-
-    private String revealRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
+    private String urgentAlert(List<Booking> bookings, LocalDate today) {
+        StringBuilder rows = new StringBuilder();
         for (Booking b : bookings) {
-            LocalDate dep   = b.getSelectedDate().getDepartureDate();
-            long daysLeft   = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl  = daysLabel(daysLeft);
+            LocalDate dep  = b.getSelectedDate().getDepartureDate();
+            long days      = ChronoUnit.DAYS.between(today, dep);
+            String when    = days == 0 ? "DANAS!" : days == 1 ? "SUTRA!" : "za " + days + " dana";
+            rows.append("""
+                <tr>
+                  <td style="padding:9px 14px;font-size:13px;font-weight:700;color:#9b3a2a;">%s</td>
+                  <td style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
+                  <td style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
+                  <td style="padding:9px 14px;font-size:12px;font-weight:700;color:#9b3a2a;text-align:right;">%s</td>
+                </tr>""".formatted(
+                    esc(b.getFirstName() + " " + b.getLastName()),
+                    esc(b.getBookingRef()),
+                    esc(b.getDepartureAirport()),
+                    when));
+        }
+        return """
+            <div style="border-radius:8px;overflow:hidden;margin-bottom:20px;">
+              <div style="padding:11px 16px;font-size:13px;font-weight:700;\
+            background:#fff0f0;color:#9b3a2a;border:1px solid #f5c6c6;border-bottom:none;">
+                🚨 HITNO: korisnik nije otvorio reveal, polazak ≤ 2 dana (%d)
+              </div>
+              <table width="100%%" cellpadding="0" cellspacing="0" \
+            style="border-collapse:collapse;border:1px solid #f5c6c6;border-top:none;background:#fff8f8;">
+                <tbody>%s</tbody>
+              </table>
+            </div>""".formatted(bookings.size(), rows);
+    }
+
+    // ── Timeline ──────────────────────────────────────────────────────────────
+
+    private String timeline(LocalDate today, List<Booking> upcoming,
+                             Set<Long> revealIds, Set<Long> forecastIds,
+                             Set<Long> boxIds, Set<Long> viewedIds, Set<Long> urgentIds) {
+
+        Map<LocalDate, List<Booking>> byDate = upcoming.stream()
+            .sorted(Comparator.comparing(b -> b.getSelectedDate().getDepartureDate()))
+            .collect(Collectors.groupingBy(
+                b -> b.getSelectedDate().getDepartureDate(),
+                LinkedHashMap::new,
+                Collectors.toList()
+            ));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("""
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;\
+            text-transform:uppercase;color:#a89888;margin-bottom:12px;">📅 Narednih 14 dana</div>""");
+
+        for (Map.Entry<LocalDate, List<Booking>> entry : byDate.entrySet()) {
+            LocalDate date    = entry.getKey();
+            List<Booking> grp = entry.getValue();
+            long daysLeft     = ChronoUnit.DAYS.between(today, date);
+
+            boolean hasUrgent = grp.stream().anyMatch(b -> urgentIds.contains(b.getId()));
+            boolean hasAction = grp.stream().anyMatch(b ->
+                viewedIds.contains(b.getId()) || boxIds.contains(b.getId()));
+
+            // Header colors
+            String hBg     = hasUrgent ? "#fff0f0" : hasAction ? "#fffbf3" : "#f5f0e8";
+            String hColor  = hasUrgent ? "#9b3a2a" : hasAction ? "#7a4e1e" : "#3d2e1a";
+            String hBorder = hasUrgent ? "#f5c6c6" : hasAction ? "#e8c7b1" : "#e0d5c0";
+
+            // "Za X dana" pill
+            String pillBg    = daysLeft == 0 ? "#fff0f0" : daysLeft <= 2 ? "#fff5eb" : "#eaf0f3";
+            String pillColor = daysLeft == 0 ? "#9b3a2a" : daysLeft <= 2 ? "#a85e44" : "#1f4a57";
+            String pillText  = daysLeft == 0 ? "DANAS" : daysLeft == 1 ? "SUTRA" : "za " + daysLeft + " dana";
+
             sb.append("""
-                <tr style="border-bottom:1px solid #ebe1cf;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
+                <div style="border-radius:8px;overflow:hidden;margin-bottom:16px;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" \
+                style="background:%s;border:1px solid %s;border-bottom:none;border-radius:8px 8px 0 0;">
+                    <tr>
+                      <td style="padding:10px 16px;">
+                        <span style="font-size:13px;font-weight:700;color:%s;">%s</span>
+                        <span style="font-size:12px;color:%s;margin-left:8px;">%s</span>
+                      </td>
+                      <td style="padding:10px 16px;text-align:right;white-space:nowrap;">
+                        <span style="display:inline-block;padding:3px 10px;border-radius:100px;\
+                font-size:11px;font-weight:700;background:%s;color:%s;">%s</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%%" cellpadding="0" cellspacing="0" \
+                style="border-collapse:collapse;border:1px solid %s;border-top:none;background:#fff;">
+                    <tbody>%s</tbody>
+                  </table>
+                </div>""".formatted(
+                    hBg, hBorder,
+                    hColor, date.format(SHORT_FMT),
+                    hColor, dayName(date.getDayOfWeek()),
+                    pillBg, pillColor, pillText,
+                    hBorder,
+                    bookingRows(grp, revealIds, forecastIds, boxIds, viewedIds, urgentIds)
+                ));
+        }
+        return sb.toString();
+    }
+
+    private String bookingRows(List<Booking> bookings,
+                                Set<Long> revealIds, Set<Long> forecastIds,
+                                Set<Long> boxIds, Set<Long> viewedIds, Set<Long> urgentIds) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking b         = bookings.get(i);
+            Long id           = b.getId();
+            boolean isUrgent  = urgentIds.contains(id);
+            boolean needsConf = viewedIds.contains(id);
+            boolean needsBox  = boxIds.contains(id);
+            boolean revealOk  = revealIds.contains(id);
+            boolean forecastOk = forecastIds.contains(id);
+
+            String rowBg  = isUrgent ? "#fff8f8" : (needsConf || needsBox) ? "#fffdf7" : "#ffffff";
+            String border = i < bookings.size() - 1 ? "border-bottom:1px solid #f0e8dc;" : "";
+
+            StringBuilder badges = new StringBuilder();
+            if (isUrgent)   badges.append(badge("🚨 Nije otvorio!", "#fff0f0", "#9b3a2a"));
+            if (needsConf)  badges.append(badge("✅ Pošalji potvrdu", "#eef6f0", "#1d6042"));
+            if (needsBox)   badges.append(badge("📦 Pošalji kutiju", "#fff5eb", "#a85e44"));
+            if (revealOk)   badges.append(badge("✉ Reveal poslan", "#eef3ff", "#2b5fd9"));
+            if (forecastOk) badges.append(badge("🌤 Prognoza poslata", "#f3f0ff", "#5b3ea8"));
+            if (badges.isEmpty()) badges.append(badge("Nema akcija danas", "#f5f5f5", "#a89888"));
+
+            sb.append("""
+                <tr style="background:%s;%s">
+                  <td style="padding:11px 14px;font-size:13px;vertical-align:middle;width:35%%;">
                     <strong style="color:#2D5F6B;">%s</strong>
+                    <div style="font-size:11px;color:#a89888;margin-top:2px;">%s</div>
                   </td>
-                  <td style="padding:9px 10px;font-size:12px;color:#6b5d4f;vertical-align:middle;">
-                    <a href="mailto:%s" style="color:#6b5d4f;text-decoration:none;">%s</a>
+                  <td style="padding:11px 14px;font-size:12px;vertical-align:middle;width:18%%;white-space:nowrap;">
+                    <span style="font-weight:700;color:#a85e44;">%s</span>
+                    &nbsp;
+                    <span style="display:inline-block;padding:2px 7px;border-radius:100px;\
+                font-size:10px;font-weight:700;background:#f0f0f0;color:#666;">%s</span>
                   </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="font-size:12px;color:#1a1410;">%s</span>
-                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#eef6f0;color:#1d6042;">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#1d6042;vertical-align:middle;">%s</td>
+                  <td style="padding:11px 14px;vertical-align:middle;">%s</td>
                 </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
-                    EmailHtmlBuilder.esc(b.getAssignedDestination())
-            ));
-        }
-        return sb.toString();
-    }
-
-    // ── Prognoza sekcija ──────────────────────────────────────────────────────
-
-    private String forecastThead() {
-        return thead("Putnik", "Email", "Ref", "Aerodrom", "Polazak", "Status");
-    }
-
-    private String forecastRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
-        for (Booking b : bookings) {
-            LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl = daysLabel(daysLeft);
-            sb.append("""
-                <tr style="border-bottom:1px solid #ebe1cf;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <strong style="color:#2D5F6B;">%s</strong>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;color:#6b5d4f;vertical-align:middle;">
-                    <a href="mailto:%s" style="color:#6b5d4f;text-decoration:none;">%s</a>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="font-size:12px;color:#1a1410;">%s</span>
-                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff5eb;color:#a85e44;">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#1d6042;vertical-align:middle;">🌤 poslato</td>
-                </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl
-            ));
-        }
-        return sb.toString();
-    }
-
-    // ── Preview sekcija ───────────────────────────────────────────────────────
-
-    private String previewThead() {
-        return thead("Putnik · Ref · Polazak", "Dana", "Reveal", "Prognoza");
-    }
-
-    private String previewRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
-        for (Booking b : bookings) {
-            LocalDate dep      = b.getSelectedDate().getDepartureDate();
-            long daysLeft      = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl     = daysLabel(daysLeft);
-            String badgeCss    = daysLeft <= 5
-                    ? "background:#fff5eb;color:#a85e44;"
-                    : "background:#eaf0f3;color:#1f4a57;";
-            String revealDate   = dep.minusDays(2).format(EmailHtmlBuilder.DATE_FMT);
-            String forecastDate = dep.minusDays(4).format(EmailHtmlBuilder.DATE_FMT);
-            boolean revealDone   = b.getRevealSentAt()   != null;
-            boolean forecastDone = b.getForecastSentAt() != null;
-
-            sb.append("""
-                <tr style="border-bottom:1px solid #ebe1cf;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <strong style="color:#2D5F6B;">%s</strong>
-                    <span style="color:#a89888;"> · %s · %s</span>
-                  </td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;%s">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:11px;vertical-align:middle;color:%s;font-weight:%s;">%s</td>
-                  <td style="padding:9px 10px;font-size:11px;vertical-align:middle;color:%s;font-weight:%s;">%s</td>
-                </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT),
-                    badgeCss, daysLbl,
-                    revealDone   ? "#1d6042" : "#6b5d4f",
-                    revealDone   ? "700" : "400",
-                    revealDone   ? "✉ poslat"    : revealDate,
-                    forecastDone ? "#1d6042" : "#a89888",
-                    forecastDone ? "700" : "400",
-                    forecastDone ? "🌤 poslata" : forecastDate
-            ));
-        }
-        return sb.toString();
-    }
-
-    // ── Reveal Box sekcija ────────────────────────────────────────────────────
-
-    private String revealBoxThead() {
-        return thead("Putnik", "Ref", "Polazak", "Adresa dostave", "Telefon");
-    }
-
-    private String revealBoxRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
-        for (Booking b : bookings) {
-            LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl = daysLabel(daysLeft);
-            String address = (b.getDeliveryAddress() != null ? b.getDeliveryAddress() : "-")
-                           + (b.getDeliveryApartment() != null && !b.getDeliveryApartment().isBlank()
-                                ? " (" + b.getDeliveryApartment() + ")" : "")
-                           + (b.getDeliveryCity() != null ? ", " + b.getDeliveryCity() : "");
-            String phone   = b.getDeliveryPhone() != null ? b.getDeliveryPhone() : "-";
-            sb.append("""
-                <tr style="border-bottom:1px solid #ebe1cf;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <strong style="color:#a85e44;">%s</strong>
-                    <div style="font-size:11px;color:#6b5d4f;margin-top:2px;">%s</div>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="font-size:12px;color:#1a1410;">%s</span>
-                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff5eb;color:#a85e44;">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;color:#2b231b;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;color:#2b231b;vertical-align:middle;">%s</td>
-                </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getEmail()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
-                    EmailHtmlBuilder.esc(address),
-                    EmailHtmlBuilder.esc(phone)
-            ));
-        }
-        return sb.toString();
-    }
-
-    // ── Viewed sekcija (korisnik otvorio reveal) ─────────────────────────────
-
-    private String viewedThead() {
-        return thead("Putnik", "Ref", "Aerodrom", "Polazak", "Destinacija", "Email");
-    }
-
-    private String viewedRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
-        for (Booking b : bookings) {
-            LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl = daysLabel(daysLeft);
-            sb.append("""
-                <tr style="border-bottom:1px solid #ebe1cf;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <strong style="color:#1d6042;">%s</strong>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="font-size:12px;color:#1a1410;">%s</span>
-                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#eef6f0;color:#1d6042;">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#1d6042;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <a href="mailto:%s" style="color:#6b5d4f;text-decoration:none;">%s</a>
-                  </td>
-                </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
-                    EmailHtmlBuilder.esc(b.getAssignedDestination()),
-                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail())
-            ));
-        }
-        return sb.toString();
-    }
-
-    // ── Not-viewed urgent sekcija ─────────────────────────────────────────────
-
-    private String notViewedThead() {
-        return thead("Putnik", "Ref", "Aerodrom", "Polazak", "Destinacija", "Email");
-    }
-
-    private String notViewedRows(LocalDate today, List<Booking> bookings) {
-        StringBuilder sb = new StringBuilder();
-        for (Booking b : bookings) {
-            LocalDate dep  = b.getSelectedDate().getDepartureDate();
-            long daysLeft  = java.time.temporal.ChronoUnit.DAYS.between(today, dep);
-            String daysLbl = daysLeft == 0 ? "DANAS!" : daysLeft == 1 ? "SUTRA!" : "za " + daysLeft + " dana";
-            sb.append("""
-                <tr style="border-bottom:1px solid #f5c6c6;background:#fff8f8;">
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <strong style="color:#9b3a2a;">%s</strong>
-                  </td>
-                  <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#a85e44;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;vertical-align:middle;">
-                    <span style="font-size:12px;color:#1a1410;">%s</span>
-                    <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:#fff0f0;color:#9b3a2a;">%s</span>
-                  </td>
-                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#9b3a2a;vertical-align:middle;">%s</td>
-                  <td style="padding:9px 10px;font-size:12px;vertical-align:middle;">
-                    <a href="mailto:%s" style="color:#9b3a2a;text-decoration:none;">%s</a>
-                  </td>
-                </tr>""".formatted(
-                    EmailHtmlBuilder.esc(b.getFirstName() + " " + b.getLastName()),
-                    EmailHtmlBuilder.esc(b.getBookingRef()),
-                    EmailHtmlBuilder.esc(b.getDepartureAirport()),
-                    dep.format(EmailHtmlBuilder.DATE_FMT), daysLbl,
-                    EmailHtmlBuilder.esc(b.getAssignedDestination()),
-                    EmailHtmlBuilder.esc(b.getEmail()), EmailHtmlBuilder.esc(b.getEmail())
-            ));
+                    rowBg, border,
+                    esc(b.getFirstName() + " " + b.getLastName()),
+                    esc(b.getEmail()),
+                    esc(b.getBookingRef()),
+                    esc(b.getDepartureAirport()),
+                    badges));
         }
         return sb.toString();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private String thead(String... cols) {
-        StringBuilder sb = new StringBuilder("<thead><tr style=\"background:#f5efe2;border-bottom:1px solid #ebe1cf;\">");
-        for (String col : cols) {
-            sb.append("<th style=\"padding:7px 10px;text-align:left;font-size:10px;font-weight:700;"
-                    + "letter-spacing:0.8px;text-transform:uppercase;color:#6b5d4f;\">")
-              .append(col).append("</th>");
-        }
-        sb.append("</tr></thead>");
-        return sb.toString();
+    private String badge(String text, String bg, String color) {
+        return "<span style=\"display:inline-block;margin:2px 3px 2px 0;padding:3px 9px;"
+             + "border-radius:100px;font-size:11px;font-weight:700;background:" + bg
+             + ";color:" + color + ";white-space:nowrap;\">" + text + "</span>";
     }
 
-    private String section(String title, String bg, String border, String titleColor, String thead, String rows) {
-        return """
-            <div style="border-radius:8px;overflow:hidden;margin:0 0 16px;">
-              <div style="padding:12px 18px;font-size:13px;font-weight:700;background:%s;color:%s;\
-            border:1px solid %s;border-bottom:none;">%s</div>
-              <table width="100%%" cellpadding="0" cellspacing="0" \
-            style="border-collapse:collapse;border:1px solid %s;border-top:none;background:#fff;">
-                %s<tbody>%s</tbody>
-              </table>
-            </div>""".formatted(bg, titleColor, border, title, border, thead, rows);
+    private Set<Long> ids(List<Booking> list) {
+        return list.stream().map(Booking::getId).collect(Collectors.toSet());
     }
 
-    private String daysLabel(long days) {
-        if (days == 0) return "danas";
-        if (days == 1) return "za 1 dan";
-        return "za " + days + " dana";
+    private String esc(String s) {
+        return EmailHtmlBuilder.esc(s);
+    }
+
+    private String dayName(DayOfWeek dow) {
+        return switch (dow) {
+            case MONDAY    -> "Ponedeljak";
+            case TUESDAY   -> "Utorak";
+            case WEDNESDAY -> "Sreda";
+            case THURSDAY  -> "Četvrtak";
+            case FRIDAY    -> "Petak";
+            case SATURDAY  -> "Subota";
+            case SUNDAY    -> "Nedelja";
+        };
     }
 }
