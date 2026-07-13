@@ -38,15 +38,6 @@ public class DailyTaskScheduler {
         cleanupClosedInquiries();
     }
 
-    /** Ručno okidanje iz AdminController-a - okida iste taskove kao i automatski. */
-    public void triggerDigest() {
-        schedulingService.sendPendingReveals();
-        schedulingService.sendPendingForecasts();
-        schedulingService.cancelStalePendingBookings();
-        schedulingService.completeFinishedBookings();
-        sendDigest();
-    }
-
     // ── Cleanup ───────────────────────────────────────────────────────────────
 
     /**

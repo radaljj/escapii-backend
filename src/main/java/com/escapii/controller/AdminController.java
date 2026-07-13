@@ -272,13 +272,6 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Rezervacija obrisana"));
     }
 
-    /** POST /api/admin/scheduler/test - ručno okida jutarnji digest (samo za testiranje). */
-    @PostMapping("/scheduler/test")
-    public ResponseEntity<Map<String, String>> testScheduler() {
-        dailyTaskScheduler.triggerDigest();
-        return ResponseEntity.ok(Map.of("status", "Digest je poslan - proveri email."));
-    }
-
     /** PATCH /api/admin/bookings/{id}/status?value=CONFIRMED - promeni status rezervacije. */
     @PatchMapping("/bookings/{id}/status")
     public ResponseEntity<AdminBookingResponse> updateBookingStatus(

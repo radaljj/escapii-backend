@@ -39,13 +39,12 @@ public class BookingRequest {
     @NotNull(message = "Termin putovanja je obavezan")
     private Long selectedDateId;
 
-    // ── Korak 4: Isključene destinacije (max 3, opciono) ─────────────
+    // ── Korak 4: Isključene destinacije (max 4, opciono) ─────────────
 
     private Long excludedDestination1Id;
     private Long excludedDestination2Id;
     private Long excludedDestination3Id;
     private Long excludedDestination4Id;
-    private Long excludedDestination5Id;
 
     // ── Korak 5: Tip smeštaja ─────────────────────────────────────────
 
