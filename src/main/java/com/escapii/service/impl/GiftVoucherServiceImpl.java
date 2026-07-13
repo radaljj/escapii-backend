@@ -68,7 +68,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public GiftVoucherValidateResponse validate(GiftVoucherValidateRequest req) {
         String code = req.code().trim().toUpperCase();
 
@@ -95,7 +95,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public GiftVoucherRevealResponse reveal(String code) {
         if (code == null || code.isBlank()) return GiftVoucherRevealResponse.invalid();
         String normalizedCode = code.trim().toUpperCase();
