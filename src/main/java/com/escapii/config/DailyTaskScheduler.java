@@ -43,6 +43,7 @@ public class DailyTaskScheduler {
         schedulingService.sendPendingReveals();
         schedulingService.sendPendingForecasts();
         schedulingService.cancelStalePendingBookings();
+        schedulingService.completeFinishedBookings();
         sendDigest();
     }
 
