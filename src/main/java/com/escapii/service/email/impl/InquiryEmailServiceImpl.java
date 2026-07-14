@@ -93,7 +93,7 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
                 "Javićemo ti se što pre",
                 "",
                 body,
-                EmailHtmlBuilder.customerFooter(i.getEmail()),
+                EmailHtmlBuilder.customerFooter(teamEmail),
                 true
         );
 
