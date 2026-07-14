@@ -127,7 +127,7 @@ public final class EmailHtmlBuilder {
                       <table width="100%%" cellpadding="0" cellspacing="0">
                         <tr><td bgcolor="#f5efe2" style="background:#f5efe2;padding:32px 40px 28px;border-bottom:1px solid #ebe1cf;" class="mob-pad force-sand">
 
-                          <table cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
+                          <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
                             <tr><td align="center">
                               <!--[if !mso]><!-->
                               <a href="https://escapii.rs" style="text-decoration:none;display:block;">
