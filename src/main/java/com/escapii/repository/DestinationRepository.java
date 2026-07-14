@@ -19,4 +19,6 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
     List<Destination> findAllByOrderByNameAsc();
 
     boolean existsByName(String name);
+
+    boolean existsByAirportCodeIgnoreCase(String airportCode);
 }

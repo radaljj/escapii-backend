@@ -20,4 +20,6 @@ public class DestinationResponse {
     private String imageUrl;
     private Set<String> departureAirports;
     private Boolean active;
+    private String nameEn;
+    private String countryEn;
 }

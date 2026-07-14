@@ -38,6 +38,14 @@ public class Destination {
     @Column(length = 255)
     private String imageUrl;
 
+    /** Engleski naziv grada/destinacije - automatski popunjen iz IATA koda. */
+    @Column(length = 100)
+    private String nameEn;
+
+    /** Engleski naziv države - automatski popunjen iz IATA koda. */
+    @Column(length = 100)
+    private String countryEn;
+
     /**
      * Aerodroми polaska sa kojih postoji let ka ovoj destinaciji.
      * Vrednosti: "BEG", "INI" (može biti više).

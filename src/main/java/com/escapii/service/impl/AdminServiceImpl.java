@@ -1,5 +1,6 @@
 package com.escapii.service.impl;
 
+import com.escapii.dto.AddDestinationRequest;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
@@ -28,6 +29,7 @@ import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.repository.TermDestinationRepository;
 import com.escapii.service.AdminService;
+import com.escapii.service.AirportLookupService;
 import com.escapii.service.AvailableDateService;
 import com.escapii.service.CustomDateInquiryService;
 import com.escapii.service.email.BookingEmailService;
@@ -85,6 +87,7 @@ public class AdminServiceImpl implements AdminService {
     private final WaitlistService             waitlistService;
     private final AvailableDateService        availableDateService;
     private final CustomDateInquiryService    inquiryService;
+    private final AirportLookupService        airportLookupService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -105,16 +108,19 @@ public class AdminServiceImpl implements AdminService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Destinacija sa imenom '" + request.name() + "' već postoji");
         }
+        String iata = request.airportCode().toUpperCase();
         Destination d = new Destination();
         d.setName(request.name());
-        d.setAirportCode(request.airportCode().toUpperCase());
+        d.setAirportCode(iata);
         d.setCountry(request.country());
         d.setRegion(request.region());
         d.setDepartureAirports(request.departureAirports().stream()
                 .map(String::toUpperCase).collect(Collectors.toSet()));
         d.setActive(true);
+        d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
+        d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
         Destination saved = destinationRepository.save(d);
-        log.info("[ADMIN] Nova destinacija kreirana: '{}' (id={})", saved.getName(), saved.getId());
+        log.info("[ADMIN] Nova destinacija kreirana: '{}' (id={}) EN: {}/{}", saved.getName(), saved.getId(), saved.getNameEn(), saved.getCountryEn());
         return destinationMapper.toResponse(saved);
     }
 
@@ -128,13 +134,16 @@ public class AdminServiceImpl implements AdminService {
         Destination d = destinationRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Destinacija ne postoji: " + id));
+        String iata = request.airportCode().toUpperCase();
         d.setName(request.name());
-        d.setAirportCode(request.airportCode().toUpperCase());
+        d.setAirportCode(iata);
         d.setCountry(request.country());
         d.setRegion(request.region());
         d.setDepartureAirports(request.departureAirports().stream()
                 .map(String::toUpperCase).collect(Collectors.toSet()));
-        log.info("[ADMIN] Destinacija '{}' (id={}) ažurirana", d.getName(), id);
+        d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
+        d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
+        log.info("[ADMIN] Destinacija '{}' (id={}) ažurirana EN: {}/{}", d.getName(), id, d.getNameEn(), d.getCountryEn());
         return destinationMapper.toResponse(destinationRepository.save(d));
     }
 
