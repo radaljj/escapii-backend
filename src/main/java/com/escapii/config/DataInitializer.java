@@ -97,7 +97,7 @@ public class DataInitializer implements ApplicationRunner {
             dest("Milano", "BGY", "Italija",             "Zapadna Evropa",      "BEG"),
             dest("Sardinija",     "AHO", "Italija",             "Mediteran",           "BEG"),
             dest("Sicilija",      "PMO", "Italija",             "Mediteran",           "BEG"),
-            dest("Firenca",          "PSA", "Italija",             "Zapadna Evropa",      "BEG"),  // Toskana
+            dest("Firenca",          "FLR", "Italija",             "Zapadna Evropa",      "BEG"),  // Toskana (Amerigo Vespucci)
 
             // ── BEG only ───────────────────────────────────────────────────────
 
