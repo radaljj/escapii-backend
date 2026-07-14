@@ -1,6 +1,5 @@
 package com.escapii.service.impl;
 
-import com.escapii.dto.AddDestinationRequest;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
