@@ -1,6 +1,7 @@
 package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
+import com.escapii.model.GiftVoucher;
 import com.escapii.service.email.InvoiceEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
@@ -78,5 +79,57 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
             "application/pdf"
         );
         if (!ok) log.warn("[Invoice] PDF email nije poslat za rezervaciju {}", booking.getBookingRef());
+    }
+
+    @Override
+    @Async("pdfExecutor")
+    public void sendVoucherInvoiceToClient(GiftVoucher voucher, byte[] pdfBytes, String invoiceNumber) {
+        int amount = voucher.getAmount().intValue();
+
+        String body =
+            "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
+            "Dragi/a " + EmailHtmlBuilder.esc(voucher.getBuyerName() != null ? voucher.getBuyerName() : "kupče") + ",</p>" +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
+            "hvala na kupovini Escapii poklon vaučera! U prilogu se nalazi profaktura sa detaljima za uplatu." +
+            "</p>" +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 22px;\">" +
+            "Iznos se plaća u RSD po <strong>srednjem kursu NBS na dan uplate</strong> — " +
+            "u PDF-u ćeš naći broj računa i IPS QR kod." +
+            "</p>" +
+
+            EmailHtmlBuilder.detailsCard("Detalji vaučera",
+                EmailHtmlBuilder.dRow("Profaktura br.", EmailHtmlBuilder.esc(invoiceNumber)) +
+                EmailHtmlBuilder.dRow("Iznos vaučera", "<strong style=\"color:#a85e44;\">" + amount + " EUR</strong>"),
+                "#a85e44") +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
+            "Kada uplatiš, pošalji nam potvrdu transakcije na " +
+            "<a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
+            EmailHtmlBuilder.esc(teamEmail) + "</a> i odmah ćemo aktivirati tvoj vaučer." +
+            "</p>";
+
+        String html = EmailHtmlBuilder.wrapBase(
+            "#a85e44", "",
+            EmailHtmlBuilder.statusBadge("Poklon vaučer", "orange"),
+            "Tvoj Escapii poklon vaučer čeka na uplatu",
+            "Vaučer · " + amount + " EUR",
+            invoiceNumber,
+            body,
+            EmailHtmlBuilder.customerFooter(teamEmail),
+            false
+        );
+
+        String attachmentName = "escapii-profaktura-" + invoiceNumber + ".pdf";
+        boolean ok = emailSender.sendWithAttachment(
+            voucher.getBuyerEmail(),
+            "Profaktura za poklon vaučer · Escapii",
+            html,
+            attachmentName,
+            pdfBytes,
+            "application/pdf"
+        );
+        if (!ok) log.warn("[Invoice] PDF email nije poslat za vaučer #{}", voucher.getId());
     }
 }

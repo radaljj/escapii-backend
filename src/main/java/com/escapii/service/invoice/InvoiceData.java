@@ -7,17 +7,20 @@ public record InvoiceData(
         LocalDate issuedAt,
         LocalDate dueDate,
 
+        // Naziv stavke (rezervacija ili poklon vaučer)
+        String itemName,
+
         // Kupac
         String clientFirstName,
         String clientLastName,
         String clientEmail,
         String clientPhone,
 
-        // Rezervacija
+        // Stavka — nullable za vaučer fakturu
         String bookingRef,
         LocalDate departureDate,
         LocalDate returnDate,
-        int numberOfTravelers,
+        Integer numberOfTravelers,
 
         // Iznosi
         int subtotalEur,
@@ -42,7 +45,11 @@ public record InvoiceData(
         return voucherDiscountEur > 0 && voucherCode != null;
     }
 
+    public boolean hasTravelDates() {
+        return departureDate != null && returnDate != null;
+    }
+
     public String clientFullName() {
-        return clientFirstName + " " + clientLastName;
+        return clientFirstName + (clientLastName != null && !clientLastName.isBlank() ? " " + clientLastName : "");
     }
 }

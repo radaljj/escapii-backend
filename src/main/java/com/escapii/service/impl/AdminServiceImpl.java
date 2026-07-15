@@ -28,6 +28,7 @@ import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.repository.InvoiceSequenceRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.repository.TermDestinationRepository;
+import com.escapii.model.GiftVoucher;
 import com.escapii.model.InvoiceSequence;
 import com.escapii.service.AdminService;
 import com.escapii.service.AirportLookupService;
@@ -821,6 +822,7 @@ public class AdminServiceImpl implements AdminService {
                 invoiceNum,
                 today,
                 today.plusDays(invoiceDueDays),
+                "Escapii putovanje iznenađenja",
                 booking.getFirstName(),
                 booking.getLastName(),
                 booking.getEmail(),
@@ -847,6 +849,84 @@ public class AdminServiceImpl implements AdminService {
         invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
                 invoiceNum, booking.getBookingRef(), booking.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void sendVoucherInvoice(Long voucherId) {
+        GiftVoucher voucher = giftVoucherRepository.findById(voucherId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Vaučer nije pronađen: " + voucherId));
+
+        if (voucher.getStatus() != com.escapii.model.VoucherStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Profaktura se može poslati samo za PENDING vaučere (trenutno: " + voucher.getStatus() + ")");
+        }
+
+        if (voucher.getInvoiceSentAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Profaktura je već poslata " + voucher.getInvoiceSentAt());
+        }
+
+        LocalDate today = LocalDate.now();
+        int year = today.getYear();
+        InvoiceSequence seq = invoiceSequenceRepository.findByYear(year)
+                .orElseGet(() -> invoiceSequenceRepository.save(new InvoiceSequence(year)));
+        seq.setLastSeq(seq.getLastSeq() + 1);
+        invoiceSequenceRepository.save(seq);
+        String invoiceNum = "ESC-INV-" + year + "-" + String.format("%04d", seq.getLastSeq());
+
+        int total = voucher.getAmount().intValue();
+
+        String account = companyAccount.replaceAll("[^0-9]", "");
+        String formattedAccount = account.length() == 18
+                ? account.substring(0, 3) + "-" + account.substring(3, 16) + "-" + account.substring(16)
+                : companyAccount;
+        String ref = voucher.getCode().replace("ESC-", "").replace("-", "");
+        String ipsContent = "K:PR|V:01|C:1" +
+                "|R:" + formattedAccount +
+                "|N:" + companyName.replace("|", "") +
+                "|I:RSD0|SF:289" +
+                "|S:Poklon vaucer " + voucher.getCode() + " " + total + "EUR" +
+                "|RO:97" + ref;
+        String ipsQrDataUri = qrCodeGenerator.pngDataUri(ipsContent, 300);
+
+        String buyerName  = voucher.getBuyerName() != null ? voucher.getBuyerName() : "";
+        int spaceIdx = buyerName.indexOf(' ');
+        String firstName = spaceIdx > 0 ? buyerName.substring(0, spaceIdx) : buyerName;
+        String lastName  = spaceIdx > 0 ? buyerName.substring(spaceIdx + 1) : "";
+
+        InvoiceData invoiceData = new InvoiceData(
+                invoiceNum,
+                today,
+                today.plusDays(invoiceDueDays),
+                "Poklon vaučer · Escapii putovanje iznenađenja",
+                firstName,
+                lastName,
+                voucher.getBuyerEmail(),
+                "",
+                voucher.getCode(),
+                null,
+                null,
+                null,
+                total,
+                0,
+                null,
+                total,
+                companyName, companyAddress, companyPib, companyMb,
+                companyAccount, companyBank, companyEmail, companyWebsite,
+                ipsQrDataUri
+        );
+
+        byte[] pdf = invoicePdfService.generate(invoiceData);
+
+        voucher.setInvoiceNumber(invoiceNum);
+        voucher.setInvoiceSentAt(LocalDateTime.now());
+        giftVoucherRepository.save(voucher);
+
+        invoiceEmailService.sendVoucherInvoiceToClient(voucher, pdf, invoiceNum);
+        log.info("[Invoice] Profaktura {} poslata za vaučer #{} na {}",
+                invoiceNum, voucherId, voucher.getBuyerEmail());
     }
 
     private String buildIpsQrContent(Booking booking, int totalEur) {

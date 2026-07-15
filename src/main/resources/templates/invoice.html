@@ -190,8 +190,8 @@
   <!-- Main item -->
   <tr class="item-row">
     <td>
-      <div class="item-name">Escapii putovanje iznenađenja</div>
-      <div class="item-meta">
+      <div class="item-name" th:text="${itemName}">Escapii putovanje iznenađenja</div>
+      <div class="item-meta" th:if="${hasTravelDates}">
         Rezervacija: <span th:text="${bookingRef}">ESC-abc12345</span>
         &#160;·&#160;
         Polazak: <span th:text="${departureDate}">01.08.2025.</span>
@@ -200,8 +200,11 @@
         <br/>
         Datum prometa: <span th:text="${returnDate}">05.08.2025.</span>
       </div>
+      <div class="item-meta" th:if="${!hasTravelDates and bookingRef != null}">
+        Ref: <span th:text="${bookingRef}">ESC-XXXX-XXXX</span>
+      </div>
     </td>
-    <td class="item-qty" th:text="${travelers}">2</td>
+    <td class="item-qty" th:text="${travelers != null ? travelers : '—'}">2</td>
     <td class="item-price"><span th:text="${subtotal}">398</span> €</td>
   </tr>
   <!-- Voucher row (conditional) -->

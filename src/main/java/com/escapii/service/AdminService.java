@@ -57,6 +57,7 @@ public interface AdminService {
 
     // ── Fakture ──
     void sendInvoice(Long bookingId);
+    void sendVoucherInvoice(Long voucherId);
 
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();

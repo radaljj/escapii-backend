@@ -76,6 +76,14 @@ public class GiftVoucher {
     @Column
     private LocalDateTime usedAt;
 
+    /** Broj profakture (npr. ESC-INV-2026-0002). Null znači nije poslata. */
+    @Column(name = "invoice_number", length = 25, unique = true)
+    private String invoiceNumber;
+
+    /** Trenutak kad je profaktura poslata kupcu - null znači nije poslata. */
+    @Column(name = "invoice_sent_at")
+    private LocalDateTime invoiceSentAt;
+
     /**
      * Referenca na booking u kome je vaučer primenjen.
      * Null = nije primenjen, ili booking se prati ručno.

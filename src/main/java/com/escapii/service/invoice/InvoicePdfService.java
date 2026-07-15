@@ -65,9 +65,11 @@ public class InvoicePdfService {
             ctx.setVariable("clientName",     data.clientFullName());
             ctx.setVariable("clientEmail",    data.clientEmail());
             ctx.setVariable("clientPhone",    data.clientPhone());
+            ctx.setVariable("itemName",       data.itemName());
+            ctx.setVariable("hasTravelDates", data.hasTravelDates());
             ctx.setVariable("bookingRef",     data.bookingRef());
-            ctx.setVariable("departureDate",  data.departureDate().format(DATE_FMT));
-            ctx.setVariable("returnDate",     data.returnDate().format(DATE_FMT));
+            ctx.setVariable("departureDate",  data.hasTravelDates() ? data.departureDate().format(DATE_FMT) : null);
+            ctx.setVariable("returnDate",     data.hasTravelDates() ? data.returnDate().format(DATE_FMT) : null);
             ctx.setVariable("travelers",      data.numberOfTravelers());
             ctx.setVariable("subtotal",       data.subtotalEur());
             ctx.setVariable("hasVoucher",     data.hasVoucher());

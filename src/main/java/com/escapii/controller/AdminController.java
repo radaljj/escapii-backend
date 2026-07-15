@@ -384,4 +384,11 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Profaktura je u toku slanja na email kupca"));
     }
 
+    /** POST /api/admin/gifts/vouchers/{id}/send-invoice — šalje profakturu kupcu vaučera. */
+    @PostMapping("/gifts/vouchers/{id}/send-invoice")
+    public ResponseEntity<Map<String, String>> sendVoucherInvoice(@PathVariable Long id) {
+        adminService.sendVoucherInvoice(id);
+        return ResponseEntity.ok(Map.of("message", "Profaktura je u toku slanja na email kupca vaučera"));
+    }
+
 }
