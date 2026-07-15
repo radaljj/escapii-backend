@@ -23,7 +23,7 @@
     .header-tbl td { padding: 28px 36px 24px; vertical-align: top; }
     .logo-text { font-size: 22px; font-weight: 700; color: #1a1410; letter-spacing: -0.5px; }
     .logo-dot  { color: #a85e44; }
-    .company-details { font-size: 10px; color: #7a6a58; line-height: 1.7; margin-top: 8px; }
+    .company-details { font-size: 10px; color: #3d2e1a; line-height: 1.7; margin-top: 8px; }
     .company-details strong { color: #1a1410; font-weight: 700; }
 
     .invoice-meta { text-align: right; }
@@ -110,9 +110,9 @@
 
     /* Footer */
     .footer-tbl { width: 794px; border-top: 1px solid #e8ddc8; background-color: #faf6ee; }
-    .footer-tbl td { padding: 14px 36px; font-size: 9px; color: #a89888; letter-spacing: 0.3px; }
+    .footer-tbl td { padding: 14px 36px; font-size: 9px; color: #3d2e1a; letter-spacing: 0.3px; }
     .footer-tbl td.r { text-align: right; }
-    .footer-tbl strong { color: #7a6a58; }
+    .footer-tbl strong { color: #1a1410; }
   </style>
 </head>
 <body>
@@ -252,7 +252,9 @@
         </tr>
         <tr class="pay-row">
           <td class="k">Iznos</td>
-          <td class="v"><span th:text="${total}">398</span> EUR</td>
+          <td class="v"><span th:text="${total}">398</span> EUR
+            <span style="display:block;font-family:Arial,sans-serif;font-size:9px;font-weight:400;color:#a89888;">po kursu NBS na dan uplate</span>
+          </td>
         </tr>
         <tr class="pay-row">
           <td class="k">Svrha</td>
