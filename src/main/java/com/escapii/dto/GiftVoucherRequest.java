@@ -2,8 +2,6 @@ package com.escapii.dto;
 
 import jakarta.validation.constraints.*;
 
-import java.math.BigDecimal;
-
 /**
  * Zahtev za kupovinu gift vaučera.
  * Kupac bira iznos, unosi email i opciono ime koje će pisati na vaučeru,
@@ -13,9 +11,9 @@ import java.math.BigDecimal;
 public record GiftVoucherRequest(
 
         @NotNull(message = "Iznos vaučera je obavezan")
-        @DecimalMin(value = "50.00", message = "Minimalni iznos vaučera je 50 EUR")
-        @DecimalMax(value = "5000.00", message = "Maksimalni iznos vaučera je 5000 EUR")
-        BigDecimal amount,
+        @Min(value = 50, message = "Minimalni iznos vaučera je 50 EUR")
+        @Max(value = 5000, message = "Maksimalni iznos vaučera je 5000 EUR")
+        Integer amount,
 
         @NotBlank(message = "Email kupca je obavezan")
         @Email(message = "Email kupca nije validan")

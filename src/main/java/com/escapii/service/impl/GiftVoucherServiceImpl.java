@@ -53,7 +53,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     public GiftVoucherResponse createVoucher(GiftVoucherRequest req) {
         GiftVoucher v = new GiftVoucher();
         v.setCode(generateUniqueCode());
-        v.setAmount(req.amount());
+        v.setAmount(BigDecimal.valueOf(req.amount()));
         v.setBuyerEmail(req.buyerEmail().trim().toLowerCase());
         v.setBuyerName(req.buyerName() != null ? req.buyerName().trim() : null);
         v.setGiftMessage(req.giftMessage() != null ? req.giftMessage().trim() : null);
@@ -148,7 +148,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         // Generiši PDF vaučer i pošalji kupcu (asinhrono)
         try {
             VoucherData pdfData = VoucherData.of(
-                saved.getAmount().intValue(),
+                saved.getAmount().intValueExact(),
                 saved.getCode(),
                 LocalDate.now(),
                 saved.getBuyerName(),
@@ -209,14 +209,15 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     @Transactional
     public GiftVoucherResponse reactivateVoucher(Long id) {
         GiftVoucher v = findOrThrow(id);
-        if (v.getStatus() == VoucherStatus.PENDING) {
+        if (v.getStatus() == VoucherStatus.PENDING || v.getStatus() == VoucherStatus.EXPIRED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Vaučer id=" + id + " je PENDING - aktiviraj ga normalnim putem (uplata potvrđena).");
+                    "Vaučer id=" + id + " ne može biti reaktiviran (status: " + v.getStatus() + ").");
         }
         VoucherStatus oldStatus = v.getStatus();
         v.setStatus(VoucherStatus.ACTIVE);
         v.setUsedAt(null);
         v.setUsedInBookingRef(null);
+        v.setUsedAmount(BigDecimal.ZERO);
         GiftVoucher saved = voucherRepository.save(v);
         log.info("[GiftVoucher] Admin reaktivirao vaučer id={} ({} → ACTIVE)", id, oldStatus);
         return new GiftVoucherResponse(saved);
