@@ -55,6 +55,9 @@ public interface AdminService {
     AdminBookingResponse setAirlineBookingCode(Long id, String code);
     AdminBookingResponse markRevealBoxSent(Long id);
 
+    // ── Fakture ──
+    void sendInvoice(Long bookingId);
+
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);

@@ -32,6 +32,10 @@ import com.escapii.service.AirportLookupService;
 import com.escapii.service.AvailableDateService;
 import com.escapii.service.CustomDateInquiryService;
 import com.escapii.service.email.BookingEmailService;
+import com.escapii.service.email.InvoiceEmailService;
+import com.escapii.service.invoice.InvoiceData;
+import com.escapii.service.invoice.InvoicePdfService;
+import com.escapii.service.voucher.QrCodeGenerator;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +77,33 @@ public class AdminServiceImpl implements AdminService {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
+    @Value("${app.company.name:Escapii d.o.o.}")
+    private String companyName;
+
+    @Value("${app.company.address:Beograd, Srbija}")
+    private String companyAddress;
+
+    @Value("${app.company.pib:000000000}")
+    private String companyPib;
+
+    @Value("${app.company.mb:00000000}")
+    private String companyMb;
+
+    @Value("${app.company.account:000-0000000000000-00}")
+    private String companyAccount;
+
+    @Value("${app.company.bank:placeholder banka}")
+    private String companyBank;
+
+    @Value("${app.company.email:hello@escapii.rs}")
+    private String companyEmail;
+
+    @Value("${app.company.website:escapii.rs}")
+    private String companyWebsite;
+
+    @Value("${app.invoice.due-days:3}")
+    private int invoiceDueDays;
+
     private final AvailableDateRepository     availableDateRepository;
     private final DestinationRepository       destinationRepository;
     private final TermDestinationRepository   termDestinationRepository;
@@ -87,6 +118,9 @@ public class AdminServiceImpl implements AdminService {
     private final AvailableDateService        availableDateService;
     private final CustomDateInquiryService    inquiryService;
     private final AirportLookupService        airportLookupService;
+    private final InvoicePdfService           invoicePdfService;
+    private final InvoiceEmailService         invoiceEmailService;
+    private final QrCodeGenerator             qrCodeGenerator;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -736,6 +770,77 @@ public class AdminServiceImpl implements AdminService {
                 inquiryId, depDate, retDate, saved.getPrivateToken(), req.pricePerPerson(), saved.getExpiresAt());
 
         return new AdminDateResponse(saved);
+    }
+
+    // ══ FAKTURE ══════════════════════════════════════════════════════════════
+
+    @Override
+    public void sendInvoice(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija nije pronađena: " + bookingId));
+
+        if (booking.getStatus() != com.escapii.model.BookingStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Profaktura se može poslati samo za PENDING rezervacije (trenutno: " + booking.getStatus() + ")");
+        }
+
+        LocalDate today   = LocalDate.now();
+        String invoiceNum = "ESC-INV-" + today.getYear() + "-" + String.format("%04d", bookingId);
+
+        int subtotal  = booking.getTotalPriceAll();
+        int discount  = booking.getVoucherDiscount() != null ? booking.getVoucherDiscount() : 0;
+        int total     = subtotal - discount;
+
+        // IPS QR kod (NBS standard) - iznos RSD0 jer se preračunava po kursu NBS na dan uplate
+        String ipsContent = buildIpsQrContent(booking, total);
+        String ipsQrDataUri = qrCodeGenerator.pngDataUri(ipsContent, 300);
+
+        AvailableDate date = booking.getSelectedDate();
+        InvoiceData invoiceData = new InvoiceData(
+                invoiceNum,
+                today,
+                today.plusDays(invoiceDueDays),
+                booking.getFirstName(),
+                booking.getLastName(),
+                booking.getEmail(),
+                booking.getPhone(),
+                booking.getBookingRef(),
+                date.getDepartureDate(),
+                date.getReturnDate(),
+                booking.getNumberOfTravelers(),
+                subtotal,
+                discount,
+                booking.getAppliedVoucherCode(),
+                total,
+                companyName, companyAddress, companyPib, companyMb,
+                companyAccount, companyBank, companyEmail, companyWebsite,
+                ipsQrDataUri
+        );
+
+        byte[] pdf = invoicePdfService.generate(invoiceData);
+        invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum);
+        log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
+                invoiceNum, booking.getBookingRef(), booking.getEmail());
+    }
+
+    private String buildIpsQrContent(Booking booking, int totalEur) {
+        // IPS NBS QR standard (v01)
+        // Iznos se ne upisuje (I:RSD0) jer se EUR preračunava po kursu NBS na dan uplate
+        String account = companyAccount.replaceAll("[^0-9]", "");
+        String formattedAccount = account.length() == 18
+                ? account.substring(0, 3) + "-" + account.substring(3, 16) + "-" + account.substring(16)
+                : companyAccount;
+        String ref = booking.getBookingRef().replace("ESC-", "").replace("-", "");
+        String desc = "Rezervacija " + booking.getBookingRef() + " " + totalEur + "EUR";
+
+        return "K:PR|V:01|C:1" +
+               "|R:" + formattedAccount +
+               "|N:" + companyName +
+               "|I:RSD0" +
+               "|SF:289" +
+               "|S:" + desc +
+               "|RO:97" + ref;
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

@@ -373,4 +373,15 @@ public class AdminController {
         return ResponseEntity.ok(adminService.markRevealBoxSent(id));
     }
 
+    /**
+     * POST /api/admin/bookings/{id}/send-invoice
+     * Generiše profakturu (PDF) i šalje je korisniku na email.
+     * Dozvoljeno samo za PENDING rezervacije.
+     */
+    @PostMapping("/bookings/{id}/send-invoice")
+    public ResponseEntity<Map<String, String>> sendInvoice(@PathVariable Long id) {
+        adminService.sendInvoice(id);
+        return ResponseEntity.ok(Map.of("message", "Profaktura je u toku slanja na email kupca"));
+    }
+
 }

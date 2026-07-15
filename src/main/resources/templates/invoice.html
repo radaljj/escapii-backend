@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="sr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    @page { size: 794px 1123px; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      width: 794px;
+      font-family: 'InvoiceSans', Arial, sans-serif;
+      font-size: 12px;
+      color: #1a1410;
+      background: #ffffff;
+    }
+
+    table { border-collapse: collapse; }
+
+    /* Accent bar */
+    .accent-bar { width: 794px; height: 6px; background-color: #a85e44; font-size: 0; line-height: 0; }
+
+    /* Header */
+    .header-tbl { width: 794px; background-color: #faf6ee; border-bottom: 1px solid #e8ddc8; }
+    .header-tbl td { padding: 28px 36px 24px; vertical-align: top; }
+    .logo-text { font-size: 22px; font-weight: 700; color: #1a1410; letter-spacing: -0.5px; }
+    .logo-dot  { color: #a85e44; }
+    .company-details { font-size: 10px; color: #7a6a58; line-height: 1.7; margin-top: 8px; }
+    .company-details strong { color: #1a1410; font-weight: 700; }
+
+    .invoice-meta { text-align: right; }
+    .invoice-type { font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+                    color: #a85e44; font-weight: 700; border: 1px solid #e0c3b2;
+                    background-color: #fbf1ea; padding: 5px 12px; border-radius: 100px;
+                    display: inline-block; }
+    .invoice-num  { font-size: 18px; font-weight: 700; color: #1a1410;
+                    letter-spacing: -0.5px; margin-top: 10px; }
+    .meta-row     { font-size: 10px; color: #7a6a58; margin-top: 4px; line-height: 1.6; }
+    .meta-row strong { color: #1a1410; }
+
+    /* Body */
+    .body-wrap { width: 794px; padding: 0; }
+    .body-inner { width: 794px; }
+    .section { padding: 20px 36px; }
+    .section-title {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: #a89888; font-weight: 700; margin-bottom: 10px;
+    }
+
+    /* Client box */
+    .client-box { background-color: #faf6ee; border: 1px solid #e8ddc8;
+                  border-radius: 8px; padding: 14px 18px; }
+    .client-name { font-size: 14px; font-weight: 700; color: #1a1410; }
+    .client-detail { font-size: 11px; color: #7a6a58; margin-top: 3px; line-height: 1.6; }
+
+    /* Divider */
+    .divider { width: 722px; height: 1px; background-color: #e8ddc8;
+               margin: 0 36px; font-size: 0; line-height: 0; }
+
+    /* Items table */
+    .items-tbl { width: 722px; margin: 0 36px; }
+    .items-hdr td {
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #a89888; font-weight: 700; padding: 8px 0 8px;
+      border-bottom: 1px solid #e8ddc8;
+    }
+    .items-hdr td.r { text-align: right; }
+    .items-hdr td.c { text-align: center; }
+
+    .item-row td { padding: 12px 0; border-bottom: 1px solid #f0e8d8; vertical-align: top; }
+    .item-name  { font-size: 12px; font-weight: 700; color: #1a1410; }
+    .item-meta  { font-size: 10px; color: #a89888; margin-top: 3px; line-height: 1.5; }
+    .item-qty   { font-size: 12px; color: #7a6a58; text-align: center; }
+    .item-price { font-size: 12px; font-weight: 700; color: #1a1410; text-align: right; }
+
+    .voucher-row td { padding: 8px 0; border-bottom: 1px solid #f0e8d8; }
+    .voucher-label { font-size: 11px; color: #7a6a58; font-style: italic; }
+    .voucher-amount { font-size: 11px; color: #2e7d4a; font-weight: 700; text-align: right; }
+
+    /* Total box */
+    .total-wrap { width: 722px; margin: 14px 36px 0; }
+    .total-box {
+      background-color: #1a1410; border-radius: 8px; padding: 16px 22px;
+    }
+    .total-box td { vertical-align: middle; }
+    .total-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+                   color: #a89888; }
+    .total-note  { font-size: 9px; color: #7a6a58; margin-top: 4px; }
+    .total-amount { font-size: 28px; font-weight: 700; color: #a85e44;
+                    text-align: right; letter-spacing: -1px; }
+
+    /* Payment section */
+    .payment-tbl { width: 722px; margin: 0 36px; }
+    .pay-info-tbl { width: 100%; }
+    .pay-row td { font-size: 11px; padding: 5px 0; border-bottom: 1px solid #f0e8d8; }
+    .pay-row td.k { color: #a89888; width: 130px; }
+    .pay-row td.v { color: #1a1410; font-weight: 700; font-family: 'Courier New', monospace;
+                    font-size: 11px; }
+    .pay-row.last td { border-bottom: none; }
+
+    /* QR block */
+    .qr-cell { width: 130px; text-align: center; vertical-align: top; padding-left: 20px; }
+    .qr-cell img { width: 110px; height: 110px; }
+    .qr-label { font-size: 9px; color: #a89888; text-align: center; margin-top: 5px;
+                letter-spacing: 0.5px; line-height: 1.4; }
+
+    /* Notes */
+    .note-box { background-color: #faf6ee; border-left: 3px solid #e8ddc8;
+                border-radius: 0 6px 6px 0; padding: 12px 16px;
+                font-size: 10px; color: #7a6a58; line-height: 1.7; }
+    .note-box strong { color: #1a1410; }
+
+    /* Footer */
+    .footer-tbl { width: 794px; border-top: 1px solid #e8ddc8; background-color: #faf6ee; }
+    .footer-tbl td { padding: 14px 36px; font-size: 9px; color: #a89888; letter-spacing: 0.3px; }
+    .footer-tbl td.r { text-align: right; }
+    .footer-tbl strong { color: #7a6a58; }
+  </style>
+</head>
+<body>
+
+<!-- Accent bar -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td class="accent-bar"></td></tr>
+</table>
+
+<!-- Header -->
+<table class="header-tbl" width="794" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="380">
+      <div class="logo-text">escapii<span class="logo-dot">.</span></div>
+      <div class="company-details">
+        <strong th:text="${companyName}">Escapii d.o.o.</strong><br/>
+        <span th:text="${companyAddress}">Beograd, Srbija</span><br/>
+        PIB: <span th:text="${companyPib}">000000000</span> &nbsp;·&nbsp;
+        MB: <span th:text="${companyMb}">00000000</span><br/>
+        <span th:text="${companyEmail}">hello@escapii.rs</span> &nbsp;·&nbsp;
+        <span th:text="${companyWebsite}">escapii.rs</span>
+      </div>
+    </td>
+    <td class="invoice-meta">
+      <div class="invoice-type">profaktura · predračun</div>
+      <div class="invoice-num" th:text="${invoiceNumber}">ESC-INV-2025-0001</div>
+      <div class="meta-row">Datum izdavanja: <strong th:text="${issuedAt}">15.07.2025.</strong></div>
+      <div class="meta-row">Rok plaćanja: <strong th:text="${dueDate}">18.07.2025.</strong></div>
+    </td>
+  </tr>
+</table>
+
+<!-- Divider -->
+<div class="divider"></div>
+
+<!-- Client + booking info -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr>
+    <td class="section">
+      <div class="section-title">Podaci o kupcu</div>
+      <div class="client-box">
+        <div class="client-name" th:text="${clientName}">Marko Petrović</div>
+        <div class="client-detail">
+          <span th:text="${clientEmail}">marko@example.com</span>
+          &nbsp;·&nbsp;
+          <span th:text="${clientPhone}">+381 64 000 0000</span>
+        </div>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div class="divider"></div>
+
+<!-- Items -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td style="padding: 18px 36px 0;">
+    <div class="section-title">Stavke</div>
+  </td></tr>
+</table>
+
+<table class="items-tbl" cellpadding="0" cellspacing="0">
+  <!-- Header -->
+  <tr class="items-hdr">
+    <td>Opis usluge</td>
+    <td class="c" width="60">Putnici</td>
+    <td class="r" width="90">Iznos</td>
+  </tr>
+  <!-- Main item -->
+  <tr class="item-row">
+    <td>
+      <div class="item-name">Escapii putovanje iznenađenja</div>
+      <div class="item-meta">
+        Rezervacija: <span th:text="${bookingRef}">ESC-abc12345</span>
+        &nbsp;·&nbsp;
+        Polazak: <span th:text="${departureDate}">01.08.2025.</span>
+        &nbsp;–&nbsp;
+        <span th:text="${returnDate}">05.08.2025.</span>
+        <br/>
+        Datum prometa: <span th:text="${returnDate}">05.08.2025.</span>
+      </div>
+    </td>
+    <td class="item-qty" th:text="${travelers}">2</td>
+    <td class="item-price"><span th:text="${subtotal}">398</span> €</td>
+  </tr>
+  <!-- Voucher row (conditional) -->
+  <tr class="voucher-row" th:if="${hasVoucher}">
+    <td colspan="2">
+      <span class="voucher-label">Popust – vaučer <span th:text="${voucherCode}">ESC-••••-XXXX</span></span>
+    </td>
+    <td class="voucher-amount">−<span th:text="${voucherDiscount}">0</span> €</td>
+  </tr>
+</table>
+
+<!-- Total -->
+<div class="total-wrap">
+  <table class="total-box" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <div class="total-label">Ukupno za uplatu</div>
+        <div class="total-note">PDV nije obračunat · nije fiskalni račun</div>
+      </td>
+      <td class="total-amount"><span th:text="${total}">398</span> €</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Spacer -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td style="height: 22px; font-size: 0;"></td></tr>
+</table>
+
+<div class="divider"></div>
+
+<!-- Payment info + QR -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td style="padding: 18px 36px 0;">
+    <div class="section-title">Podaci za uplatu</div>
+  </td></tr>
+</table>
+
+<table class="payment-tbl" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="vertical-align: top;">
+      <table class="pay-info-tbl" cellpadding="0" cellspacing="0">
+        <tr class="pay-row">
+          <td class="k">Primalac</td>
+          <td class="v" th:text="${companyName}">Escapii d.o.o.</td>
+        </tr>
+        <tr class="pay-row">
+          <td class="k">Banka</td>
+          <td class="v" th:text="${companyBank}">placeholder banka</td>
+        </tr>
+        <tr class="pay-row">
+          <td class="k">Broj računa</td>
+          <td class="v" th:text="${companyAccount}">000-0000000000000-00</td>
+        </tr>
+        <tr class="pay-row">
+          <td class="k">Iznos</td>
+          <td class="v"><span th:text="${total}">398</span> EUR</td>
+        </tr>
+        <tr class="pay-row">
+          <td class="k">Svrha</td>
+          <td class="v">Rezervacija <span th:text="${bookingRef}">ESC-abc12345</span></td>
+        </tr>
+        <tr class="pay-row last">
+          <td class="k">Poziv na broj</td>
+          <td class="v">97 <span th:text="${bookingRef}">ESC-abc12345</span></td>
+        </tr>
+      </table>
+    </td>
+    <td class="qr-cell">
+      <img th:attr="src=${ipsQrDataUri}" alt="IPS QR kod"/>
+      <div class="qr-label">IPS QR · skeniraj<br/>u banking appu</div>
+    </td>
+  </tr>
+</table>
+
+<!-- Spacer -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td style="height: 18px; font-size: 0;"></td></tr>
+</table>
+
+<!-- Notes -->
+<table width="794" cellpadding="0" cellspacing="0">
+  <tr><td style="padding: 0 36px;">
+    <div class="note-box">
+      <strong>Napomena:</strong> Iznos se može uplatiti u EUR ili u RSD po
+      <strong>srednjem kursu Narodne banke Srbije na dan uplate</strong>.
+      Ova profaktura nije fiskalni račun. Potvrdu o izvršenoj uplati pošaljite na
+      <span th:text="${companyEmail}">hello@escapii.rs</span>.
+    </div>
+  </td></tr>
+</table>
+
+<!-- Footer -->
+<table width="794" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+  <tr><td style="height: 1px; background-color: #e8ddc8; font-size: 0;"></td></tr>
+</table>
+<table class="footer-tbl" width="794" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <strong>escapii</strong> ·
+      <span th:text="${companyName}">Escapii d.o.o.</span> ·
+      PIB <span th:text="${companyPib}">000000000</span>
+    </td>
+    <td class="r">
+      Dokument br. <span th:text="${invoiceNumber}">ESC-INV-2025-0001</span>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
