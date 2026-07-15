@@ -205,6 +205,10 @@ public class Booking {
     @Column(name = "forecast_sent_at")
     private LocalDateTime forecastSentAt;
 
+    /** Broj profakture (npr. ESC-INV-2026-0001). Null znači još nije poslata. */
+    @Column(name = "invoice_number", length = 25, unique = true)
+    private String invoiceNumber;
+
     /** Trenutak kad je profaktura poslata korisniku - null znači još nije poslata. */
     @Column(name = "invoice_sent_at")
     private LocalDateTime invoiceSentAt;

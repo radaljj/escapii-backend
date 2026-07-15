@@ -25,8 +25,10 @@ import com.escapii.repository.BookingRepository;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
+import com.escapii.repository.InvoiceSequenceRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.repository.TermDestinationRepository;
+import com.escapii.model.InvoiceSequence;
 import com.escapii.service.AdminService;
 import com.escapii.service.AirportLookupService;
 import com.escapii.service.AvailableDateService;
@@ -120,6 +122,7 @@ public class AdminServiceImpl implements AdminService {
     private final AirportLookupService        airportLookupService;
     private final InvoicePdfService           invoicePdfService;
     private final InvoiceEmailService         invoiceEmailService;
+    private final InvoiceSequenceRepository   invoiceSequenceRepository;
     private final QrCodeGenerator             qrCodeGenerator;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
@@ -797,8 +800,13 @@ public class AdminServiceImpl implements AdminService {
                     "Rezervacija nema odabrani datum polaska");
         }
 
-        LocalDate today   = LocalDate.now();
-        String invoiceNum = "ESC-INV-" + today.getYear() + "-" + String.format("%04d", bookingId);
+        LocalDate today = LocalDate.now();
+        int year = today.getYear();
+        InvoiceSequence seq = invoiceSequenceRepository.findByYear(year)
+                .orElseGet(() -> invoiceSequenceRepository.save(new InvoiceSequence(year)));
+        seq.setLastSeq(seq.getLastSeq() + 1);
+        invoiceSequenceRepository.save(seq);
+        String invoiceNum = "ESC-INV-" + year + "-" + String.format("%04d", seq.getLastSeq());
 
         // totalPriceAll je već post-discount (BookingServiceImpl smanjuje ga pri primeni vaučera)
         int total    = booking.getTotalPriceAll();
@@ -832,6 +840,7 @@ public class AdminServiceImpl implements AdminService {
 
         byte[] pdf = invoicePdfService.generate(invoiceData);
 
+        booking.setInvoiceNumber(invoiceNum);
         booking.setInvoiceSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
 
