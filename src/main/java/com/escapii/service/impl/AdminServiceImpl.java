@@ -775,6 +775,7 @@ public class AdminServiceImpl implements AdminService {
     // ══ FAKTURE ══════════════════════════════════════════════════════════════
 
     @Override
+    @Transactional
     public void sendInvoice(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -785,18 +786,29 @@ public class AdminServiceImpl implements AdminService {
                     "Profaktura se može poslati samo za PENDING rezervacije (trenutno: " + booking.getStatus() + ")");
         }
 
+        if (booking.getInvoiceSentAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Profaktura je već poslata " + booking.getInvoiceSentAt());
+        }
+
+        AvailableDate date = booking.getSelectedDate();
+        if (date == null) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Rezervacija nema odabrani datum polaska");
+        }
+
         LocalDate today   = LocalDate.now();
         String invoiceNum = "ESC-INV-" + today.getYear() + "-" + String.format("%04d", bookingId);
 
-        int subtotal  = booking.getTotalPriceAll();
-        int discount  = booking.getVoucherDiscount() != null ? booking.getVoucherDiscount() : 0;
-        int total     = subtotal - discount;
+        // totalPriceAll je već post-discount (BookingServiceImpl smanjuje ga pri primeni vaučera)
+        int total    = booking.getTotalPriceAll();
+        int discount = booking.getVoucherDiscount() != null ? booking.getVoucherDiscount() : 0;
+        int subtotal = total + discount; // originalna cena pre vaučera
 
         // IPS QR kod (NBS standard) - iznos RSD0 jer se preračunava po kursu NBS na dan uplate
         String ipsContent = buildIpsQrContent(booking, total);
         String ipsQrDataUri = qrCodeGenerator.pngDataUri(ipsContent, 300);
 
-        AvailableDate date = booking.getSelectedDate();
         InvoiceData invoiceData = new InvoiceData(
                 invoiceNum,
                 today,
@@ -819,6 +831,10 @@ public class AdminServiceImpl implements AdminService {
         );
 
         byte[] pdf = invoicePdfService.generate(invoiceData);
+
+        booking.setInvoiceSentAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+
         invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
                 invoiceNum, booking.getBookingRef(), booking.getEmail());
@@ -833,10 +849,11 @@ public class AdminServiceImpl implements AdminService {
                 : companyAccount;
         String ref = booking.getBookingRef().replace("ESC-", "").replace("-", "");
         String desc = "Rezervacija " + booking.getBookingRef() + " " + totalEur + "EUR";
+        String safeName = companyName.replace("|", "");
 
         return "K:PR|V:01|C:1" +
                "|R:" + formattedAccount +
-               "|N:" + companyName +
+               "|N:" + safeName +
                "|I:RSD0" +
                "|SF:289" +
                "|S:" + desc +

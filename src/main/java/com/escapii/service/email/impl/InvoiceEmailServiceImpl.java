@@ -25,8 +25,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
     public void sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber) {
         String salutation = EmailHtmlBuilder.salutation(booking);
 
-        int total = booking.getTotalPriceAll()
-                - (booking.getVoucherDiscount() != null ? booking.getVoucherDiscount() : 0);
+        int total = booking.getTotalPriceAll();
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +

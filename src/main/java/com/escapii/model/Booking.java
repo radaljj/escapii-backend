@@ -205,6 +205,10 @@ public class Booking {
     @Column(name = "forecast_sent_at")
     private LocalDateTime forecastSentAt;
 
+    /** Trenutak kad je profaktura poslata korisniku - null znači još nije poslata. */
+    @Column(name = "invoice_sent_at")
+    private LocalDateTime invoiceSentAt;
+
     // ── Reveal Box ────────────────────────────────────────────────────
 
     /** Korisnik je odabrao fizički Reveal Box (25€ flat). */

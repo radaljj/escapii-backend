@@ -52,6 +52,8 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setThreadNamePrefix("escapii-pdf-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
+        executor.setRejectedExecutionHandler((r, exec) ->
+            log.error("[PDF] pdfExecutor queue je pun - task odbijen: {}", r.getClass().getSimpleName()));
         executor.initialize();
         return executor;
     }

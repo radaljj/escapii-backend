@@ -46,7 +46,7 @@ public class InvoicePdfService {
 
     public byte[] generate(InvoiceData data) {
         try {
-            boolean acquired = PDF_SEMAPHORE.tryAcquire(10, TimeUnit.MINUTES);
+            boolean acquired = PDF_SEMAPHORE.tryAcquire(45, TimeUnit.SECONDS);
             if (!acquired) {
                 throw new RuntimeException("PDF generisanje nije moglo da počne - server prezauzet");
             }
