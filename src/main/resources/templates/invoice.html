@@ -78,14 +78,20 @@
     /* Total box */
     .total-wrap { width: 722px; margin: 14px 36px 0; }
     .total-box {
-      background-color: #1a1410; border-radius: 8px; padding: 16px 22px;
+      background-color: #faf6ee;
+      border-top: 1px solid #e8ddc8;
+      border-right: 1px solid #e8ddc8;
+      border-bottom: 2px solid #a85e44;
+      border-left: 3px solid #a85e44;
+      border-radius: 0 6px 6px 0;
+      padding: 14px 20px;
     }
     .total-box td { vertical-align: middle; }
     .total-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
                    color: #a89888; }
-    .total-note  { font-size: 9px; color: #7a6a58; margin-top: 4px; }
-    .total-amount { font-size: 28px; font-weight: 700; color: #a85e44;
-                    text-align: right; letter-spacing: -1px; }
+    .total-note  { font-size: 9px; color: #a89888; margin-top: 3px; }
+    .total-amount { font-size: 26px; font-weight: 700; color: #a85e44;
+                    text-align: right; letter-spacing: -0.5px; }
 
     /* Payment section */
     .payment-tbl { width: 722px; margin: 0 36px; }
@@ -126,7 +132,7 @@
 <table class="header-tbl" width="794" cellpadding="0" cellspacing="0">
   <tr>
     <td width="380">
-      <div class="logo-text">escapii<span class="logo-dot">.</span></div>
+      <img th:attr="src=${logoDataUri}" alt="escapii" style="height:30px;width:auto;display:block;margin-bottom:10px;"/>
       <div class="company-details">
         <strong th:text="${companyName}">Escapii d.o.o.</strong><br/>
         <span th:text="${companyAddress}">Beograd, Srbija</span><br/>

@@ -52,7 +52,7 @@ public final class EmailHtmlBuilder {
         String accent = (accentBarColor == null || accentBarColor.isBlank()) ? "#a85e44" : accentBarColor;
 
         String badgeBlock = badgeHtml.isBlank() ? "" :
-            "<div style=\"margin-bottom:14px;\">" + badgeHtml + "</div>";
+            "<div style=\"margin-bottom:14px;text-align:center;\">" + badgeHtml + "</div>";
 
         String subheadingHtml = subheading.isBlank() ? "" :
             "<p style=\"margin:10px 0 0;font-size:14px;color:#6b5d4f;line-height:1.6;max-width:90%%;\">%s</p>"
