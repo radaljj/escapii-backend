@@ -25,30 +25,43 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
     public void sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber) {
         String salutation = EmailHtmlBuilder.salutation(booking);
 
+        int total = booking.getTotalPriceAll()
+                - (booking.getVoucherDiscount() != null ? booking.getVoucherDiscount() : 0);
+
         String body =
-            "<p style=\"font-size:15px;line-height:1.6;color:#3d2e1a;margin:0 0 22px;\">" +
-            salutation + " " + EmailHtmlBuilder.esc(booking.getFirstName()) + ", " +
-            "u prilogu se nalazi profaktura za tvoju Escapii rezervaciju. " +
-            "Uplatom u roku navedenom na dokumentu potvrđuješ svoju rezervaciju." +
+            "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
+            salutation + " " + EmailHtmlBuilder.esc(booking.getFirstName()) + ",</p>" +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
+            "hvala na rezervaciji! Jedva čekamo da te pošaljemo na put 🌍" +
             "</p>" +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 22px;\">" +
+            "U prilogu se nalazi profaktura sa svim detaljima uplate. " +
+            "Iznos se plaća u RSD po <strong>srednjem kursu NBS na dan uplate</strong> — " +
+            "u PDF-u ćeš naći broj računa i IPS QR kod koji možeš skenirati direktno u banking aplikaciji." +
+            "</p>" +
+
             EmailHtmlBuilder.detailsCard("Detalji rezervacije",
                 EmailHtmlBuilder.dRow("Rezervacija", "<strong>" + EmailHtmlBuilder.esc(booking.getBookingRef()) + "</strong>") +
-                EmailHtmlBuilder.dRow("Broj fakture", EmailHtmlBuilder.esc(invoiceNumber)) +
-                EmailHtmlBuilder.dRow("Iznos", "<strong style=\"color:#a85e44;\">" + booking.getTotalPriceAll() + " EUR</strong>") +
+                EmailHtmlBuilder.dRow("Profaktura br.", EmailHtmlBuilder.esc(invoiceNumber)) +
+                EmailHtmlBuilder.dRow("Iznos", "<strong style=\"color:#a85e44;\">" + total + " EUR</strong>") +
                 (booking.getVoucherDiscount() != null && booking.getVoucherDiscount() > 0
-                    ? EmailHtmlBuilder.dRow("Vaučer popust", "<span style=\"color:#2e7d4a;\">−" + booking.getVoucherDiscount() + " EUR</span>")
+                    ? EmailHtmlBuilder.dRow("Uključen vaučer popust", "<span style=\"color:#2e7d4a;\">−" + booking.getVoucherDiscount() + " EUR</span>")
                     : ""),
                 "#a85e44") +
-            "<p style=\"font-size:13px;color:#6b5d4f;line-height:1.7;margin:16px 0 0;\">" +
-            "Nakon uplate, potvrdu transakcije pošalji nam na <a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) +
-            "\" style=\"color:#a85e44;font-weight:600;\">" + EmailHtmlBuilder.esc(teamEmail) + "</a>. " +
-            "Detalji plaćanja (uključujući IPS QR kod za mobilno bankarstvo) nalaze se u prilogu." +
+
+            "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
+            "Kada uplatiš, pošalji nam potvrdu transakcije na " +
+            "<a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
+            EmailHtmlBuilder.esc(teamEmail) + "</a> i odmah ćemo potvrditi tvoje mesto. " +
+            "Ako imaš bilo kakvo pitanje — tu smo!" +
             "</p>";
 
         String html = EmailHtmlBuilder.wrapBase(
             "#a85e44", "",
             EmailHtmlBuilder.statusBadge("Profaktura", "orange"),
-            "Profaktura za tvoju rezervaciju",
+            "Tvoja Escapii rezervacija čeka na uplatu",
             "Rezervacija " + booking.getBookingRef(),
             invoiceNumber,
             body,
@@ -59,7 +72,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
         String attachmentName = "escapii-profaktura-" + invoiceNumber + ".pdf";
         boolean ok = emailSender.sendWithAttachment(
             booking.getEmail(),
-            "📄 Profaktura " + invoiceNumber + " · Escapii rezervacija " + booking.getBookingRef(),
+            "Profaktura za rezervaciju " + booking.getBookingRef() + " · Escapii",
             html,
             attachmentName,
             pdfBytes,
