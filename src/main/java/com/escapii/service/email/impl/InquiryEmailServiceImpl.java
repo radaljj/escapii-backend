@@ -23,28 +23,29 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
     @Override
     @Async
     public void sendTeamAlert(CustomDateInquiry i) {
-        String notes = (i.getNotes() != null && !i.getNotes().isBlank())
-                ? "<tr><td style='padding:6px 0;color:#888;'>Napomena</td><td style='padding:6px 0;'>"
-                  + EmailHtmlBuilder.esc(i.getNotes()) + "</td></tr>"
+        String notesRow = (i.getNotes() != null && !i.getNotes().isBlank())
+                ? EmailHtmlBuilder.dRow("Napomena", EmailHtmlBuilder.esc(i.getNotes()))
                 : "";
-        String html = """
-                <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0f2d35;color:#e8e0d5;border-radius:12px;padding:28px 32px;">
-                  <h2 style="margin:0 0 20px;color:#CA8A71;font-size:20px;">📅 Nov prilagođeni upit</h2>
-                  <table style="width:100%%;border-collapse:collapse;font-size:15px;">
-                    <tr><td style="padding:6px 0;color:#888;width:130px;">ID</td><td style="padding:6px 0;">#%d</td></tr>
-                    <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;">%s</td></tr>
-                    <tr><td style="padding:6px 0;color:#888;">Aerodrom</td><td style="padding:6px 0;">%s</td></tr>
-                    <tr><td style="padding:6px 0;color:#888;">Putnici</td><td style="padding:6px 0;">%d</td></tr>
-                    <tr><td style="padding:6px 0;color:#888;">Željeni datum</td><td style="padding:6px 0;">%s</td></tr>
-                    <tr><td style="padding:6px 0;color:#888;">Noći</td><td style="padding:6px 0;">%d</td></tr>
-                    %s
-                  </table>
-                </div>
-                """.formatted(
-                        i.getId(), EmailHtmlBuilder.esc(i.getEmail()),
-                        EmailHtmlBuilder.esc(i.getAirport()),
-                        i.getTravelers(), i.getDesiredDepartureDate(),
-                        i.getNights(), notes);
+
+        String body = EmailHtmlBuilder.detailsCard("Detalji upita",
+                EmailHtmlBuilder.dRow("Aerodrom", EmailHtmlBuilder.esc(i.getAirport())) +
+                EmailHtmlBuilder.dRow("Email", "<a href=\"mailto:" + EmailHtmlBuilder.esc(i.getEmail()) + "\" style=\"color:#a85e44;\">" + EmailHtmlBuilder.esc(i.getEmail()) + "</a>") +
+                EmailHtmlBuilder.dRow("Putnici", String.valueOf(i.getTravelers())) +
+                EmailHtmlBuilder.dRow("Željeni datum", String.valueOf(i.getDesiredDepartureDate())) +
+                EmailHtmlBuilder.dRow("Noći", i.getNights() + " noći") +
+                notesRow,
+                "#a85e44");
+
+        String html = EmailHtmlBuilder.wrapBase(
+                "#a85e44", "",
+                EmailHtmlBuilder.statusBadge("Nov upit", "blue"),
+                "Prilagođeni termin #" + i.getId(),
+                i.getAirport() + " · " + i.getTravelers() + " putnik/a",
+                "",
+                body,
+                "<strong style=\"color:#1a1410;\">escapii</strong> · Interno obaveštenje",
+                false
+        );
 
         boolean ok = emailSender.send(teamEmail, "📅 Nov prilagođeni upit #" + i.getId(), html);
         if (!ok) {
