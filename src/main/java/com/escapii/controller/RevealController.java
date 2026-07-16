@@ -27,7 +27,8 @@ public class RevealController {
      *  1. Token postoji u bazi
      *  2. Booking status == CONFIRMED
      *  3. assignedDestination nije null/prazan
-     *  4. Datum polaska nije prošao (link važi do dana polaska)
+     *  4. revealSentAt nije null (reveal je zvanično poslat/otključan)
+     *  5. Datum polaska nije prošao (link važi do dana polaska)
      *
      * Vraća samo destinaciju i ime putnika - ništa osjetljivo.
      */

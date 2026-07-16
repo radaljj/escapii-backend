@@ -53,6 +53,16 @@ public class RevealServiceImpl implements RevealService {
                     "Destinacija još nije dostupna.");
         }
 
+        // Defense-in-depth: reveal se sme otkriti tek pošto je zvanično "otključan" (revealSentAt
+        // postavljen od strane scheduler-a na T-2 ili ručno od strane admina). Trenutno se token
+        // generiše tek pri slanju mejla, pa je ovo redundantno - ali sprečava buduću regresiju
+        // ako bi se token ikad generisao ranije (npr. odmah pri potvrdi rezervacije).
+        if (booking.getRevealSentAt() == null) {
+            log.warn("[Reveal] Token postoji ali reveal još nije poslat za rezervaciju {}", booking.getBookingRef());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Destinacija još nije dostupna.");
+        }
+
         // Link važi do dana polaska - nakon toga putovanje je počelo, link više nema smisla
         LocalDate departureDate = booking.getSelectedDate().getDepartureDate();
         if (LocalDate.now().isAfter(departureDate)) {

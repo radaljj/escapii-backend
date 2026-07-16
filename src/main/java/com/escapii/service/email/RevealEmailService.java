@@ -13,7 +13,4 @@ public interface RevealEmailService {
      * tako da link u emailu uvek vodi na aktuelni sajt (test/production/rs/com).
      */
     void sendRevealEmail(Booking booking, String siteUrl);
-
-    /** Šalje timu internu notifikaciju da je reveal poslan. */
-    void sendRevealTeamNotification(Booking booking);
 }

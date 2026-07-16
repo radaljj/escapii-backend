@@ -8,7 +8,6 @@ import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -20,9 +19,6 @@ public class RevealEmailServiceImpl implements RevealEmailService {
 
     @Value("${app.frontend-url:https://escapii.rs}")
     private String frontendUrl;
-
-    @Value("${app.ops-email}")
-    private String opsEmail;
 
     // ── Reveal email korisniku ───────────────────────────────────────────────
 
@@ -98,62 +94,5 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         }
         log.info("[Reveal] Email poslan korisniku {} za rezervaciju {}",
                 LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
-    }
-
-    // ── Interna notifikacija timu ────────────────────────────────────────────
-
-    @Override
-    @Async
-    public void sendRevealTeamNotification(Booking booking) {
-        String ref        = EmailHtmlBuilder.esc(booking.getBookingRef());
-        String name       = EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName());
-        String dest       = EmailHtmlBuilder.esc(booking.getAssignedDestination());
-        String departure  = booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT);
-        String email      = EmailHtmlBuilder.esc(booking.getEmail());
-
-        String body = """
-            <table width="100%%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Rezervacija</td>
-                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#2D5F6B;font-weight:800;border-bottom:1px solid #ebe1cf;">%s</td>
-              </tr>
-              <tr>
-                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Putnik</td>
-                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
-              </tr>
-              <tr>
-                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Email</td>
-                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
-              </tr>
-              <tr>
-                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Destinacija</td>
-                <td width="62%%" style="width:62%%;padding:7px 0;font-size:15px;color:#a85e44;font-weight:800;border-bottom:1px solid #ebe1cf;">%s</td>
-              </tr>
-              <tr>
-                <td width="38%%" style="width:38%%;padding:7px 0;font-size:13px;color:#a89888;font-weight:600;">Datum polaska</td>
-                <td width="62%%" style="width:62%%;padding:7px 0;font-size:13px;color:#1a1410;">%s</td>
-              </tr>
-            </table>
-            """.formatted(ref, name, email, dest, departure);
-
-        String html = EmailHtmlBuilder.wrapBase(
-            "#1d6042",
-            "#064e3b",
-            EmailHtmlBuilder.statusBadge("Reveal poslan", "green"),
-            "✅ Destinacija poslata",
-            "Reveal email je automatski poslan korisniku.",
-            ref,
-            body,
-            "Escapii · interni sistem",
-            false
-        );
-
-        sender.send(
-            opsEmail,
-            "[Escapii Ops] Destinacija poslata → " + booking.getBookingRef() + " → " + booking.getAssignedDestination(),
-            html
-        );
-
-        log.info("[Reveal] Tim notifikovan za {} ({})", booking.getBookingRef(), booking.getAssignedDestination());
     }
 }
