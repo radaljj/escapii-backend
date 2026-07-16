@@ -93,9 +93,11 @@ public class GiftVoucher {
     private Long usedInBookingRef;
 
     /**
-     * Ukupan iznos vaučera koji je do sada zaista primenjen u završenim rezervacijama.
+     * Ukupan iznos vaučera koji je do sada primenjen u aktivnim/rezervisanim rezervacijama.
      * Preostali saldo = amount - usedAmount.
-     * Povećava se samo u markUsed() kada rezervacija postane COMPLETED.
+     * Uvećava se odmah pri kreiranju rezervacije (BookingServiceImpl.createBooking),
+     * a reversuje se pri otkazivanju/brisanju rezervacije. markUsed() i COMPLETED flow
+     * samo menjaju status (ACTIVE/RESERVED → USED) - ne diraju usedAmount.
      * Vaučer ostaje ACTIVE dok usedAmount < amount.
      */
     @Column(name = "used_amount", nullable = false, precision = 10, scale = 2)

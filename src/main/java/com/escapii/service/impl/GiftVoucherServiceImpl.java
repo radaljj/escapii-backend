@@ -173,33 +173,24 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                     "Vaučer id=" + id + " nije u ACTIVE/RESERVED statusu (trenutno: " + v.getStatus() + ")");
         }
 
-        // Pročitaj koliki popust je primenjen na ovaj booking
-        BigDecimal applied = BigDecimal.ZERO;
+        // usedAmount je već ispravno postavljen u createBooking() kad je vaučer primenjen -
+        // ovde se NE sme ponovo dodavati popust, samo finalizujemo status.
         if (bookingRef != null) {
-            applied = bookingRepository.findById(bookingRef)
-                    .map(b -> b.getVoucherDiscount() != null
-                            ? BigDecimal.valueOf(b.getVoucherDiscount())
-                            : BigDecimal.ZERO)
-                    .orElse(BigDecimal.ZERO);
+            v.setUsedInBookingRef(bookingRef);
         }
 
-        // Akumuliraj ukupno potrošen iznos
-        BigDecimal newUsedAmount = v.getUsedAmount().add(applied);
-        v.setUsedAmount(newUsedAmount);
-        v.setUsedInBookingRef(bookingRef);
-
         // Vaučer postaje USED tek kad je u potpunosti potrošen
-        if (newUsedAmount.compareTo(v.getAmount()) >= 0) {
+        if (v.getUsedAmount().compareTo(v.getAmount()) >= 0) {
             v.setStatus(VoucherStatus.USED);
             v.setUsedAt(LocalDateTime.now());
             log.info("[GiftVoucher] Vaučer id={} u potpunosti iskorišćen ({}€ od {}€) u booking ref={}",
-                    id, newUsedAmount, v.getAmount(), bookingRef);
+                    id, v.getUsedAmount(), v.getAmount(), bookingRef);
         } else {
             // Delimično iskorišćen - ostaje ACTIVE sa preostalim saldom
             v.setStatus(VoucherStatus.ACTIVE);
-            BigDecimal remaining = v.getAmount().subtract(newUsedAmount);
-            log.info("[GiftVoucher] Vaučer id={} delimično iskorišćen ({}€ u booking ref={}), preostaje {}€",
-                    id, applied, bookingRef, remaining);
+            BigDecimal remaining = v.getAmount().subtract(v.getUsedAmount());
+            log.info("[GiftVoucher] Vaučer id={} delimično iskorišćen ({}€ potrošeno u booking ref={}), preostaje {}€",
+                    id, v.getUsedAmount(), bookingRef, remaining);
         }
 
         return new GiftVoucherResponse(voucherRepository.save(v));
