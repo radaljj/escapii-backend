@@ -143,16 +143,14 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                     when));
         }
         return """
-            <div style="border-radius:8px;overflow:hidden;margin-bottom:20px;">
-              <div style="padding:11px 16px;font-size:13px;font-weight:700;\
-            background:#fff0f0;color:#9b3a2a;border:1px solid #f5c6c6;border-bottom:none;">
+            <table width="100%%" cellpadding="0" cellspacing="0" \
+            style="border-collapse:collapse;border:1px solid #f5c6c6;border-radius:8px;margin-bottom:20px;background:#fff8f8;">
+              <tr><td style="padding:11px 16px;font-size:13px;font-weight:700;\
+            background:#fff0f0;color:#9b3a2a;border-bottom:1px solid #f5c6c6;border-radius:8px 8px 0 0;">
                 🚨 HITNO: korisnik nije otvorio reveal, polazak ≤ 2 dana (%d)
-              </div>
-              <table width="100%%" cellpadding="0" cellspacing="0" \
-            style="border-collapse:collapse;border:1px solid #f5c6c6;border-top:none;background:#fff8f8;">
-                <tbody>%s</tbody>
-              </table>
-            </div>""".formatted(bookings.size(), rows);
+              </td></tr>
+              %s
+            </table>""".formatted(bookings.size(), rows);
     }
 
     // ── Timeline ──────────────────────────────────────────────────────────────
@@ -194,30 +192,28 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             String pillText  = daysLeft == 0 ? "DANAS" : daysLeft == 1 ? "SUTRA" : "za " + daysLeft + " dana";
 
             sb.append("""
-                <div style="border-radius:8px;overflow:hidden;margin-bottom:16px;">
-                  <table width="100%%" cellpadding="0" cellspacing="0" \
-                style="background:%s;border:1px solid %s;border-bottom:none;border-radius:8px 8px 0 0;">
-                    <tr>
-                      <td style="padding:10px 16px;">
-                        <span style="font-size:13px;font-weight:700;color:%s;">%s</span>
-                        <span style="font-size:12px;color:%s;margin-left:8px;">%s</span>
-                      </td>
-                      <td style="padding:10px 16px;text-align:right;white-space:nowrap;">
-                        <span style="display:inline-block;padding:3px 10px;border-radius:100px;\
+                <table width="100%%" cellpadding="0" cellspacing="0" \
+                style="border-collapse:collapse;border:1px solid %s;border-radius:8px;margin-bottom:16px;background:#fff;">
+                  <tr style="background:%s;">
+                    <td style="padding:10px 16px;border-bottom:1px solid %s;border-radius:8px 0 0 0;">
+                      <span style="font-size:13px;font-weight:700;color:%s;">%s</span>
+                      <span style="font-size:12px;color:%s;margin-left:8px;">%s</span>
+                    </td>
+                    <td style="padding:10px 16px;text-align:right;white-space:nowrap;\
+                border-bottom:1px solid %s;border-radius:0 8px 0 0;">
+                      <span style="display:inline-block;padding:3px 10px;border-radius:100px;\
                 font-size:11px;font-weight:700;background:%s;color:%s;">%s</span>
-                      </td>
-                    </tr>
-                  </table>
-                  <table width="100%%" cellpadding="0" cellspacing="0" \
-                style="border-collapse:collapse;border:1px solid %s;border-top:none;background:#fff;">
-                    <tbody>%s</tbody>
-                  </table>
-                </div>""".formatted(
-                    hBg, hBorder,
+                    </td>
+                  </tr>
+                  %s
+                </table>""".formatted(
+                    hBorder,
+                    hBg,
+                    hBorder,
                     hColor, date.format(SHORT_FMT),
                     hColor, dayName(date.getDayOfWeek()),
-                    pillBg, pillColor, pillText,
                     hBorder,
+                    pillBg, pillColor, pillText,
                     bookingRows(grp, revealIds, forecastIds, boxIds, viewedIds, urgentIds)
                 ));
         }
