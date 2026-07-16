@@ -144,9 +144,9 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         }
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" \
-            style="border-collapse:collapse;border:1px solid #f5c6c6;border-radius:8px;margin-bottom:20px;background:#fff8f8;">
+            style="border:1px solid #f5c6c6;border-radius:8px;overflow:hidden;margin-bottom:20px;background:#fff8f8;">
               <tr><td style="padding:11px 16px;font-size:13px;font-weight:700;\
-            background:#fff0f0;color:#9b3a2a;border-bottom:1px solid #f5c6c6;border-radius:8px 8px 0 0;">
+            background:#fff0f0;color:#9b3a2a;border-bottom:1px solid #f5c6c6;">
                 🚨 HITNO: korisnik nije otvorio reveal, polazak ≤ 2 dana (%d)
               </td></tr>
               %s
@@ -193,14 +193,14 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
             sb.append("""
                 <table width="100%%" cellpadding="0" cellspacing="0" \
-                style="border-collapse:collapse;border:1px solid %s;border-radius:8px;margin-bottom:16px;background:#fff;">
+                style="border:1px solid %s;border-radius:8px;overflow:hidden;margin-bottom:16px;background:#fff;">
                   <tr style="background:%s;">
-                    <td style="padding:10px 16px;border-bottom:1px solid %s;border-radius:8px 0 0 0;">
+                    <td style="padding:10px 16px;background:%s;border-bottom:1px solid %s;">
                       <span style="font-size:13px;font-weight:700;color:%s;">%s</span>
                       <span style="font-size:12px;color:%s;margin-left:8px;">%s</span>
                     </td>
                     <td style="padding:10px 16px;text-align:right;white-space:nowrap;\
-                border-bottom:1px solid %s;border-radius:0 8px 0 0;">
+                background:%s;border-bottom:1px solid %s;">
                       <span style="display:inline-block;padding:3px 10px;border-radius:100px;\
                 font-size:11px;font-weight:700;background:%s;color:%s;">%s</span>
                     </td>
@@ -209,10 +209,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                 </table>""".formatted(
                     hBorder,
                     hBg,
-                    hBorder,
+                    hBg, hBorder,
                     hColor, date.format(SHORT_FMT),
                     hColor, dayName(date.getDayOfWeek()),
-                    hBorder,
+                    hBg, hBorder,
                     pillBg, pillColor, pillText,
                     bookingRows(grp, revealIds, forecastIds, boxIds, viewedIds, urgentIds)
                 ));
