@@ -379,16 +379,14 @@ public class AdminController {
      * Dozvoljeno samo za PENDING rezervacije.
      */
     @PostMapping("/bookings/{id}/send-invoice")
-    public ResponseEntity<Map<String, String>> sendInvoice(@PathVariable Long id) {
-        adminService.sendInvoice(id);
-        return ResponseEntity.ok(Map.of("message", "Profaktura je u toku slanja na email kupca"));
+    public ResponseEntity<AdminBookingResponse> sendInvoice(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.sendInvoice(id));
     }
 
     /** POST /api/admin/gifts/vouchers/{id}/send-invoice — šalje profakturu kupcu vaučera. */
     @PostMapping("/gifts/vouchers/{id}/send-invoice")
-    public ResponseEntity<Map<String, String>> sendVoucherInvoice(@PathVariable Long id) {
-        adminService.sendVoucherInvoice(id);
-        return ResponseEntity.ok(Map.of("message", "Profaktura je u toku slanja na email kupca vaučera"));
+    public ResponseEntity<com.escapii.dto.GiftVoucherResponse> sendVoucherInvoice(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.sendVoucherInvoice(id));
     }
 
 }

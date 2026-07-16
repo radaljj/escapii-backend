@@ -84,4 +84,8 @@ public class AdminBookingResponse {
     private String  deliveryCity;
     private String  deliveryPhone;
     private Boolean revealBoxSent;
+
+    // Faktura (profaktura)
+    private String        invoiceNumber;
+    private LocalDateTime invoiceSentAt;
 }

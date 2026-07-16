@@ -258,7 +258,9 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
                 v.getUsedAt(), v.getUsedInBookingRef(),
                 null, // KOD SE NE VRAĆA JAVNO
                 v.getUsedAmount(),
-                v.getAmount().subtract(v.getUsedAmount())
+                v.getAmount().subtract(v.getUsedAmount()),
+                v.getInvoiceNumber(),
+                v.getInvoiceSentAt()
         );
     }
 }

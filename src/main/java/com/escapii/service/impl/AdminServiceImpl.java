@@ -780,7 +780,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void sendInvoice(Long bookingId) {
+    public AdminBookingResponse sendInvoice(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija nije pronađena: " + bookingId));
@@ -844,16 +844,18 @@ public class AdminServiceImpl implements AdminService {
 
         booking.setInvoiceNumber(invoiceNum);
         booking.setInvoiceSentAt(LocalDateTime.now());
-        bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
 
         invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
                 invoiceNum, booking.getBookingRef(), booking.getEmail());
+
+        return adminBookingMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
-    public void sendVoucherInvoice(Long voucherId) {
+    public com.escapii.dto.GiftVoucherResponse sendVoucherInvoice(Long voucherId) {
         GiftVoucher voucher = giftVoucherRepository.findById(voucherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Vaučer nije pronađen: " + voucherId));
@@ -922,11 +924,13 @@ public class AdminServiceImpl implements AdminService {
 
         voucher.setInvoiceNumber(invoiceNum);
         voucher.setInvoiceSentAt(LocalDateTime.now());
-        giftVoucherRepository.save(voucher);
+        GiftVoucher savedVoucher = giftVoucherRepository.save(voucher);
 
         invoiceEmailService.sendVoucherInvoiceToClient(voucher, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za vaučer #{} na {}",
                 invoiceNum, voucherId, voucher.getBuyerEmail());
+
+        return new com.escapii.dto.GiftVoucherResponse(savedVoucher);
     }
 
     private String buildIpsQrContent(Booking booking, int totalEur) {

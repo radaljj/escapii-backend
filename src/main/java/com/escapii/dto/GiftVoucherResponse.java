@@ -27,7 +27,10 @@ public record GiftVoucherResponse(
         // Koliko je ukupno potrošeno (za prikaz u admin panelu)
         BigDecimal usedAmount,
         // Preostali saldo = amount - usedAmount
-        BigDecimal remainingAmount
+        BigDecimal remainingAmount,
+        // Status profakture (za prikaz u admin panelu)
+        String invoiceNumber,
+        LocalDateTime invoiceSentAt
 ) {
     public GiftVoucherResponse(GiftVoucher v) {
         this(
@@ -44,7 +47,9 @@ public record GiftVoucherResponse(
                 v.getUsedInBookingRef(),
                 v.getCode(),
                 v.getUsedAmount(),
-                v.getAmount().subtract(v.getUsedAmount())
+                v.getAmount().subtract(v.getUsedAmount()),
+                v.getInvoiceNumber(),
+                v.getInvoiceSentAt()
         );
     }
 }

@@ -56,8 +56,8 @@ public interface AdminService {
     AdminBookingResponse markRevealBoxSent(Long id);
 
     // ── Fakture ──
-    void sendInvoice(Long bookingId);
-    void sendVoucherInvoice(Long voucherId);
+    AdminBookingResponse sendInvoice(Long bookingId);
+    com.escapii.dto.GiftVoucherResponse sendVoucherInvoice(Long voucherId);
 
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();
