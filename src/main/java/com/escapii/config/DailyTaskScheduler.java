@@ -85,7 +85,8 @@ public class DailyTaskScheduler {
         List<Booking> upcoming          = bookingRepository.findConfirmedDepartingBetween(today, today.plusDays(14));
         // Reveal Box podsetnik - polazak od danas do +5 dana
         List<Booking> revealBoxPending  = bookingRepository.findPendingRevealBoxes(today, today.plusDays(5));
-        // Korisnik otvorio reveal stranicu - tim treba da pošalje potvrdu leta/smeštaja
+        // Korisnik otvorio reveal stranicu, dokument rezervacije još nije poslat -
+        // tim treba da uploaduje PDF (slanje je automatsko posle upload-a)
         List<Booking> revealedAndViewed = bookingRepository.findRevealedAndViewed(today, today.plusDays(14));
         // Korisnik NIJE otvorio reveal, a polazak je za <= 2 dana - hitno upozorenje
         List<Booking> notViewedUrgent   = bookingRepository.findRevealedButNotViewed(today, today.plusDays(2));

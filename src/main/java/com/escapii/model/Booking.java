@@ -213,6 +213,28 @@ public class Booking {
     @Column(name = "invoice_sent_at")
     private LocalDateTime invoiceSentAt;
 
+    // ── Zvanični dokument rezervacije (od partnerske agencije) ─────────
+
+    /**
+     * PDF sa zvaničnim podacima rezervacije koje je admin dobio od partnerske
+     * agencije (karte, vaučer smeštaja) i ručno uploadovao u admin panelu.
+     * Šalje se korisniku automatski čim: (1) dokument postoji I (2) korisnik
+     * je potvrdio da je video reveal (RevealEvent) - bez obzira na redosled.
+     */
+    @Lob
+    @Column(name = "confirmation_document", columnDefinition = "bytea")
+    private byte[] confirmationDocument;
+
+    @Column(name = "confirmation_document_filename", length = 255)
+    private String confirmationDocumentFilename;
+
+    @Column(name = "confirmation_document_uploaded_at")
+    private LocalDateTime confirmationDocumentUploadedAt;
+
+    /** Trenutak kad je dokument poslat korisniku mejlom - null znači još nije poslat. */
+    @Column(name = "confirmation_sent_at")
+    private LocalDateTime confirmationSentAt;
+
     // ── Reveal Box ────────────────────────────────────────────────────
 
     /** Korisnik je odabrao fizički Reveal Box (25€ flat). */

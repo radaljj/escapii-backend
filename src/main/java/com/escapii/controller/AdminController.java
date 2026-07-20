@@ -389,4 +389,23 @@ public class AdminController {
         return ResponseEntity.ok(adminService.sendVoucherInvoice(id));
     }
 
+    /**
+     * POST /api/admin/bookings/{id}/confirmation-document
+     * Upload zvaničnog PDF dokumenta rezervacije (od partnerske agencije).
+     * Šalje se korisniku automatski čim je i dokument uploadovan i korisnik
+     * potvrdio da je video reveal - bez obzira na redosled ta dva događaja.
+     */
+    @PostMapping(value = "/bookings/{id}/confirmation-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AdminBookingResponse> uploadConfirmationDocument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(adminService.uploadConfirmationDocument(id, file));
+    }
+
+    /** POST /api/admin/bookings/{id}/confirmation-document/resend — ručno ponovo šalje već uploadovan dokument. */
+    @PostMapping("/bookings/{id}/confirmation-document/resend")
+    public ResponseEntity<AdminBookingResponse> resendConfirmationDocument(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.resendConfirmationDocument(id));
+    }
+
 }

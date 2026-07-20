@@ -6,14 +6,17 @@ import com.escapii.model.RevealEvent;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.RevealEventRepository;
 import com.escapii.service.RevealService;
+import com.escapii.service.email.ConfirmationDocumentEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ public class RevealServiceImpl implements RevealService {
 
     private final BookingRepository      bookingRepository;
     private final RevealEventRepository  revealEventRepository;
+    private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
 
     @Override
     public Map<String, Object> getRevealInfo(String token) {
@@ -125,12 +129,23 @@ public class RevealServiceImpl implements RevealService {
     }
 
     @Override
+    @Transactional
     public void confirmRevealed(String token) {
         bookingRepository.findByRevealToken(token).ifPresent(booking -> {
             // Idempotentno - samo prvi put, ne menjamo ako event već postoji
             if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
                 revealEventRepository.save(new RevealEvent(booking.getBookingRef()));
                 log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());
+
+                // Ako je admin VEĆ uploadovao dokument pre nego što je korisnik
+                // pogledao reveal - šaljemo odmah (drugi mogući redosled od dva).
+                if (booking.getConfirmationDocument() != null && booking.getConfirmationSentAt() == null) {
+                    confirmationDocumentEmailService.sendConfirmationDocument(booking);
+                    booking.setConfirmationSentAt(LocalDateTime.now());
+                    bookingRepository.save(booking);
+                    log.info("[ConfirmationDocument] Poslat za {} (dokument već postojao pre reveal-a)",
+                            booking.getBookingRef());
+                }
             }
         });
     }

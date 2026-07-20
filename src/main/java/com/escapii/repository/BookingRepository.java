@@ -145,12 +145,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /**
      * CONFIRMED bookingovi kojima je reveal email poslan i korisnik je otvorio reveal stranicu
-     * (RevealEvent postoji) — tim treba da pošalje potvrdu leta i smeštaja.
+     * (RevealEvent postoji), ALI im dokument rezervacije još nije poslat (confirmationSentAt
+     * IS NULL) — tim treba da uploaduje zvanični PDF od agencije (slanje je posle toga automatsko).
      * Isključeni: Reveal Box rezervacije (oni dobijaju fizičku kutiju, ne email reveal).
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.revealSentAt IS NOT NULL " +
            "AND b.hasRevealBox = false " +
+           "AND b.confirmationSentAt IS NULL " +
            "AND b.selectedDate.returnDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff " +
            "AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r) " +

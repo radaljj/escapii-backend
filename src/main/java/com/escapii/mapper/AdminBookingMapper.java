@@ -27,6 +27,7 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "deliveryCity",                target = "deliveryCity")
     @Mapping(source = "deliveryPhone",               target = "deliveryPhone")
     @Mapping(source = "revealBoxSent",               target = "revealBoxSent")
+    @Mapping(target = "hasConfirmationDocument", expression = "java(entity.getConfirmationDocument() != null)")
     @Mapping(target = "excludedDestinations",    expression = "java(buildExclusionList(entity))")
     @Mapping(target = "excludedDestinationIds",  expression = "java(buildExclusionIdList(entity))")
     @Mapping(target = "termDestinations",        ignore = true)

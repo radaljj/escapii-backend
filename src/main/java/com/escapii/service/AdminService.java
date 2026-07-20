@@ -59,6 +59,10 @@ public interface AdminService {
     AdminBookingResponse sendInvoice(Long bookingId);
     com.escapii.dto.GiftVoucherResponse sendVoucherInvoice(Long voucherId);
 
+    // ── Dokument rezervacije (od partnerske agencije) ──
+    AdminBookingResponse uploadConfirmationDocument(Long bookingId, org.springframework.web.multipart.MultipartFile file);
+    AdminBookingResponse resendConfirmationDocument(Long bookingId);
+
     // ── Upiti za custom termine ──
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);

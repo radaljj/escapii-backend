@@ -238,7 +238,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
             StringBuilder badges = new StringBuilder();
             if (isUrgent)   badges.append(badge("🚨 Nije otvorio!", "#fff0f0", "#9b3a2a"));
-            if (needsConf)  badges.append(badge("✅ Pošalji potvrdu", "#eef6f0", "#1d6042"));
+            if (needsConf)  badges.append(badge("📎 Uploaduj dokument", "#eef6f0", "#1d6042"));
             if (needsBox)   badges.append(badge("📦 Pošalji kutiju", "#fff5eb", "#a85e44"));
             if (revealOk)   badges.append(badge("✉ Reveal poslan", "#eef3ff", "#2b5fd9"));
             if (forecastOk) badges.append(badge("🌤 Prognoza poslata", "#f3f0ff", "#5b3ea8"));

@@ -35,6 +35,7 @@ import com.escapii.service.AirportLookupService;
 import com.escapii.service.AvailableDateService;
 import com.escapii.service.CustomDateInquiryService;
 import com.escapii.service.email.BookingEmailService;
+import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.email.InvoiceEmailService;
 import com.escapii.service.invoice.InvoiceData;
 import com.escapii.service.invoice.InvoicePdfService;
@@ -124,6 +125,7 @@ public class AdminServiceImpl implements AdminService {
     private final InvoicePdfService           invoicePdfService;
     private final InvoiceEmailService         invoiceEmailService;
     private final InvoiceSequenceRepository   invoiceSequenceRepository;
+    private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
     private final QrCodeGenerator             qrCodeGenerator;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
@@ -931,6 +933,81 @@ public class AdminServiceImpl implements AdminService {
                 invoiceNum, voucherId, voucher.getBuyerEmail());
 
         return new com.escapii.dto.GiftVoucherResponse(savedVoucher);
+    }
+
+    // ══ DOKUMENT REZERVACIJE (od partnerske agencije) ═══════════════════════════
+
+    private static final long MAX_CONFIRMATION_DOCUMENT_SIZE = 10L * 1024 * 1024; // 10 MB
+
+    @Override
+    @Transactional
+    public AdminBookingResponse uploadConfirmationDocument(Long bookingId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fajl je prazan.");
+        }
+        String contentType = file.getContentType();
+        if (!"application/pdf".equals(contentType)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Dozvoljen je samo PDF fajl.");
+        }
+        if (file.getSize() > MAX_CONFIRMATION_DOCUMENT_SIZE) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Fajl je prevelik (maks 10 MB).");
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija nije pronađena: " + bookingId));
+
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Greška pri čitanju fajla.");
+        }
+
+        booking.setConfirmationDocument(bytes);
+        booking.setConfirmationDocumentFilename(StringUtils.hasText(file.getOriginalFilename())
+                ? file.getOriginalFilename() : "rezervacija.pdf");
+        booking.setConfirmationDocumentUploadedAt(LocalDateTime.now());
+        // Novi upload poništava prethodno "poslato" stanje - odluka o ponovnom
+        // slanju je eksplicitna admin akcija (resendConfirmationDocument),
+        // sprečava neočekivano duplo automatsko slanje pri zameni fajla.
+        booking.setConfirmationSentAt(null);
+        Booking saved = bookingRepository.save(booking);
+
+        // Ako je korisnik VEĆ potvrdio da je video reveal (RevealEvent postoji),
+        // šaljemo odmah - nema razloga da čekamo, dokument je upravo stigao.
+        boolean alreadyViewed = Boolean.TRUE.equals(booking.getHasRevealBox()) == false
+                && revealEventRepository.findByBookingRef(booking.getBookingRef()).isPresent();
+        if (alreadyViewed) {
+            confirmationDocumentEmailService.sendConfirmationDocument(saved);
+            saved.setConfirmationSentAt(LocalDateTime.now());
+            saved = bookingRepository.save(saved);
+            log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {} (reveal već viđen)", saved.getBookingRef());
+        } else {
+            log.info("[ConfirmationDocument] Uploadovan za {} - čeka se da korisnik pogleda reveal", saved.getBookingRef());
+        }
+
+        return adminBookingMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminBookingResponse resendConfirmationDocument(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija nije pronađena: " + bookingId));
+
+        if (booking.getConfirmationDocument() == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Dokument nije uploadovan za ovu rezervaciju.");
+        }
+
+        confirmationDocumentEmailService.sendConfirmationDocument(booking);
+        booking.setConfirmationSentAt(LocalDateTime.now());
+        Booking saved = bookingRepository.save(booking);
+
+        log.info("[ConfirmationDocument] Ručno ponovo poslat za {}", saved.getBookingRef());
+        return adminBookingMapper.toResponse(saved);
     }
 
     private String buildIpsQrContent(Booking booking, int totalEur) {

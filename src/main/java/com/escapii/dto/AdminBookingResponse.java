@@ -88,4 +88,10 @@ public class AdminBookingResponse {
     // Faktura (profaktura)
     private String        invoiceNumber;
     private LocalDateTime invoiceSentAt;
+
+    // Dokument rezervacije (od partnerske agencije)
+    private Boolean        hasConfirmationDocument;
+    private String         confirmationDocumentFilename;
+    private LocalDateTime  confirmationDocumentUploadedAt;
+    private LocalDateTime  confirmationSentAt;
 }
