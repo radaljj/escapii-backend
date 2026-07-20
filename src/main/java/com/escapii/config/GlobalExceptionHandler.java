@@ -15,6 +15,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
@@ -108,6 +109,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "Neispravan parametar: " + message));
+    }
+
+    /**
+     * Fajl prekoračuje spring.servlet.multipart.max-file-size/max-request-size.
+     * Napomena: ako Tomcat connector-level limit (server.tomcat.max-http-form-post-size)
+     * odbije zahtev PRE ovoga, ovaj handler se nikad neće izvršiti - taj limit mora
+     * biti usklađen sa ovim iznad, inače odgovor stiže bez CORS headera.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        log.warn("[Upload] Fajl prevelik: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(Map.of("error", "Fajl je prevelik."));
     }
 
     /** Nepredviđene greške - 500. Beleži u bazu i šalje email (samo nova pojava). */
