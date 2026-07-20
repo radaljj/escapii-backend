@@ -26,17 +26,23 @@ public class LaunchSubscriberController {
 
     /**
      * POST /api/launch-notify
-     * Body: { "email": "..." }
+     * Body: { "email": "...", "consent": true }
+     * consent MORA biti eksplicitno true - GDPR zahteva afirmativnu saglasnost,
+     * frontend validacija se lako zaobiđe pa se ponavlja i ovde na serveru.
      */
     @PostMapping("/api/launch-notify")
-    public ResponseEntity<Map<String, String>> subscribe(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> subscribe(@RequestBody Map<String, Object> body) {
         // Honeypot: boti popune ovo polje, pravi korisnici ne vide ga
-        String honeypot = body.getOrDefault("hp", "");
+        String honeypot = String.valueOf(body.getOrDefault("hp", "")).trim();
         if (!honeypot.isBlank()) {
             return ResponseEntity.ok(Map.of("status", "subscribed")); // tiho odbaciti
         }
 
-        String email = body.getOrDefault("email", "").trim().toLowerCase();
+        if (!Boolean.TRUE.equals(body.get("consent"))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Potrebna je saglasnost za čuvanje email adrese."));
+        }
+
+        String email = String.valueOf(body.getOrDefault("email", "")).trim().toLowerCase();
         if (email.isBlank() || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") || email.length() > 200) {
             return ResponseEntity.badRequest().body(Map.of("error", "Neispravan email."));
         }
