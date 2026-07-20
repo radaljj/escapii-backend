@@ -221,7 +221,11 @@ public class Booking {
      * Šalje se korisniku automatski čim: (1) dokument postoji I (2) korisnik
      * je potvrdio da je video reveal (RevealEvent) - bez obzira na redosled.
      */
-    @Lob
+    // NAPOMENA: bez @Lob namerno - @Lob na byte[] tera Hibernate da koristi
+    // PostgreSQL Large Object (OID) semantiku umesto bytea, čak i uz eksplicitni
+    // columnDefinition="bytea" (uzrokuje "column is of type bytea but expression
+    // is of type oid" na insert-u). Bez @Lob, Hibernate 6 mapira byte[] direktno
+    // na bytea preko standardnog VARBINARY JDBC tipa - što i jeste kolona u bazi.
     @Column(name = "confirmation_document", columnDefinition = "bytea")
     private byte[] confirmationDocument;
 
