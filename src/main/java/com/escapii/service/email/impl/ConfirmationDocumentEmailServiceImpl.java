@@ -62,7 +62,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
         String html = EmailHtmlBuilder.wrapBase(
             "#2D5F6B", "",
             EmailHtmlBuilder.statusBadge("Podaci rezervacije", "blue"),
-            "Tvoji zvanični podaci su stigli!",
+            "Tvoji detalji putovanja su stigli!",
             "Rezervacija " + booking.getBookingRef() + " · " + booking.getAssignedDestination(),
             "",
             body,
