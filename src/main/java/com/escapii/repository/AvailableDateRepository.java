@@ -15,8 +15,16 @@ import java.util.Optional;
 @Repository
 public interface AvailableDateRepository extends JpaRepository<AvailableDate, Long> {
 
-    /** Javni termini - isključuje privatne (isPrivate=true) */
-    List<AvailableDate> findByDepartureAirportAndActiveTrueAndIsPrivateFalseOrderByDepartureDateAsc(String departureAirport);
+    /**
+     * Javni termini - isključuje privatne (isPrivate=true).
+     * departureDate mora biti STROGO posle danas (After = >) - usklađeno sa
+     * BookingServiceImpl koji odbija rezervaciju za termin koji je "danas"
+     * (isAfter(today) proverava isto). Bez ovoga bi termin koji je danas
+     * ostao vidljiv i "dostupan" na sajtu ceo dan, ali svaka rezervacija
+     * bi pukla sa 400 - cleanup cron ga deaktivira tek sledećeg jutra.
+     */
+    List<AvailableDate> findByDepartureAirportAndActiveTrueAndIsPrivateFalseAndDepartureDateAfterOrderByDepartureDateAsc(
+            String departureAirport, java.time.LocalDate today);
 
     List<AvailableDate> findAllByOrderByDepartureDateAsc();
 
@@ -37,22 +45,25 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
 
 
     /**
-     * Briše prošle termine koji NEMAJU nijednu rezervaciju.
-     * Sigurno - ne narušava FK constraints.
+     * Briše prošle termine (departureDate < cutoff) koji NEMAJU nijednu rezervaciju.
+     * Sigurno - ne narušava FK constraints. Pozivalac šalje "sutra" kao cutoff da
+     * termin sa departureDate=danas takođe bude tretiran kao istekao.
      */
     @Transactional
     @Modifying
-    @Query("DELETE FROM AvailableDate d WHERE d.departureDate < :today " +
+    @Query("DELETE FROM AvailableDate d WHERE d.departureDate < :cutoff " +
            "AND NOT EXISTS (SELECT b FROM Booking b WHERE b.selectedDate.id = d.id)")
-    int deleteExpiredWithNoBookings(@Param("today") LocalDate today);
+    int deleteExpiredWithNoBookings(@Param("cutoff") LocalDate cutoff);
 
     /**
-     * Deaktivira prošle termine koji IMAJU rezervacije - ne brišemo ih, čuvamo istoriju.
+     * Deaktivira prošle termine (departureDate < cutoff) koji IMAJU rezervacije -
+     * ne brišemo ih, čuvamo istoriju. Pozivalac šalje "sutra" kao cutoff da termin
+     * sa departureDate=danas takođe bude deaktiviran.
      */
     @Transactional
     @Modifying
-    @Query("UPDATE AvailableDate d SET d.active = false WHERE d.departureDate < :today " +
+    @Query("UPDATE AvailableDate d SET d.active = false WHERE d.departureDate < :cutoff " +
            "AND d.active = true " +
            "AND EXISTS (SELECT b FROM Booking b WHERE b.selectedDate.id = d.id)")
-    int deactivateExpiredWithBookings(@Param("today") LocalDate today);
+    int deactivateExpiredWithBookings(@Param("cutoff") LocalDate cutoff);
 }

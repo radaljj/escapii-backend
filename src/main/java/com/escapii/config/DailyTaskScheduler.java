@@ -41,14 +41,17 @@ public class DailyTaskScheduler {
     // ── Cleanup ───────────────────────────────────────────────────────────────
 
     /**
-     * Briše termine čiji je datum polaska prošao:
+     * Briše termine čiji je datum polaska prošao ILI je danas:
      * - bez rezervacija → briše se iz baze
      * - sa rezervacijama → deaktivira se (čuva istoriju)
+     * Cutoff je "sutra" (ne "danas") jer BookingServiceImpl odbija rezervaciju
+     * za termin koji je danas (isAfter(today) mora biti true) - termin sa
+     * departureDate=danas se zato tretira kao već istekao za potrebe cleanup-a.
      */
     public void cleanupExpiredDates() {
-        LocalDate today = LocalDate.now();
-        int deleted     = availableDateRepository.deleteExpiredWithNoBookings(today);
-        int deactivated = availableDateRepository.deactivateExpiredWithBookings(today);
+        LocalDate cutoff = LocalDate.now().plusDays(1);
+        int deleted     = availableDateRepository.deleteExpiredWithNoBookings(cutoff);
+        int deactivated = availableDateRepository.deactivateExpiredWithBookings(cutoff);
         if (deleted > 0 || deactivated > 0) {
             log.info("[Cleanup] Termini: obrisano={}, deaktivirano={}", deleted, deactivated);
         }
