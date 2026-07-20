@@ -1,6 +1,7 @@
 package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
+import com.escapii.model.LaunchSubscriber;
 import com.escapii.service.email.DigestEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
@@ -35,7 +36,8 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                                 List<Booking> upcoming,
                                 List<Booking> revealBoxPending,
                                 List<Booking> revealedAndViewed,
-                                List<Booking> notViewedUrgent) {
+                                List<Booking> notViewedUrgent,
+                                List<LaunchSubscriber> newLaunchSubscribers) {
 
         String todayStr = today.format(EmailHtmlBuilder.DATE_FMT);
 
@@ -53,6 +55,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
         body.append(metaBar(upcoming.size(), revealsSent.size(), forecastDue.size(),
                             revealBoxPending.size(), notViewedUrgent.size()));
+
+        if (!newLaunchSubscribers.isEmpty()) {
+            body.append(launchSubscribersCard(newLaunchSubscribers));
+        }
 
         if (!hasActions) {
             body.append("""
@@ -84,6 +90,28 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
                 revealsSent.size(), forecastDue.size(), upcoming.size());
+    }
+
+    // ── Launch notify prijave (privremeno - uklanja se posle lansiranja) ────────
+
+    private String launchSubscribersCard(List<LaunchSubscriber> subs) {
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < subs.size(); i++) {
+            String border = i < subs.size() - 1 ? "border-bottom:1px solid #f0e8dc;" : "";
+            rows.append("""
+                <tr style="%s">
+                  <td style="padding:9px 14px;font-size:13px;color:#1a1410;">%s</td>
+                </tr>""".formatted(border, esc(subs.get(i).getEmail())));
+        }
+        return """
+            <table width="100%%" cellpadding="0" cellspacing="0" \
+            style="border:1px solid #bcd0d6;border-radius:8px;overflow:hidden;margin-bottom:20px;background:#fff;">
+              <tr><td style="padding:11px 16px;font-size:13px;font-weight:700;\
+            background:#eaf0f3;color:#1f4a57;border-bottom:1px solid #bcd0d6;">
+                🚀 Nove prijave za obaveštenje o lansiranju (%d)
+              </td></tr>
+              %s
+            </table>""".formatted(subs.size(), rows);
     }
 
     // ── Meta bar ──────────────────────────────────────────────────────────────

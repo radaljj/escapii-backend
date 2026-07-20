@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - GET  /api/dates/private:          max 20 zahteva po IP na sat
  * - POST /api/gifts/vouchers:         max 3 zahteva po IP na sat
  * - POST /api/gifts/vouchers/validate: max 5 zahteva po IP na 15 minuta
+ * - POST /api/launch-notify:         max 5 zahteva po IP na sat
  *
  * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For - taj dodaje naš trusted proxy
  * (Render/Railway), pa korisnik ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
@@ -58,6 +59,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final int  WAITLIST_MAX     = 5;
     private static final long WAITLIST_WINDOW  = 60 * 60 * 1000L;      // 1 sat
+
+    private static final int  LAUNCH_NOTIFY_MAX    = 5;
+    private static final long LAUNCH_NOTIFY_WINDOW = 60 * 60 * 1000L;  // 1 sat
 
     private static final int  DATES_MAX        = 60;
     private static final long DATES_WINDOW     = 60 * 1000L;           // 1 minut
@@ -99,6 +103,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> giftVoucherLog    = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> giftValidateLog   = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> giftTripLog       = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> launchNotifyLog   = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -154,6 +159,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if ("POST".equalsIgnoreCase(request.getMethod()) && uri.endsWith("/api/waitlist")) {
             if (isRateLimited(waitlistLog, ip, WAITLIST_MAX, WAITLIST_WINDOW)) {
                 log.warn("[RateLimit] Waitlist limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Pokušajte ponovo za sat vremena.");
+                return;
+            }
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.endsWith("/api/launch-notify")) {
+            if (isRateLimited(launchNotifyLog, ip, LAUNCH_NOTIFY_MAX, LAUNCH_NOTIFY_WINDOW)) {
+                log.warn("[RateLimit] Launch-notify limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva. Pokušajte ponovo za sat vremena.");
                 return;
             }
@@ -249,7 +262,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();

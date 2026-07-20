@@ -1,9 +1,11 @@
 package com.escapii.config;
 
 import com.escapii.model.Booking;
+import com.escapii.model.LaunchSubscriber;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.CustomDateInquiryRepository;
+import com.escapii.repository.LaunchSubscriberRepository;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.DigestEmailService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class DailyTaskScheduler {
     private final DigestEmailService           digestEmailService;
     private final AvailableDateRepository      availableDateRepository;
     private final CustomDateInquiryRepository  inquiryRepository;
+    private final LaunchSubscriberRepository   launchSubscriberRepository;
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -93,14 +96,18 @@ public class DailyTaskScheduler {
         List<Booking> revealedAndViewed = bookingRepository.findRevealedAndViewed(today, today.plusDays(14));
         // Korisnik NIJE otvorio reveal, a polazak je za <= 2 dana - hitno upozorenje
         List<Booking> notViewedUrgent   = bookingRepository.findRevealedButNotViewed(today, today.plusDays(2));
+        // Nove prijave na coming-soon "obavesti me" formu od jučer - privremena sekcija,
+        // uklanja se kad sajt ode live
+        List<LaunchSubscriber> newLaunchSubscribers = launchSubscriberRepository.findByCreatedAtBetween(startOfDay, endOfDay);
 
         if (!upcoming.isEmpty() || !revealSent.isEmpty() || !forecastSent.isEmpty()
-                || !revealBoxPending.isEmpty() || !revealedAndViewed.isEmpty() || !notViewedUrgent.isEmpty()) {
+                || !revealBoxPending.isEmpty() || !revealedAndViewed.isEmpty() || !notViewedUrgent.isEmpty()
+                || !newLaunchSubscribers.isEmpty()) {
             digestEmailService.sendDailyDigest(today, revealSent, forecastSent, upcoming,
-                    revealBoxPending, revealedAndViewed, notViewedUrgent);
-            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}, Viewed: {}, NotViewed urgent: {}",
+                    revealBoxPending, revealedAndViewed, notViewedUrgent, newLaunchSubscribers);
+            log.info("[Scheduler] Digest poslan. Reveal: {}, Forecast: {}, Ukupno 14 dana: {}, RevealBox: {}, Viewed: {}, NotViewed urgent: {}, Launch prijave: {}",
                     revealSent.size(), forecastSent.size(), upcoming.size(),
-                    revealBoxPending.size(), revealedAndViewed.size(), notViewedUrgent.size());
+                    revealBoxPending.size(), revealedAndViewed.size(), notViewedUrgent.size(), newLaunchSubscribers.size());
         } else {
             log.info("[Scheduler] Nema aktivnih rezervacija - digest nije poslan.");
         }
