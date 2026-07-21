@@ -20,6 +20,10 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
     @Value("${app.team-email}")
     private String teamEmail;
 
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
+
     @Override
     @Async
     public void sendTeamAlert(CustomDateInquiry i) {
@@ -94,7 +98,7 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
                 "Javićemo ti se što pre",
                 "",
                 body,
-                EmailHtmlBuilder.customerFooter(teamEmail),
+                EmailHtmlBuilder.customerFooter(contactEmail),
                 true
         );
 

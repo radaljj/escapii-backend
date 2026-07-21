@@ -18,8 +18,10 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
     private final EmailSender emailSender;
 
-    @Value("${app.team-email}")
-    private String teamEmail;
+
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
 
     @Override
     @Async("pdfExecutor")
@@ -53,8 +55,8 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
             "Kada uplatiš, pošalji nam potvrdu transakcije na " +
-            "<a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
-            EmailHtmlBuilder.esc(teamEmail) + "</a> i odmah ćemo potvrditi tvoje mesto. " +
+            "<a href=\"mailto:" + EmailHtmlBuilder.esc(contactEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
+            EmailHtmlBuilder.esc(contactEmail) + "</a> i odmah ćemo potvrditi tvoje mesto. " +
             "Ako imaš bilo kakvo pitanje — tu smo!" +
             "</p>";
 
@@ -65,7 +67,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
             "Rezervacija " + booking.getBookingRef(),
             invoiceNumber,
             body,
-            EmailHtmlBuilder.customerFooter(teamEmail),
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
 
@@ -106,8 +108,8 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
             "Kada uplatiš, pošalji nam potvrdu transakcije na " +
-            "<a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
-            EmailHtmlBuilder.esc(teamEmail) + "</a> i odmah ćemo aktivirati tvoj vaučer." +
+            "<a href=\"mailto:" + EmailHtmlBuilder.esc(contactEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
+            EmailHtmlBuilder.esc(contactEmail) + "</a> i odmah ćemo aktivirati tvoj vaučer." +
             "</p>";
 
         String html = EmailHtmlBuilder.wrapBase(
@@ -117,7 +119,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
             "Vaučer · " + amount + " EUR",
             invoiceNumber,
             body,
-            EmailHtmlBuilder.customerFooter(teamEmail),
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
 

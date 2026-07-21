@@ -39,6 +39,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     @Value("${app.team-email}")
     private String teamEmail;
 
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
+
     /** ISO kod → srpski naziv, popunjava se iz iste liste koja se šalje frontendu. */
     private Map<String, String> countryNames;
 
@@ -255,7 +259,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             .replace("{{PASSENGERS_HTML}}",    buildPassengersSection(booking))
             .replace("{{TOTAL_BOX_HTML}}",     EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
             .replace("{{PRICE_TABLE_HTML}}",   buildPriceTable(booking, n))
-            .replace("{{SENDER_EMAIL}}",       EmailHtmlBuilder.esc(sender.getFrom()));
+            .replace("{{SENDER_EMAIL}}",       EmailHtmlBuilder.esc(contactEmail));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -277,15 +281,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 .replace("{{TIMELINE_HTML}}",    buildConfirmedTimeline(booking))
                 .replace("{{PASSENGERS_HTML}}", buildPassengersSection(booking))
                 .replace("{{PRICE_TABLE_HTML}}", buildPriceTable(booking, n))
-                .replace("{{SENDER_EMAIL}}",     EmailHtmlBuilder.esc(sender.getFrom()));
+                .replace("{{SENDER_EMAIL}}",     EmailHtmlBuilder.esc(contactEmail));
         } else {
             return loadEmailTemplate("otkaz-rezervacije.html")
                 .replace("{{SALUTATION}}",     EmailHtmlBuilder.salutation(booking))
                 .replace("{{FIRST_NAME}}",     EmailHtmlBuilder.esc(booking.getFirstName()))
                 .replace("{{REF_CODE}}",        EmailHtmlBuilder.esc(booking.getBookingRef()))
                 .replace("{{TRIP_CARD_HTML}}",  customerTripCardStyled(booking, depDate, retDate, n, true))
-                .replace("{{CONTACT_EMAIL}}",   EmailHtmlBuilder.esc(sender.getFrom()))
-                .replace("{{SENDER_EMAIL}}",    EmailHtmlBuilder.esc(sender.getFrom()));
+                .replace("{{CONTACT_EMAIL}}",   EmailHtmlBuilder.esc(contactEmail))
+                .replace("{{SENDER_EMAIL}}",    EmailHtmlBuilder.esc(contactEmail));
         }
     }
 

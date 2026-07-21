@@ -78,7 +78,7 @@ class ShellSmokeTest {
 
         // 1-2. Fakture (rezervacija + vaučer)
         var inv = new InvoiceEmailServiceImpl(sender);
-        set(inv, "teamEmail", "escapii.team@gmail.com");
+        set(inv, "contactEmail", "info@escapii.rs");
         inv.sendInvoiceToClient(booking(), new byte[]{1}, "ESC-INV-2026-0001");
         check("faktura-rezervacija", cap.get());
         inv.sendVoucherInvoiceToClient(voucher(), new byte[]{1}, "ESC-INV-2026-0002");
@@ -93,7 +93,7 @@ class ShellSmokeTest {
 
         // 4. Dokument rezervacije
         var cd = new ConfirmationDocumentEmailServiceImpl(sender);
-        set(cd, "teamEmail", "escapii.team@gmail.com");
+        set(cd, "contactEmail", "info@escapii.rs");
         cd.sendConfirmationDocument(booking());
         check("dokument-rezervacije", cap.get());
 
@@ -107,6 +107,7 @@ class ShellSmokeTest {
         // 8-9. Vaučer (tim + PDF kupcu)
         var gv = new GiftVoucherEmailServiceImpl(sender);
         set(gv, "teamEmail", "escapii.team@gmail.com");
+        set(gv, "contactEmail", "info@escapii.rs");
         gv.sendTeamAlert(voucher());
         check("vaucer-tim", cap.get());
         gv.sendVoucherPdfToBuyer(voucher(), new byte[]{1});
@@ -115,6 +116,7 @@ class ShellSmokeTest {
         // 10-11. Upit za prilagođeni termin (tim + potvrda kupcu)
         var inq = new InquiryEmailServiceImpl(sender);
         set(inq, "teamEmail", "escapii.team@gmail.com");
+        set(inq, "contactEmail", "info@escapii.rs");
         CustomDateInquiry ci = new CustomDateInquiry();
         ci.setId(3L); ci.setEmail("upit@example.com"); ci.setAirport("BEG");
         ci.setTravelers(2); ci.setDesiredDepartureDate(LocalDate.now().plusDays(60));
@@ -125,7 +127,7 @@ class ShellSmokeTest {
 
         // 12. Coming-soon welcome (privremeno - briše se pri lansiranju)
         var lw = new LaunchWelcomeEmailServiceImpl(sender);
-        set(lw, "teamEmail", "escapii.team@gmail.com");
+        set(lw, "contactEmail", "info@escapii.rs");
         lw.sendWelcome("novi@example.com");
         check("launch-welcome", cap.get());
         assertTrue(cap.get().contains("Obećavamo ti da ćeš saznati"),
@@ -141,6 +143,7 @@ class ShellSmokeTest {
             }
         });
         set(be, "teamEmail", "escapii.team@gmail.com");
+        set(be, "contactEmail", "info@escapii.rs");
         var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
         init.setAccessible(true);
         init.invoke(be);
@@ -157,6 +160,7 @@ class ShellSmokeTest {
 
         // 7. Prognoza
         var fc = new ForecastEmailServiceImpl(sender);
+        set(fc, "contactEmail", "info@escapii.rs");
         var days = List.of(
             new com.escapii.service.weather.DailyForecast(LocalDate.now().plusDays(20), 0, 28, 18, 0.0),
             new com.escapii.service.weather.DailyForecast(LocalDate.now().plusDays(21), 61, 24, 16, 3.2),

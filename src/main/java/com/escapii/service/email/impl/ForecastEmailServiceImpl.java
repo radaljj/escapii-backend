@@ -8,6 +8,7 @@ import com.escapii.service.email.core.EmailSender;
 import com.escapii.service.weather.DailyForecast;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,6 +21,10 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class ForecastEmailServiceImpl implements ForecastEmailService {
+
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
 
     private final EmailSender sender;
 
@@ -145,7 +150,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             "Putovanje · " + depDateStr,
             "",
             body,
-            EmailHtmlBuilder.customerFooter("escapii.team@gmail.com"),
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
     }

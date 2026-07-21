@@ -20,8 +20,10 @@ public class LaunchWelcomeEmailServiceImpl implements LaunchWelcomeEmailService 
 
     private final EmailSender emailSender;
 
-    @Value("${app.team-email}")
-    private String teamEmail;
+
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
 
     @Override
     @Async
@@ -62,7 +64,7 @@ public class LaunchWelcomeEmailServiceImpl implements LaunchWelcomeEmailService 
             "",
             "",
             body,
-            EmailHtmlBuilder.customerFooter(teamEmail),
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false,
             "Hvala što si tu. Obećavamo ti da ćeš saznati među prvima kad poletimo."
         );

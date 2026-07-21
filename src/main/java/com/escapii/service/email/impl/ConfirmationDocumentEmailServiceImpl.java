@@ -17,8 +17,10 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
 
     private final EmailSender emailSender;
 
-    @Value("${app.team-email}")
-    private String teamEmail;
+
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
 
     @Override
     @Async("pdfExecutor")
@@ -55,8 +57,8 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
             "Sačuvaj ovaj PDF - sadrži zvanične podatke koji ti mogu zatrebati na aerodromu ili u smeštaju. " +
             "Ako primetiš bilo kakvu grešku u podacima, javi nam se odmah na " +
-            "<a href=\"mailto:" + EmailHtmlBuilder.esc(teamEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
-            EmailHtmlBuilder.esc(teamEmail) + "</a>." +
+            "<a href=\"mailto:" + EmailHtmlBuilder.esc(contactEmail) + "\" style=\"color:#a85e44;font-weight:600;\">" +
+            EmailHtmlBuilder.esc(contactEmail) + "</a>." +
             "</p>";
 
         String html = EmailHtmlBuilder.wrapBase(
@@ -66,7 +68,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
             "Rezervacija " + booking.getBookingRef() + " · " + booking.getAssignedDestination(),
             "",
             body,
-            EmailHtmlBuilder.customerFooter(teamEmail),
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
 

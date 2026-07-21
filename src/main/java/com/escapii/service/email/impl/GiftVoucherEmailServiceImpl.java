@@ -23,6 +23,10 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
+    @Value("${app.contact-email}")
+    private String contactEmail;
+
     // ── Tim notifikacija (novi upit) ─────────────────────────────────────────
 
     @Override
@@ -95,7 +99,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                 "Vaučer je u prilogu kao PDF",
                 v.getCode(),
                 body,
-                EmailHtmlBuilder.customerFooter(teamEmail),
+                EmailHtmlBuilder.customerFooter(contactEmail),
                 false
         );
 
