@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -52,6 +54,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(Map.of("error", "HTTP metod nije podržan: " + ex.getMethod()));
+    }
+
+    /**
+     * Neispravni query parametri - nedostaje obavezan, ili je pogrešnog tipa
+     * (npr. /vouchers/reveal bez ?code=, ili ?id=abc gde se očekuje broj).
+     *
+     * Ovo je greška pozivaoca, ne servera. Bez ove obrade padale su na
+     * Exception fallback koji vraća 500 i šalje email alert - pa je svaki bot
+     * koji naleti na endpoint bez parametra pravio lažnu uzbunu.
+     */
+    @ExceptionHandler({
+        MissingServletRequestParameterException.class,
+        MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleBadRequestParam(Exception ex, HttpServletRequest request) {
+        String param = (ex instanceof MissingServletRequestParameterException m)
+                ? m.getParameterName()
+                : ((MethodArgumentTypeMismatchException) ex).getName();
+        log.warn("[API] Neispravan parametar '{}' na {}", param, request.getRequestURI());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Neispravan ili nedostajući parametar: " + param));
     }
 
     /** Validacione greške - @Valid na BookingRequest. */
