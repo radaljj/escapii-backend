@@ -82,6 +82,11 @@
     }
   </style>
   <style type="text/css">
+    :root {
+      color-scheme: light only;
+      supported-color-schemes: light only;
+    }
+
     @media (prefers-color-scheme: dark) {
       body {
         background-color: #ebe4d4 !important;
@@ -95,7 +100,20 @@
         background-color: #ffffff !important;
       }
     }
+
+    /* Outlook.com / Outlook mobile sami invertuju boje - vracamo ih */
+    [data-ogsc] .force-sand td,
+    [data-ogsb] .force-sand td {
+      background-color: #f5efe2 !important;
+    }
+
+    [data-ogsc] .force-white td,
+    [data-ogsb] .force-white td {
+      background-color: #ffffff !important;
+    }
   </style>
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
 </head>
 
 <body style="word-spacing:normal;background-color:#ebe4d4;">

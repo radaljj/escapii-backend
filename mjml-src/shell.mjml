@@ -1,16 +1,34 @@
 <mjml>
   <mj-head>
     <mj-preview>{{PREHEADER}} &#847;&#847;&#847;&#847;&#847;&#847;&#847;</mj-preview>
+    <!-- MJML ovo ne emituje samo; bez toga Apple Mail/iOS i Outlook invertuju
+         boje u dark mode-u i kartica postane tamna -->
+    <mj-raw>
+      <meta name="color-scheme" content="light only">
+      <meta name="supported-color-schemes" content="light only">
+    </mj-raw>
     <mj-attributes>
       <mj-all font-family="'Segoe UI',Arial,Helvetica,sans-serif" />
       <mj-section padding="0" background-color="#ebe4d4" />
     </mj-attributes>
     <mj-style>
+      :root { color-scheme: light only; supported-color-schemes: light only; }
+
       @media (prefers-color-scheme: dark) {
         body { background-color: #ebe4d4 !important; }
         .force-sand td  { background-color: #f5efe2 !important; }
         .force-white td { background-color: #ffffff !important; }
+        .ink  { color: #1a1410 !important; }
+        .mute { color: #6b5d4f !important; }
       }
+
+      /* Outlook.com i Outlook mobile ne poštuju gornji upit - oni sami
+         invertuju boje i pri tom dodaju data-ogsc/data-ogsb atribute,
+         što je jedina kuka preko koje se boje mogu vratiti. */
+      [data-ogsc] .force-sand td,  [data-ogsb] .force-sand td  { background-color: #f5efe2 !important; }
+      [data-ogsc] .force-white td, [data-ogsb] .force-white td { background-color: #ffffff !important; }
+      [data-ogsc] .ink,  [data-ogsb] .ink  { color: #1a1410 !important; }
+      [data-ogsc] .mute, [data-ogsb] .mute { color: #6b5d4f !important; }
     </mj-style>
   </mj-head>
 
@@ -43,9 +61,9 @@
         <mj-text
           font-family="Georgia,'Times New Roman',serif"
           font-size="32px" color="#1a1410" line-height="1.2"
-          font-weight="400" padding="0">{{HEADING}}</mj-text>
+          font-weight="400" padding="0" css-class="ink">{{HEADING}}</mj-text>
 
-        <mj-text padding="0" font-size="14px" color="#6b5d4f" line-height="1.6">{{SUBHEADING}}</mj-text>
+        <mj-text padding="0" font-size="14px" color="#6b5d4f" line-height="1.6" css-class="mute">{{SUBHEADING}}</mj-text>
         <mj-text padding="0" font-size="14px">{{REF}}</mj-text>
 
       </mj-column>
@@ -58,7 +76,7 @@
         border-left="1px solid #ebe1cf"
         border-right="1px solid #ebe1cf"
         padding="32px 40px">
-        <mj-text padding="0" font-size="14px" color="#1a1410" line-height="1.6">{{BODY}}</mj-text>
+        <mj-text padding="0" font-size="14px" color="#1a1410" line-height="1.6" css-class="ink">{{BODY}}</mj-text>
       </mj-column>
     </mj-section>
 
@@ -72,7 +90,7 @@
         border-top="1px solid #ebe1cf"
         border-radius="0 0 10px 10px"
         padding="22px 40px">
-        <mj-text align="center" font-size="11px" color="#6b5d4f" line-height="1.8" padding="0">{{FOOTER}}</mj-text>
+        <mj-text align="center" font-size="11px" color="#6b5d4f" line-height="1.8" padding="0" css-class="mute">{{FOOTER}}</mj-text>
       </mj-column>
     </mj-section>
 

@@ -1,16 +1,26 @@
 <mjml>
   <mj-head>
     <mj-preview>{{DATE}} — {{ACTIVE_COUNT}} aktivnih rezervacija &#847;&#847;&#847;&#847;&#847;&#847;&#847;</mj-preview>
+    <mj-raw>
+      <meta name="color-scheme" content="light only">
+      <meta name="supported-color-schemes" content="light only">
+    </mj-raw>
     <mj-attributes>
       <mj-all font-family="'Segoe UI',Arial,Helvetica,sans-serif" />
       <mj-section padding="0" background-color="#ebe4d4" />
     </mj-attributes>
     <mj-style>
+      :root { color-scheme: light only; supported-color-schemes: light only; }
+
       @media (prefers-color-scheme: dark) {
         body { background-color: #ebe4d4 !important; }
         .force-sand td  { background-color: #f5efe2 !important; }
         .force-white td { background-color: #ffffff !important; }
       }
+
+      /* Outlook.com / Outlook mobile sami invertuju boje - vracamo ih */
+      [data-ogsc] .force-sand td,  [data-ogsb] .force-sand td  { background-color: #f5efe2 !important; }
+      [data-ogsc] .force-white td, [data-ogsb] .force-white td { background-color: #ffffff !important; }
     </mj-style>
   </mj-head>
 

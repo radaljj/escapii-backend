@@ -82,6 +82,11 @@
     }
   </style>
   <style type="text/css">
+    :root {
+      color-scheme: light only;
+      supported-color-schemes: light only;
+    }
+
     @media (prefers-color-scheme: dark) {
       body {
         background-color: #ebe4d4 !important;
@@ -94,8 +99,43 @@
       .force-white td {
         background-color: #ffffff !important;
       }
+
+      .ink {
+        color: #1a1410 !important;
+      }
+
+      .mute {
+        color: #6b5d4f !important;
+      }
+    }
+
+    /* Outlook.com i Outlook mobile ne poštuju gornji upit - oni sami
+         invertuju boje i pri tom dodaju data-ogsc/data-ogsb atribute,
+         što je jedina kuka preko koje se boje mogu vratiti. */
+    [data-ogsc] .force-sand td,
+    [data-ogsb] .force-sand td {
+      background-color: #f5efe2 !important;
+    }
+
+    [data-ogsc] .force-white td,
+    [data-ogsb] .force-white td {
+      background-color: #ffffff !important;
+    }
+
+    [data-ogsc] .ink,
+    [data-ogsb] .ink {
+      color: #1a1410 !important;
+    }
+
+    [data-ogsc] .mute,
+    [data-ogsb] .mute {
+      color: #6b5d4f !important;
     }
   </style>
+  <!-- MJML ovo ne emituje samo; bez toga Apple Mail/iOS i Outlook invertuju
+         boje u dark mode-u i kartica postane tamna -->
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
 </head>
 
 <body style="word-spacing:normal;background-color:#ebe4d4;">
@@ -164,12 +204,12 @@
                               </td>
                             </tr>
                             <tr>
-                              <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                              <td align="left" class="ink" style="font-size:0px;padding:0;word-break:break-word;">
                                 <div style="font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:400;line-height:1.2;text-align:left;color:#1a1410;">{{HEADING}}</div>
                               </td>
                             </tr>
                             <tr>
-                              <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                              <td align="left" class="mute" style="font-size:0px;padding:0;word-break:break-word;">
                                 <div style="font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;text-align:left;color:#6b5d4f;">{{SUBHEADING}}</div>
                               </td>
                             </tr>
@@ -208,7 +248,7 @@
                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="" width="100%">
                           <tbody>
                             <tr>
-                              <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                              <td align="center" class="mute" style="font-size:0px;padding:0;word-break:break-word;">
                                 <div style="font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;text-align:center;color:#6b5d4f;"><span style="letter-spacing:1.2px;">
                                     <span style="color:#a85e44;letter-spacing:3px;">&#9679; &#9679; &#9679;</span> &nbsp;&nbsp;Vaša destinacija ostaje tajna sve do 48h pre polaska&nbsp;&nbsp; <span style="color:#a85e44;letter-spacing:3px;">&#9679; &#9679; &#9679;</span>
                                   </span></div>
@@ -244,7 +284,7 @@
                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="" width="100%">
                           <tbody>
                             <tr>
-                              <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                              <td align="left" class="ink" style="font-size:0px;padding:0;word-break:break-word;">
                                 <div style="font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;text-align:left;color:#1a1410;">
 
                                   {{BODY}}
@@ -281,7 +321,7 @@
                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="" width="100%">
                           <tbody>
                             <tr>
-                              <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                              <td align="center" class="mute" style="font-size:0px;padding:0;word-break:break-word;">
                                 <div style="font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:11px;line-height:1.8;text-align:center;color:#6b5d4f;">{{FOOTER}}</div>
                               </td>
                             </tr>
