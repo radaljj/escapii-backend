@@ -1,0 +1,84 @@
+<mjml>
+  <mj-head>
+    <mj-preview>{{PREHEADER}} &#847;&#847;&#847;&#847;&#847;&#847;&#847;</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Segoe UI',Arial,Helvetica,sans-serif" />
+      <mj-section padding="0" background-color="#ebe4d4" />
+    </mj-attributes>
+    <mj-style>
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #ebe4d4 !important; }
+        .force-sand td  { background-color: #f5efe2 !important; }
+        .force-white td { background-color: #ffffff !important; }
+      }
+    </mj-style>
+  </mj-head>
+
+  <mj-body background-color="#ebe4d4" width="640px">
+
+    <mj-section padding="40px 16px 0">
+      <mj-column><mj-spacer height="1px" /></mj-column>
+    </mj-section>
+
+    <!-- ══ HEADER ══ -->
+    <mj-section padding="0 16px" css-class="force-sand">
+      <mj-column
+        background-color="#f5efe2"
+        border-top="4px solid {{ACCENT}}"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        border-bottom="1px solid #ebe1cf"
+        border-radius="10px 10px 0 0"
+        padding="32px 40px 28px">
+
+        <mj-image
+          src="https://escapii.rs/wp-content/themes/escapii-theme/images/logo-black.png"
+          alt="escapii" width="120px" align="center"
+          href="https://escapii.rs" padding="0 0 18px" />
+
+        <!-- Tokeni nose sopstvene margine (vidi EmailHtmlBuilder), zato padding=0:
+             prazna vrednost = nula vizuelnog prostora -->
+        <mj-text padding="0" font-size="14px">{{BADGE}}</mj-text>
+
+        <mj-text
+          font-family="Georgia,'Times New Roman',serif"
+          font-size="32px" color="#1a1410" line-height="1.2"
+          font-weight="400" padding="0">{{HEADING}}</mj-text>
+
+        <mj-text padding="0" font-size="14px" color="#6b5d4f" line-height="1.6">{{SUBHEADING}}</mj-text>
+        <mj-text padding="0" font-size="14px">{{REF}}</mj-text>
+
+      </mj-column>
+    </mj-section>
+
+    <!-- ══ BODY ══ -->
+    <mj-section padding="0 16px" css-class="force-white">
+      <mj-column
+        background-color="#ffffff"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        padding="32px 40px">
+        <mj-text padding="0" font-size="14px" color="#1a1410" line-height="1.6">{{BODY}}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- ══ FOOTER ══ -->
+    <mj-section padding="0 16px" css-class="force-sand">
+      <mj-column
+        background-color="#f5efe2"
+        border-left="1px solid #ebe1cf"
+        border-right="1px solid #ebe1cf"
+        border-bottom="1px solid #ebe1cf"
+        border-top="1px solid #ebe1cf"
+        border-radius="0 0 10px 10px"
+        padding="22px 40px">
+        <mj-text align="center" font-size="11px" color="#6b5d4f" line-height="1.8" padding="0">{{FOOTER}}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="0 16px 40px">
+      <mj-column><mj-spacer height="1px" /></mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

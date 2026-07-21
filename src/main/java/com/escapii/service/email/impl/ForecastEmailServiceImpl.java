@@ -97,10 +97,11 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <!-- Separator -->
                 <div style="height:1px;background:#ebe1cf;margin-bottom:20px;"></div>
 
-                <!-- Forecast strip (travel days only) -->
-                <table width="100%%" cellpadding="0" cellspacing="0">
-                  <tr>%s</tr>
-                </table>
+                <!-- Forecast strip (travel days only) - inline-block kartice se
+                     prelamaju na uzak ekran; fiksne <td> kolone bi se prelile
+                     kod dužih putovanja (8 dana × 60px > 320px). font-size:0
+                     na kontejneru uklanja razmake između inline-block elemenata. -->
+                <div style="text-align:center;font-size:0;">%s</div>
 
               </td></tr>
             </table>
@@ -193,7 +194,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 : "font-size:12px;font-weight:700;";
 
             sb.append("""
-                <td width="60" style="text-align:center;padding:0 2px;">
+                <div style="display:inline-block;width:64px;vertical-align:top;padding:2px;font-size:12px;">
                   <div style="%sborder-radius:12px;padding:10px 4px;">
                     <div style="%s">%s</div>
                     <div style="font-size:8px;color:#a89888;margin-bottom:5px;">%s</div>
@@ -202,7 +203,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                     <div style="font-size:10px;color:#1f4a57;margin-top:2px;">%d°</div>
                     %s
                   </div>
-                </td>""".formatted(
+                </div>""".formatted(
                     bg,
                     labelStyle, label,
                     dayDate,
