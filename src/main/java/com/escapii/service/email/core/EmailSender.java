@@ -40,6 +40,44 @@ public class EmailSender {
     }
 
     /**
+     * Postavlja telo kao multipart/alternative - plain text + HTML.
+     * Mejlovi bez tekstualne verzije dobijaju lošiju ocenu kod spam filtera
+     * (Microsoft je posebno osetljiv), a tekst je i jedino što vide čitači
+     * ekrana i klijenti sa isključenim HTML-om.
+     */
+    private void setBody(MimeMessageHelper helper, String html) throws MessagingException {
+        helper.setText(toPlainText(html), html);
+    }
+
+    /**
+     * Gruba ali dovoljna HTML → tekst konverzija. Ne pokušava da reprodukuje
+     * raspored: cilj je čitljiv tekst sa istom porukom, ne verna kopija.
+     */
+    static String toPlainText(String html) {
+        String s = html;
+        // <head>, <style>, <script> nose CSS i skriptu - ne smeju u tekst
+        s = s.replaceAll("(?is)<head[^>]*>.*?</head>", " ");
+        s = s.replaceAll("(?is)<(style|script)[^>]*>.*?</\\1>", " ");
+        // komentari (uključujući Outlook mso uslovne blokove)
+        s = s.replaceAll("(?s)<!--.*?-->", " ");
+        // elementi koji vizuelno prelamaju red
+        s = s.replaceAll("(?i)<br\\s*/?>", "\n");
+        s = s.replaceAll("(?i)</(p|div|tr|h[1-6]|li|table)>", "\n");
+        // preostali tagovi
+        s = s.replaceAll("(?s)<[^>]+>", " ");
+        // entiteti - prvo imenovani, pa numerički, &amp; na kraju da se ne udvostruči
+        s = s.replace("&nbsp;", " ").replace("&middot;", "·")
+             .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"");
+        s = s.replaceAll("&#(\\d+);", "");
+        s = s.replace("&amp;", "&");
+        // sredi razmake: najviše jedan prazan red, bez vodećih razmaka u redu
+        s = s.replaceAll("[ \\t\\x0B\\f\\r]+", " ");
+        s = s.replaceAll(" ?\n ?", "\n");
+        s = s.replaceAll("\n{3,}", "\n\n");
+        return s.trim();
+    }
+
+    /**
      * Šalje email. Vraća {@code true} ako je email uspešno poslat, {@code false} ako je
      * došlo do greške (greška je već logovana - caller odlučuje šta dalje).
      */
@@ -50,7 +88,7 @@ public class EmailSender {
             setFrom(helper);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(html, true);
+            setBody(helper, html);
             mailSender.send(message);
             log.info("[EmailSender] Email poslan na {}", LogUtils.maskEmail(to));
             return true;
@@ -86,7 +124,7 @@ public class EmailSender {
             setFrom(helper);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(html, true);
+            setBody(helper, html);
             helper.addAttachment(attachmentName, new ByteArrayResource(attachmentData), contentType);
             mailSender.send(message);
             log.info("[EmailSender] Email sa prilogom '{}' poslan na {}", attachmentName, LogUtils.maskEmail(to));
