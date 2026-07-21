@@ -43,6 +43,7 @@ class ShellSmokeTest {
         b.setAssignedDestination("Barselona"); b.setAirlineName("Wizz Air");
         b.setConfirmationDocumentFilename("rezervacija.pdf");
         b.setConfirmationDocument(new byte[]{1,2,3});
+        b.setCreatedAt(LocalDateTime.now().minusHours(2));
         AvailableDate d = new AvailableDate();
         d.setDepartureDate(LocalDate.now().plusDays(20));
         d.setReturnDate(LocalDate.now().plusDays(23));
@@ -129,6 +130,30 @@ class ShellSmokeTest {
         check("launch-welcome", cap.get());
         assertTrue(cap.get().contains("Obećavamo ti da ćeš saznati"),
                 "preheader nije primenjen");
+
+        // 13-16. Booking mejlovi (MJML templejti, ne prolaze kroz shell)
+        var be = new BookingEmailServiceImpl(sender, new com.escapii.service.DestinationService() {
+            public List<com.escapii.model.Destination> getDestinationsByAirport(String a) { return List.of(); }
+            public List<com.escapii.model.Destination> getAllDestinations() { return List.of(); }
+            public List<com.escapii.dto.CountryDto> fetchCountries() {
+                return List.of(new com.escapii.dto.CountryDto("RS", "Serbia", "Srbija"),
+                               new com.escapii.dto.CountryDto("ES", "Spain", "Španija"));
+            }
+        });
+        set(be, "teamEmail", "escapii.team@gmail.com");
+        var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
+        init.setAccessible(true);
+        init.invoke(be);
+        Booking bb = booking();
+        bb.setHasRevealBox(Boolean.FALSE);
+        be.sendTeamNotification(bb);
+        check("booking-tim", cap.get());
+        be.sendCustomerConfirmation(bb);
+        check("booking-upit-primljen", cap.get());
+        be.sendBookingConfirmed(bb);
+        check("booking-potvrdjena", cap.get());
+        be.sendBookingCancelled(bb);
+        check("booking-otkazana", cap.get());
 
         // 7. Prognoza
         var fc = new ForecastEmailServiceImpl(sender);
