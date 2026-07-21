@@ -49,6 +49,24 @@ public final class EmailHtmlBuilder {
         String footerText,
         boolean mysteryStrip
     ) {
+        // Bez eksplicitnog preheadera - naslov se koristi kao pregled u inbox-u
+        return wrapBase(accentBarColor, headerBg, badgeHtml, headingText, subheading,
+                        refCode, bodyContent, footerText, mysteryStrip, headingText);
+    }
+
+    /** Varijanta sa zasebnim preheader tekstom (ono što se vidi u inbox listi). */
+    public static String wrapBase(
+        String accentBarColor,
+        String headerBg,
+        String badgeHtml,
+        String headingText,
+        String subheading,
+        String refCode,
+        String bodyContent,
+        String footerText,
+        boolean mysteryStrip,
+        String preheader
+    ) {
         String accent = (accentBarColor == null || accentBarColor.isBlank()) ? "#a85e44" : accentBarColor;
 
         // Fragmenti nose sopstvene margine - shell ih ubacuje u mj-text sa padding=0,
@@ -68,7 +86,7 @@ public final class EmailHtmlBuilder {
 
         // replace() je literalan (nije regex) - siguran za sadržaj sa $ ili backslash
         return loadTemplate(mysteryStrip ? "shell-mystery.html" : "shell.html")
-                .replace("{{PREHEADER}}",  headingText)
+                .replace("{{PREHEADER}}",  preheader)
                 .replace("{{ACCENT}}",     accent)
                 .replace("{{BADGE}}",      badgeBlock)
                 .replace("{{HEADING}}",    headingText)

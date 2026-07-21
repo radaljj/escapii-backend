@@ -2,6 +2,7 @@ package com.escapii.controller;
 
 import com.escapii.model.LaunchSubscriber;
 import com.escapii.repository.LaunchSubscriberRepository;
+import com.escapii.service.email.LaunchWelcomeEmailService;
 import com.escapii.util.LogUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class LaunchSubscriberController {
 
     private final LaunchSubscriberRepository repository;
+    private final LaunchWelcomeEmailService welcomeEmailService;
 
     /**
      * POST /api/launch-notify
@@ -53,6 +55,9 @@ public class LaunchSubscriberController {
                 sub.setEmail(email);
                 repository.save(sub);
                 log.info("[LaunchNotify] Nova prijava: {}", LogUtils.maskEmail(email));
+                // Welcome mejl ide samo za NOVU prijavu - ponovni unos iste adrese
+                // ne sme da rezultira drugim mejlom. @Async, ne blokira odgovor.
+                welcomeEmailService.sendWelcome(email);
             } catch (DataIntegrityViolationException e) {
                 // race condition - dva istovremena zahteva sa istim emailom, bezopasno
             }

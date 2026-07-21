@@ -122,6 +122,14 @@ class ShellSmokeTest {
         inq.sendTeamAlert(ci);
         check("upit-tim", cap.get());
 
+        // 12. Coming-soon welcome (privremeno - briše se pri lansiranju)
+        var lw = new LaunchWelcomeEmailServiceImpl(sender);
+        set(lw, "teamEmail", "escapii.team@gmail.com");
+        lw.sendWelcome("novi@example.com");
+        check("launch-welcome", cap.get());
+        assertTrue(cap.get().contains("Obećavamo ti da ćeš saznati"),
+                "preheader nije primenjen");
+
         // 7. Prognoza
         var fc = new ForecastEmailServiceImpl(sender);
         var days = List.of(
