@@ -121,23 +121,23 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             <table width="100%%" cellpadding="0" cellspacing="0" \
             style="background:#faf6ee;border:1px solid #ebe1cf;border-radius:8px;margin-bottom:20px;">
               <tr>
-                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                <td class="dg-stat" style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">Aktivnih</div>
                   <div style="font-size:20px;font-weight:700;color:#1a1410;">%d</div>
                 </td>
-                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                <td class="dg-stat" style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">✉ Reveal</div>
                   <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
-                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                <td class="dg-stat" style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">🌤 Prognoza</div>
                   <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
-                <td style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
+                <td class="dg-stat" style="padding:12px 14px;border-right:1px solid #ebe1cf;text-align:center;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">📦 Kutija</div>
                   <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
-                <td style="padding:12px 14px;text-align:center;">
+                <td class="dg-stat" style="padding:12px 14px;text-align:center;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:4px;">🚨 Hitno</div>
                   <div style="font-size:20px;font-weight:700;color:%s;">%d</div>
                 </td>
@@ -160,10 +160,10 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             String when    = days == 0 ? "DANAS!" : days == 1 ? "SUTRA!" : "za " + days + " dana";
             rows.append("""
                 <tr>
-                  <td style="padding:9px 14px;font-size:13px;font-weight:700;color:#9b3a2a;">%s</td>
-                  <td style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
-                  <td style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
-                  <td style="padding:9px 14px;font-size:12px;font-weight:700;color:#9b3a2a;text-align:right;">%s</td>
+                  <td class="dg-cell dg-cell-first" style="padding:9px 14px;font-size:13px;font-weight:700;color:#9b3a2a;">%s</td>
+                  <td class="dg-cell" style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
+                  <td class="dg-cell" style="padding:9px 14px;font-size:12px;color:#9b3a2a;">%s</td>
+                  <td class="dg-cell dg-cell-last" style="padding:9px 14px;font-size:12px;font-weight:700;color:#9b3a2a;text-align:right;">%s</td>
                 </tr>""".formatted(
                     esc(b.getFirstName() + " " + b.getLastName()),
                     esc(b.getBookingRef()),
@@ -274,17 +274,17 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
             sb.append("""
                 <tr style="background:%s;%s">
-                  <td style="padding:11px 14px;font-size:13px;vertical-align:middle;width:35%%;">
+                  <td class="dg-cell dg-cell-first" style="padding:11px 14px;font-size:13px;vertical-align:middle;width:35%%;">
                     <strong style="color:#2D5F6B;">%s</strong>
                     <div style="font-size:11px;color:#a89888;margin-top:2px;">%s</div>
                   </td>
-                  <td style="padding:11px 14px;font-size:12px;vertical-align:middle;width:18%%;white-space:nowrap;">
+                  <td class="dg-cell" style="padding:11px 14px;font-size:12px;vertical-align:middle;width:18%%;white-space:nowrap;">
                     <span style="font-weight:700;color:#a85e44;">%s</span>
                     &nbsp;
                     <span style="display:inline-block;padding:2px 7px;border-radius:100px;\
                 font-size:10px;font-weight:700;background:#f0f0f0;color:#666;">%s</span>
                   </td>
-                  <td style="padding:11px 14px;vertical-align:middle;">%s</td>
+                  <td class="dg-cell dg-cell-last" style="padding:11px 14px;vertical-align:middle;">%s</td>
                 </tr>""".formatted(
                     rowBg, border,
                     esc(b.getFirstName() + " " + b.getLastName()),

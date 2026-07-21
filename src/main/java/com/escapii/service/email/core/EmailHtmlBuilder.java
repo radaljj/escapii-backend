@@ -97,6 +97,21 @@ public final class EmailHtmlBuilder {
                 @media (max-width:620px) {
                   .mob-full { width:100%% !important; }
                   .mob-pad  { padding:22px !important; }
+                  /* Digest: 5 statistika u redu je preusko na telefonu - lome se 3+2 */
+                  .dg-stat {
+                    display:inline-block !important; width:33.33%% !important;
+                    border-right:none !important; padding:10px 4px !important;
+                    box-sizing:border-box !important;
+                  }
+                  /* Digest: redovi rezervacija se slažu jedan ispod drugog */
+                  .dg-cell {
+                    display:block !important; width:100%% !important;
+                    box-sizing:border-box !important;
+                    text-align:left !important; white-space:normal !important;
+                    padding:4px 14px !important;
+                  }
+                  .dg-cell-first { padding-top:11px !important; }
+                  .dg-cell-last  { padding-bottom:11px !important; }
                 }
                 @media (prefers-color-scheme: dark) {
                   .force-cream  { background:#ebe4d4 !important; }
