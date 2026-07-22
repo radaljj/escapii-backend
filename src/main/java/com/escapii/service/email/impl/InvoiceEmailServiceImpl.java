@@ -8,7 +8,6 @@ import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -24,8 +23,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
     private String contactEmail;
 
     @Override
-    @Async("pdfExecutor")
-    public void sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber) {
+    public boolean sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber) {
         String salutation = EmailHtmlBuilder.salutation(booking);
 
         int total = booking.getTotalPriceAll();
@@ -81,11 +79,11 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
             "application/pdf"
         );
         if (!ok) log.warn("[Invoice] PDF email nije poslat za rezervaciju {}", booking.getBookingRef());
+        return ok;
     }
 
     @Override
-    @Async("pdfExecutor")
-    public void sendVoucherInvoiceToClient(GiftVoucher voucher, byte[] pdfBytes, String invoiceNumber) {
+    public boolean sendVoucherInvoiceToClient(GiftVoucher voucher, byte[] pdfBytes, String invoiceNumber) {
         int amount = voucher.getAmount().intValue();
 
         String body =
@@ -133,5 +131,6 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
             "application/pdf"
         );
         if (!ok) log.warn("[Invoice] PDF email nije poslat za vaučer #{}", voucher.getId());
+        return ok;
     }
 }

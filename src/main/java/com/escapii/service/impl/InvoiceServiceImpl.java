@@ -132,11 +132,18 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         byte[] pdf = invoicePdfService.generate(invoiceData);
 
+        // Šaljemo PRE upisa: broj profakture i vreme slanja se beleže samo ako je
+        // mejl stvarno otišao. Ranije je vreme upisivano pre poziva, pa je neuspeh
+        // ostajao nevidljiv - u panelu "poslato", kod kupca ništa.
+        if (!invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum)) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Slanje profakture nije uspelo. Profaktura nije evidentirana - pokušaj ponovo.");
+        }
+
         booking.setInvoiceNumber(invoiceNum);
         booking.setInvoiceSentAt(LocalDateTime.now());
         Booking saved = bookingRepository.save(booking);
 
-        invoiceEmailService.sendInvoiceToClient(booking, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
                 invoiceNum, booking.getBookingRef(), booking.getEmail());
 
@@ -212,11 +219,15 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         byte[] pdf = invoicePdfService.generate(invoiceData);
 
+        if (!invoiceEmailService.sendVoucherInvoiceToClient(voucher, pdf, invoiceNum)) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Slanje profakture nije uspelo. Profaktura nije evidentirana - pokušaj ponovo.");
+        }
+
         voucher.setInvoiceNumber(invoiceNum);
         voucher.setInvoiceSentAt(LocalDateTime.now());
         GiftVoucher savedVoucher = giftVoucherRepository.save(voucher);
 
-        invoiceEmailService.sendVoucherInvoiceToClient(voucher, pdf, invoiceNum);
         log.info("[Invoice] Profaktura {} poslata za vaučer #{} na {}",
                 invoiceNum, voucherId, voucher.getBuyerEmail());
 

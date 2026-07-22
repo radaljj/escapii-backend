@@ -140,11 +140,17 @@ public class RevealServiceImpl implements RevealService {
                 // Ako je admin VEĆ uploadovao dokument pre nego što je korisnik
                 // pogledao reveal - šaljemo odmah (drugi mogući redosled od dva).
                 if (booking.getConfirmationDocument() != null && booking.getConfirmationSentAt() == null) {
-                    confirmationDocumentEmailService.sendConfirmationDocument(booking);
-                    booking.setConfirmationSentAt(LocalDateTime.now());
-                    bookingRepository.save(booking);
-                    log.info("[ConfirmationDocument] Poslat za {} (dokument već postojao pre reveal-a)",
-                            booking.getBookingRef());
+                    // Ako slanje pukne, confirmationSentAt ostaje prazan - panel i dalje
+                    // pokazuje "čeka", pa se vidi da treba ponoviti.
+                    if (confirmationDocumentEmailService.sendConfirmationDocument(booking)) {
+                        booking.setConfirmationSentAt(LocalDateTime.now());
+                        bookingRepository.save(booking);
+                        log.info("[ConfirmationDocument] Poslat za {} (dokument već postojao pre reveal-a)",
+                                booking.getBookingRef());
+                    } else {
+                        log.error("[ConfirmationDocument] Slanje nije uspelo za {} - ostaje neposlat",
+                                booking.getBookingRef());
+                    }
                 }
             }
         });

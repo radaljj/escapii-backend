@@ -7,7 +7,6 @@ import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -23,8 +22,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
     private String contactEmail;
 
     @Override
-    @Async("pdfExecutor")
-    public void sendConfirmationDocument(Booking booking) {
+    public boolean sendConfirmationDocument(Booking booking) {
         String salutation = EmailHtmlBuilder.salutation(booking);
         var date = booking.getSelectedDate();
 
@@ -85,5 +83,6 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
             "application/pdf"
         );
         if (!ok) log.warn("[ConfirmationDocument] Email nije poslat za rezervaciju {}", booking.getBookingRef());
+        return ok;
     }
 }

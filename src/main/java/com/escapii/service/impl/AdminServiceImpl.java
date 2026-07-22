@@ -799,10 +799,16 @@ public class AdminServiceImpl implements AdminService {
         boolean alreadyViewed = Boolean.TRUE.equals(booking.getHasRevealBox()) == false
                 && revealEventRepository.findByBookingRef(booking.getBookingRef()).isPresent();
         if (alreadyViewed) {
-            confirmationDocumentEmailService.sendConfirmationDocument(saved);
-            saved.setConfirmationSentAt(LocalDateTime.now());
-            saved = bookingRepository.save(saved);
-            log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {} (reveal već viđen)", saved.getBookingRef());
+            // Vreme se upisuje SAMO ako je mejl stvarno otišao - inače bi panel
+            // pokazivao "poslato" za mejl koji kupac nikad nije dobio.
+            if (confirmationDocumentEmailService.sendConfirmationDocument(saved)) {
+                saved.setConfirmationSentAt(LocalDateTime.now());
+                saved = bookingRepository.save(saved);
+                log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {} (reveal već viđen)", saved.getBookingRef());
+            } else {
+                log.error("[ConfirmationDocument] Slanje nije uspelo za {} - ostaje neposlat, može ponovo",
+                        saved.getBookingRef());
+            }
         } else {
             log.info("[ConfirmationDocument] Uploadovan za {} - čeka se da korisnik pogleda reveal", saved.getBookingRef());
         }
@@ -838,7 +844,10 @@ public class AdminServiceImpl implements AdminService {
                     "Kupac još nije otvorio reveal. Dokument sadrži destinaciju i ne sme stići pre toga.");
         }
 
-        confirmationDocumentEmailService.sendConfirmationDocument(booking);
+        if (!confirmationDocumentEmailService.sendConfirmationDocument(booking)) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Slanje nije uspelo. Rezervacija ostaje označena kao neposlata - pokušaj ponovo.");
+        }
         booking.setConfirmationSentAt(LocalDateTime.now());
         Booking saved = bookingRepository.save(booking);
 
