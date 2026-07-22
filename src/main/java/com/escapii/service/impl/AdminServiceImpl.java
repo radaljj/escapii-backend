@@ -822,14 +822,20 @@ public class AdminServiceImpl implements AdminService {
                     "Dokument nije uploadovan za ovu rezervaciju.");
         }
 
-        // Dokument nosi destinaciju - i u telu i u naslovu mejla. Poslati ga pre
-        // reveala znači otkriti destinaciju ranije, a to je jedina stvar koju
-        // platforma obećava da neće. Automatski put (upload) to već poštuje jer
-        // čeka da korisnik pogleda reveal; ručno slanje mora isto, inače je
-        // dovoljan jedan pogrešan klik.
-        if (booking.getRevealSentAt() == null) {
+        // Dokument nosi destinaciju - i u telu i u naslovu mejla. Ne sme stići
+        // pre nego što je kupac sazna, inače pokvari otkrivanje.
+        //
+        // Reveal mejl NE sadrži destinaciju, samo link - kupac je sazna tek kad
+        // otvori stranicu. Zato se čeka RevealEvent (otvoreno), a ne revealSentAt
+        // (poslato); isti uslov koji koristi i automatski put posle upload-a.
+        //
+        // Kod Reveal Box-a nema šta da se čeka: sistem ne može znati kad je kupac
+        // otvorio fizičku kutiju, a scheduler te rezervacije preskače pa se
+        // revealSentAt nikad i ne postavi. Tu odluku donosi admin.
+        if (!Boolean.TRUE.equals(booking.getHasRevealBox())
+                && revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Reveal još nije poslat. Dokument sadrži destinaciju i ne sme se poslati ranije.");
+                    "Kupac još nije otvorio reveal. Dokument sadrži destinaciju i ne sme stići pre toga.");
         }
 
         confirmationDocumentEmailService.sendConfirmationDocument(booking);
