@@ -822,6 +822,16 @@ public class AdminServiceImpl implements AdminService {
                     "Dokument nije uploadovan za ovu rezervaciju.");
         }
 
+        // Dokument nosi destinaciju - i u telu i u naslovu mejla. Poslati ga pre
+        // reveala znači otkriti destinaciju ranije, a to je jedina stvar koju
+        // platforma obećava da neće. Automatski put (upload) to već poštuje jer
+        // čeka da korisnik pogleda reveal; ručno slanje mora isto, inače je
+        // dovoljan jedan pogrešan klik.
+        if (booking.getRevealSentAt() == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Reveal još nije poslat. Dokument sadrži destinaciju i ne sme se poslati ranije.");
+        }
+
         confirmationDocumentEmailService.sendConfirmationDocument(booking);
         booking.setConfirmationSentAt(LocalDateTime.now());
         Booking saved = bookingRepository.save(booking);
