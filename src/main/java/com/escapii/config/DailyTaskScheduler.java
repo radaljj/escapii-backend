@@ -32,8 +32,12 @@ public class DailyTaskScheduler {
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
-        schedulingService.sendPendingReveals();
+        // Redosled je bitan: prognoza uvek mora stići PRE reveala, jer je pisana
+        // kao najava ("kada dobiješ email sa otkrićem destinacije...") i namerno
+        // ne imenuje grad. Kod kasno potvrđenih rezervacija oba padaju istog
+        // dana, pa je ovo jedino što drži redosled - lanac je sinhron.
         schedulingService.sendPendingForecasts();
+        schedulingService.sendPendingReveals();
         schedulingService.cancelStalePendingBookings();
         schedulingService.completeFinishedBookings();
         sendDigest();

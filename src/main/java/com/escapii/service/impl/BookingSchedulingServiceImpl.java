@@ -62,8 +62,11 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     @Override
     public void sendPendingForecasts() {
         LocalDate today = LocalDate.now();
+        // Donja granica je danas, ne T-4: prognoza se pokušava svakog dana dok
+        // polazak ne prođe, pa je ni kasno potvrđena rezervacija ne propusti.
+        // Redosled u odnosu na reveal drži DailyTaskScheduler.
         List<Booking> readyList = bookingRepository.findReadyForForecast(
-                today.plusDays(4), today.plusDays(7));
+                today, today.plusDays(7));
         sendForecasts(readyList);
     }
 

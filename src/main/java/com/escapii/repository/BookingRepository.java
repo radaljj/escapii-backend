@@ -108,8 +108,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      *   - assignedDestination je unesena (potrebna za geocoding)
      *   - forecastSentAt je null (još nije poslato)
      *   - departureDate je između [from, until]:
-     *       from  = today+4  → nikad ne šaljemo ako je reveal već otišao (T-2)
-     *       until = today+7  → primarni okidač na T-7; catch-up za propuštene dane T-4..T-6
+     *       from  = today    → pokušavamo svakog dana dok polazak ne prođe
+     *       until = today+7  → primarni okidač na T-7, ostalo je nadoknada
+     *
+     * Prognoza sme da stigne i na dan polaska, ali nikad posle reveala -
+     * taj redosled drži DailyTaskScheduler, koji je šalje prvu.
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.assignedDestination IS NOT NULL " +
