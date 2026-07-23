@@ -54,7 +54,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int  STATUS_MAX       = 5;
     private static final long STATUS_WINDOW    = 15 * 60 * 1000L;      // 15 minuta
 
-    private static final int  ADMIN_MAX        = 20;
+    // Admin panel radi više poziva po jednoj akciji (npr. dodavanje destinacije
+    // = POST + loadDates), a otvaranje panela ih radi 7+. Sa 20/min se limit
+    // probijao pri normalnom radu. Pogrešan ključ je ionako pokriven zasebno u
+    // AdminKeyFilter (20 neuspešnih pokušaja / 10 min); ovaj limit je samo kočnica
+    // za slučaj da ključ procuri, pa sme biti znatno viši.
+    private static final int  ADMIN_MAX        = 150;
     private static final long ADMIN_WINDOW     = 60 * 1000L;           // 1 minut
 
     private static final int  WAITLIST_MAX     = 5;
