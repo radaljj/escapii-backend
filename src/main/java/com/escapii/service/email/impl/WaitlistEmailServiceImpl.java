@@ -55,8 +55,7 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
     }
 
     @Override
-    @Async
-    public void sendWaitlistNotification(String email, String airport) {
+    public boolean sendWaitlistNotification(String email, String airport) {
         String airportName = EmailHtmlBuilder.resolveAirportName(airport);
         String body = """
             <div style="text-align:center;padding:8px 0 20px;">
@@ -89,6 +88,6 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             "Escapii · escapii.rs",
             false
         );
-        sender.send(email, "Otvorili su se novi termini - Escapii", html);
+        return sender.send(email, "Otvorili su se novi termini - Escapii", html);
     }
 }
