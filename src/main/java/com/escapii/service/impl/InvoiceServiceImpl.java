@@ -51,7 +51,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Value("${app.company.bank:placeholder banka}")
     private String companyBank;
 
-    @Value("${app.company.email:hello@escapii.rs}")
+    @Value("${app.company.email:info@escapii.rs}")
     private String companyEmail;
 
     @Value("${app.company.website:escapii.rs}")
