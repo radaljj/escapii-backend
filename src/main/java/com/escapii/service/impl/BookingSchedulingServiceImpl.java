@@ -300,6 +300,17 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     continue;
                 }
 
+                // Reveal NIKAD pre prognoze - to je suština proizvoda. Redosled
+                // poziva (prognoza pa reveal) nije dovoljan: ako prognoza tiho
+                // padne (npr. weather API vrati 503, kao 23.07), reveal bi svejedno
+                // otišao. Zato eksplicitno čekamo forecastSentAt. Ako prognoza baš
+                // zaglavi, reveal čeka sledeći ciklus; digest to pokazuje, a admin
+                // može ručno poslati reveal (sendRevealForBooking to namerno ne proverava).
+                if (booking.getForecastSentAt() == null) {
+                    log.warn("[Reveal] {} preskočen - prognoza još nije poslata, reveal čeka", booking.getBookingRef());
+                    continue;
+                }
+
                 if (booking.getRevealToken() == null) {
                     booking.setRevealToken(TokenUtils.generate());
                     bookingRepository.saveAndFlush(booking); // token mora biti u bazi pre nego korisnik klikne link
