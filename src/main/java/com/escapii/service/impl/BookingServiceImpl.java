@@ -285,7 +285,12 @@ public class BookingServiceImpl implements BookingService {
         b.setHasInsurance(request.isHasInsurance());
         b.setHasBreakfast(request.isHasBreakfast());
         b.setHasSeatsTogether(request.isHasSeatsTogether());
-        b.setHasConnectingFlights(request.isHasConnectingFlights());
+        // Privatni termin se pravi po meri klijenta, za tačno zadati datum - direktan
+        // let tu često i ne postoji, pa je presedanje uvek prihvaćeno. Forma taj izbor
+        // ni ne prikazuje kod privatnih termina, ali se na to ne oslanjamo: frontend
+        // se može zaobići, a rezervacija bi onda tražila nemoguć uslov.
+        b.setHasConnectingFlights(Boolean.TRUE.equals(date.getIsPrivate())
+                || request.isHasConnectingFlights());
 
         // Reveal Box
         b.setHasRevealBox(request.isHasRevealBox());
