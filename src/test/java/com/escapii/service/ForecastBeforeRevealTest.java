@@ -55,6 +55,41 @@ class ForecastBeforeRevealTest {
     }
 
     /**
+     * Nikad se ne smeju poslati OBA izvora - primarni uspeh mora odmah da vrati,
+     * pre nego što se rezervni uopšte dosegne. Inače bi kupac mogao dobiti dve
+     * prognoze.
+     */
+    @Test
+    void primarniUspehPrekidaPreRezervnog() throws Exception {
+        String w = src("src/main/java/com/escapii/service/weather/WeatherServiceImpl.java");
+        int primarni = w.indexOf("fetchOpenMeteo(coords");
+        int returnPosle = w.indexOf("return Optional.of(f)", primarni);
+        int rezervni = w.indexOf("fetchMetNorway(coords");
+        assertTrue(returnPosle > primarni && returnPosle < rezervni,
+                "mora postojati 'return' između primarnog i rezervnog - "
+                + "bez njega bi se oba izvora poslala (dupla prognoza)");
+    }
+
+    /**
+     * Rezervni izvor NE sme dobiti ime grada - samo koordinate, kao i primarni.
+     * Da MET Norway prima String grad, mogao bi ga proslediti dalje / procureti.
+     */
+    @Test
+    void rezervniIzvorDobijaSamoKoordinate() throws Exception {
+        String w = src("src/main/java/com/escapii/service/weather/WeatherServiceImpl.java");
+
+        assertTrue(w.contains("fetchMetNorway(double lat, double lon)"),
+                "rezervni mora primati koordinate (double, double), ne ime grada");
+        assertTrue(w.contains("fetchOpenMeteo(double lat, double lon)"),
+                "primarni mora primati koordinate (double, double), ne ime grada");
+        // URL rezervnog koristi brojčane koordinate (%.4f), ne string (%s)
+        int urlLine = w.indexOf("MET_NORWAY_URL");
+        String url = w.substring(urlLine, w.indexOf(";", urlLine));
+        assertTrue(url.contains("%.4f") && !url.contains("%s"),
+                "MET URL sme imati samo koordinate, nikako ime grada");
+    }
+
+    /**
      * Reveal petlja mora eksplicitno da preskoči rezervaciju bez prognoze.
      * Ovo je jedina brana koja je 23.07 nedostajala.
      */
