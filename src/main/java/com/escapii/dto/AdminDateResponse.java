@@ -22,6 +22,8 @@ public class AdminDateResponse {
     private final String                     privateToken;
     private final LocalDateTime              expiresAt;
     private final List<TermDestinationResponse> destinations;
+    /** Kome ide privatni link - null za javne termine. */
+    private final String                     clientEmail;
 
     public AdminDateResponse(AvailableDate d) {
         this.id              = d.getId();
@@ -38,5 +40,6 @@ public class AdminDateResponse {
         this.destinations    = d.getTermDestinations().stream()
                 .map(TermDestinationResponse::new)
                 .toList();
+        this.clientEmail     = d.getClientEmail();
     }
 }

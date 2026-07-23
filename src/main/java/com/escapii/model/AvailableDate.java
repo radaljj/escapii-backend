@@ -81,4 +81,15 @@ public class AvailableDate {
      */
     @OneToMany(mappedBy = "date", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TermDestination> termDestinations = new ArrayList<>();
+
+    /**
+     * Email klijenta iz upita na osnovu kog je privatni termin napravljen -
+     * da admin zna kome da pošalje privatni link.
+     *
+     * Čuva se kao tekst, ne kao veza ka upitu, jer se zatvoreni upiti brišu
+     * (vidi cleanupClosedInquiries) - veza bi pukla, a adresa nam treba i posle.
+     * Null za javne termine i za one ručno prebačene u privatne.
+     */
+    @Column(length = 200)
+    private String clientEmail;
 }

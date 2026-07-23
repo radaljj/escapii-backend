@@ -733,6 +733,8 @@ public class AdminServiceImpl implements AdminService {
         date.setIsPrivate(true);
         date.setPrivateToken(TokenUtils.generate());
         date.setExpiresAt(LocalDateTime.now().plusHours(req.effectiveExpiry()));
+        // Zapamti kome ide privatni link - upit se kasnije može obrisati.
+        date.setClientEmail(inquiry.getEmail());
 
         AvailableDate saved = availableDateRepository.save(date);
         log.info("[ADMIN] Privatni termin kreiran za upit id={} | {} → {} | token={} | {}€/os | expiresAt={}",
