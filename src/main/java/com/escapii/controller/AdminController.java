@@ -252,6 +252,20 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateInquiryPrice(id, value));
     }
 
+    /**
+     * PATCH /api/admin/inquiries/{id}/date?desiredDepartureDate=2026-09-02&amp;nights=5
+     * Izmeni traženi datum polaska i broj noćenja za upit - koristi se kad admin dogovori
+     * drugi datum sa klijentom (npr. traženi termin nije dostupan), PRE kreiranja privatnog
+     * termina i slanja linka.
+     */
+    @PatchMapping("/inquiries/{id}/date")
+    public ResponseEntity<CustomDateInquiryResponse> updateInquiryDate(
+            @PathVariable Long id,
+            @RequestParam java.time.LocalDate desiredDepartureDate,
+            @RequestParam Integer nights) {
+        return ResponseEntity.ok(adminService.updateInquiryDate(id, desiredDepartureDate, nights));
+    }
+
     // ══ REZERVACIJE ══════════════════════════════════════════════════════════
 
     /** GET /api/admin/bookings - sve rezervacije sortirane po datumu (najnovije prve). */

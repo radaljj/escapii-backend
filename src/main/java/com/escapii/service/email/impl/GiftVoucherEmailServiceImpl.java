@@ -1,12 +1,15 @@
 package com.escapii.service.email.impl;
 
 import com.escapii.model.GiftVoucher;
+import com.escapii.service.AppErrorService;
 import com.escapii.service.email.GiftVoucherEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,10 @@ import org.springframework.stereotype.Service;
 public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
 
     private final EmailSender emailSender;
+
+    /** @Lazy sprečava circular dependency: AppErrorService → emailAlert → GiftVoucherEmailServiceImpl */
+    @Autowired @Lazy
+    private AppErrorService appErrorService;
 
     @Value("${app.team-email}")
     private String teamEmail;
@@ -111,6 +118,23 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                 attachmentName,
                 pdfBytes,
                 "application/pdf");
-        if (!ok) log.warn("[GiftVoucher] PDF email nije poslat kupcu za vaučer id={}", v.getId());
+        if (!ok) {
+            log.warn("[GiftVoucher] PDF email nije poslat kupcu za vaučer id={}", v.getId());
+            recordEmailError("EMAIL gift-voucher-pdf voucherId=" + v.getId());
+        }
+    }
+
+    /**
+     * Snima grešku slanja emaila u AppError dashboard (vidljivo adminu u 🚨 Greške tabu).
+     * Bez ovoga, neuspeh slanja PDF vaučera (metoda je @Async pa ga pozivalac ne može uhvatiti)
+     * ostaje nevidljiv adminu - kupac plati, a vaučer nikad ne stigne.
+     */
+    private void recordEmailError(String context) {
+        try {
+            appErrorService.record(context, 0,
+                new RuntimeException("Email nije poslat - proveriti SMTP konfiguraciju i log"));
+        } catch (Exception ex) {
+            log.error("[GiftVoucher] Nije moguće snimiti email grešku u AppErrorService: {}", ex.getMessage());
+        }
     }
 }

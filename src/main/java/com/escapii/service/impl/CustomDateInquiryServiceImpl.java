@@ -7,6 +7,7 @@ import com.escapii.model.InquiryStatus;
 import com.escapii.service.email.InquiryEmailService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.CustomDateInquiryService;
@@ -76,6 +77,28 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
                         "Upit sa ID=" + id + " nije pronađen."));
         inquiry.setPrice(price);
         log.info("[Inquiry] Cena upita id={} postavljena na {}", id, price);
+        return new CustomDateInquiryResponse(inquiryRepository.save(inquiry));
+    }
+
+    @Override
+    @Transactional
+    public CustomDateInquiryResponse updateDate(Long id, LocalDate desiredDepartureDate, Integer nights) {
+        CustomDateInquiry inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Upit sa ID=" + id + " nije pronađen."));
+
+        if (desiredDepartureDate == null || !desiredDepartureDate.isAfter(LocalDate.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Datum polaska mora biti u budućnosti.");
+        }
+        if (nights == null || nights < 1 || nights > 14) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Broj noćenja mora biti između 1 i 14.");
+        }
+
+        inquiry.setDesiredDepartureDate(desiredDepartureDate);
+        inquiry.setNights(nights);
+        log.info("[Inquiry] Datum upita id={} promenjen na {} ({} noćenja)", id, desiredDepartureDate, nights);
         return new CustomDateInquiryResponse(inquiryRepository.save(inquiry));
     }
 

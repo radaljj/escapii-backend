@@ -23,7 +23,7 @@ public record CustomDateInquiryRequest(
     LocalDate desiredDepartureDate,
 
     @Min(value = 1, message = "Minimalni broj noćenja je 1.")
-    @Max(value = 3, message = "Maksimalni broj noćenja je 3.")
+    @Max(value = 14, message = "Maksimalni broj noćenja je 14.")
     int nights,
 
     @NotBlank(message = "Email adresa je obavezna.")

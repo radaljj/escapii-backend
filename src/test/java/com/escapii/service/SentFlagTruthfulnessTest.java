@@ -59,4 +59,33 @@ class SentFlagTruthfulnessTest {
         assertTrue(rev.contains("if (confirmationDocumentEmailService.sendConfirmationDocument(booking))"),
                 "upis confirmationSentAt mora biti uslovljen ishodom slanja");
     }
+
+    /**
+     * Isto pravilo važi i za ručni admin resend (dugme u panelu) - ne samo za
+     * scheduler batch metode. sendRevealEmail/sendForecastEmail su void i bacaju
+     * bare RuntimeException na neuspeh (ne boolean), pa se ovde proverava da poziv
+     * slanja u izvornom kodu prethodi upisu sentAt flag-a.
+     */
+    @Test
+    void rucniResendSaljeMejlPreUpisaFlaga() throws Exception {
+        String s = src("src/main/java/com/escapii/service/impl/BookingSchedulingServiceImpl.java");
+
+        int revealMethod = s.indexOf("public Map<String, String> sendRevealForBooking");
+        int revealEnd    = s.indexOf("\n    }", revealMethod);
+        String revealBody = s.substring(revealMethod, revealEnd);
+        int revealSend = revealBody.indexOf("sendRevealEmail(booking");
+        int revealMark = revealBody.indexOf("setRevealSentAt");
+        assertTrue(revealSend > 0 && revealMark > 0, "oba poziva moraju postojati u sendRevealForBooking");
+        assertTrue(revealSend < revealMark,
+                "slanje mora biti PRE upisa revealSentAt - obrnuto bi evidentiralo neposlat reveal");
+
+        int forecastMethod = s.indexOf("public Map<String, String> sendForecastForBooking");
+        int forecastEnd    = s.indexOf("\n    }", forecastMethod);
+        String forecastBody = s.substring(forecastMethod, forecastEnd);
+        int forecastSend = forecastBody.indexOf("sendForecastEmail(booking");
+        int forecastMark = forecastBody.indexOf("setForecastSentAt");
+        assertTrue(forecastSend > 0 && forecastMark > 0, "oba poziva moraju postojati u sendForecastForBooking");
+        assertTrue(forecastSend < forecastMark,
+                "slanje mora biti PRE upisa forecastSentAt - obrnuto bi evidentiralo neposlatu prognozu");
+    }
 }

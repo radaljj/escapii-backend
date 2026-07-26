@@ -6,6 +6,7 @@ import com.escapii.mapper.BookingMapper;
 import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
+import com.escapii.model.Destination;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -134,5 +136,49 @@ class BookingCreationFlowTest {
         assertThrows(Exception.class, () -> svc.createBooking(validRequest()));
 
         verifyNoInteractions(bookingEmailService);
+    }
+
+    /**
+     * INI ne dozvoljava nijednu isključenu destinaciju (dostupnost letova) - tampovan
+     * zahtev sa isključenjima za INI mora biti odbijen na backendu, ne samo sprečen na
+     * frontendu (togExcl blokira klik), inače prođe mimo pravila.
+     */
+    @Test
+    void iniSaBiloKojomIskljucenomDestinacijomSeOdbija() {
+        AvailableDate iniDate = activeDate();
+        iniDate.setDepartureAirport("INI");
+        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
+        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(destinationRepository.findById(anyLong())).thenReturn(Optional.of(new Destination()));
+
+        BookingRequest r = validRequest();
+        r.setDepartureAirport("INI");
+        r.setExcludedDestination1Id(1L);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(r));
+        assertEquals(400, ex.getStatusCode().value());
+        verifyNoInteractions(bookingEmailService);
+    }
+
+    /** INI bez ijedne isključene destinacije ostaje legitiman slučaj i ne sme biti blokiran. */
+    @Test
+    void iniBezIskljucenaDestinacijaProlazi() {
+        AvailableDate iniDate = activeDate();
+        iniDate.setDepartureAirport("INI");
+        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
+        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        BookingRequest r = validRequest();
+        r.setDepartureAirport("INI");
+
+        assertDoesNotThrow(() -> svc.createBooking(r));
+        verify(bookingEmailService).sendCustomerConfirmation(any());
     }
 }

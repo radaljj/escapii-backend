@@ -16,8 +16,9 @@ import org.springframework.stereotype.Service;
  * Sedišta     → +24€/pp (12€/smer × 2 smera)
  * Osiguranje  → +12€/pp
  * <p>
- * Isključivanja (max 4 za sve aerodrome):
+ * Isključivanja (max 4, samo BEG i ostali osim INI):
  * 1. besplatno | 2. +15€/pp | 3. +15€/pp | 4. +15€/pp
+ * INI (Niš) - isključivanja nisu dostupna uopšte (dostupnost letova).
  * <p>
  * Kabinski kofer (selektivan po putniku):
  * +100€/pp (50€/smer × 2 smera)
@@ -87,12 +88,12 @@ public class PriceCalculatorImpl implements PriceCalculator {
     }
 
     /**
-     * INI - max 1 isključivanje, nema besplatnog.
-     * 1. → +15€/pp
+     * INI - isključivanja nisu dostupna. BookingServiceImpl.createBooking() odbija
+     * zahtev sa exclusionCount &gt; 0 za INI pre nego što uopšte stigne dovde -
+     * ovo je samo odbrambena vrednost, ne aktivna cena.
      */
     private int calcExclusionCostINI(int exclusionCount, int n) {
-        if (exclusionCount <= 0) return 0;
-        return EXCLUSION_PP * n; // uvek 15€/pp, max 1
+        return 0;
     }
 
     private int resolveAccommodationExtra(AccommodationType type) {

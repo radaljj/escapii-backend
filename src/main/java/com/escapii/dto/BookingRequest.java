@@ -1,9 +1,11 @@
 package com.escapii.dto;
 
 import com.escapii.model.AccommodationType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,8 +15,12 @@ import java.util.List;
 
 /**
  * DTO koji prima podatke sa forme (svih 8 koraka).
- * Validacija se vrši automatski pre obrade (@Valid u controlleru).
- * Normalizacija (trim, lowercase) vrši se u BookingServiceImpl pre obrade.
+ * Validacija se vrši automatski pre obrade (@Valid u controlleru), a to je PRE
+ * poziva normalize() u BookingServiceImpl - za polja čiji @Pattern zavisi od
+ * case-a (departureAirport, PassengerInfo.gender) normalizacija zato mora ići
+ * kroz @JsonSetter (izvršava se pri Jackson deserijalizaciji, dakle pre @Valid),
+ * ne kroz normalize(). Ostala polja (trim) ne utiču na ishod validacije pa im
+ * je dovoljno da se normalizuju u normalize() pre čuvanja.
  */
 @Getter
 @Setter
@@ -26,6 +32,16 @@ public class BookingRequest {
     @NotBlank(message = "Aerodrom polaska je obavezan")
     @Pattern(regexp = "BEG|INI|ZAG|BUD|TIM", message = "Nepoznat aerodrom polaska")
     private String departureAirport;
+
+    /**
+     * Normalizuje pre nego što @Valid vidi vrednost (Jackson zove setter pri
+     * deserijalizaciji, a to je pre validacije) - inače npr. "beg" ili " BEG "
+     * padne na @Pattern iako je posle normalize() validan.
+     */
+    @JsonSetter("departureAirport")
+    public void setDepartureAirport(String departureAirport) {
+        this.departureAirport = departureAirport == null ? null : departureAirport.trim().toUpperCase();
+    }
 
     // ── Korak 2: Broj putnika ─────────────────────────────────────────
 
@@ -170,7 +186,6 @@ public class BookingRequest {
     @Getter
     @Setter
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class PassengerInfo {
 
         @NotBlank(message = "Ime putnika ne sme biti prazno")
@@ -199,5 +214,35 @@ public class BookingRequest {
         /** Broj pasoša kojim putnik putuje. Opciono. */
         @Size(max = 50, message = "Broj pasoša ne sme biti duži od 50 karaktera")
         private String passportNumber;
+
+        /**
+         * Ručni konstruktor umesto Lombok @AllArgsConstructor - Spring Boot
+         * registruje ParameterNamesModule, pa bi Jackson bez ovoga konstruisao
+         * objekat direktno kroz all-args konstruktor (implicit creator),
+         * zaobilazeći setGender() i @Valid bi video neobrađenu vrednost
+         * (npr. " m " ne prolazi @Pattern="M|F"). Isto zadržava i default
+         * hasValidPassport=true kad JSON izostavi to polje - all-args
+         * konstruktor bi ga inače postavio na null.
+         */
+        @JsonCreator
+        public PassengerInfo(
+                @JsonProperty("name") String name,
+                @JsonProperty("gender") String gender,
+                @JsonProperty("dateOfBirth") LocalDate dateOfBirth,
+                @JsonProperty("visaInfo") String visaInfo,
+                @JsonProperty("hasValidPassport") Boolean hasValidPassport,
+                @JsonProperty("passportNumber") String passportNumber) {
+            this.name = name;
+            this.gender = gender == null ? null : gender.trim().toUpperCase();
+            this.dateOfBirth = dateOfBirth;
+            this.visaInfo = visaInfo;
+            this.hasValidPassport = hasValidPassport != null ? hasValidPassport : Boolean.TRUE;
+            this.passportNumber = passportNumber;
+        }
+
+        /** Normalizuje i kad se gender postavlja van JSON deserijalizacije (npr. normalize()). */
+        public void setGender(String gender) {
+            this.gender = gender == null ? null : gender.trim().toUpperCase();
+        }
     }
 }

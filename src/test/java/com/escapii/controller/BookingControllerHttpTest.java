@@ -1,6 +1,7 @@
 package com.escapii.controller;
 
 import com.escapii.config.GlobalExceptionHandler;
+import com.escapii.dto.BookingRequest;
 import com.escapii.dto.BookingResponse;
 import com.escapii.dto.BookingStatusResponse;
 import com.escapii.dto.PricePreviewResponse;
@@ -8,6 +9,7 @@ import com.escapii.model.AccommodationType;
 import com.escapii.model.BookingStatus;
 import com.escapii.service.BookingService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -106,6 +109,33 @@ class BookingControllerHttpTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(bookingService);
+    }
+
+    /**
+     * Aerodrom i pol se normalizuju (trim + uppercase) PRE @Valid - kroz
+     * @JsonSetter na BookingRequest, ne kroz normalize() koji se zove tek u
+     * BookingServiceImpl, posle validacije. Bez ovoga bi klijent koji pošalje
+     * malim slovima dobio generičku 400 grešku umesto da prođe normalizovano.
+     */
+    @Test
+    void malaSlovaAerodromIPolSeNormalizujuPreValidacijeIProlaze() throws Exception {
+        when(bookingService.createBooking(any())).thenReturn(
+                BookingResponse.builder().bookingRef("ESC-abcd1234").status(BookingStatus.PENDING)
+                        .totalPriceAll(560).numberOfTravelers(1).build());
+
+        String lowerCase = VALID_JSON
+                .replace("\"BEG\"", "\" beg \"")
+                .replace("\"M\"", "\" m \"");
+
+        mockMvc.perform(post("/api/booking")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lowerCase))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<BookingRequest> captor = ArgumentCaptor.forClass(BookingRequest.class);
+        verify(bookingService).createBooking(captor.capture());
+        assertEquals("BEG", captor.getValue().getDepartureAirport());
+        assertEquals("M", captor.getValue().getPassengers().get(0).getGender());
     }
 
     @Test

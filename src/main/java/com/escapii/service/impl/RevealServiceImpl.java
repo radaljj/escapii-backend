@@ -121,6 +121,7 @@ public class RevealServiceImpl implements RevealService {
         if (booking.getExcludedDestination1() != null) excluded.add(booking.getExcludedDestination1().getName());
         if (booking.getExcludedDestination2() != null) excluded.add(booking.getExcludedDestination2().getName());
         if (booking.getExcludedDestination3() != null) excluded.add(booking.getExcludedDestination3().getName());
+        if (booking.getExcludedDestination4() != null) excluded.add(booking.getExcludedDestination4().getName());
         if (!excluded.isEmpty()) {
             addons.add("🚫 Isključeno: " + String.join(", ", excluded));
         }

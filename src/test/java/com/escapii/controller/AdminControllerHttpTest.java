@@ -3,7 +3,9 @@ package com.escapii.controller;
 import com.escapii.config.DailyTaskScheduler;
 import com.escapii.config.GlobalExceptionHandler;
 import com.escapii.dto.AdminBookingResponse;
+import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.model.BookingStatus;
+import com.escapii.model.CustomDateInquiry;
 import com.escapii.service.AdminService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -105,5 +109,41 @@ class AdminControllerHttpTest {
                 .andExpect(jsonPath("$.message").value("Reveal email poslan"));
 
         verify(dailyTaskScheduler).sendRevealForBooking(eq(1L), nullable(String.class));
+    }
+
+    /**
+     * Admin mora moći da izmeni traženi datum/noćenja na upitu PRE kreiranja
+     * privatnog termina (dogovoren drugi datum sa klijentom telefonom).
+     */
+    @Test
+    void izmenaDatumaUpitaProsledjujeServisu() throws Exception {
+        LocalDate noviDatum = LocalDate.now().plusDays(20);
+        CustomDateInquiry inquiry = new CustomDateInquiry();
+        inquiry.setId(1L);
+        inquiry.setDesiredDepartureDate(noviDatum);
+        inquiry.setNights(3);
+        when(adminService.updateInquiryDate(1L, noviDatum, 3))
+                .thenReturn(new CustomDateInquiryResponse(inquiry));
+
+        mockMvc.perform(patch("/api/admin/inquiries/1/date")
+                        .param("desiredDepartureDate", noviDatum.toString())
+                        .param("nights", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nights").value(3));
+
+        verify(adminService).updateInquiryDate(1L, noviDatum, 3);
+    }
+
+    /** Prošao datum ili noćenja van 1-3 - servis baca 400, klijent mora videti 400. */
+    @Test
+    void neuspesnaIzmenaDatumaUpitaVraca400() throws Exception {
+        LocalDate proslostDatum = LocalDate.now().minusDays(1);
+        when(adminService.updateInquiryDate(eq(1L), any(), anyInt()))
+                .thenThrow(new ResponseStatusException(BAD_REQUEST, "Datum polaska mora biti u budućnosti."));
+
+        mockMvc.perform(patch("/api/admin/inquiries/1/date")
+                        .param("desiredDepartureDate", proslostDatum.toString())
+                        .param("nights", "2"))
+                .andExpect(status().isBadRequest());
     }
 }

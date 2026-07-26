@@ -161,9 +161,21 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
         if (booking.getRevealToken() == null) {
             booking.setRevealToken(TokenUtils.generate());
         }
+
+        // Šalji PRE upisa revealSentAt - isti obrazac kao automatski sendReveals()
+        // i InvoiceServiceImpl.sendInvoice(). sendRevealEmail baca bare RuntimeException
+        // na neuspeh (ne boolean) - hvatamo je ovde da admin dobije čist 502 umesto
+        // generičkog 500 koji nepotrebno spamuje AppError alert za obično privremeni
+        // SMTP hiccup, i da revealSentAt nikad ne bude upisan pre potvrđenog uspeha.
+        try {
+            revealEmailService.sendRevealEmail(booking, validatedUrl);
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Slanje reveal emaila nije uspelo. Reveal nije evidentiran - pokušaj ponovo.");
+        }
+
         booking.setRevealSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
-        revealEmailService.sendRevealEmail(booking, validatedUrl);
 
         log.info("[Admin] Ručni reveal poslan za {} → '{}' (siteUrl={})",
                 booking.getBookingRef(), booking.getAssignedDestination(), validatedUrl);
@@ -193,9 +205,20 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     "Pokušaj uneti precizniji naziv u polje 'Grad za prognozu'.");
         }
 
+        // Šalji PRE upisa forecastSentAt - isti obrazac kao automatski sendForecasts()
+        // i InvoiceServiceImpl.sendInvoice(). sendForecastEmail baca bare RuntimeException
+        // na neuspeh (ne boolean) - hvatamo je ovde da admin dobije čist 502 umesto
+        // generičkog 500 koji nepotrebno spamuje AppError alert za obično privremeni
+        // SMTP hiccup, i da forecastSentAt nikad ne bude upisan pre potvrđenog uspeha.
+        try {
+            forecastEmailService.sendForecastEmail(booking, forecast.get());
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Slanje prognoze nije uspelo. Prognoza nije evidentirana - pokušaj ponovo.");
+        }
+
         booking.setForecastSentAt(LocalDateTime.now());
         bookingRepository.save(booking);
-        forecastEmailService.sendForecastEmail(booking, forecast.get());
 
         log.info("[Admin] Ručna prognoza poslana za {} → '{}' (weatherQuery='{}')",
                 booking.getBookingRef(), booking.getAssignedDestination(), weatherQuery);

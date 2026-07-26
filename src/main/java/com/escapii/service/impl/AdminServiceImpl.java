@@ -700,6 +700,12 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public CustomDateInquiryResponse updateInquiryDate(Long id, LocalDate desiredDepartureDate, Integer nights) {
+        return inquiryService.updateDate(id, desiredDepartureDate, nights);
+    }
+
+    @Override
+    @Transactional
     public void deleteInquiry(Long id) {
         if (!inquiryRepository.existsById(id)) {
             throw new org.springframework.web.server.ResponseStatusException(

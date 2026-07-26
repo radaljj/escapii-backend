@@ -5,6 +5,7 @@ import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.model.InquiryStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface CustomDateInquiryService {
@@ -20,4 +21,11 @@ public interface CustomDateInquiryService {
 
     /** Postavi/ažuriraj cenu putovanja za upit (admin akcija). Null briše cenu. */
     CustomDateInquiryResponse updatePrice(Long id, BigDecimal price);
+
+    /**
+     * Izmeni traženi datum polaska i broj noćenja za upit (admin akcija) - koristi se kad
+     * klijent nije mogao dobiti tačan traženi termin pa je admin dogovorio drugi datum,
+     * PRE nego što se kreira privatni termin i pošalje link.
+     */
+    CustomDateInquiryResponse updateDate(Long id, LocalDate desiredDepartureDate, Integer nights);
 }

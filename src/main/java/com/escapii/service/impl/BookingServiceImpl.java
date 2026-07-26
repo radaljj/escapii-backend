@@ -129,6 +129,14 @@ public class BookingServiceImpl implements BookingService {
         Destination   excl4 = resolveDestination(request.getExcludedDestination4Id());
         int exclusionCount  = countNonNull(excl1, excl2, excl3, excl4);
 
+        // 4b. INI ne dozvoljava isključivanje destinacija uopšte (zbog dostupnosti letova) -
+        // frontend to sprečava u koraku 6 (togExcl blokira klik za INI), ali mora se forsirati
+        // i ovde jer je tampovan zahtev sa isključenjima za INI moguć direktnim pozivom API-ja.
+        if ("INI".equalsIgnoreCase(request.getDepartureAirport()) && exclusionCount > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Isključivanje destinacija nije dostupno za letove iz Niša");
+        }
+
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),

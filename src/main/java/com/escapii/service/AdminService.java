@@ -13,6 +13,7 @@ import com.escapii.model.InquiryStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AdminService {
@@ -67,6 +68,7 @@ public interface AdminService {
     List<CustomDateInquiryResponse> getAllInquiries();
     CustomDateInquiryResponse updateInquiryStatus(Long id, InquiryStatus status);
     CustomDateInquiryResponse updateInquiryPrice(Long id, BigDecimal price);
+    CustomDateInquiryResponse updateInquiryDate(Long id, LocalDate desiredDepartureDate, Integer nights);
     void deleteInquiry(Long id);
 
     /**
