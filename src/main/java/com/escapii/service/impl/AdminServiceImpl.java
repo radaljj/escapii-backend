@@ -437,7 +437,9 @@ public class AdminServiceImpl implements AdminService {
         // USED vaučer se NE menja - putovanje je završeno pre brisanja.
         String voucherCode = booking.getAppliedVoucherCode();
         if (voucherCode != null) {
-            giftVoucherRepository.findByCode(voucherCode).ifPresent(v -> {
+            // findByCodeForUpdate (ne findByCode) - zaključava red da ne bi istovremeni
+            // booking sa istim kodom video zastarelo stanje (izgubljena izmena/race).
+            giftVoucherRepository.findByCodeForUpdate(voucherCode).ifPresent(v -> {
                 if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
                     Integer disc = booking.getVoucherDiscount();
                     if (disc != null && disc > 0) {
@@ -496,7 +498,9 @@ public class AdminServiceImpl implements AdminService {
         //             ova rezervacija i dalje nosi popust u ceni.
         // Ostali prelazi - nema promene.
         if (saved.getAppliedVoucherCode() != null) {
-            giftVoucherRepository.findByCode(saved.getAppliedVoucherCode()).ifPresent(v -> {
+            // findByCodeForUpdate (ne findByCode) - zaključava red da ne bi istovremeni
+            // booking sa istim kodom video zastarelo stanje (izgubljena izmena/race).
+            giftVoucherRepository.findByCodeForUpdate(saved.getAppliedVoucherCode()).ifPresent(v -> {
                 if (status == BookingStatus.COMPLETED) {
                     if (v.getStatus() == VoucherStatus.RESERVED) {
                         // Vaučer je bio u potpunosti potrošen - finalizuj kao USED

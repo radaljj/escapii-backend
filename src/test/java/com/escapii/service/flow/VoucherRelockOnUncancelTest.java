@@ -100,7 +100,7 @@ class VoucherRelockOnUncancelTest {
         when(bookingRepository.findWithDetailsById(7L)).thenReturn(Optional.of(b));
         when(availableDateRepository.findByBookingId(7L)).thenReturn(Optional.of(slotWith(3)));
         GiftVoucher v = voucher(BigDecimal.valueOf(100), BigDecimal.valueOf(100), VoucherStatus.RESERVED);
-        when(giftVoucherRepository.findByCode("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
+        when(giftVoucherRepository.findByCodeForUpdate("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
 
         svc.updateBookingStatus(7L, BookingStatus.CANCELLED);
 
@@ -117,7 +117,7 @@ class VoucherRelockOnUncancelTest {
         when(availableDateRepository.findByBookingId(7L)).thenReturn(Optional.of(slotWith(3)));
         // Stanje posle otkazivanja: vaučer pušten nazad, pun iznos slobodan
         GiftVoucher v = voucher(BigDecimal.valueOf(100), BigDecimal.ZERO, VoucherStatus.ACTIVE);
-        when(giftVoucherRepository.findByCode("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
+        when(giftVoucherRepository.findByCodeForUpdate("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
 
         svc.updateBookingStatus(7L, BookingStatus.CONFIRMED);
 
@@ -139,7 +139,7 @@ class VoucherRelockOnUncancelTest {
         when(availableDateRepository.findByBookingId(7L)).thenReturn(Optional.of(slotWith(3)));
         // Neko drugi je već potrošio 60€ od vaučera dok je bio ACTIVE - ostaje samo 40€
         GiftVoucher v = voucher(BigDecimal.valueOf(100), BigDecimal.valueOf(60), VoucherStatus.ACTIVE);
-        when(giftVoucherRepository.findByCode("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
+        when(giftVoucherRepository.findByCodeForUpdate("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
 
         svc.updateBookingStatus(7L, BookingStatus.CONFIRMED);
 
@@ -155,7 +155,7 @@ class VoucherRelockOnUncancelTest {
         when(bookingRepository.findWithDetailsById(7L)).thenReturn(Optional.of(b));
         when(availableDateRepository.findByBookingId(7L)).thenReturn(Optional.of(slotWith(3)));
         GiftVoucher v = voucher(BigDecimal.valueOf(100), BigDecimal.valueOf(100), VoucherStatus.RESERVED);
-        when(giftVoucherRepository.findByCode("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
+        when(giftVoucherRepository.findByCodeForUpdate("ESC-AAAA-BBBB-CCCC")).thenReturn(Optional.of(v));
 
         svc.updateBookingStatus(7L, BookingStatus.CONFIRMED);
 

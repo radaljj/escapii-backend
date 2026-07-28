@@ -85,8 +85,10 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             log.info("[Scheduler] Auto-cancel: {} otkazan (kreiran: {})", b.getBookingRef(), b.getCreatedAt());
 
             // Oslobodi vaučer ako je postojao - reversiraj usedAmount i postavi ACTIVE
+            // findByCodeForUpdate (ne findByCode) - zaključava red protiv race-a sa
+            // istovremenim bookingom koji koristi isti kod.
             if (b.getAppliedVoucherCode() != null) {
-                giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
+                giftVoucherRepository.findByCodeForUpdate(b.getAppliedVoucherCode()).ifPresent(v -> {
                     if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
                         Integer disc = b.getVoucherDiscount();
                         if (disc != null && disc > 0) {
@@ -122,7 +124,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
             // Trajno označi vaučer kao iskorišćen - putovanje završeno
             if (b.getAppliedVoucherCode() != null) {
-                giftVoucherRepository.findByCode(b.getAppliedVoucherCode()).ifPresent(v -> {
+                giftVoucherRepository.findByCodeForUpdate(b.getAppliedVoucherCode()).ifPresent(v -> {
                     if (v.getStatus() == VoucherStatus.RESERVED) {
                         v.setStatus(VoucherStatus.USED);
                         v.setUsedAt(java.time.LocalDateTime.now());
