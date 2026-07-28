@@ -75,10 +75,10 @@
 
         <!-- Greeting + cancellation message -->
         <mj-text font-size="15px" color="#1a1410" line-height="1.65" padding="0 0 20px">
-          Draga/i <strong style="color:#1a1410;">{{FIRST_NAME}}</strong>,<br /><br />
-          sa žaljenjem vam obaveštavamo da je vaša rezervacija otkazana.
-          Razumemo da su planovi nekad nepredvidivi — i nadamo se da ćete nam ponovo ukazati poverenje.<br /><br />
-          Vaša avantura nas čeka — kada budete spremni, mi ćemo biti tu. ✦
+          {{SALUTATION}} <strong style="color:#1a1410;">{{FIRST_NAME}}</strong>,<br /><br />
+          Žao nam je što je vaša rezervacija otkazana.<br /><br />
+          Razumemo da se planovi ponekad promene i iskreno se nadamo da ćemo imati priliku da vam uskoro priredimo neko novo iznenađenje.<br /><br />
+          Kada budete spremni za sledeću avanturu, Escapii će vas čekati. ✦
         </mj-text>
 
         <!-- Trip card — cancelled style (injected by Java) -->
