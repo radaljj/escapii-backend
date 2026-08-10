@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - POST /api/waitlist:              max 5 zahteva po IP na sat
  * - GET  /api/dates:                 max 60 zahteva po IP na minut
  * - GET  /api/destinations/**:        max 60 zahteva po IP na minut (/all, /countries, itd.)
+ * - GET  /api/airports:              max 60 zahteva po IP na minut
  * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
  * - GET  /api/reveal:                max 10 zahteva po IP na 15 minuta
  * - POST /api/reveal/confirm:        max 10 zahteva po IP na 15 minuta
@@ -102,6 +103,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> waitlistLog     = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> datesLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> destinationsLog = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> airportsLog     = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> revealLog       = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> inquiryLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> privateDateLog    = new ConcurrentHashMap<>();
@@ -156,6 +158,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if ("GET".equalsIgnoreCase(request.getMethod()) && uri.startsWith("/api/destinations")) {
             if (isRateLimited(destinationsLog, ip, DESTINATIONS_MAX, DESTINATIONS_WINDOW)) {
                 log.warn("[RateLimit] Destinations limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva.");
+                return;
+            }
+        }
+
+        // Aerodromi se učitavaju pri svakom otvaranju forme (i admin panela) -
+        // isti limit kao destinacije, statična lista pa je jeftino.
+        if ("GET".equalsIgnoreCase(request.getMethod()) && uri.startsWith("/api/airports")) {
+            if (isRateLimited(airportsLog, ip, DESTINATIONS_MAX, DESTINATIONS_WINDOW)) {
+                log.warn("[RateLimit] Airports limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva.");
                 return;
             }
@@ -267,7 +279,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, airportsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();

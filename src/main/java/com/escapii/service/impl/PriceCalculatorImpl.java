@@ -3,6 +3,7 @@ package com.escapii.service.impl;
 import com.escapii.dto.PricePreviewResponse;
 import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
+import com.escapii.model.DepartureAirport;
 import com.escapii.service.PriceCalculator;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +17,9 @@ import org.springframework.stereotype.Service;
  * Sedišta     → +24€/pp (12€/smer × 2 smera)
  * Osiguranje  → +12€/pp
  * <p>
- * Isključivanja (max 4, samo BEG i ostali osim INI):
- * 1. besplatno | 2. +15€/pp | 3. +15€/pp | 4. +15€/pp
- * INI (Niš) - isključivanja nisu dostupna uopšte (dostupnost letova).
+ * Isključivanja: +15€/pp po isključenju, ali koliko ih je dozvoljeno i da li je
+ * prvo besplatno definiše sam aerodrom (DepartureAirport) - npr. BEG i BUD imaju
+ * 4 sa prvim gratis, INI nijedno (dostupnost letova).
  * <p>
  * Kabinski kofer (selektivan po putniku):
  * +100€/pp (50€/smer × 2 smera)
@@ -47,11 +48,9 @@ public class PriceCalculatorImpl implements PriceCalculator {
         int seatsTogether = hasSeatsTogether ? SEATS_PP : 0;
         int insurance = hasInsurance ? INSURANCE_PP : 0;
 
-        // Isključivanja: 1. gratis, 2. i 3. → 15€/pp svako
-        boolean isINI = "INI".equalsIgnoreCase(departureAirport);
-        int exclusionCostFlat = isINI
-                ? calcExclusionCostINI(exclusionCount, n)
-                : calcExclusionCost(exclusionCount, n);
+        // Pravila isključivanja (koliko ih je dozvoljeno i da li je prvo gratis)
+        // dolaze iz DepartureAirport - nema više if-a po kodu aerodroma.
+        int exclusionCostFlat = calcExclusionCost(exclusionCount, n, departureAirport);
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
         int revealBoxTotal = hasRevealBox ? REVEAL_BOX_FLAT : 0;
@@ -79,21 +78,27 @@ public class PriceCalculatorImpl implements PriceCalculator {
     }
 
     /**
-     * BEG i ostali: max 4 isključivanja.
-     * 1. → 0€ | 2. → +15€/pp | 3. → +15€/pp | 4. → +15€/pp
+     * Cena isključivanja po pravilima konkretnog aerodroma:
+     *   maxExclusions      - koliko ih je uopšte dozvoljeno (0 = nisu dostupna)
+     *   firstExclusionFree - da li se prvo isključivanje ne naplaćuje
+     *
+     * Broj isključenja se ograničava na maxExclusions i ovde, iako
+     * BookingServiceImpl.createBooking() odbija zahtev preko limita pre nego što
+     * stigne dovde - da preview cene nikad ne prikaže više nego što je moguće
+     * rezervisati.
      */
-    private int calcExclusionCost(int exclusionCount, int n) {
-        if (exclusionCount <= 1) return 0;
-        return Math.min(exclusionCount - 1, 3) * EXCLUSION_PP * n;
-    }
+    private int calcExclusionCost(int exclusionCount, int n, String departureAirport) {
+        DepartureAirport airport = DepartureAirport.from(departureAirport).orElse(null);
+        // Nepoznat/nepostavljen aerodrom (npr. price-preview bez izbora) - najstroža
+        // varijanta koja ne izmišlja popust: naplati svako isključivanje.
+        if (airport == null) {
+            return Math.max(0, exclusionCount) * EXCLUSION_PP * n;
+        }
+        if (airport.maxExclusions() == 0 || exclusionCount <= 0) return 0;
 
-    /**
-     * INI - isključivanja nisu dostupna. BookingServiceImpl.createBooking() odbija
-     * zahtev sa exclusionCount &gt; 0 za INI pre nego što uopšte stigne dovde -
-     * ovo je samo odbrambena vrednost, ne aktivna cena.
-     */
-    private int calcExclusionCostINI(int exclusionCount, int n) {
-        return 0;
+        int effective = Math.min(exclusionCount, airport.maxExclusions());
+        int billable  = airport.firstExclusionFree() ? effective - 1 : effective;
+        return Math.max(0, billable) * EXCLUSION_PP * n;
     }
 
     private int resolveAccommodationExtra(AccommodationType type) {

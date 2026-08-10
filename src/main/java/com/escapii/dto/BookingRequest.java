@@ -1,6 +1,7 @@
 package com.escapii.dto;
 
 import com.escapii.model.AccommodationType;
+import com.escapii.validation.ValidDepartureAirport;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -30,7 +31,7 @@ public class BookingRequest {
     // ── Korak 1: Polazni aerodrom ─────────────────────────────────────
 
     @NotBlank(message = "Aerodrom polaska je obavezan")
-    @Pattern(regexp = "BEG|INI|ZAG|BUD|TIM", message = "Nepoznat aerodrom polaska")
+    @ValidDepartureAirport
     private String departureAirport;
 
     /**

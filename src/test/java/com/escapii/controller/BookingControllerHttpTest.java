@@ -101,7 +101,7 @@ class BookingControllerHttpTest {
 
     @Test
     void nepoznatAerodromVraca400() throws Exception {
-        String badAirport = VALID_JSON.replace("\"BEG\"", "\"XXX\""); // nije u BEG|INI|ZAG|BUD|TIM
+        String badAirport = VALID_JSON.replace("\"BEG\"", "\"XXX\""); // nije u DepartureAirport
 
         mockMvc.perform(post("/api/booking")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,6 +109,25 @@ class BookingControllerHttpTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(bookingService);
+    }
+
+    /**
+     * Svaki aerodrom iz DepartureAirport mora proći kroz @ValidDepartureAirport
+     * validaciju - ovo hvata slučaj da je aerodrom dodat u enum ali ga validacija
+     * i dalje odbija (npr. da je neko vratio stari @Pattern sa fiksnom listom).
+     */
+    @Test
+    void sviDefinisaniAerodromiProlazeValidaciju() throws Exception {
+        when(bookingService.createBooking(any())).thenReturn(
+                BookingResponse.builder().bookingRef("ESC-abcd1234").status(BookingStatus.PENDING)
+                        .totalPriceAll(560).numberOfTravelers(1).build());
+
+        for (com.escapii.model.DepartureAirport a : com.escapii.model.DepartureAirport.values()) {
+            mockMvc.perform(post("/api/booking")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(VALID_JSON.replace("\"BEG\"", "\"" + a.code() + "\"")))
+                    .andExpect(status().isCreated());
+        }
     }
 
     /**

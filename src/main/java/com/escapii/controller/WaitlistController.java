@@ -1,12 +1,12 @@
 package com.escapii.controller;
 
+import com.escapii.model.DepartureAirport;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,8 +20,6 @@ public class WaitlistController {
      * POST /api/waitlist
      * Body: { "email": "...", "airport": "BEG" }
      */
-    private static final Set<String> VALID_AIRPORTS = Set.of("BEG", "INI", "ZAG", "BUD", "TIM");
-
     @PostMapping("/api/waitlist")
     public ResponseEntity<Map<String, String>> subscribe(@RequestBody Map<String, String> body) {
         // Honeypot: boti popune ovo polje, pravi korisnici ne vide ga
@@ -37,7 +35,7 @@ public class WaitlistController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Neispravan email."));
         }
-        if (!VALID_AIRPORTS.contains(airport)) {
+        if (!DepartureAirport.isValid(airport)) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Nepoznat aerodrom."));
         }
@@ -62,7 +60,7 @@ public class WaitlistController {
     @PostMapping("/api/admin/waitlist/notify/{airport}")
     public ResponseEntity<Map<String, Object>> notifyAndClear(@PathVariable String airport) {
         String ap = airport.trim().toUpperCase();
-        if (!VALID_AIRPORTS.contains(ap)) {
+        if (!DepartureAirport.isValid(ap)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Nepoznat aerodrom: " + ap));
         }
         int sent = waitlistService.notifyAndClear(ap);

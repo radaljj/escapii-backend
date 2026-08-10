@@ -48,7 +48,7 @@ public class Destination {
 
     /**
      * Aerodroми polaska sa kojih postoji let ka ovoj destinaciji.
-     * Vrednosti: "BEG", "INI" (može biti više).
+     * Vrednosti su kodovi iz DepartureAirport (može biti više).
      * Koristi se za filtriranje u /api/destinations?airport=BEG.
      */
     @ElementCollection(fetch = FetchType.EAGER)

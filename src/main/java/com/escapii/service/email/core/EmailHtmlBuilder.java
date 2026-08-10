@@ -2,6 +2,7 @@ package com.escapii.service.email.core;
 
 import com.escapii.model.AccommodationType;
 import com.escapii.model.Booking;
+import com.escapii.model.DepartureAirport;
 
 import java.time.format.DateTimeFormatter;
 
@@ -212,15 +213,9 @@ public final class EmailHtmlBuilder {
 
     public static String eur(int amount) { return amount + " €"; }
 
+    /** Naziv grada iz centralne definicije aerodroma; nepoznat kod vraća sam kod. */
     public static String resolveAirportName(String iata) {
-        return switch (iata == null ? "" : iata.toUpperCase()) {
-            case "BEG" -> "Beograd";
-            case "INI" -> "Niš";
-            case "ZAG" -> "Zagreb";
-            case "BUD" -> "Budimpešta";
-            case "TIM" -> "Temišvar";
-            default    -> iata;
-        };
+        return DepartureAirport.cityNameOf(iata);
     }
 
     public static String resolveAccomLabel(AccommodationType type) {

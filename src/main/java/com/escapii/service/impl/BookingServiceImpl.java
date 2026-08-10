@@ -8,6 +8,7 @@ import com.escapii.mapper.BookingMapper;
 import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
+import com.escapii.model.DepartureAirport;
 import com.escapii.model.Destination;
 import com.escapii.model.GiftVoucher;
 import com.escapii.model.VoucherStatus;
@@ -129,12 +130,18 @@ public class BookingServiceImpl implements BookingService {
         Destination   excl4 = resolveDestination(request.getExcludedDestination4Id());
         int exclusionCount  = countNonNull(excl1, excl2, excl3, excl4);
 
-        // 4b. INI ne dozvoljava isključivanje destinacija uopšte (zbog dostupnosti letova) -
-        // frontend to sprečava u koraku 6 (togExcl blokira klik za INI), ali mora se forsirati
-        // i ovde jer je tampovan zahtev sa isključenjima za INI moguć direktnim pozivom API-ja.
-        if ("INI".equalsIgnoreCase(request.getDepartureAirport()) && exclusionCount > 0) {
+        // 4b. Broj isključenih destinacija po pravilima aerodroma (DepartureAirport).
+        // Frontend to već sprečava u koraku 6, ali mora se forsirati i ovde jer je
+        // tampovan zahtev moguć direktnim pozivom API-ja.
+        DepartureAirport airport = DepartureAirport.from(request.getDepartureAirport())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Nepoznat aerodrom polaska"));
+        if (exclusionCount > airport.maxExclusions()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Isključivanje destinacija nije dostupno za letove iz Niša");
+                    airport.allowsExclusions()
+                        ? "Za let iz grada " + airport.citySr() + " dozvoljeno je najviše "
+                          + airport.maxExclusions() + " isključenih destinacija"
+                        : "Isključivanje destinacija nije dostupno za letove iz grada " + airport.citySr());
         }
 
         PricePreviewResponse price = priceCalculator.calculate(

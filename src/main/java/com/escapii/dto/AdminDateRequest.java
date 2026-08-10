@@ -1,5 +1,6 @@
 package com.escapii.dto;
 
+import com.escapii.validation.ValidDepartureAirport;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +25,7 @@ public class AdminDateRequest {
     // numberOfNights se računa automatski na osnovu departureDate i returnDate
 
     @NotBlank(message = "Aerodrom polaska je obavezan")
-    @Pattern(regexp = "BEG|INI|ZAG|BUD|TIM", message = "Nepoznat aerodrom (BEG, INI, ZAG...)")
+    @ValidDepartureAirport
     private String departureAirport;
 
     @NotNull(message = "Broj mesta je obavezan")
