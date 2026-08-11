@@ -792,15 +792,15 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 <td width="100%%" style="padding-top:12px;">
                   <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #ebe1cf;">
                     <tr bgcolor="#f5efe2" style="background:#f5efe2;">
-                      <td width="78%%" style="width:78%%;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Stavka</td>
-                      <td width="22%%" style="width:22%%;padding:10px 16px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Ukupno</td>
+                      <td width="65%%" style="width:65%%;padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;">Stavka</td>
+                      <td width="35%%" style="width:35%%;padding:10px 12px;text-align:right;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a89888;white-space:nowrap;">Ukupno</td>
                     </tr>
                     <tr><td colspan="2" style="padding:0;height:1px;background:#ebe1cf;font-size:0;line-height:0;mso-line-height-rule:exactly;"></td></tr>
                     %s
                     %s
                     <tr bgcolor="#1a1410" style="background:#1a1410;">
-                      <td style="padding:14px 16px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
-                      <td style="padding:14px 16px;text-align:right;font-size:18px;font-weight:900;color:#e29070;">%s</td>
+                      <td style="padding:12px 12px;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;">SVE UKUPNO</td>
+                      <td style="padding:12px 12px;text-align:right;font-size:18px;font-weight:900;color:#e29070;white-space:nowrap;">%s</td>
                     </tr>
                   </table>
                 </td>
@@ -812,8 +812,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private String priceRow(String label, String perPerson, Integer count, int total, boolean flat) {
         return """
             <tr>
-              <td width="78%%" style="width:78%%;padding:11px 16px;font-size:14px;color:#1a1410;">%s</td>
-              <td width="22%%" style="width:22%%;padding:11px 16px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;">%s</td>
+              <td width="65%%" style="width:65%%;padding:10px 12px;font-size:13px;color:#1a1410;">%s</td>
+              <td width="35%%" style="width:35%%;padding:10px 12px;text-align:right;font-size:14px;font-weight:700;color:#1a1410;white-space:nowrap;">%s</td>
             </tr>
             <tr><td colspan="2" style="padding:0;height:1px;background:#ebe1cf;font-size:0;line-height:0;mso-line-height-rule:exactly;"></td></tr>
             """.formatted(label, EmailHtmlBuilder.eur(total));
