@@ -20,10 +20,10 @@ import java.util.Optional;
  */
 public enum DepartureAirport {
 
-    //  grad (SR)      grad (EN)      slika         naziv aerodroma (SR)          naziv aerodroma (EN)             maxIsklj.  prvoBesplatno  javnoVidljiv
-    BEG("Beograd",     "Belgrade",    "beograd",    "Aerodrom Nikola Tesla",      "Nikola Tesla Airport",          4, true,   true),
-    INI("Niš",         "Niš",         "nis",        "Aerodrom Konstantin Veliki", "Constantine the Great Airport", 0, false,  true),
-    BUD("Budimpešta",  "Budapest",    "budimpesta", "Aerodrom Ferenc List",       "Ferenc Liszt Airport",          4, true,   false);
+    //  grad (SR)      grad (EN)      slika         naziv aerodroma (SR)          naziv aerodroma (EN)             maxIsklj.  prvoBesplatno  javnoVidljiv  domaci
+    BEG("Beograd",     "Belgrade",    "beograd",    "Aerodrom Nikola Tesla",      "Nikola Tesla Airport",          4, true,   true,          true),
+    INI("Niš",         "Niš",         "nis",        "Aerodrom Konstantin Veliki", "Constantine the Great Airport", 0, false,  true,          true),
+    BUD("Budimpešta",  "Budapest",    "budimpesta", "Aerodrom Ferenc List",       "Ferenc Liszt Airport",          4, true,   false,         false);
 
     private final String citySr;
     private final String cityEn;
@@ -33,11 +33,13 @@ public enum DepartureAirport {
     private final int    maxExclusions;
     private final boolean firstExclusionFree;
     private final boolean publiclySelectable;
+    /** Aerodrom je u Srbiji - kupac ne treba da potvrđuje sopstveni prevoz do aerodroma. */
+    private final boolean domestic;
 
     DepartureAirport(String citySr, String cityEn, String imageSlug,
                      String airportName, String airportNameEn,
                      int maxExclusions, boolean firstExclusionFree,
-                     boolean publiclySelectable) {
+                     boolean publiclySelectable, boolean domestic) {
         this.citySr             = citySr;
         this.cityEn             = cityEn;
         this.imageSlug          = imageSlug;
@@ -46,6 +48,7 @@ public enum DepartureAirport {
         this.maxExclusions      = maxExclusions;
         this.firstExclusionFree = firstExclusionFree;
         this.publiclySelectable = publiclySelectable;
+        this.domestic           = domestic;
     }
 
     public String code()              { return name(); }
@@ -56,6 +59,7 @@ public enum DepartureAirport {
     public String airportNameEn()     { return airportNameEn; }
     public int    maxExclusions()     { return maxExclusions; }
     public boolean firstExclusionFree() { return firstExclusionFree; }
+    public boolean domestic()           { return domestic; }
 
     /**
      * Da li se aerodrom nudi u javnom izboru polazišta. Kad je false, sva logika

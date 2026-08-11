@@ -15,12 +15,13 @@ public record DepartureAirportResponse(
         String  imageSlug,
         int     maxExclusions,
         boolean firstExclusionFree,
-        boolean publiclySelectable
+        boolean publiclySelectable,
+        boolean domestic
 ) {
     public static DepartureAirportResponse of(DepartureAirport a) {
         return new DepartureAirportResponse(
                 a.code(), a.citySr(), a.cityEn(), a.airportName(), a.airportNameEn(),
                 a.imageSlug(), a.maxExclusions(), a.firstExclusionFree(),
-                a.publiclySelectable());
+                a.publiclySelectable(), a.domestic());
     }
 }
