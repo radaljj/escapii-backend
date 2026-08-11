@@ -125,6 +125,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.toggleTermDestination(id, destId, value));
     }
 
+    /** PATCH /api/admin/dates/{id}/destinations/{destId}/connecting?value=true - označi/ukloni presedanje za dest. */
+    @PatchMapping("/dates/{id}/destinations/{destId}/connecting")
+    public ResponseEntity<TermDestinationResponse> toggleConnecting(
+            @PathVariable Long id, @PathVariable Long destId, @RequestParam boolean value) {
+        return ResponseEntity.ok(adminService.toggleConnecting(id, destId, value));
+    }
+
     /** PATCH /api/admin/dates/{id}/active?value=false - aktiviraj/deaktiviraj termin. */
     @PatchMapping("/dates/{id}/active")
     public ResponseEntity<Map<String, Object>> toggleActive(

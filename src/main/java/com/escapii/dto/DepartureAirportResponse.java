@@ -14,11 +14,13 @@ public record DepartureAirportResponse(
         String  airportNameEn,
         String  imageSlug,
         int     maxExclusions,
-        boolean firstExclusionFree
+        boolean firstExclusionFree,
+        boolean publiclySelectable
 ) {
     public static DepartureAirportResponse of(DepartureAirport a) {
         return new DepartureAirportResponse(
                 a.code(), a.citySr(), a.cityEn(), a.airportName(), a.airportNameEn(),
-                a.imageSlug(), a.maxExclusions(), a.firstExclusionFree());
+                a.imageSlug(), a.maxExclusions(), a.firstExclusionFree(),
+                a.publiclySelectable());
     }
 }

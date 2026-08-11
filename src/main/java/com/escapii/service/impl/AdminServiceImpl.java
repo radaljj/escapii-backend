@@ -320,6 +320,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
+    public TermDestinationResponse toggleConnecting(Long dateId, Long destinationId, boolean connecting) {
+        TermDestination td = termDestinationRepository.findByDateIdAndDestinationId(dateId, destinationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Destinacija nije u ovom terminu"));
+        td.setConnecting(connecting);
+        TermDestination saved = termDestinationRepository.save(td);
+        log.info("[ADMIN] Destinacija '{}' označena kao {} za termin id={}",
+                saved.getDestination().getName(), connecting ? "presedanje" : "direktan let", dateId);
+        return new TermDestinationResponse(saved);
+    }
+
+    @Override
     @CacheEvict(value = "active-dates", allEntries = true)
     @Transactional
     public void toggleActive(Long id, boolean active) {

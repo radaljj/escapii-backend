@@ -30,9 +30,19 @@ public class TermDestination {
     @Column(nullable = false)
     private boolean active = true;
 
+    /**
+     * Da li ova destinacija zahteva presedanje. Kad je true, prikazuje se kupcu
+     * u koraku isključivanja SAMO ako je prihvatio presedanje kao dodatak.
+     * Admin postavlja ovo po terminu - ista destinacija može biti direktna u
+     * jednom terminu, a sa presedanjem u drugom.
+     */
+    @Column(nullable = false)
+    private boolean connecting = false;
+
     public TermDestination(AvailableDate date, Destination destination) {
         this.date        = date;
         this.destination = destination;
         this.active      = true;
+        this.connecting  = false;
     }
 }

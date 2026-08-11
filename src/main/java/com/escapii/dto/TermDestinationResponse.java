@@ -14,6 +14,7 @@ public class TermDestinationResponse {
     private final String countryEn;
     private final String imageUrl;
     private final boolean active;
+    private final boolean connecting;
 
     public TermDestinationResponse(TermDestination td) {
         this.id            = td.getId();
@@ -25,5 +26,6 @@ public class TermDestinationResponse {
         this.countryEn     = td.getDestination().getCountryEn();
         this.imageUrl      = td.getDestination().getImageUrl();
         this.active        = td.isActive();
+        this.connecting    = td.isConnecting();
     }
 }

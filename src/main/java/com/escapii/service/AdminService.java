@@ -35,6 +35,7 @@ public interface AdminService {
     TermDestinationResponse addDestinationToTerm(Long dateId, Long destinationId);
     void removeDestinationFromTerm(Long dateId, Long destinationId);
     TermDestinationResponse toggleTermDestination(Long dateId, Long destinationId, boolean active);
+    TermDestinationResponse toggleConnecting(Long dateId, Long destinationId, boolean connecting);
     void updateSlots(Long id, int slots);
     void updatePrice(Long id, int price);
     void deleteDate(Long id);

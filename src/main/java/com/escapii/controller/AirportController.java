@@ -21,7 +21,13 @@ import java.util.List;
 @RequestMapping("/api/airports")
 public class AirportController {
 
-    /** GET /api/airports - svi aerodromi polaska, redosledom iz definicije. */
+    /**
+     * GET /api/airports - svi aerodromi polaska, redosledom iz definicije.
+     *
+     * Vraća i one koji još nisu javno ponuđeni (publiclySelectable=false) - javna
+     * forma ih sama filtrira, dok admin panel treba da ih vidi da bi unapred
+     * pripremio termine i destinacije.
+     */
     @GetMapping
     public ResponseEntity<List<DepartureAirportResponse>> getAirports() {
         return ResponseEntity.ok(
