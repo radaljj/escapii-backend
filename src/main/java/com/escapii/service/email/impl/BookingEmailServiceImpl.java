@@ -188,19 +188,21 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;background:#faf6ee;border:1px solid #ebe1cf;border-radius:6px;">
               <tr>
-                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+                <td width="50%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;border-bottom:1px solid #ebe1cf;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Ref. broj</div>
                   <div style="font-size:14px;font-weight:700;color:#2D5F6B;">%s</div>
                 </td>
-                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+                <td width="50%%" style="padding:12px 16px;border-bottom:1px solid #ebe1cf;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Primljeno</div>
                   <div style="font-size:13px;font-weight:600;color:#1a1410;">%s</div>
                 </td>
-                <td width="25%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;width:25%%;">
+              </tr>
+              <tr>
+                <td width="50%%" style="padding:12px 16px;border-right:1px solid #ebe1cf;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Ukupno</div>
                   <div style="font-size:14px;font-weight:700;color:#a85e44;">%s €</div>
                 </td>
-                <td width="25%%" style="padding:12px 16px;width:25%%;">
+                <td width="50%%" style="padding:12px 16px;">
                   <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#a89888;margin-bottom:3px;">Rok odgovora</div>
                   <div style="font-size:13px;font-weight:700;color:#9b3a2a;">%s</div>
                 </td>
