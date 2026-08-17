@@ -78,6 +78,31 @@
       td.mj-full-width-mobile {
         width: auto !important;
       }
+
+      /* Smanji bočni margin oko kartice (16px → 8px) */
+      .e-section > tbody > tr > td {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+      }
+
+      /* Smanji donji padding footera (40px → 20px) */
+      .e-section-footer > tbody > tr > td {
+        padding-bottom: 20px !important;
+      }
+
+      /* Smanji bočni padding unutar svih kartica (40px → 20px) */
+      .e-card > tbody > tr > td {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+
+      /* Footer kartica: ukloni border-radius koji ne radi na mobilnom */
+      .e-card-footer > tbody > tr > td {
+        border-radius: 0 !important;
+      }
+
+      /* Heading font na mobilnom (34px → 26px) */
+      .mob-h1 { font-size: 26px !important; line-height: 1.2 !important; }
     }
   </style>
   <style type="text/css">
@@ -138,13 +163,13 @@
     <!-- Card header - dark teal editorial hero, matching the IG look -->
     <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="force-dark-outlook" role="presentation" style="width:640px;" width="640" bgcolor="#FAF7F2" ><tr><td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
     <div class="force-dark" style="background:#FAF7F2;background-color:#FAF7F2;margin:0px auto;max-width:640px;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
+      <table class="e-section" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
         <tbody>
           <tr>
             <td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;direction:ltr;font-size:0px;padding:0 16px;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:608px;" ><![endif]-->
               <div class="mj-column-per-100 mj-outlook-group-fix" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:separate;">
+                <table class="e-card e-card-dark" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:separate;">
                   <tbody>
                     <tr>
                       <td bgcolor="#1A3A4A" style="background-color:#1A3A4A;background-image:radial-gradient(rgba(247,219,167,0.35) 1.4px, transparent 1.4px);background-size:14px 14px;background-position:right -10px top -10px;background-repeat:no-repeat;border-radius:14px 14px 0 0;vertical-align:top;border-collapse:separate;padding:36px 40px 32px;">
@@ -178,7 +203,7 @@
                             <!-- Heading -->
                             <tr>
                               <td align="left" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:0px;padding:0 0 12px;word-break:break-word;">
-                                <div style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-0.3px;text-align:left;color:#FFFFFF;">Primili smo tvoju <span style="border-bottom:4px solid #F1AB86;">rezervaciju.</span></div>
+                                <div class="mob-h1" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-0.3px;text-align:left;color:#FFFFFF;">Primili smo tvoju <span style="border-bottom:4px solid #F1AB86;">rezervaciju.</span></div>
                               </td>
                             </tr>
                             <!-- Ref code -->
@@ -204,13 +229,13 @@
     <!-- Mystery strip -->
     <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="force-darkstrip-outlook" role="presentation" style="width:640px;" width="640" bgcolor="#FAF7F2" ><tr><td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
     <div class="force-darkstrip" style="background:#FAF7F2;background-color:#FAF7F2;margin:0px auto;max-width:640px;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
+      <table class="e-section" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
         <tbody>
           <tr>
             <td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;direction:ltr;font-size:0px;padding:0 16px;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:608px;" ><![endif]-->
               <div class="mj-column-per-100 mj-outlook-group-fix" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+                <table class="e-card e-card-strip" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                   <tbody>
                     <tr>
                       <td bgcolor="#153341" style="background-color:#153341;vertical-align:top;padding:14px 40px;">
@@ -238,13 +263,13 @@
     <!-- White body -->
     <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="force-white-outlook" role="presentation" style="width:640px;" width="640" bgcolor="#FAF7F2" ><tr><td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
     <div class="force-white" style="background:#FAF7F2;background-color:#FAF7F2;margin:0px auto;max-width:640px;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
+      <table class="e-section" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
         <tbody>
           <tr>
             <td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;direction:ltr;font-size:0px;padding:0 16px;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:608px;" ><![endif]-->
               <div class="mj-column-per-100 mj-outlook-group-fix" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+                <table class="e-card e-card-body" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                   <tbody>
                     <tr>
                       <td style="background-color:#ffffff;border-left:1px solid #EADFC9;border-right:1px solid #EADFC9;vertical-align:top;padding:32px 40px;">
@@ -347,13 +372,13 @@
     <!-- Sand footer -->
     <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="force-sand-outlook" role="presentation" style="width:640px;" width="640" bgcolor="#FAF7F2" ><tr><td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
     <div class="force-sand" style="background:#FAF7F2;background-color:#FAF7F2;margin:0px auto;max-width:640px;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
+      <table class="e-section e-section-footer" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;background-color:#FAF7F2;width:100%;">
         <tbody>
           <tr>
             <td style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;direction:ltr;font-size:0px;padding:0 16px 40px;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:608px;" ><![endif]-->
               <div class="mj-column-per-100 mj-outlook-group-fix" style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:separate;">
+                <table class="e-card e-card-footer" border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:separate;">
                   <tbody>
                     <tr>
                       <td style="background-color:#FAF7F2;border-bottom:1px solid #EADFC9;border-left:1px solid #EADFC9;border-radius:0 0 10px 10px;border-right:1px solid #EADFC9;border-top:1px solid #EADFC9;vertical-align:top;border-collapse:separate;padding:22px 40px;">
