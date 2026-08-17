@@ -1,7 +1,6 @@
 package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
-import com.escapii.model.LaunchSubscriber;
 import com.escapii.service.email.DigestEmailService;
 import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
@@ -46,8 +45,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                                 List<Booking> upcoming,
                                 List<Booking> revealBoxPending,
                                 List<Booking> revealedAndViewed,
-                                List<Booking> notViewedUrgent,
-                                List<LaunchSubscriber> newLaunchSubscribers) {
+                                List<Booking> notViewedUrgent) {
 
         String todayStr = today.format(EmailHtmlBuilder.DATE_FMT);
 
@@ -81,7 +79,6 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             .replace("{{STAT_BOX_COLOR}}",       revealBoxPending.isEmpty() ? "#a89888" : "#a85e44")
             .replace("{{STAT_URGENT}}",          String.valueOf(notViewedUrgent.size()))
             .replace("{{STAT_URGENT_COLOR}}",    notViewedUrgent.isEmpty()  ? "#a89888" : "#9b3a2a")
-            .replace("{{BLOCK_LAUNCH}}",         newLaunchSubscribers.isEmpty() ? "" : launchSubscribersCard(newLaunchSubscribers))
             .replace("{{BLOCK_NOACTION}}",       noActionBlock)
             .replace("{{BLOCK_URGENT}}",         notViewedUrgent.isEmpty() ? "" : urgentAlert(notViewedUrgent, today))
             .replace("{{BLOCK_TIMELINE}}",       upcoming.isEmpty() ? ""
@@ -90,28 +87,6 @@ public class DigestEmailServiceImpl implements DigestEmailService {
         sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
                 revealsSent.size(), forecastDue.size(), upcoming.size());
-    }
-
-    // ── Launch notify prijave (privremeno - uklanja se posle lansiranja) ────────
-
-    private String launchSubscribersCard(List<LaunchSubscriber> subs) {
-        StringBuilder rows = new StringBuilder();
-        for (int i = 0; i < subs.size(); i++) {
-            String border = i < subs.size() - 1 ? "border-bottom:1px solid #f0e8dc;" : "";
-            rows.append("""
-                <tr>
-                  <td style="padding:9px 14px;font-size:13px;color:#1a1410;word-break:break-all;%s">%s</td>
-                </tr>""".formatted(border, esc(subs.get(i).getEmail())));
-        }
-        return """
-            <table width="100%%" cellpadding="0" cellspacing="0" \
-            style="border:1px solid #bcd0d6;border-radius:8px;overflow:hidden;margin-bottom:18px;background:#fff;">
-              <tr><td style="padding:11px 14px;font-size:13px;font-weight:700;\
-            background:#eaf0f3;color:#1f4a57;border-bottom:1px solid #bcd0d6;">
-                &#128640; Nove prijave za obaveštenje o lansiranju (%d)
-              </td></tr>
-              %s
-            </table>""".formatted(subs.size(), rows);
     }
 
     // ── Urgent alert ──────────────────────────────────────────────────────────
