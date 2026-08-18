@@ -20,10 +20,6 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
     @Value("${app.team-email}")
     private String teamEmail;
 
-    /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
-    @Value("${app.contact-email}")
-    private String contactEmail;
-
     @Override
     @Async
     public void sendTeamAlert(CustomDateInquiry i) {
@@ -52,57 +48,6 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
         );
 
         boolean ok = emailSender.send(teamEmail, "📅 Nov prilagođeni upit #" + i.getId(), html);
-        if (!ok) {
-            log.warn("[Inquiry] Tim notifikacija nije poslata za upit id={}", i.getId());
-            return;
-        }
-
-        sendUserConfirmation(i);
-    }
-
-    private void sendUserConfirmation(CustomDateInquiry i) {
-        String body = """
-                <div style="background:#f5f2ec;border-radius:10px;padding:20px 24px;margin-bottom:20px;">
-                  <p style="margin:0;font-size:15px;line-height:1.6;color:#3d2e1a;">
-                    Primili smo tvoj upit za prilagođeni termin i javićemo ti se što pre sa detaljima i cenom.
-                  </p>
-                </div>
-                <table width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;color:#5a4a3a;margin-bottom:8px;">
-                  <tr>
-                    <td style="padding:7px 0;width:130px;color:#a89888;">Aerodrom</td>
-                    <td style="padding:7px 0;font-weight:600;">%s</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:7px 0;color:#a89888;">Željeni datum</td>
-                    <td style="padding:7px 0;font-weight:600;">%s</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:7px 0;color:#a89888;">Broj putnika</td>
-                    <td style="padding:7px 0;font-weight:600;">%d</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:7px 0;color:#a89888;">Broj noći</td>
-                    <td style="padding:7px 0;font-weight:600;">%d</td>
-                  </tr>
-                </table>
-                """.formatted(
-                        EmailHtmlBuilder.esc(i.getAirport()),
-                        i.getDesiredDepartureDate(),
-                        i.getTravelers(),
-                        i.getNights());
-
-        String html = EmailHtmlBuilder.wrapBase(
-                "#C57B57", "#1a0e08",
-                EmailHtmlBuilder.statusBadge("Upit primljen", "blue"),
-                "Primili smo tvoj upit",
-                "Javićemo ti se što pre",
-                "",
-                body,
-                EmailHtmlBuilder.customerFooter(contactEmail),
-                true
-        );
-
-        boolean ok = emailSender.send(i.getEmail(), "Primili smo tvoj upit — Escapii", html);
-        if (!ok) log.warn("[Inquiry] Korisnička potvrda nije poslata za upit id={}", i.getId());
+        if (!ok) log.warn("[Inquiry] Tim notifikacija nije poslata za upit id={}", i.getId());
     }
 }
