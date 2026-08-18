@@ -60,7 +60,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
 
         GiftVoucher saved = voucherRepository.save(v);
         log.info("[GiftVoucher] Nov vaučer: id={}, amount={}, buyerEmail={}",
-                saved.getId(), saved.getAmount(), saved.getBuyerEmail());
+                saved.getId(), saved.getAmount(), com.escapii.util.LogUtils.maskEmail(saved.getBuyerEmail()));
 
         emailService.sendTeamAlert(saved);
 
@@ -143,7 +143,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
         v.setActivatedAt(LocalDateTime.now());
         v.setExpiresAt(LocalDateTime.now().plusYears(1));
         GiftVoucher saved = voucherRepository.save(v);
-        log.info("[GiftVoucher] Vaučer id={} aktiviran, generišem PDF i šaljem na {}", id, saved.getBuyerEmail());
+        log.info("[GiftVoucher] Vaučer id={} aktiviran, generišem PDF i šaljem na {}", id, com.escapii.util.LogUtils.maskEmail(saved.getBuyerEmail()));
 
         // Generiši PDF vaučer i pošalji kupcu (asinhrono)
         try {

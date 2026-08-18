@@ -67,7 +67,7 @@ public class AvailableDateServiceImpl implements AvailableDateService {
 
         AvailableDate saved = availableDateRepository.save(date);
         log.info("[Private] Termin id={} privatizovan. Token={}, travelers={}, basePrice={}€/os, expiresAt={}",
-                saved.getId(), saved.getPrivateToken(), travelers, saved.getBasePrice(), saved.getExpiresAt());
+                saved.getId(), com.escapii.util.LogUtils.maskToken(saved.getPrivateToken()), travelers, saved.getBasePrice(), saved.getExpiresAt());
         return saved;
     }
 }

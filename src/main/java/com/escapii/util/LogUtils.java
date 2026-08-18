@@ -24,4 +24,19 @@ public final class LogUtils {
                 : local.substring(0, 2) + "***";
         return visible + domain;
     }
+
+    /** Maskira bearer token (private-date, reveal) - vidljivo samo prvih 8 znakova. */
+    public static String maskToken(String token) {
+        if (token == null || token.isBlank()) return "***";
+        return token.length() <= 8 ? "***" : token.substring(0, 8) + "...";
+    }
+
+    /** Maskira vaučer kod - vidljiv samo prefix do poslednje crtice. */
+    public static String maskVoucherCode(String code) {
+        if (code == null || code.length() < 4) return "***";
+        int lastDash = code.lastIndexOf('-');
+        return lastDash > 0
+                ? code.substring(0, lastDash + 1) + "****"
+                : code.substring(0, code.length() - 4) + "****";
+    }
 }

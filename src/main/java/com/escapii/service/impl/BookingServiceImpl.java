@@ -20,10 +20,12 @@ import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.BookingService;
-import com.escapii.service.email.BookingEmailService;
+import com.escapii.event.BookingEmailEvent;
 import com.escapii.service.PriceCalculator;
+import com.escapii.util.LogUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,9 +40,9 @@ public class BookingServiceImpl implements BookingService {
     private final AvailableDateRepository availableDateRepository;
     private final DestinationRepository   destinationRepository;
     private final GiftVoucherRepository   giftVoucherRepository;
-    private final PriceCalculator         priceCalculator;
-    private final BookingEmailService     bookingEmailService;
-    private final BookingMapper           bookingMapper;
+    private final PriceCalculator          priceCalculator;
+    private final ApplicationEventPublisher eventPublisher;
+    private final BookingMapper            bookingMapper;
 
     @Override
     @Transactional
@@ -86,7 +88,7 @@ public class BookingServiceImpl implements BookingService {
                 request.getEmail(),
                 request.getSelectedDateId(),
                 java.time.LocalDateTime.now().minusHours(24))) {
-            log.warn("[AntiBot] Duplikat booking - email='{}' dateId={}", request.getEmail(), request.getSelectedDateId());
+            log.warn("[AntiBot] Duplikat booking - email='{}' dateId={}", LogUtils.maskEmail(request.getEmail()), request.getSelectedDateId());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Već imate aktivnu rezervaciju za ovaj termin sa ovom email adresom.");
         }
@@ -171,7 +173,7 @@ public class BookingServiceImpl implements BookingService {
                 log.info("[Booking] Primenjen vaučer {} (preostalo {}€, popust {}€) - nova ukupna cena: {}€",
                         code, remaining, discount, booking.getTotalPriceAll());
             } else {
-                log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan - ignorisan", code);
+                log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan - ignorisan", LogUtils.maskVoucherCode(code));
             }
         }
 
@@ -188,12 +190,12 @@ public class BookingServiceImpl implements BookingService {
             if (newUsed.compareTo(appliedVoucher.getAmount()) >= 0) {
                 appliedVoucher.setStatus(VoucherStatus.RESERVED); // u potpunosti potrošen, čeka potvrdu
                 log.info("[Voucher] {} → RESERVED ({}€ potrošeno od {}€) za booking {}",
-                        appliedVoucher.getCode(), newUsed, appliedVoucher.getAmount(), saved.getBookingRef());
+                        LogUtils.maskVoucherCode(appliedVoucher.getCode()), newUsed, appliedVoucher.getAmount(), saved.getBookingRef());
             } else {
                 // Delimično potrošen - ostaje ACTIVE sa preostalim iznosom
                 java.math.BigDecimal preostalo = appliedVoucher.getAmount().subtract(newUsed);
                 log.info("[Voucher] {} ostaje ACTIVE ({}€ potrošeno, preostaje {}€) za booking {}",
-                        appliedVoucher.getCode(), newUsed, preostalo, saved.getBookingRef());
+                        LogUtils.maskVoucherCode(appliedVoucher.getCode()), newUsed, preostalo, saved.getBookingRef());
             }
             giftVoucherRepository.save(appliedVoucher);
         }
@@ -203,8 +205,8 @@ public class BookingServiceImpl implements BookingService {
                 saved.getDepartureAirport(),
                 date.getDepartureDate(), date.getReturnDate());
 
-        bookingEmailService.sendTeamNotification(saved);
-        bookingEmailService.sendCustomerConfirmation(saved);
+        eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.TEAM_NOTIFICATION));
+        eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.CUSTOMER_CONFIRMATION));
 
         return bookingMapper.toResponse(saved);
     }
@@ -221,7 +223,7 @@ public class BookingServiceImpl implements BookingService {
         // accommodationType can be null for preview (default = STANDARD)
         AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
         return priceCalculator.calculate(date, n, accomType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, null);
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, date.getDepartureAirport());
     }
 
     @Override

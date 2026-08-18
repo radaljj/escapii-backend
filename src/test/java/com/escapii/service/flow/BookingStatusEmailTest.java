@@ -1,5 +1,6 @@
 package com.escapii.service.flow;
 
+import com.escapii.event.BookingEmailEvent;
 import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
 import com.escapii.model.AvailableDate;
@@ -7,7 +8,6 @@ import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
 import com.escapii.repository.*;
 import com.escapii.service.*;
-import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.impl.AdminServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
+import static com.escapii.event.BookingEmailEvent.Type.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -39,7 +41,7 @@ class BookingStatusEmailTest {
     @Mock private CustomDateInquiryRepository inquiryRepository;
     @Mock private AdminBookingMapper adminBookingMapper;
     @Mock private DestinationMapper destinationMapper;
-    @Mock private BookingEmailService bookingEmailService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private WaitlistService waitlistService;
     @Mock private AvailableDateService availableDateService;
     @Mock private CustomDateInquiryService inquiryService;
@@ -53,7 +55,7 @@ class BookingStatusEmailTest {
     void setUp() {
         svc = new AdminServiceImpl(availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
-                adminBookingMapper, destinationMapper, bookingEmailService, waitlistService,
+                adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
                 confirmationDocumentEmailService);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -83,8 +85,10 @@ class BookingStatusEmailTest {
 
         svc.updateBookingStatus(1L, BookingStatus.CONFIRMED);
 
-        verify(bookingEmailService).sendBookingConfirmed(any());
-        verify(bookingEmailService, never()).sendBookingCancelled(any());
+        verify(eventPublisher).publishEvent(argThat((Object e) ->
+                e instanceof BookingEmailEvent && ((BookingEmailEvent) e).getType() == BOOKING_CONFIRMED));
+        verify(eventPublisher, never()).publishEvent(argThat((Object e) ->
+                e instanceof BookingEmailEvent && ((BookingEmailEvent) e).getType() == BOOKING_CANCELLED));
     }
 
     @Test
@@ -95,8 +99,10 @@ class BookingStatusEmailTest {
 
         svc.updateBookingStatus(1L, BookingStatus.CANCELLED);
 
-        verify(bookingEmailService).sendBookingCancelled(any());
-        verify(bookingEmailService, never()).sendBookingConfirmed(any());
+        verify(eventPublisher).publishEvent(argThat((Object e) ->
+                e instanceof BookingEmailEvent && ((BookingEmailEvent) e).getType() == BOOKING_CANCELLED));
+        verify(eventPublisher, never()).publishEvent(argThat((Object e) ->
+                e instanceof BookingEmailEvent && ((BookingEmailEvent) e).getType() == BOOKING_CONFIRMED));
     }
 
     /**
@@ -107,13 +113,11 @@ class BookingStatusEmailTest {
     void pendingNaCancelledNeSaljeNista() {
         Booking b = booking(BookingStatus.PENDING);
         when(bookingRepository.findWithDetailsById(1L)).thenReturn(Optional.of(b));
-        // Termin se učitava kad god se status stvarno menja, čak i kad ispadne
-        // da broj mesta ostaje nepromenjen (PENDING→CANCELLED ne diraslote).
         when(availableDateRepository.findByBookingId(1L)).thenReturn(Optional.of(slotWith(5)));
 
         svc.updateBookingStatus(1L, BookingStatus.CANCELLED);
 
-        verifyNoInteractions(bookingEmailService);
+        verify(eventPublisher, never()).publishEvent(any(BookingEmailEvent.class));
     }
 
     @Test
@@ -124,6 +128,6 @@ class BookingStatusEmailTest {
 
         svc.updateBookingStatus(1L, BookingStatus.COMPLETED);
 
-        verifyNoInteractions(bookingEmailService);
+        verify(eventPublisher, never()).publishEvent(any(BookingEmailEvent.class));
     }
 }

@@ -42,7 +42,7 @@ public class CustomDateInquiryServiceImpl implements CustomDateInquiryService {
         CustomDateInquiry saved = inquiryRepository.save(inquiry);
         log.info("[Inquiry] Nov upit: id={}, airport={}, travelers={}, datum={}, email={}",
                 saved.getId(), saved.getAirport(), saved.getTravelers(),
-                saved.getDesiredDepartureDate(), saved.getEmail());
+                saved.getDesiredDepartureDate(), com.escapii.util.LogUtils.maskEmail(saved.getEmail()));
 
         inquiryEmailService.sendTeamAlert(saved);
 

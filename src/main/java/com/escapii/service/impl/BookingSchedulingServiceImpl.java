@@ -101,7 +101,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                         v.setUsedInBookingRef(null);
                         giftVoucherRepository.save(v);
                         log.info("[Voucher] {} → ACTIVE (auto-cancel booking {}, reversovano {}€)",
-                                v.getCode(), b.getBookingRef(), disc);
+                                com.escapii.util.LogUtils.maskVoucherCode(v.getCode()), b.getBookingRef(), disc);
                     }
                 });
             }
@@ -129,7 +129,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                         v.setStatus(VoucherStatus.USED);
                         v.setUsedAt(java.time.LocalDateTime.now());
                         giftVoucherRepository.save(v);
-                        log.info("[Voucher] {} → USED (auto-complete booking {})", v.getCode(), b.getBookingRef());
+                        log.info("[Voucher] {} → USED (auto-complete booking {})", com.escapii.util.LogUtils.maskVoucherCode(v.getCode()), b.getBookingRef());
                     }
                 });
             }

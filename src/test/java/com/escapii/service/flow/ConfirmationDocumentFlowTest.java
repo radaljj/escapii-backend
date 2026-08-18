@@ -6,7 +6,6 @@ import com.escapii.model.Booking;
 import com.escapii.model.RevealEvent;
 import com.escapii.repository.*;
 import com.escapii.service.*;
-import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.impl.AdminServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -48,7 +48,7 @@ class ConfirmationDocumentFlowTest {
     @Mock private CustomDateInquiryRepository inquiryRepository;
     @Mock private AdminBookingMapper adminBookingMapper;
     @Mock private DestinationMapper destinationMapper;
-    @Mock private BookingEmailService bookingEmailService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private WaitlistService waitlistService;
     @Mock private AvailableDateService availableDateService;
     @Mock private CustomDateInquiryService inquiryService;
@@ -62,7 +62,7 @@ class ConfirmationDocumentFlowTest {
     void setUp() {
         svc = new AdminServiceImpl(availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
-                adminBookingMapper, destinationMapper, bookingEmailService, waitlistService,
+                adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
                 confirmationDocumentEmailService);
     }

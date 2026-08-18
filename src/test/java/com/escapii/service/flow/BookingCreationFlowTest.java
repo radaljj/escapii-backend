@@ -2,6 +2,7 @@ package com.escapii.service.flow;
 
 import com.escapii.dto.BookingRequest;
 import com.escapii.dto.PricePreviewResponse;
+import com.escapii.event.BookingEmailEvent;
 import com.escapii.mapper.BookingMapper;
 import com.escapii.model.AccommodationType;
 import com.escapii.model.AvailableDate;
@@ -12,7 +13,6 @@ import com.escapii.repository.BookingRepository;
 import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.PriceCalculator;
-import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.impl.BookingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -49,7 +50,7 @@ class BookingCreationFlowTest {
     @Mock private DestinationRepository destinationRepository;
     @Mock private GiftVoucherRepository giftVoucherRepository;
     @Mock private PriceCalculator priceCalculator;
-    @Mock private BookingEmailService bookingEmailService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private BookingMapper bookingMapper;
 
     private BookingServiceImpl svc;
@@ -57,7 +58,7 @@ class BookingCreationFlowTest {
     @BeforeEach
     void setUp() {
         svc = new BookingServiceImpl(bookingRepository, availableDateRepository, destinationRepository,
-                giftVoucherRepository, priceCalculator, bookingEmailService, bookingMapper);
+                giftVoucherRepository, priceCalculator, eventPublisher, bookingMapper);
     }
 
     private BookingRequest validRequest() {
@@ -114,16 +115,26 @@ class BookingCreationFlowTest {
 
         svc.createBooking(validRequest());
 
-        ArgumentCaptor<Booking> teamBooking = ArgumentCaptor.forClass(Booking.class);
-        ArgumentCaptor<Booking> customerBooking = ArgumentCaptor.forClass(Booking.class);
-        verify(bookingEmailService).sendTeamNotification(teamBooking.capture());
-        verify(bookingEmailService).sendCustomerConfirmation(customerBooking.capture());
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, times(2)).publishEvent(captor.capture());
+
+        List<Object> events = captor.getAllValues();
+        BookingEmailEvent teamEvent = events.stream()
+                .filter(e -> e instanceof BookingEmailEvent &&
+                             ((BookingEmailEvent) e).getType() == BookingEmailEvent.Type.TEAM_NOTIFICATION)
+                .map(e -> (BookingEmailEvent) e)
+                .findFirst().orElseThrow();
+        BookingEmailEvent customerEvent = events.stream()
+                .filter(e -> e instanceof BookingEmailEvent &&
+                             ((BookingEmailEvent) e).getType() == BookingEmailEvent.Type.CUSTOMER_CONFIRMATION)
+                .map(e -> (BookingEmailEvent) e)
+                .findFirst().orElseThrow();
 
         // Oba mejla moraju nositi SAČUVANU rezervaciju (sa ID-jem), ne prolazni
         // objekat od pre snimanja - inače bi npr. link na admin panel bio mrtav.
-        assertEquals(1L, teamBooking.getValue().getId());
-        assertEquals(1L, customerBooking.getValue().getId());
-        assertEquals("marko@example.com", customerBooking.getValue().getEmail());
+        assertEquals(1L, teamEvent.getBooking().getId());
+        assertEquals(1L, customerEvent.getBooking().getId());
+        assertEquals("marko@example.com", customerEvent.getBooking().getEmail());
     }
 
     /** Nepostojeći/neaktivan termin ne sme stići do slanja mejlova. */
@@ -135,7 +146,7 @@ class BookingCreationFlowTest {
 
         assertThrows(Exception.class, () -> svc.createBooking(validRequest()));
 
-        verifyNoInteractions(bookingEmailService);
+        verifyNoInteractions(eventPublisher);
     }
 
     /**
@@ -157,7 +168,7 @@ class BookingCreationFlowTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(r));
         assertEquals(400, ex.getStatusCode().value());
-        verifyNoInteractions(bookingEmailService);
+        verifyNoInteractions(eventPublisher);
     }
 
     /** INI bez ijedne isključene destinacije ostaje legitiman slučaj i ne sme biti blokiran. */
@@ -179,6 +190,8 @@ class BookingCreationFlowTest {
         r.setDepartureAirport("INI");
 
         assertDoesNotThrow(() -> svc.createBooking(r));
-        verify(bookingEmailService).sendCustomerConfirmation(any());
+        verify(eventPublisher).publishEvent(argThat((Object e) ->
+                e instanceof BookingEmailEvent &&
+                ((BookingEmailEvent) e).getType() == BookingEmailEvent.Type.CUSTOMER_CONFIRMATION));
     }
 }
