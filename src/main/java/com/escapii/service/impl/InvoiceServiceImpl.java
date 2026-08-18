@@ -17,6 +17,7 @@ import com.escapii.service.email.InvoiceEmailService;
 import com.escapii.service.invoice.InvoiceData;
 import com.escapii.service.invoice.InvoicePdfService;
 import com.escapii.service.voucher.QrCodeGenerator;
+import com.escapii.util.LogUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,7 +146,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Booking saved = bookingRepository.save(booking);
 
         log.info("[Invoice] Profaktura {} poslata za rezervaciju {} na {}",
-                invoiceNum, booking.getBookingRef(), booking.getEmail());
+                invoiceNum, booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
 
         return adminBookingMapper.toResponse(saved);
     }
@@ -229,7 +230,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         GiftVoucher savedVoucher = giftVoucherRepository.save(voucher);
 
         log.info("[Invoice] Profaktura {} poslata za vaučer #{} na {}",
-                invoiceNum, voucherId, voucher.getBuyerEmail());
+                invoiceNum, voucherId, LogUtils.maskEmail(voucher.getBuyerEmail()));
 
         return new GiftVoucherResponse(savedVoucher);
     }

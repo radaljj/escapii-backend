@@ -31,12 +31,10 @@ public final class LogUtils {
         return token.length() <= 8 ? "***" : token.substring(0, 8) + "...";
     }
 
-    /** Maskira vaučer kod - vidljiv samo prefix do poslednje crtice. */
+    /** Maskira vaučer kod - vidljivo samo "ESC-" (ili analogni prefix do prve crtice). */
     public static String maskVoucherCode(String code) {
         if (code == null || code.length() < 4) return "***";
-        int lastDash = code.lastIndexOf('-');
-        return lastDash > 0
-                ? code.substring(0, lastDash + 1) + "****"
-                : code.substring(0, code.length() - 4) + "****";
+        int firstDash = code.indexOf('-');
+        return firstDash > 0 ? code.substring(0, firstDash + 1) + "****" : "****";
     }
 }

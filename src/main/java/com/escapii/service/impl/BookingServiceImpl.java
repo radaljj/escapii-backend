@@ -171,7 +171,7 @@ public class BookingServiceImpl implements BookingService {
                 booking.setTotalPriceAll(Math.max(0, booking.getTotalPriceAll() - discount));
                 appliedVoucher = voucher;
                 log.info("[Booking] Primenjen vaučer {} (preostalo {}€, popust {}€) - nova ukupna cena: {}€",
-                        code, remaining, discount, booking.getTotalPriceAll());
+                        LogUtils.maskVoucherCode(code), remaining, discount, booking.getTotalPriceAll());
             } else {
                 log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan - ignorisan", LogUtils.maskVoucherCode(code));
             }
