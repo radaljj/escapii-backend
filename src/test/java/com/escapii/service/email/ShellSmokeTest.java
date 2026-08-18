@@ -113,10 +113,9 @@ class ShellSmokeTest {
         gv.sendVoucherPdfToBuyer(voucher(), new byte[]{1});
         check("vaucer-pdf", cap.get());
 
-        // 10-11. Upit za prilagođeni termin (tim + potvrda kupcu)
+        // 10. Upit za prilagođeni termin (tim alert)
         var inq = new InquiryEmailServiceImpl(sender);
         set(inq, "teamEmail", "escapii.team@gmail.com");
-        set(inq, "contactEmail", "info@escapii.rs");
         CustomDateInquiry ci = new CustomDateInquiry();
         ci.setId(3L); ci.setEmail("upit@example.com"); ci.setAirport("BEG");
         ci.setTravelers(2); ci.setDesiredDepartureDate(LocalDate.now().plusDays(60));
