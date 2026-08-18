@@ -36,7 +36,7 @@ public class DailyTaskScheduler {
         // dana, pa je ovo jedino što drži redosled - lanac je sinhron.
         schedulingService.sendPendingForecasts();
         schedulingService.sendPendingReveals();
-        schedulingService.cancelStalePendingBookings();
+        // cancelStalePendingBookings() je uklonjen - admin ručno potvrđuje ili otkazuje
         schedulingService.completeFinishedBookings();
         sendDigest();
         cleanupExpiredDates();
