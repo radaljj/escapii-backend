@@ -275,15 +275,17 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         if (confirmed) {
             return loadEmailTemplate("potvrda-rezervacije.html")
-                .replace("{{SALUTATION}}",      EmailHtmlBuilder.salutation(booking))
-                .replace("{{FIRST_NAME}}",      EmailHtmlBuilder.esc(booking.getFirstName()))
-                .replace("{{REF_CODE}}",         EmailHtmlBuilder.esc(booking.getBookingRef()))
-                .replace("{{TRIP_CARD_HTML}}",   customerTripCardStyled(booking, depDate, retDate, n, false))
-                .replace("{{TOTAL_BOX_HTML}}",   EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
-                .replace("{{TIMELINE_HTML}}",    buildConfirmedTimeline(booking))
-                .replace("{{PASSENGERS_HTML}}", buildPassengersSection(booking))
-                .replace("{{PRICE_TABLE_HTML}}", buildPriceTable(booking, n))
-                .replace("{{SENDER_EMAIL}}",     EmailHtmlBuilder.esc(contactEmail));
+                .replace("{{SALUTATION}}",         EmailHtmlBuilder.salutation(booking))
+                .replace("{{FIRST_NAME}}",         EmailHtmlBuilder.esc(booking.getFirstName()))
+                .replace("{{REF_CODE}}",            EmailHtmlBuilder.esc(booking.getBookingRef()))
+                .replace("{{AIRPORT_CODE}}",        EmailHtmlBuilder.esc(booking.getDepartureAirport()))
+                .replace("{{BOARDING_PASS_HTML}}",  buildBoardingPassBlock(booking, depDate, retDate, n))
+                .replace("{{TRIP_DETAILS_HTML}}",   buildTripDetailsTable(booking))
+                .replace("{{PASSENGERS_HTML}}",    buildPassengersSection(booking))
+                .replace("{{TOTAL_BOX_HTML}}",      EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
+                .replace("{{PRICE_TABLE_HTML}}",    buildPriceTable(booking, n))
+                .replace("{{TIMELINE_HTML}}",       buildConfirmedTimeline(booking))
+                .replace("{{SENDER_EMAIL}}",        EmailHtmlBuilder.esc(contactEmail));
         } else {
             return loadEmailTemplate("otkaz-rezervacije.html")
                 .replace("{{SALUTATION}}",     EmailHtmlBuilder.salutation(booking))
@@ -303,16 +305,25 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         var dep         = booking.getSelectedDate().getDepartureDate();
         var weatherDate = dep.minusDays(7);
         var revealDate  = dep.minusDays(2);
+        var boxEarliest = dep.minusDays(5);
+        var boxLatest   = dep.minusDays(3);
+        boolean hasBox  = Boolean.TRUE.equals(booking.getHasRevealBox());
 
         String today      = java.time.LocalDate.now().format(EmailHtmlBuilder.DATE_FMT);
         String weatherStr = weatherDate.format(EmailHtmlBuilder.DATE_FMT);
         String revealStr  = revealDate.format(EmailHtmlBuilder.DATE_FMT);
         String depStr     = dep.format(EmailHtmlBuilder.DATE_FMT);
+        String boxStr     = boxEarliest.format(EmailHtmlBuilder.DATE_FMT) + "–" + boxLatest.format(EmailHtmlBuilder.DATE_FMT);
+
+        String step3When = hasBox ? (boxStr + " · 3-5 dana pre polaska") : (revealStr + " · 48h pre polaska");
+        String step3Desc = hasBox
+            ? "Reveal Box stiže na tvoju adresu! Otvori ga i saznaš gde putuješ. ✉️ Potvrdu ćeš dobiti i mejlom 48h pre polaska."
+            : "Konačno - otkrivaš gde ideš! Detalji putovanja stižu na tvoj email.";
 
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
               <tr>
-                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:16px;">Šta vas čeka</td>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:16px;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Šta te čeka</td>
               </tr>
               <tr>
                 <td width="100%%">
@@ -327,22 +338,19 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("✓", "#eef6f0", "#1d6042",
                 "Rezervacija potvrđena",
                 "Danas · " + today,
-                "Sve je rezervisano - letovi, smeštaj, transfer. Možete se opustiti - doslovno."),
+                "Sve je rezervisano - letovi, smeštaj, transfer. Možeš se opustiti - doslovno."),
             EmailHtmlBuilder.timelineItem("🌤", "#fff5eb", "#a85e44",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
-                "Dobijate prognozu da znate šta da spakujete. Destinacija? I dalje tajna!"),
-            EmailHtmlBuilder.timelineItem("✉", "#eaf0f3", "#2D5F6B",
-                Boolean.TRUE.equals(booking.getHasRevealBox())
-                    ? "Iznenađenje na tvojoj adresi" : "Koverta s destinacijom",
-                revealStr + " · 48h pre polaska",
-                Boolean.TRUE.equals(booking.getHasRevealBox())
-                    ? "Reveal Box stiže na tvoju adresu i otkriva gde putujete! 📦"
-                    : "Konačno - otkrivate gde idete!"),
-            EmailHtmlBuilder.timelineItem("✈", "#f5efe2", "#ebe1cf",
+                "Dobijaš prognozu da znaš šta da spakovač. Destinacija? I dalje tajna!"),
+            EmailHtmlBuilder.timelineItem(hasBox ? "📦" : "✉", "#eaf0f3", "#2D5F6B",
+                hasBox ? "Escapii Reveal Box ✉️" : "Koverta s destinacijom",
+                step3When,
+                step3Desc),
+            EmailHtmlBuilder.timelineItem("✈", "#f5efe2", "#a85e44",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
-                "Dođite na aerodrom i dozvolite sebi da budete iznenađeni.")
+                "Dođi na aerodrom 3h pre leta i dozvoli sebi da budeš iznenađen/a.")
         );
     }
 
@@ -608,6 +616,52 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             avatarInitials,                     // avatar
             passengerNamesHtml,                 // names list
             EmailHtmlBuilder.esc(booking.getBookingRef())  // ref code
+        );
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Trip details table (potvrda-rezervacije.html)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private String buildTripDetailsTable(Booking booking) {
+        int nights = booking.getSelectedDate().getNumberOfNights();
+        String trajanje = nights + (nights == 1 ? " noć" : " noći");
+        String smeshtaj = EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType());
+        String iskljucene = booking.getExclusionCount() > 0 ? buildExclusionsText(booking) : "/";
+
+        return """
+            <!-- Trip details table -->
+            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+              <tr>
+                <td width="100%%" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a89888;padding-bottom:12px;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Detalji putovanja</td>
+              </tr>
+              <tr>
+                <td>
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="border:1px solid #EADFC9;border-radius:10px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:10px 0 10px 16px;border-bottom:1px solid #EADFC9;font-size:13px;color:#93877A;width:45%%;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Trajanje</td>
+                      <td style="padding:10px 16px 10px 0;border-bottom:1px solid #EADFC9;font-size:13px;font-weight:600;color:#1E2D2F;text-align:right;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">%s</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0 10px 16px;border-bottom:1px solid #EADFC9;font-size:13px;color:#93877A;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Smeštaj</td>
+                      <td style="padding:10px 16px 10px 0;border-bottom:1px solid #EADFC9;font-size:13px;font-weight:600;color:#1E2D2F;text-align:right;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">%s</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0 10px 16px;border-bottom:1px solid #EADFC9;font-size:13px;color:#93877A;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Isključene dest.</td>
+                      <td style="padding:10px 16px 10px 0;border-bottom:1px solid #EADFC9;font-size:13px;font-weight:600;color:#1E2D2F;text-align:right;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">%s</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0 10px 16px;font-size:13px;color:#93877A;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">Destinacija</td>
+                      <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:700;color:#F1AB86;text-align:right;font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;">✦ Iznenađenje!</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            """.formatted(
+            EmailHtmlBuilder.esc(trajanje),
+            EmailHtmlBuilder.esc(smeshtaj),
+            EmailHtmlBuilder.esc(iskljucene)
         );
     }
 
