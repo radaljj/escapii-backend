@@ -56,6 +56,10 @@ public class BookingRequest {
     @NotNull(message = "Termin putovanja je obavezan")
     private Long selectedDateId;
 
+    /** Token za privatni termin — obavezan samo kad je termin privatan, inače se ignoriše. */
+    @Size(max = 64, message = "privateToken je predugačak")
+    private String privateToken;
+
     // ── Korak 4: Isključene destinacije (max 4, opciono) ─────────────
 
     private Long excludedDestination1Id;

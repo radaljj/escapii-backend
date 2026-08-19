@@ -95,6 +95,17 @@ public class BookingServiceImpl implements BookingService {
 
         AvailableDate date  = findActiveDateOrThrow(request.getSelectedDateId());
 
+        // 0a. Privatni termin — token mora biti ispravan i link ne sme biti istekao
+        if (Boolean.TRUE.equals(date.getIsPrivate())) {
+            String reqToken = request.getPrivateToken();
+            if (reqToken == null || !reqToken.equals(date.getPrivateToken())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Neispravan token za privatni termin");
+            }
+            if (date.getExpiresAt() != null && date.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Link za privatni termin je istekao");
+            }
+        }
+
         // 0. Datum polaska mora biti u budućnosti
         if (!date.getDepartureDate().isAfter(java.time.LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
