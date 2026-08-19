@@ -317,7 +317,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         String step3When = hasBox ? (boxStr + " · 3-5 dana pre polaska") : (revealStr + " · 48h pre polaska");
         String step3Desc = hasBox
-            ? "Reveal Box stiže na tvoju adresu! Otvori ga i saznaš gde putuješ. ✉️ Potvrdu ćeš dobiti i mejlom 48h pre polaska."
+            ? "Reveal Box stiže na tvoju adresu! Otvori ga i saznaš gde putuješ. 📦"
             : "Konačno - otkrivaš gde ideš! Detalji putovanja stižu na tvoj email.";
 
         return """
