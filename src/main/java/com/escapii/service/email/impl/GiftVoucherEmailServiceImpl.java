@@ -63,7 +63,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                 v.getAmount().toPlainString() + " EUR · " + v.getBuyerEmail(),
                 "",
                 body,
-                "<strong style=\"color:#e8f0f4;\">escapii</strong> · Interno obaveštenje",
+                "<strong style=\"color:#1a1410;\">escapii</strong> · Interno obaveštenje",
                 false
         );
 
