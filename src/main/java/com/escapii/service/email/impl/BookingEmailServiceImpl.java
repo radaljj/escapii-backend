@@ -718,6 +718,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             String gender   = "M".equals(p.getGender()) ? "Muški" : "Ženski";
             String passport = (p.getPassportNumber() != null && !p.getPassportNumber().isBlank())
                     ? EmailHtmlBuilder.esc(p.getPassportNumber()) : "-";
+            String passportCountry = (p.getPassportCountry() != null && !p.getPassportCountry().isBlank())
+                    ? EmailHtmlBuilder.esc(p.getPassportCountry()) : "-";
             String visaInfo = (p.getVisaInfo() != null && !p.getVisaInfo().isBlank())
                     ? EmailHtmlBuilder.esc(p.getVisaInfo()) : "-";
 
@@ -745,7 +747,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   </tr>
                   <tr>
-                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Pa&#353;o&#353;</td>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Zemlja pa&#353;o&#353;a</td>
+                    <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
+                  </tr>
+                  <tr>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Br. pa&#353;o&#353;a</td>
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   </tr>
                   <tr>
@@ -753,7 +759,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;">%s</td>
                   </tr>
                 </table>
-                """.formatted(i + 1, name, gender, dob, passport, visaInfo));
+                """.formatted(i + 1, name, gender, dob, passportCountry, passport, visaInfo));
         }
 
         return """
