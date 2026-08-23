@@ -49,8 +49,6 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
         String todayStr = today.format(EmailHtmlBuilder.DATE_FMT);
 
-        Set<Long> revealIds   = ids(revealsSent);
-        Set<Long> forecastIds = ids(forecastDue);
         Set<Long> boxIds      = ids(revealBoxPending);
         Set<Long> viewedIds   = ids(revealedAndViewed);
         Set<Long> urgentIds   = ids(notViewedUrgent);
@@ -82,7 +80,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             .replace("{{BLOCK_NOACTION}}",       noActionBlock)
             .replace("{{BLOCK_URGENT}}",         notViewedUrgent.isEmpty() ? "" : urgentAlert(notViewedUrgent, today))
             .replace("{{BLOCK_TIMELINE}}",       upcoming.isEmpty() ? ""
-                    : timeline(today, upcoming, revealIds, forecastIds, boxIds, viewedIds, urgentIds));
+                    : timeline(today, upcoming, boxIds, viewedIds, urgentIds));
 
         sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
@@ -133,7 +131,6 @@ public class DigestEmailServiceImpl implements DigestEmailService {
     // ── Timeline ──────────────────────────────────────────────────────────────
 
     private String timeline(LocalDate today, List<Booking> upcoming,
-                             Set<Long> revealIds, Set<Long> forecastIds,
                              Set<Long> boxIds, Set<Long> viewedIds, Set<Long> urgentIds) {
 
         Map<LocalDate, List<Booking>> byDate = upcoming.stream()
@@ -191,14 +188,13 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                     hColor, date.format(SHORT_FMT),
                     dayName(date.getDayOfWeek()),
                     pillBg, pillColor, pillText,
-                    bookingRows(grp, revealIds, forecastIds, boxIds, viewedIds, urgentIds)
+                    bookingRows(grp, boxIds, viewedIds, urgentIds)
                 ));
         }
         return sb.toString();
     }
 
     private String bookingRows(List<Booking> bookings,
-                                Set<Long> revealIds, Set<Long> forecastIds,
                                 Set<Long> boxIds, Set<Long> viewedIds, Set<Long> urgentIds) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bookings.size(); i++) {
@@ -207,8 +203,8 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             boolean isUrgent  = urgentIds.contains(id);
             boolean needsConf = viewedIds.contains(id);
             boolean needsBox  = boxIds.contains(id);
-            boolean revealOk  = revealIds.contains(id);
-            boolean forecastOk = forecastIds.contains(id);
+            boolean revealOk  = b.getRevealSentAt() != null;
+            boolean forecastOk = b.getForecastSentAt() != null;
 
             String rowBg  = isUrgent ? "#fff8f8" : (needsConf || needsBox) ? "#fffdf7" : "#ffffff";
             String border = i < bookings.size() - 1 ? "border-bottom:1px solid #f0e8dc;" : "";
