@@ -73,10 +73,10 @@ public final class EmailHtmlBuilder {
         // Fragmenti nose sopstvene margine - shell ih ubacuje u mj-text sa padding=0,
         // pa prazna vrednost ne ostavlja prazan prostor.
         String badgeBlock = badgeHtml.isBlank() ? "" :
-            "<div style=\"margin-bottom:14px;text-align:center;\">" + badgeHtml + "</div>";
+            "<div style=\"margin-bottom:14px;text-align:left;\">" + badgeHtml + "</div>";
 
         String subheadingHtml = subheading.isBlank() ? "" :
-            "<p style=\"margin:10px 0 0;font-size:14px;color:#a0bcc8;line-height:1.6;\">%s</p>"
+            "<p style=\"margin:10px 0 0;font-size:14px;color:rgba(250,247,242,0.7);line-height:1.6;\">%s</p>"
                 .formatted(subheading);
 
         String refHtml = refCode.isBlank() ? "" :
@@ -111,9 +111,9 @@ public final class EmailHtmlBuilder {
 
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#e8f0f4;">escapii</strong> - putovanja iznenađenja<br>
-            Beograd, Srbija · <a href="mailto:%s" style="color:#EADFC9;text-decoration:none;font-weight:600;">%s</a><br><br>
-            <a href="https://escapii.rs" style="color:#EADFC9;text-decoration:none;font-weight:600;">escapii.rs</a>
+            <strong style="color:#1E2D2F;">Escapii.rs</strong><br>
+            Prva digitalna platforma za putovanja iznenađenja u Srbiji<br><br>
+            <a href="mailto:%s" style="color:#F1AB86;text-decoration:none;font-weight:600;">%s</a> · <a href="https://escapii.rs" style="color:#F1AB86;text-decoration:none;font-weight:600;">escapii.rs</a>
             """.formatted(email, email);
     }
 
