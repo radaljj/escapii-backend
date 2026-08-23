@@ -5,6 +5,7 @@ import com.escapii.service.email.core.EmailHtmlBuilder;
 import com.escapii.service.email.core.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Service;
 public class WaitlistEmailServiceImpl implements WaitlistEmailService {
 
     private final EmailSender sender;
+
+    @Value("${app.contact-email}")
+    private String contactEmail;
 
     @Override
     @Async
@@ -45,10 +49,10 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             "#a85e44",
             "#08112a",
             EmailHtmlBuilder.statusBadge("Lista čekanja", "orange"),
-            "Na listi ste čekanja",
+            "Na listi ste <span style=\"border-bottom:4px solid #F1AB86;\">čekanja</span>",
             "Bićete prvi koji će saznati čim se otvore novi termini.",
             "", body,
-            "Escapii · escapii.rs",
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
         sender.send(email, "Na listi ste čekanja - Escapii", html);
@@ -82,10 +86,10 @@ public class WaitlistEmailServiceImpl implements WaitlistEmailService {
             "#a85e44",
             "#08112a",
             EmailHtmlBuilder.statusBadge("Novi termini", "orange"),
-            "Otvorili su se novi termini!",
+            "Otvorili su se novi <span style=\"border-bottom:4px solid #F1AB86;\">termini!</span>",
             "Termini se brzo popunjavaju - rezervišite na vreme!",
             "", body,
-            "Escapii · escapii.rs",
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
         return sender.send(email, "Otvorili su se novi termini - Escapii", html);

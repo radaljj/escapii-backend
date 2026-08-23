@@ -146,7 +146,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             "#a85e44",
             "#0a1628",
             EmailHtmlBuilder.statusBadge("Prognoza", "orange"),
-            "Tvoja vremenska prognoza",
+            "Tvoja vremenska <span style=\"border-bottom:4px solid #F1AB86;\">prognoza</span>",
             "Putovanje · " + depDateStr,
             "",
             body,

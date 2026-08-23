@@ -20,6 +20,9 @@ public class RevealEmailServiceImpl implements RevealEmailService {
     @Value("${app.frontend-url:https://escapii.rs}")
     private String frontendUrl;
 
+    @Value("${app.contact-email}")
+    private String contactEmail;
+
     // ── Reveal email korisniku ───────────────────────────────────────────────
 
     @Override
@@ -75,11 +78,11 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             "#a85e44",
             "#0f1f3d",
             EmailHtmlBuilder.statusBadge("Otkrij destinaciju", "orange"),
-            "Tvoja destinacija te čeka!",
+            "Tvoja destinacija te <span style=\"border-bottom:4px solid #F1AB86;\">čeka!</span>",
             "48 sati pre polaska - stiglo je vreme.",
             ref,
             body,
-            "Escapii · escapii.rs · Srećan put!",
+            EmailHtmlBuilder.customerFooter(contactEmail),
             false
         );
 

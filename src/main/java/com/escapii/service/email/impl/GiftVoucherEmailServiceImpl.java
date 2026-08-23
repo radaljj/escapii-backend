@@ -102,7 +102,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
         String html = EmailHtmlBuilder.wrapBase(
                 "#a85e44", "",
                 EmailHtmlBuilder.statusBadge("Vaučer spreman", "green"),
-                "Tvoj poklon vaučer je spreman!",
+                "Tvoj poklon vaučer je <span style=\"border-bottom:4px solid #F1AB86;\">spreman!</span>",
                 "Vaučer je u prilogu kao PDF",
                 v.getCode(),
                 body,
