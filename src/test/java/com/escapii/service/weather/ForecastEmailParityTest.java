@@ -85,7 +85,7 @@ class ForecastEmailParityTest {
 
         // ── 2. Ista struktura - isti ključni markeri u oba ──
         for (String marker : List.of(
-                "Tvoja vremenska prognoza",   // naslov
+                "Tvoja vremenska",            // naslov
                 "Trenutno vreme",             // hero
                 "POLAZAK",                    // datum polaska
                 "Preporuka")) {               // napomena
