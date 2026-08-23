@@ -76,12 +76,12 @@ public final class EmailHtmlBuilder {
             "<div style=\"margin-bottom:14px;text-align:center;\">" + badgeHtml + "</div>";
 
         String subheadingHtml = subheading.isBlank() ? "" :
-            "<p style=\"margin:10px 0 0;font-size:14px;color:#6b5d4f;line-height:1.6;\">%s</p>"
+            "<p style=\"margin:10px 0 0;font-size:14px;color:#a0bcc8;line-height:1.6;\">%s</p>"
                 .formatted(subheading);
 
         String refHtml = refCode.isBlank() ? "" :
-            ("<div style=\"display:inline-block;background:rgba(168,94,68,0.08);"
-            + "border:1px solid rgba(168,94,68,0.25);color:#a85e44;font-family:'Courier New',monospace;"
+            ("<div style=\"display:inline-block;background:rgba(255,255,255,0.1);"
+            + "border:1px solid rgba(255,255,255,0.2);color:#EADFC9;font-family:'Courier New',monospace;"
             + "font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;"
             + "margin-top:14px;\">&#10022; %s</div>").formatted(refCode);
 
@@ -111,9 +111,9 @@ public final class EmailHtmlBuilder {
 
     public static String customerFooter(String email) {
         return """
-            <strong style="color:#1a1410;">escapii</strong> - putovanja iznenađenja<br>
-            Beograd, Srbija · <a href="mailto:%s" style="color:#a85e44;text-decoration:none;font-weight:600;">%s</a><br><br>
-            <a href="https://escapii.rs" style="color:#a85e44;text-decoration:none;font-weight:600;">escapii.rs</a>
+            <strong style="color:#e8f0f4;">escapii</strong> - putovanja iznenađenja<br>
+            Beograd, Srbija · <a href="mailto:%s" style="color:#EADFC9;text-decoration:none;font-weight:600;">%s</a><br><br>
+            <a href="https://escapii.rs" style="color:#EADFC9;text-decoration:none;font-weight:600;">escapii.rs</a>
             """.formatted(email, email);
     }
 
