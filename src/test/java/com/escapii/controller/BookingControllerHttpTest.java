@@ -62,6 +62,11 @@ class BookingControllerHttpTest {
           "lastName": "Marković",
           "email": "marko@example.com",
           "phone": "+381601234567",
+          "acceptedTerms": true,
+          "acceptedPrivacy": true,
+          "acceptedGdpr": true,
+          "consentVersion": "2026-08-24",
+          "consentLang": "sr",
           "formDuration": 20
         }
         """;
@@ -95,6 +100,25 @@ class BookingControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bookingService);
+    }
+
+    /**
+     * Checkbox-evi za uslove/privatnost/GDPR postoje samo na frontu i lako se
+     * zaobiđu direktnim POST-om. Backend mora sam odbiti zahtev bez saglasnosti -
+     * inače nemamo nikakav dokaz da je korisnik ikada išta prihvatio.
+     */
+    @Test
+    void zahtevBezSaglasnostiVraca400() throws Exception {
+        for (String polje : new String[]{"acceptedTerms", "acceptedPrivacy", "acceptedGdpr"}) {
+            String bezSaglasnosti = VALID_JSON.replace("\"" + polje + "\": true", "\"" + polje + "\": false");
+
+            mockMvc.perform(post("/api/booking")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bezSaglasnosti))
+                    .andExpect(status().isBadRequest());
+        }
 
         verifyNoInteractions(bookingService);
     }

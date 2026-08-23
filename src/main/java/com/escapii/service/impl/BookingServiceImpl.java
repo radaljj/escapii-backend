@@ -12,6 +12,7 @@ import com.escapii.model.DepartureAirport;
 import com.escapii.model.Destination;
 import com.escapii.model.GiftVoucher;
 import com.escapii.model.VoucherStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.escapii.model.PassengerInfo;
@@ -356,6 +357,12 @@ public class BookingServiceImpl implements BookingService {
             notes = (notes != null && !notes.isBlank()) ? notes + " | " + voucherNote : voucherNote;
         }
         b.setNotes(notes);
+
+        // Saglasnosti su već validirane (@AssertTrue) - ako smo stigli dovde,
+        // sve tri su prihvaćene, pa beležimo trenutak kao dokaz.
+        b.setConsentAcceptedAt(LocalDateTime.now());
+        b.setConsentVersion(request.getConsentVersion());
+        b.setConsentLang(request.getConsentLang());
 
         return b;
     }

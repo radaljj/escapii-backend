@@ -156,6 +156,27 @@ public class BookingRequest {
     @Size(max = 20)
     private String voucherCode;
 
+    // ── Saglasnosti (GDPR dokaz) ──────────────────────────────────────
+    // Checkbox-evi na frontu se mogu zaobići direktnim API pozivom, pa se
+    // prihvatanje validira i ovde, a vreme/verzija/jezik čuvaju uz rezervaciju.
+
+    @AssertTrue(message = "Morate prihvatiti uslove korišćenja")
+    private boolean acceptedTerms;
+
+    @AssertTrue(message = "Morate prihvatiti politiku privatnosti")
+    private boolean acceptedPrivacy;
+
+    @AssertTrue(message = "Morate dati saglasnost za obradu ličnih podataka")
+    private boolean acceptedGdpr;
+
+    /** Verzija dokumenata koja je bila prikazana korisniku (npr. "2026-08-24"). */
+    @Size(max = 20, message = "Verzija saglasnosti ne sme biti duža od 20 karaktera")
+    private String consentVersion;
+
+    /** Jezik na kom su dokumenti prikazani ("sr" ili "en"). */
+    @Pattern(regexp = "^$|^(sr|en)$", message = "Jezik saglasnosti mora biti sr ili en")
+    private String consentLang;
+
     @AssertTrue(message = "Adresa, grad i telefon za dostavu su obavezni kada je Reveal Box odabran")
     public boolean isDeliveryComplete() {
         if (!hasRevealBox) return true;
@@ -181,6 +202,8 @@ public class BookingRequest {
         if (deliveryCity      != null) deliveryCity      = deliveryCity.trim();
         if (deliveryPhone     != null) deliveryPhone     = deliveryPhone.trim();
         if (deliveryApartment != null) deliveryApartment = deliveryApartment.trim();
+        if (consentVersion    != null) consentVersion    = consentVersion.trim();
+        if (consentLang       != null) consentLang       = consentLang.trim().toLowerCase();
         if (passengers != null) passengers.forEach(p -> {
             if (p.getName()    != null) p.setName(p.getName().trim());
             if (p.getGender()  != null) p.setGender(p.getGender().trim().toUpperCase());

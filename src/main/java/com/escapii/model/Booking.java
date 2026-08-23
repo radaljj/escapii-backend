@@ -268,6 +268,24 @@ public class Booking {
     @Column(name = "reveal_box_sent", nullable = false)
     private Boolean revealBoxSent = false;
 
+    // ── Dokaz prihvatanja uslova (GDPR) ───────────────────────────────
+
+    /**
+     * Trenutak kada je korisnik prihvatio uslove, politiku privatnosti i
+     * obradu podataka. Postavlja se pri kreiranju rezervacije - sve tri
+     * saglasnosti su obavezne, pa je jedan timestamp dovoljan kao dokaz.
+     */
+    @Column(name = "consent_accepted_at")
+    private LocalDateTime consentAcceptedAt;
+
+    /** Verzija dokumenata prikazana korisniku u trenutku prihvatanja. */
+    @Column(name = "consent_version", length = 20)
+    private String consentVersion;
+
+    /** Jezik na kom su dokumenti bili prikazani ("sr" ili "en"). */
+    @Column(name = "consent_lang", length = 5)
+    private String consentLang;
+
     @PrePersist
     protected void onCreate() {
         createdAt  = LocalDateTime.now();

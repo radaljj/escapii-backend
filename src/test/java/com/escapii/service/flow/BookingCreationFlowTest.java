@@ -74,6 +74,11 @@ class BookingCreationFlowTest {
         r.setLastName("Marković");
         r.setEmail("marko@example.com");
         r.setPhone("+381601234567");
+        r.setAcceptedTerms(true);
+        r.setAcceptedPrivacy(true);
+        r.setAcceptedGdpr(true);
+        r.setConsentVersion("2026-08-24");
+        r.setConsentLang("sr");
         // formDuration >= 4 i website prazno - prolaze anti-bot provere
         r.setFormDuration(20);
         return r;
@@ -135,6 +140,34 @@ class BookingCreationFlowTest {
         assertEquals(1L, teamEvent.getBooking().getId());
         assertEquals(1L, customerEvent.getBooking().getId());
         assertEquals("marko@example.com", customerEvent.getBooking().getEmail());
+    }
+
+    /**
+     * Prihvatanje uslova mora biti zabeleženo NA SAČUVANOJ rezervaciji - to je
+     * jedini dokaz koji imamo ako korisnik kasnije ospori saglasnost. Verzija i
+     * jezik se pamte jer se dokumenti menjaju kroz vreme.
+     */
+    @Test
+    void saglasnostSeBeleziNaRezervaciji() {
+        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
+        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        svc.createBooking(validRequest());
+
+        ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
+        verify(bookingRepository).save(captor.capture());
+        Booking saved = captor.getValue();
+
+        assertNotNull(saved.getConsentAcceptedAt(), "Vreme prihvatanja uslova mora biti zabeleženo");
+        assertEquals("2026-08-24", saved.getConsentVersion());
+        assertEquals("sr", saved.getConsentLang());
     }
 
     /** Nepostojeći/neaktivan termin ne sme stići do slanja mejlova. */
