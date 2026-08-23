@@ -69,7 +69,7 @@ class BookingCreationFlowTest {
         r.setAccommodationType(AccommodationType.STANDARD);
         r.setCabinSuitcaseCount(0);
         r.setPassengers(List.of(new BookingRequest.PassengerInfo(
-                "Marko Marković", "M", LocalDate.of(1990, 1, 1), null, true, null)));
+                "Marko Marković", "M", LocalDate.of(1990, 1, 1), null, true, "Srbija", "AA1234567")));
         r.setFirstName("Marko");
         r.setLastName("Marković");
         r.setEmail("marko@example.com");

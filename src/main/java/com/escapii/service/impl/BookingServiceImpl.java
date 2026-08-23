@@ -333,6 +333,7 @@ public class BookingServiceImpl implements BookingService {
                 .map(p -> new com.escapii.model.PassengerInfo(
                         p.getName(), p.getGender(), p.getDateOfBirth(), p.getVisaInfo(),
                         p.getHasValidPassport() != null ? p.getHasValidPassport() : true,
+                        p.getPassportCountry(),
                         p.getPassportNumber()))
                 .toList());
 

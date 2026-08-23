@@ -16,7 +16,8 @@ public class PassengerDetail {
     private String    name;
     private String    gender;          // "M" ili "F"
     private LocalDate dateOfBirth;
-    private String    passportNumber;  // može biti null
+    private String    passportCountry; // može biti null (zemlja pasoša)
+    private String    passportNumber;  // može biti null (serijski broj)
     private Boolean   hasValidPassport;
     private String    visaInfo;        // može biti null
 }

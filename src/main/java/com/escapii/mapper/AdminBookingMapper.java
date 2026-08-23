@@ -44,6 +44,7 @@ public abstract class AdminBookingMapper {
                         .name(p.getName())
                         .gender(p.getGender())
                         .dateOfBirth(p.getDateOfBirth())
+                        .passportCountry(p.getPassportCountry())
                         .passportNumber(p.getPassportNumber())
                         .hasValidPassport(p.getHasValidPassport())
                         .visaInfo(p.getVisaInfo())

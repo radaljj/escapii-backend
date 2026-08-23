@@ -184,7 +184,9 @@ public class BookingRequest {
         if (passengers != null) passengers.forEach(p -> {
             if (p.getName()    != null) p.setName(p.getName().trim());
             if (p.getGender()  != null) p.setGender(p.getGender().trim().toUpperCase());
-            if (p.getVisaInfo() != null) p.setVisaInfo(p.getVisaInfo().trim());
+            if (p.getVisaInfo()       != null) p.setVisaInfo(p.getVisaInfo().trim());
+            if (p.getPassportNumber() != null) p.setPassportNumber(p.getPassportNumber().trim().toUpperCase());
+            if (p.getPassportCountry() != null) p.setPassportCountry(p.getPassportCountry().trim());
         });
     }
 
@@ -216,8 +218,14 @@ public class BookingRequest {
         /** Da li putnik ima validan pasoš (važeći najmanje 6 meseci od povratka). */
         private Boolean hasValidPassport = true;
 
-        /** Zemlja pasoša kojim putnik putuje (npr. "Srbija") - uprkos nazivu polja, ne čuva se broj dokumenta. */
-        @Size(max = 50, message = "Broj pasoša ne sme biti duži od 50 karaktera")
+        /** Zemlja pasoša (dropdown vrednost, npr. "Srbija"). Opciono. */
+        @Size(max = 50, message = "Zemlja pasoša ne sme biti duža od 50 karaktera")
+        private String passportCountry;
+
+        /** Serijski broj pasoša (slova i cifre, 5–20 karaktera, automatski uppercase). */
+        @NotBlank(message = "Broj pasoša je obavezan")
+        @Pattern(regexp = "^[A-Z0-9]{5,20}$",
+                 message = "Broj pasoša nije validan (dozvoljena su slova i cifre, 5–20 karaktera)")
         private String passportNumber;
 
         /**
@@ -236,13 +244,19 @@ public class BookingRequest {
                 @JsonProperty("dateOfBirth") LocalDate dateOfBirth,
                 @JsonProperty("visaInfo") String visaInfo,
                 @JsonProperty("hasValidPassport") Boolean hasValidPassport,
+                @JsonProperty("passportCountry") String passportCountry,
                 @JsonProperty("passportNumber") String passportNumber) {
             this.name = name;
             this.gender = gender == null ? null : gender.trim().toUpperCase();
             this.dateOfBirth = dateOfBirth;
             this.visaInfo = visaInfo;
             this.hasValidPassport = hasValidPassport != null ? hasValidPassport : Boolean.TRUE;
-            this.passportNumber = passportNumber;
+            this.passportCountry = passportCountry;
+            this.passportNumber = passportNumber != null ? passportNumber.trim().toUpperCase() : null;
+        }
+
+        public void setPassportNumber(String passportNumber) {
+            this.passportNumber = passportNumber != null ? passportNumber.trim().toUpperCase() : null;
         }
 
         /** Normalizuje i kad se gender postavlja van JSON deserijalizacije (npr. normalize()). */

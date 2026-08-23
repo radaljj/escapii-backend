@@ -37,7 +37,11 @@ public class PassengerInfo {
     @Column(name = "has_valid_passport", nullable = false)
     private Boolean hasValidPassport = true;
 
-    /** Zemlja pasoša kojim putnik putuje (npr. "Srbija") - uprkos nazivu polja, ne čuva se broj dokumenta. */
+    /** Zemlja pasoša (dropdown vrednost, npr. "Srbija"). Opciono. */
     @Column(name = "passport_number", length = 50)
+    private String passportCountry;
+
+    /** Serijski broj pasoša putnika (velika slova + cifre, 5–20 karaktera). */
+    @Column(name = "passport_serial_number", length = 50)
     private String passportNumber;
 }
