@@ -56,7 +56,7 @@ class BookingControllerHttpTest {
           "accommodationType": "STANDARD",
           "cabinSuitcaseCount": 0,
           "passengers": [
-            {"name": "Marko Marković", "gender": "M", "dateOfBirth": "1990-01-01", "hasValidPassport": true}
+            {"name": "Marko Marković", "gender": "M", "dateOfBirth": "1990-01-01", "hasValidPassport": true, "passportNumber": "AA1234567"}
           ],
           "firstName": "Marko",
           "lastName": "Marković",
