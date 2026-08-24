@@ -151,9 +151,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             """.formatted(
             metaSection(booking, depDate, retDate, n),
             teamSection("Kontakt",
-                tRow("Ime i prezime", "<a href='mailto:" + booking.getEmail() + "' style='color:#2D5F6B;font-weight:700;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName()) + "</a>") +
-                tRow("Email", "<a href='mailto:" + booking.getEmail() + "' style='color:#a85e44;text-decoration:none;'>" + booking.getEmail() + "</a>") +
-                tRow("Telefon", "<a href='tel:" + booking.getPhone() + "' style='color:#a85e44;text-decoration:none;'>" + booking.getPhone() + "</a>")
+                tRow("Ime i prezime", "<a href='mailto:" + EmailHtmlBuilder.esc(booking.getEmail()) + "' style='color:#2D5F6B;font-weight:700;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getFirstName() + " " + booking.getLastName()) + "</a>") +
+                tRow("Email", "<a href='mailto:" + EmailHtmlBuilder.esc(booking.getEmail()) + "' style='color:#a85e44;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getEmail()) + "</a>") +
+                tRow("Telefon", "<a href='tel:" + EmailHtmlBuilder.esc(booking.getPhone()) + "' style='color:#a85e44;text-decoration:none;'>" + EmailHtmlBuilder.esc(booking.getPhone()) + "</a>")
             ),
             teamSection("Putovanje",
                 tRow("Aerodrom", booking.getDepartureAirport()) +

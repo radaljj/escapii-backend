@@ -114,7 +114,7 @@ public final class EmailHtmlBuilder {
             <strong style="color:#1E2D2F;">Escapii.rs</strong><br>
             Prva digitalna platforma za putovanja iznenađenja u Srbiji<br><br>
             <a href="mailto:%s" style="color:#F1AB86;text-decoration:none;font-weight:600;">%s</a> · <a href="https://escapii.rs" style="color:#F1AB86;text-decoration:none;font-weight:600;">escapii.rs</a>
-            """.formatted(email, email);
+            """.formatted(esc(email), esc(email));
     }
 
     public static String dRow(String label, String value) {
