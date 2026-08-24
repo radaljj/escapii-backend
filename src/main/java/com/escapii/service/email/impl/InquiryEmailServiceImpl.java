@@ -40,7 +40,7 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
                 "#a85e44", "",
                 EmailHtmlBuilder.statusBadge("Nov upit", "blue"),
                 "Prilagođeni termin #" + i.getId(),
-                i.getAirport() + " · " + i.getTravelers() + " putnik/a",
+                EmailHtmlBuilder.esc(i.getAirport()) + " · " + i.getTravelers() + " putnik/a",
                 "",
                 body,
                 "<strong style=\"color:#1a1410;\">escapii</strong> · Interno obaveštenje",

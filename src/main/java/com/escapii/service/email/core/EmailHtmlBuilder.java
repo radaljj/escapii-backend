@@ -208,7 +208,7 @@ public final class EmailHtmlBuilder {
 
     public static String esc(String input) {
         if (input == null) return "";
-        return input.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
+        return input.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&#39;");
     }
 
     public static String eur(int amount) { return amount + " €"; }

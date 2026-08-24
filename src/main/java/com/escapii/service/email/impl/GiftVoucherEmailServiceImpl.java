@@ -60,7 +60,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                 "#a85e44", "",
                 EmailHtmlBuilder.statusBadge("Nov vaučer", "green"),
                 "Gift vaučer #" + v.getId(),
-                v.getAmount().toPlainString() + " EUR · " + v.getBuyerEmail(),
+                v.getAmount().toPlainString() + " EUR · " + EmailHtmlBuilder.esc(v.getBuyerEmail()),
                 "",
                 body,
                 "<strong style=\"color:#1a1410;\">escapii</strong> · Interno obaveštenje",

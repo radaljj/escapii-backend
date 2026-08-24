@@ -127,7 +127,7 @@ public class EmailSender {
             setBody(helper, html);
             helper.addAttachment(attachmentName, new ByteArrayResource(attachmentData), contentType);
             mailSender.send(message);
-            log.info("[EmailSender] Email sa prilogom '{}' poslan na {}", attachmentName, LogUtils.maskEmail(to));
+            log.info("[EmailSender] Email sa prilogom poslan na {}", LogUtils.maskEmail(to));
             return true;
         } catch (MessagingException e) {
             log.error("[EmailSender] MessagingException (prilog) za {}: {}", LogUtils.maskEmail(to), e.getMessage(), e);

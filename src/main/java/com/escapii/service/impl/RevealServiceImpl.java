@@ -133,7 +133,7 @@ public class RevealServiceImpl implements RevealService {
     @Transactional
     public void confirmRevealed(String token) {
         bookingRepository.findByRevealToken(token).ifPresent(booking -> {
-            // Idempotentno - samo prvi put, ne menjamo ako event već postoji
+            if (booking.getStatus() != com.escapii.model.BookingStatus.CONFIRMED) return;
             if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
                 revealEventRepository.save(new RevealEvent(booking.getBookingRef()));
                 log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());

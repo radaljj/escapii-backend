@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import com.escapii.util.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import java.util.logging.Level;
 
@@ -87,7 +88,7 @@ public class VoucherPdfService {
             boolean acquired = PDF_SEMAPHORE.tryAcquire(10, TimeUnit.MINUTES);
             if (!acquired) {
                 log.error("[PDF] Timeout čekanja na semafor za vaučer kod={} - server je prezauzet",
-                        data.voucherCode());
+                        LogUtils.maskVoucherCode(data.voucherCode()));
                 throw new RuntimeException("PDF generisanje nije moglo da počne - server prezauzet");
             }
         } catch (InterruptedException e) {
