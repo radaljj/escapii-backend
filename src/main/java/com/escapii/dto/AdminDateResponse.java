@@ -24,6 +24,8 @@ public class AdminDateResponse {
     private final List<TermDestinationResponse> destinations;
     /** Kome ide privatni link - null za javne termine. */
     private final String                     clientEmail;
+    /** Agencija koja organizuje termin - null ako nije dodeljena. */
+    private final AgencyResponse             agency;
 
     public AdminDateResponse(AvailableDate d) {
         this.id              = d.getId();
@@ -41,5 +43,14 @@ public class AdminDateResponse {
                 .map(TermDestinationResponse::new)
                 .toList();
         this.clientEmail     = d.getClientEmail();
+        this.agency          = d.getAgency() == null ? null : AgencyResponse.builder()
+                .id(d.getAgency().getId())
+                .name(d.getAgency().getName())
+                .contactName(d.getAgency().getContactName())
+                .contactEmail(d.getAgency().getContactEmail())
+                .contactPhone(d.getAgency().getContactPhone())
+                .notes(d.getAgency().getNotes())
+                .active(d.getAgency().getActive())
+                .build();
     }
 }

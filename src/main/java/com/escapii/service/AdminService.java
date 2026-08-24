@@ -4,6 +4,8 @@ import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
+import com.escapii.dto.AgencyRequest;
+import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationRequest;
 import com.escapii.dto.DestinationResponse;
@@ -77,4 +79,12 @@ public interface AdminService {
      * Termin je privatan od prvog trenutka; nikad nije javno vidljiv.
      */
     AdminDateResponse createPrivateDateFromInquiry(Long inquiryId, CreatePrivateDateRequest request);
+
+    // ── Agencije ──
+    List<AgencyResponse> getAllAgencies();
+    List<AgencyResponse> getActiveAgencies();
+    AgencyResponse createAgency(AgencyRequest req);
+    AgencyResponse updateAgency(Long id, AgencyRequest req);
+    AgencyResponse toggleAgencyActive(Long id);
+    void assignAgencyToDate(Long dateId, Long agencyId);
 }

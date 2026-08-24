@@ -40,4 +40,7 @@ public class AdminDateRequest {
     /** ID-evi destinacija za ovaj termin - opciono, max 20. */
     @Size(max = 20, message = "Maksimalno 20 destinacija po terminu")
     private List<Long> destinationIds = new ArrayList<>();
+
+    /** ID agencije koja organizuje ovaj termin. Opciono. */
+    private Long agencyId;
 }

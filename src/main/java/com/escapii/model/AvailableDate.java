@@ -92,4 +92,12 @@ public class AvailableDate {
      */
     @Column(length = 200)
     private String clientEmail;
+
+    /**
+     * Turistička agencija koja organizuje ovaj termin (kupuje karte i smeštaj).
+     * Nullable - postojeći termini i dalje rade bez agencije.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_id")
+    private Agency agency;
 }

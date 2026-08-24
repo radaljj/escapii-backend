@@ -1,5 +1,7 @@
 package com.escapii.controller;
 
+import com.escapii.dto.AgencyRequest;
+import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
@@ -427,6 +429,50 @@ public class AdminController {
     @PostMapping("/bookings/{id}/confirmation-document/resend")
     public ResponseEntity<AdminBookingResponse> resendConfirmationDocument(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.resendConfirmationDocument(id));
+    }
+
+    // ══ AGENCIJE ═════════════════════════════════════════════════════════════
+
+    /** GET /api/admin/agencies — sve agencije (uključujući neaktivne). */
+    @GetMapping("/agencies")
+    public ResponseEntity<List<AgencyResponse>> getAllAgencies() {
+        return ResponseEntity.ok(adminService.getAllAgencies());
+    }
+
+    /** GET /api/admin/agencies/active — samo aktivne agencije (za dropdown u formi termina). */
+    @GetMapping("/agencies/active")
+    public ResponseEntity<List<AgencyResponse>> getActiveAgencies() {
+        return ResponseEntity.ok(adminService.getActiveAgencies());
+    }
+
+    /** POST /api/admin/agencies — nova agencija. */
+    @PostMapping("/agencies")
+    public ResponseEntity<AgencyResponse> createAgency(@Valid @RequestBody AgencyRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createAgency(req));
+    }
+
+    /** PUT /api/admin/agencies/{id} — izmeni agenciju. */
+    @PutMapping("/agencies/{id}")
+    public ResponseEntity<AgencyResponse> updateAgency(
+            @PathVariable Long id,
+            @Valid @RequestBody AgencyRequest req) {
+        return ResponseEntity.ok(adminService.updateAgency(id, req));
+    }
+
+    /** POST /api/admin/agencies/{id}/toggle — aktiviraj/deaktiviraj agenciju. */
+    @PostMapping("/agencies/{id}/toggle")
+    public ResponseEntity<AgencyResponse> toggleAgency(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.toggleAgencyActive(id));
+    }
+
+    /** PUT /api/admin/dates/{id}/agency — dodeli agenciju terminu (agencyId=null briše vezu). */
+    @PutMapping("/dates/{id}/agency")
+    public ResponseEntity<Void> assignAgencyToDate(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Long> body) {
+        Long agencyId = body != null ? body.get("agencyId") : null;
+        adminService.assignAgencyToDate(id, agencyId);
+        return ResponseEntity.noContent().build();
     }
 
 }

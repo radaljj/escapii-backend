@@ -19,6 +19,10 @@ import com.escapii.model.InquiryStatus;
 import com.escapii.model.RevealEvent;
 import com.escapii.model.TermDestination;
 import com.escapii.model.VoucherStatus;
+import com.escapii.dto.AgencyRequest;
+import com.escapii.dto.AgencyResponse;
+import com.escapii.model.Agency;
+import com.escapii.repository.AgencyRepository;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.CustomDateInquiryRepository;
@@ -76,6 +80,7 @@ public class AdminServiceImpl implements AdminService {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
+    private final AgencyRepository            agencyRepository;
     private final AvailableDateRepository     availableDateRepository;
     private final DestinationRepository       destinationRepository;
     private final TermDestinationRepository   termDestinationRepository;
@@ -246,6 +251,13 @@ public class AdminServiceImpl implements AdminService {
         date.setAvailableSlots(req.getAvailableSlots());
         date.setBasePrice(req.getBasePrice());
         date.setActive(true);
+
+        if (req.getAgencyId() != null) {
+            Agency agency = agencyRepository.findById(req.getAgencyId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Agencija nije pronađena: " + req.getAgencyId()));
+            date.setAgency(agency);
+        }
 
         // Inicijalne destinacije (ako su prosleđene pri kreiranju termina)
         AvailableDate saved = availableDateRepository.save(date);
@@ -906,6 +918,83 @@ public class AdminServiceImpl implements AdminService {
 
         log.info("[ConfirmationDocument] Ručno ponovo poslat za {}", saved.getBookingRef());
         return adminBookingMapper.toResponse(saved);
+    }
+
+    // ══ AGENCIJE ═════════════════════════════════════════════════════════════
+
+    @Transactional(readOnly = true)
+    public List<AgencyResponse> getAllAgencies() {
+        return agencyRepository.findAllByOrderByNameAsc().stream()
+                .map(this::toAgencyResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AgencyResponse> getActiveAgencies() {
+        return agencyRepository.findByActiveTrueOrderByNameAsc().stream()
+                .map(this::toAgencyResponse).toList();
+    }
+
+    @Transactional
+    public AgencyResponse createAgency(AgencyRequest req) {
+        Agency a = new Agency();
+        a.setName(req.name().trim());
+        a.setContactName(req.contactName() != null ? req.contactName().trim() : null);
+        a.setContactEmail(req.contactEmail() != null ? req.contactEmail().trim().toLowerCase() : null);
+        a.setContactPhone(req.contactPhone() != null ? req.contactPhone().trim() : null);
+        a.setNotes(req.notes() != null ? req.notes().trim() : null);
+        a.setActive(true);
+        Agency saved = agencyRepository.save(a);
+        log.info("[ADMIN] Kreirana agencija id={} name={}", saved.getId(), saved.getName());
+        return toAgencyResponse(saved);
+    }
+
+    @Transactional
+    public AgencyResponse updateAgency(Long id, AgencyRequest req) {
+        Agency a = agencyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Agencija nije pronađena: " + id));
+        a.setName(req.name().trim());
+        a.setContactName(req.contactName() != null ? req.contactName().trim() : null);
+        a.setContactEmail(req.contactEmail() != null ? req.contactEmail().trim().toLowerCase() : null);
+        a.setContactPhone(req.contactPhone() != null ? req.contactPhone().trim() : null);
+        a.setNotes(req.notes() != null ? req.notes().trim() : null);
+        return toAgencyResponse(agencyRepository.save(a));
+    }
+
+    @Transactional
+    public AgencyResponse toggleAgencyActive(Long id) {
+        Agency a = agencyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Agencija nije pronađena: " + id));
+        a.setActive(!a.getActive());
+        log.info("[ADMIN] Agencija id={} active={}", id, a.getActive());
+        return toAgencyResponse(agencyRepository.save(a));
+    }
+
+    @Transactional
+    public void assignAgencyToDate(Long dateId, Long agencyId) {
+        AvailableDate date = findDateOrThrow(dateId);
+        if (agencyId == null) {
+            date.setAgency(null);
+        } else {
+            Agency agency = agencyRepository.findById(agencyId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Agencija nije pronađena: " + agencyId));
+            date.setAgency(agency);
+        }
+        availableDateRepository.save(date);
+    }
+
+    private AgencyResponse toAgencyResponse(Agency a) {
+        return AgencyResponse.builder()
+                .id(a.getId())
+                .name(a.getName())
+                .contactName(a.getContactName())
+                .contactEmail(a.getContactEmail())
+                .contactPhone(a.getContactPhone())
+                .notes(a.getNotes())
+                .active(a.getActive())
+                .build();
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

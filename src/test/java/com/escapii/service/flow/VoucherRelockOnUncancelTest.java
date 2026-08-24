@@ -35,6 +35,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class VoucherRelockOnUncancelTest {
 
+    @Mock private com.escapii.repository.AgencyRepository agencyRepository;
     @Mock private AvailableDateRepository availableDateRepository;
     @Mock private DestinationRepository destinationRepository;
     @Mock private TermDestinationRepository termDestinationRepository;
@@ -56,7 +57,7 @@ class VoucherRelockOnUncancelTest {
 
     @BeforeEach
     void setUp() {
-        svc = new AdminServiceImpl(availableDateRepository, destinationRepository, termDestinationRepository,
+        svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
