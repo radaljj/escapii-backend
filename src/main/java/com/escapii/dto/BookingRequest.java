@@ -239,6 +239,7 @@ public class BookingRequest {
         private String visaInfo;
 
         /** Da li putnik ima validan pasoš (važeći najmanje 6 meseci od povratka). */
+        @AssertTrue(message = "Putnik mora imati validan pasoš (važeći min. 6 meseci od povratka)")
         private Boolean hasValidPassport = true;
 
         /** Zemlja pasoša (dropdown vrednost, npr. "Srbija"). Opciono. */
