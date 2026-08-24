@@ -26,6 +26,7 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
     List<AvailableDate> findByDepartureAirportAndActiveTrueAndIsPrivateFalseAndDepartureDateAfterOrderByDepartureDateAsc(
             String departureAirport, java.time.LocalDate today);
 
+    @Query("SELECT d FROM AvailableDate d LEFT JOIN FETCH d.agency ORDER BY d.departureDate ASC")
     List<AvailableDate> findAllByOrderByDepartureDateAsc();
 
     boolean existsByDepartureAirport(String departureAirport);
