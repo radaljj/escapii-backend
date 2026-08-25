@@ -17,6 +17,7 @@ public class AdminDateResponse {
     private final String                     departureAirport;
     private final Integer                    availableSlots;
     private final Integer                    basePrice;
+    private final Integer                    agencyCostPrice;
     private final Boolean                    active;
     private final Boolean                    isPrivate;
     private final String                     privateToken;
@@ -35,6 +36,7 @@ public class AdminDateResponse {
         this.departureAirport = d.getDepartureAirport();
         this.availableSlots  = d.getAvailableSlots();
         this.basePrice       = d.getBasePrice();
+        this.agencyCostPrice = d.getAgencyCostPrice();
         this.active          = d.getActive();
         this.isPrivate       = d.getIsPrivate();
         this.privateToken    = d.getPrivateToken();

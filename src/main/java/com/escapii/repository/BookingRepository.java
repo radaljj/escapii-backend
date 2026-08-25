@@ -77,6 +77,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Ukupan broj rezervacija za dati termin (sve statuse) - koristi se pre brisanja. */
     long countBySelectedDateId(Long selectedDateId);
 
+    /** Zbir putnika po terminu za aktivne rezervacije (CONFIRMED + COMPLETED). */
+    @Query("SELECT b.selectedDate.id, SUM(b.numberOfTravelers) FROM Booking b " +
+           "WHERE b.status IN ('CONFIRMED', 'COMPLETED') " +
+           "AND b.selectedDate.id IN :dateIds " +
+           "GROUP BY b.selectedDate.id")
+    List<Object[]> sumTravelersByDateIds(@Param("dateIds") List<Long> dateIds);
+
     /**
      * Duplikat check - isti email + isti termin kreiran u poslednjih 24h.
      * Koristi se za anti-spam zaštitu pri kreiranju bookinga.

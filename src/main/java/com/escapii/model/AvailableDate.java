@@ -93,6 +93,10 @@ public class AvailableDate {
     @Column(length = 200)
     private String clientEmail;
 
+    /** Nabavna cena od agencije po osobi (EUR). Null ako nije unesena. */
+    @Column(name = "agency_cost_price")
+    private Integer agencyCostPrice;
+
     /**
      * Turistička agencija koja organizuje ovaj termin (kupuje karte i smeštaj).
      * Nullable - postojeći termini i dalje rade bez agencije.

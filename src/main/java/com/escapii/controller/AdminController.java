@@ -1,5 +1,6 @@
 package com.escapii.controller;
 
+import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencyRequest;
 import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.AdminBookingResponse;
@@ -473,6 +474,12 @@ public class AdminController {
         Long agencyId = body != null ? body.get("agencyId") : null;
         adminService.assignAgencyToDate(id, agencyId);
         return ResponseEntity.noContent().build();
+    }
+
+    /** GET /api/admin/agencies/earnings — zarada po agenciji (za fakturisanje). */
+    @GetMapping("/agencies/earnings")
+    public ResponseEntity<List<AgencyEarningsResponse>> getAgencyEarnings() {
+        return ResponseEntity.ok(adminService.getAgencyEarnings());
     }
 
 }

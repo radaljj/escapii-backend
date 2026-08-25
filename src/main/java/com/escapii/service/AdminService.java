@@ -4,6 +4,7 @@ import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
+import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencyRequest;
 import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.CustomDateInquiryResponse;
@@ -87,4 +88,5 @@ public interface AdminService {
     AgencyResponse updateAgency(Long id, AgencyRequest req);
     AgencyResponse toggleAgencyActive(Long id);
     void assignAgencyToDate(Long dateId, Long agencyId);
+    List<AgencyEarningsResponse> getAgencyEarnings();
 }

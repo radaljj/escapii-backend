@@ -3,6 +3,7 @@ package com.escapii.service.impl;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationRequest;
@@ -250,6 +251,7 @@ public class AdminServiceImpl implements AdminService {
         date.setDepartureAirport(req.getDepartureAirport().toUpperCase());
         date.setAvailableSlots(req.getAvailableSlots());
         date.setBasePrice(req.getBasePrice());
+        date.setAgencyCostPrice(req.getAgencyCostPrice());
         date.setActive(true);
 
         if (req.getAgencyId() != null) {
@@ -995,6 +997,65 @@ public class AdminServiceImpl implements AdminService {
                 .notes(a.getNotes())
                 .active(a.getActive())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AgencyEarningsResponse> getAgencyEarnings() {
+        List<AvailableDate> allDates = availableDateRepository.findAllByOrderByDepartureDateAsc();
+        List<AvailableDate> agencyDates = allDates.stream()
+                .filter(d -> d.getAgency() != null && d.getAgencyCostPrice() != null)
+                .toList();
+
+        if (agencyDates.isEmpty()) return List.of();
+
+        List<Long> dateIds = agencyDates.stream().map(AvailableDate::getId).toList();
+        Map<Long, Long> travelersByDate = bookingRepository.sumTravelersByDateIds(dateIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        Map<Long, List<AvailableDate>> byAgency = agencyDates.stream()
+                .collect(Collectors.groupingBy(d -> d.getAgency().getId()));
+
+        return byAgency.entrySet().stream().map(entry -> {
+            List<AvailableDate> dates = entry.getValue();
+            Agency agency = dates.get(0).getAgency();
+
+            List<AgencyEarningsResponse.TermEarning> termEarnings = dates.stream().map(d -> {
+                int travelers = travelersByDate.getOrDefault(d.getId(), 0L).intValue();
+                int revenue = d.getBasePrice() * travelers;
+                int cost = d.getAgencyCostPrice() * travelers;
+                return AgencyEarningsResponse.TermEarning.builder()
+                        .dateId(d.getId())
+                        .departureDate(d.getDepartureDate().toString())
+                        .returnDate(d.getReturnDate().toString())
+                        .departureAirport(d.getDepartureAirport())
+                        .basePrice(d.getBasePrice())
+                        .costPrice(d.getAgencyCostPrice())
+                        .travelers(travelers)
+                        .revenue(revenue)
+                        .cost(cost)
+                        .profit(revenue - cost)
+                        .build();
+            }).toList();
+
+            int totalTravelers = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getTravelers).sum();
+            int totalRevenue = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getRevenue).sum();
+            int totalCost = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getCost).sum();
+
+            return AgencyEarningsResponse.builder()
+                    .agencyId(agency.getId())
+                    .agencyName(agency.getName())
+                    .totalTerms(dates.size())
+                    .totalTravelers(totalTravelers)
+                    .totalRevenue(totalRevenue)
+                    .totalCost(totalCost)
+                    .totalProfit(totalRevenue - totalCost)
+                    .terms(termEarnings)
+                    .build();
+        }).toList();
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════
