@@ -124,6 +124,18 @@ public class Booking {
     @Column(nullable = false)
     private Integer totalPriceAll = 0;       // kompletna cena rezervacije
 
+    /** Snapshot nabavne cene od agencije po osobi, zabeležen pri potvrdi. */
+    @Column(name = "agency_cost_snapshot")
+    private Integer agencyCostSnapshot;
+
+    /** Snapshot ID-a agencije, zabeležen pri potvrdi. */
+    @Column(name = "agency_id_snapshot")
+    private Long agencyIdSnapshot;
+
+    /** Snapshot imena agencije, zabeležen pri potvrdi. */
+    @Column(name = "agency_name_snapshot", length = 100)
+    private String agencyNameSnapshot;
+
     // ── Airline booking code ─────────────────────────────────────────
 
     /**

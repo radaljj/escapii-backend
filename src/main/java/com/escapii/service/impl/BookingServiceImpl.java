@@ -342,6 +342,12 @@ public class BookingServiceImpl implements BookingService {
         b.setTotalPricePerPerson(price.getEurPerPerson());
         b.setTotalPriceAll(price.getTotalEurAll());
 
+        if (date.getAgency() != null) {
+            b.setAgencyIdSnapshot(date.getAgency().getId());
+            b.setAgencyNameSnapshot(date.getAgency().getName());
+            b.setAgencyCostSnapshot(date.getAgencyCostPrice());
+        }
+
         if (!request.getPassengers().isEmpty()) {
             b.setLeadPassengerGender(request.getPassengers().get(0).getGender());
         }

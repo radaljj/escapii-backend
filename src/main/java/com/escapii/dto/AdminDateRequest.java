@@ -47,4 +47,9 @@ public class AdminDateRequest {
 
     /** ID agencije koja organizuje ovaj termin. Opciono. */
     private Long agencyId;
+
+    @AssertTrue(message = "Agencija i nabavna cena moraju biti oba popunjena ili oba prazna")
+    private boolean isAgencyFieldsConsistent() {
+        return (agencyId == null) == (agencyCostPrice == null);
+    }
 }

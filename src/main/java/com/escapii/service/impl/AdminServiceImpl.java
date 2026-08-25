@@ -1010,10 +1010,11 @@ public class AdminServiceImpl implements AdminService {
         if (agencyDates.isEmpty()) return List.of();
 
         List<Long> dateIds = agencyDates.stream().map(AvailableDate::getId).toList();
-        Map<Long, Long> travelersByDate = bookingRepository.sumTravelersByDateIds(dateIds).stream()
+        // [dateId, sumRevenue, sumCost, sumTravelers] — iz booking snapshotova
+        Map<Long, Object[]> earningsByDate = bookingRepository.sumEarningsByDateIds(dateIds).stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
-                        row -> (Long) row[1]
+                        row -> row
                 ));
 
         Map<Long, List<AvailableDate>> byAgency = agencyDates.stream()
@@ -1024,9 +1025,10 @@ public class AdminServiceImpl implements AdminService {
             Agency agency = dates.get(0).getAgency();
 
             List<AgencyEarningsResponse.TermEarning> termEarnings = dates.stream().map(d -> {
-                int travelers = travelersByDate.getOrDefault(d.getId(), 0L).intValue();
-                int revenue = d.getBasePrice() * travelers;
-                int cost = d.getAgencyCostPrice() * travelers;
+                Object[] data = earningsByDate.get(d.getId());
+                int travelers = data != null ? ((Long) data[3]).intValue() : 0;
+                int revenue   = data != null ? ((Long) data[1]).intValue() : 0;
+                int cost      = data != null ? ((Long) data[2]).intValue() : 0;
                 return AgencyEarningsResponse.TermEarning.builder()
                         .dateId(d.getId())
                         .departureDate(d.getDepartureDate().toString())
