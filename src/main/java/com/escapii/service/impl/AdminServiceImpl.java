@@ -251,7 +251,6 @@ public class AdminServiceImpl implements AdminService {
         date.setDepartureAirport(req.getDepartureAirport().toUpperCase());
         date.setAvailableSlots(req.getAvailableSlots());
         date.setBasePrice(req.getBasePrice());
-        date.setAgencyCostPrice(req.getAgencyCostPrice());
         date.setActive(true);
 
         if (req.getAgencyId() != null) {
@@ -1002,40 +1001,26 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public List<AgencyEarningsResponse> getAgencyEarnings() {
-        List<AvailableDate> allDates = availableDateRepository.findAllByOrderByDepartureDateAsc();
-        List<AvailableDate> agencyDates = allDates.stream()
-                .filter(d -> d.getAgency() != null && d.getAgencyCostPrice() != null)
-                .toList();
+        // [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, sumTravelers]
+        List<Object[]> rows = bookingRepository.findAgencyEarningsAggregated();
+        if (rows.isEmpty()) return List.of();
 
-        if (agencyDates.isEmpty()) return List.of();
-
-        List<Long> dateIds = agencyDates.stream().map(AvailableDate::getId).toList();
-        // [dateId, sumRevenue, sumCost, sumTravelers] — iz booking snapshotova
-        Map<Long, Object[]> earningsByDate = bookingRepository.sumEarningsByDateIds(dateIds).stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> row
-                ));
-
-        Map<Long, List<AvailableDate>> byAgency = agencyDates.stream()
-                .collect(Collectors.groupingBy(d -> d.getAgency().getId()));
+        Map<Long, List<Object[]>> byAgency = rows.stream()
+                .collect(Collectors.groupingBy(r -> (Long) r[0]));
 
         return byAgency.entrySet().stream().map(entry -> {
-            List<AvailableDate> dates = entry.getValue();
-            Agency agency = dates.get(0).getAgency();
+            List<Object[]> agencyRows = entry.getValue();
+            String agencyName = (String) agencyRows.get(0)[1];
 
-            List<AgencyEarningsResponse.TermEarning> termEarnings = dates.stream().map(d -> {
-                Object[] data = earningsByDate.get(d.getId());
-                int travelers = data != null ? ((Long) data[3]).intValue() : 0;
-                int revenue   = data != null ? ((Long) data[1]).intValue() : 0;
-                int cost      = data != null ? ((Long) data[2]).intValue() : 0;
+            List<AgencyEarningsResponse.TermEarning> termEarnings = agencyRows.stream().map(r -> {
+                int travelers = ((Long) r[8]).intValue();
+                int revenue   = ((Long) r[6]).intValue();
+                int cost      = ((Long) r[7]).intValue();
                 return AgencyEarningsResponse.TermEarning.builder()
-                        .dateId(d.getId())
-                        .departureDate(d.getDepartureDate().toString())
-                        .returnDate(d.getReturnDate().toString())
-                        .departureAirport(d.getDepartureAirport())
-                        .basePrice(d.getBasePrice())
-                        .costPrice(d.getAgencyCostPrice())
+                        .dateId((Long) r[2])
+                        .departureDate(r[3].toString())
+                        .returnDate(r[4].toString())
+                        .departureAirport((String) r[5])
                         .travelers(travelers)
                         .revenue(revenue)
                         .cost(cost)
@@ -1048,9 +1033,9 @@ public class AdminServiceImpl implements AdminService {
             int totalCost = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getCost).sum();
 
             return AgencyEarningsResponse.builder()
-                    .agencyId(agency.getId())
-                    .agencyName(agency.getName())
-                    .totalTerms(dates.size())
+                    .agencyId(entry.getKey())
+                    .agencyName(agencyName)
+                    .totalTerms(agencyRows.size())
                     .totalTravelers(totalTravelers)
                     .totalRevenue(totalRevenue)
                     .totalCost(totalCost)
@@ -1058,6 +1043,17 @@ public class AdminServiceImpl implements AdminService {
                     .terms(termEarnings)
                     .build();
         }).toList();
+    }
+
+    @Transactional
+    public AdminBookingResponse setAgencyCost(Long bookingId, Integer agencyCost) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+        booking.setAgencyCost(agencyCost);
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Agency cost za {} → {}€", saved.getBookingRef(), agencyCost);
+        return adminBookingMapper.toResponse(saved);
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

@@ -77,15 +77,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Ukupan broj rezervacija za dati termin (sve statuse) - koristi se pre brisanja. */
     long countBySelectedDateId(Long selectedDateId);
 
-    /** Earnings po terminu: [dateId, sumRevenue, sumCost, sumTravelers]. Koristi booking snapshote. */
-    @Query("SELECT b.selectedDate.id, " +
-           "SUM(b.basePricePerPerson * b.numberOfTravelers), " +
-           "SUM(COALESCE(b.agencyCostSnapshot, 0) * b.numberOfTravelers), " +
-           "SUM(b.numberOfTravelers) " +
+    /** Earnings po agenciji+terminu: [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, travelers]. */
+    @Query("SELECT b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
+           "b.selectedDate.departureDate, b.selectedDate.returnDate, b.selectedDate.departureAirport, " +
+           "SUM(b.totalPriceAll), SUM(COALESCE(b.agencyCost, 0)), SUM(b.numberOfTravelers) " +
            "FROM Booking b WHERE b.status IN ('CONFIRMED', 'COMPLETED') " +
-           "AND b.selectedDate.id IN :dateIds " +
-           "GROUP BY b.selectedDate.id")
-    List<Object[]> sumEarningsByDateIds(@Param("dateIds") List<Long> dateIds);
+           "AND b.agencyIdSnapshot IS NOT NULL " +
+           "GROUP BY b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
+           "b.selectedDate.departureDate, b.selectedDate.returnDate, b.selectedDate.departureAirport")
+    List<Object[]> findAgencyEarningsAggregated();
 
     /**
      * Duplikat check - isti email + isti termin kreiran u poslednjih 24h.

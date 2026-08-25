@@ -41,15 +41,6 @@ public class AdminDateRequest {
     @Size(max = 20, message = "Maksimalno 20 destinacija po terminu")
     private List<Long> destinationIds = new ArrayList<>();
 
-    /** Nabavna cena od agencije po osobi (EUR). Opciono. */
-    @Min(value = 0, message = "Nabavna cena ne može biti negativna")
-    private Integer agencyCostPrice;
-
     /** ID agencije koja organizuje ovaj termin. Opciono. */
     private Long agencyId;
-
-    @AssertTrue(message = "Agencija i nabavna cena moraju biti oba popunjena ili oba prazna")
-    private boolean isAgencyFieldsConsistent() {
-        return (agencyId == null) == (agencyCostPrice == null);
-    }
 }

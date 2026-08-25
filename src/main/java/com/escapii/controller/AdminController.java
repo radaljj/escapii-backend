@@ -476,6 +476,15 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    /** PATCH /api/admin/bookings/{id}/agency-cost — unesi ukupan trošak agencije za rezervaciju. */
+    @PatchMapping("/bookings/{id}/agency-cost")
+    public ResponseEntity<AdminBookingResponse> setAgencyCost(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> body) {
+        Integer cost = body.get("agencyCost");
+        return ResponseEntity.ok(adminService.setAgencyCost(id, cost));
+    }
+
     /** GET /api/admin/agencies/earnings — zarada po agenciji (za fakturisanje). */
     @GetMapping("/agencies/earnings")
     public ResponseEntity<List<AgencyEarningsResponse>> getAgencyEarnings() {

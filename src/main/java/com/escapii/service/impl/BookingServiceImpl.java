@@ -345,7 +345,6 @@ public class BookingServiceImpl implements BookingService {
         if (date.getAgency() != null) {
             b.setAgencyIdSnapshot(date.getAgency().getId());
             b.setAgencyNameSnapshot(date.getAgency().getName());
-            b.setAgencyCostSnapshot(date.getAgencyCostPrice());
         }
 
         if (!request.getPassengers().isEmpty()) {

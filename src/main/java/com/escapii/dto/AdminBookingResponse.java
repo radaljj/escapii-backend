@@ -67,6 +67,7 @@ public class AdminBookingResponse {
     private Integer basePricePerPerson;
     private Integer totalPricePerPerson;
     private Integer totalPriceAll;
+    private Integer agencyCost;
 
     // Termin i isključene destinacije (IDs za dropdown)
     private Long selectedDateId;

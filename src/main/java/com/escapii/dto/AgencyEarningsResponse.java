@@ -24,8 +24,6 @@ public class AgencyEarningsResponse {
         private final String departureDate;
         private final String returnDate;
         private final String departureAirport;
-        private final int basePrice;
-        private final int costPrice;
         private final int travelers;
         private final int revenue;
         private final int cost;

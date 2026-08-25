@@ -89,4 +89,5 @@ public interface AdminService {
     AgencyResponse toggleAgencyActive(Long id);
     void assignAgencyToDate(Long dateId, Long agencyId);
     List<AgencyEarningsResponse> getAgencyEarnings();
+    AdminBookingResponse setAgencyCost(Long bookingId, Integer agencyCost);
 }
