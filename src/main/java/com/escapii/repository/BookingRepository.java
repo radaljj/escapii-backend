@@ -80,9 +80,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Earnings po agenciji+terminu: [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, travelers]. */
     @Query("SELECT b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
            "b.selectedDate.departureDate, b.selectedDate.returnDate, b.selectedDate.departureAirport, " +
-           "SUM(b.totalPriceAll), SUM(COALESCE(b.agencyCost, 0)), SUM(b.numberOfTravelers) " +
+           "SUM(b.totalPriceAll), SUM(b.agencyCost), SUM(b.numberOfTravelers) " +
            "FROM Booking b WHERE b.status IN ('CONFIRMED', 'COMPLETED') " +
-           "AND b.agencyIdSnapshot IS NOT NULL " +
+           "AND b.agencyIdSnapshot IS NOT NULL AND b.agencyCost IS NOT NULL " +
            "GROUP BY b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
            "b.selectedDate.departureDate, b.selectedDate.returnDate, b.selectedDate.departureAirport")
     List<Object[]> findAgencyEarningsAggregated();

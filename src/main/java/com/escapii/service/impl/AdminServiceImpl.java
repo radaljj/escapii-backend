@@ -1047,6 +1047,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Transactional
     public AdminBookingResponse setAgencyCost(Long bookingId, Integer agencyCost) {
+        if (agencyCost != null && agencyCost < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Trošak agencije ne može biti negativan");
+        }
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + bookingId));
