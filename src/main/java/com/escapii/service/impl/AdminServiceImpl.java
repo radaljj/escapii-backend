@@ -1032,8 +1032,10 @@ public class AdminServiceImpl implements AdminService {
 
             List<AgencyEarningsResponse.TermEarning> termEarnings = agencyRows.stream().map(r -> {
                 int travelers = ((Long) r[8]).intValue();
-                int revenue   = ((Long) r[6]).intValue();
+                int paid      = ((Long) r[6]).intValue();
                 int cost      = ((Long) r[7]).intValue();
+                int voucher   = ((Long) r[9]).intValue();
+                int revenue   = paid + voucher;
                 return AgencyEarningsResponse.TermEarning.builder()
                         .dateId((Long) r[2])
                         .departureDate(r[3].toString())
@@ -1043,12 +1045,14 @@ public class AdminServiceImpl implements AdminService {
                         .revenue(revenue)
                         .cost(cost)
                         .profit(revenue - cost)
+                        .voucher(voucher)
                         .build();
             }).toList();
 
             int totalTravelers = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getTravelers).sum();
             int totalRevenue = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getRevenue).sum();
             int totalCost = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getCost).sum();
+            int totalVoucher = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getVoucher).sum();
 
             return AgencyEarningsResponse.builder()
                     .agencyId(entry.getKey())
@@ -1058,6 +1062,7 @@ public class AdminServiceImpl implements AdminService {
                     .totalRevenue(totalRevenue)
                     .totalCost(totalCost)
                     .totalProfit(totalRevenue - totalCost)
+                    .totalVoucher(totalVoucher)
                     .terms(termEarnings)
                     .build();
         }).toList();

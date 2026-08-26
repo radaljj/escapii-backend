@@ -15,6 +15,7 @@ public class AgencyEarningsResponse {
     private final int totalRevenue;
     private final int totalCost;
     private final int totalProfit;
+    private final int totalVoucher;
     private final List<TermEarning> terms;
 
     @Getter
@@ -28,5 +29,6 @@ public class AgencyEarningsResponse {
         private final int revenue;
         private final int cost;
         private final int profit;
+        private final int voucher;
     }
 }

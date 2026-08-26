@@ -77,10 +77,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Ukupan broj rezervacija za dati termin (sve statuse) - koristi se pre brisanja. */
     long countBySelectedDateId(Long selectedDateId);
 
-    /** Earnings po agenciji+terminu: [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, travelers]. */
+    /** Earnings po agenciji+terminu: [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, travelers, sumVoucher]. */
     @Query("SELECT b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
            "b.selectedDate.departureDate, b.selectedDate.returnDate, b.selectedDate.departureAirport, " +
-           "SUM(b.totalPriceAll), SUM(b.agencyCost), SUM(b.numberOfTravelers) " +
+           "SUM(b.totalPriceAll), SUM(b.agencyCost), SUM(b.numberOfTravelers), " +
+           "SUM(COALESCE(b.voucherDiscount, 0)) " +
            "FROM Booking b WHERE b.status IN ('CONFIRMED', 'COMPLETED') " +
            "AND b.agencyIdSnapshot IS NOT NULL AND b.agencyCost IS NOT NULL " +
            "GROUP BY b.agencyIdSnapshot, b.agencyNameSnapshot, b.selectedDate.id, " +
