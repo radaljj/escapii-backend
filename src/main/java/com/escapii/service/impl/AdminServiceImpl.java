@@ -800,6 +800,13 @@ public class AdminServiceImpl implements AdminService {
         // Zapamti kome ide privatni link - upit se kasnije može obrisati.
         date.setClientEmail(inquiry.getEmail());
 
+        if (req.agencyId() != null) {
+            Agency agency = agencyRepository.findById(req.agencyId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Agencija nije pronađena: " + req.agencyId()));
+            date.setAgency(agency);
+        }
+
         AvailableDate saved = availableDateRepository.save(date);
         log.info("[ADMIN] Privatni termin kreiran za upit id={} | {} → {} | token={} | {}€/os | expiresAt={}",
                 inquiryId, depDate, retDate, LogUtils.maskToken(saved.getPrivateToken()), req.pricePerPerson(), saved.getExpiresAt());

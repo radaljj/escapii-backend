@@ -23,7 +23,10 @@ public record CreatePrivateDateRequest(
     Integer travelers,
 
     /** Koliko sati je link validan. Podrazumevano: 48. */
-    Integer expiresInHours
+    Integer expiresInHours,
+
+    /** Opciono - agencija koja organizuje termin. */
+    Long agencyId
 ) {
     public int effectiveExpiry() {
         return (expiresInHours != null && expiresInHours > 0) ? expiresInHours : 48;
