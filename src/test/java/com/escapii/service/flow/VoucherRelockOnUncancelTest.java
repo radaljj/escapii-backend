@@ -2,6 +2,7 @@ package com.escapii.service.flow;
 
 import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
+import com.escapii.model.Agency;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
@@ -82,6 +83,13 @@ class VoucherRelockOnUncancelTest {
         AvailableDate d = new AvailableDate();
         d.setId(50L);
         d.setAvailableSlots(availableSlots);
+        // Agencija na terminu je preduslov da booking uopšte može u CONFIRMED
+        // (guard u updateBookingStatus) - testovi ovde ne testiraju taj guard
+        // nego vaučer logiku, pa termin uvek ima agenciju kao u produkciji.
+        Agency a = new Agency();
+        a.setId(1L);
+        a.setName("Test agencija");
+        d.setAgency(a);
         return d;
     }
 

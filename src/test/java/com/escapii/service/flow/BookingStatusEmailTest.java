@@ -3,6 +3,7 @@ package com.escapii.service.flow;
 import com.escapii.event.BookingEmailEvent;
 import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
+import com.escapii.model.Agency;
 import com.escapii.model.AvailableDate;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingStatus;
@@ -75,6 +76,12 @@ class BookingStatusEmailTest {
         AvailableDate d = new AvailableDate();
         d.setId(50L);
         d.setAvailableSlots(availableSlots);
+        // Agencija je preduslov za CONFIRMED (guard u updateBookingStatus).
+        // Ovi testovi testiraju email logiku, ne guard, pa termin ima agenciju.
+        Agency a = new Agency();
+        a.setId(1L);
+        a.setName("Test agencija");
+        d.setAgency(a);
         return d;
     }
 
