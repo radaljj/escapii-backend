@@ -27,11 +27,16 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
                 ? EmailHtmlBuilder.dRow("Napomena", EmailHtmlBuilder.esc(i.getNotes()))
                 : "";
 
+        java.time.LocalDate ret = i.getDesiredDepartureDate().plusDays(i.getNights());
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd.MM.");
+        java.time.format.DateTimeFormatter fmtY = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+        String period = i.getDesiredDepartureDate().format(fmt) + " – " + ret.format(fmtY);
+
         String body = EmailHtmlBuilder.detailsCard("Detalji upita",
                 EmailHtmlBuilder.dRow("Aerodrom", EmailHtmlBuilder.esc(i.getAirport())) +
                 EmailHtmlBuilder.dRow("Email", "<a href=\"mailto:" + EmailHtmlBuilder.esc(i.getEmail()) + "\" style=\"color:#a85e44;\">" + EmailHtmlBuilder.esc(i.getEmail()) + "</a>") +
                 EmailHtmlBuilder.dRow("Putnici", String.valueOf(i.getTravelers())) +
-                EmailHtmlBuilder.dRow("Željeni datum", String.valueOf(i.getDesiredDepartureDate())) +
+                EmailHtmlBuilder.dRow("Period", period) +
                 EmailHtmlBuilder.dRow("Noći", i.getNights() + " noći") +
                 notesRow,
                 "#a85e44");
@@ -40,7 +45,7 @@ public class InquiryEmailServiceImpl implements InquiryEmailService {
                 "#a85e44", "",
                 EmailHtmlBuilder.statusBadge("Nov upit", "blue"),
                 "Prilagođeni termin #" + i.getId(),
-                EmailHtmlBuilder.esc(i.getAirport()) + " · " + i.getTravelers() + " putnik/a",
+                EmailHtmlBuilder.esc(i.getAirport()) + " · " + period + " · " + i.getTravelers() + " putnik/a",
                 "",
                 body,
                 "<strong style=\"color:#1a1410;\">escapii</strong> · Interno obaveštenje",
