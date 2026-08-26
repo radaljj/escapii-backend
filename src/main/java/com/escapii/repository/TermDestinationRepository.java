@@ -14,6 +14,12 @@ public interface TermDestinationRepository extends JpaRepository<TermDestination
 
     List<TermDestination> findByDateIdOrderByDestinationNameAsc(Long dateId);
 
+    /** Batch varijanta - za više termina odjednom, sprečava N+1 kod liste bookinga. */
+    @Query("SELECT td FROM TermDestination td " +
+           "WHERE td.date.id IN :dateIds " +
+           "ORDER BY td.destination.name ASC")
+    List<TermDestination> findByDateIdIn(@Param("dateIds") java.util.Collection<Long> dateIds);
+
     Optional<TermDestination> findByDateIdAndDestinationId(Long dateId, Long destinationId);
 
     boolean existsByDateIdAndDestinationId(Long dateId, Long destinationId);

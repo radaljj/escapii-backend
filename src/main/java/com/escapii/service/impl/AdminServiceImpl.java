@@ -424,17 +424,25 @@ public class AdminServiceImpl implements AdminService {
 
         responses.forEach(r -> r.setDestinationRevealedAt(revealedMap.get(r.getBookingRef())));
 
-        // Popuni termDestinations per booking (destinacije dostupne za taj termin)
-        responses.forEach(r -> {
-            if (r.getSelectedDateId() != null) {
-                List<com.escapii.dto.TermDestinationResponse> termDests =
-                        termDestinationRepository.findByDateIdOrderByDestinationNameAsc(r.getSelectedDateId())
-                                .stream()
-                                .map(com.escapii.dto.TermDestinationResponse::new)
-                                .toList();
-                r.setTermDestinations(termDests);
-            }
-        });
+        // Popuni termDestinations per booking - batch upit (sprečava N+1)
+        Set<Long> dateIds = responses.stream()
+                .map(AdminBookingResponse::getSelectedDateId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (!dateIds.isEmpty()) {
+            Map<Long, List<com.escapii.dto.TermDestinationResponse>> byDateId =
+                    termDestinationRepository.findByDateIdIn(dateIds).stream()
+                            .collect(Collectors.groupingBy(
+                                    td -> td.getDate().getId(),
+                                    Collectors.mapping(com.escapii.dto.TermDestinationResponse::new, Collectors.toList())));
+
+            responses.forEach(r -> {
+                if (r.getSelectedDateId() != null) {
+                    r.setTermDestinations(byDateId.getOrDefault(r.getSelectedDateId(), List.of()));
+                }
+            });
+        }
 
         return responses;
     }
