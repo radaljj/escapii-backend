@@ -651,12 +651,21 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public AdminBookingResponse setDestination(Long id, String destination) {
+    public AdminBookingResponse setDestination(Long id, String destination, boolean force) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + id));
 
         String trimmed = (destination == null) ? null : destination.strip();
+        boolean isChange = trimmed != null && !trimmed.isEmpty()
+                && booking.getAssignedDestination() != null
+                && !trimmed.equals(booking.getAssignedDestination());
+
+        if (isChange && booking.getRevealSentAt() != null && !force) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Reveal je već poslat — koristite force=true da promenite destinaciju");
+        }
+
         booking.setAssignedDestination(trimmed);
 
         // Generiši token tek kad je destinacija unesena i još nema tokena

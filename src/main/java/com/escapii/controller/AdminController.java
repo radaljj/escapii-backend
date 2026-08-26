@@ -323,7 +323,7 @@ public class AdminController {
             @PathVariable Long id,
             @Valid @RequestBody AdminDestinationRequest body) {
         String destination = body.destination() != null ? body.destination() : "";
-        return ResponseEntity.ok(adminService.setDestination(id, destination));
+        return ResponseEntity.ok(adminService.setDestination(id, destination, body.isForce()));
     }
 
     /**

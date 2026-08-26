@@ -11,9 +11,11 @@ import com.escapii.model.Booking;
 import com.escapii.model.DepartureAirport;
 import com.escapii.model.Destination;
 import com.escapii.model.GiftVoucher;
+import com.escapii.model.TermDestination;
 import com.escapii.model.VoucherStatus;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import com.escapii.model.PassengerInfo;
 import com.escapii.repository.AvailableDateRepository;
@@ -143,6 +145,27 @@ public class BookingServiceImpl implements BookingService {
         Destination   excl3 = resolveDestination(request.getExcludedDestination3Id());
         Destination   excl4 = resolveDestination(request.getExcludedDestination4Id());
         int exclusionCount  = countNonNull(excl1, excl2, excl3, excl4);
+
+        // 4a. Svaka isključena destinacija mora biti aktivna za ovaj termin, bez duplikata.
+        if (exclusionCount > 0) {
+            Set<Long> activeDestIds = date.getTermDestinations().stream()
+                    .filter(TermDestination::isActive)
+                    .map(td -> td.getDestination().getId())
+                    .collect(java.util.stream.Collectors.toSet());
+
+            Set<Long> seen = new java.util.LinkedHashSet<>();
+            for (Destination d : new Destination[]{excl1, excl2, excl3, excl4}) {
+                if (d == null) continue;
+                if (!seen.add(d.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Duplikat isključene destinacije: " + d.getName());
+                }
+                if (!activeDestIds.contains(d.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Destinacija '" + d.getName() + "' nije aktivna za izabrani termin");
+                }
+            }
+        }
 
         // 4b. Broj isključenih destinacija po pravilima aerodroma (DepartureAirport).
         // Frontend to već sprečava u koraku 6, ali mora se forsirati i ovde jer je

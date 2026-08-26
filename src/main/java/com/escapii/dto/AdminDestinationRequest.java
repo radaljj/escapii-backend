@@ -8,5 +8,8 @@ import jakarta.validation.constraints.Size;
  */
 public record AdminDestinationRequest(
         @Size(max = 200, message = "Naziv destinacije ne sme biti duži od 200 karaktera")
-        String destination
-) {}
+        String destination,
+        Boolean force
+) {
+    public boolean isForce() { return Boolean.TRUE.equals(force); }
+}
