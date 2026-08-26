@@ -581,6 +581,17 @@ public class AdminServiceImpl implements AdminService {
             });
         }
 
+        // Snapshot agencije se pravi tek pri potvrdi - do tada admin može promeniti agenciju na terminu.
+        if (status == BookingStatus.CONFIRMED && saved.getAgencyIdSnapshot() == null) {
+            availableDateRepository.findByBookingId(id).ifPresent(date -> {
+                if (date.getAgency() != null) {
+                    saved.setAgencyIdSnapshot(date.getAgency().getId());
+                    saved.setAgencyNameSnapshot(date.getAgency().getName());
+                    bookingRepository.save(saved);
+                }
+            });
+        }
+
         // Mejl se šalje kroz event - garantuje slanje tek POSLE commit-a
         if (status == BookingStatus.CONFIRMED) {
             eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.BOOKING_CONFIRMED));
