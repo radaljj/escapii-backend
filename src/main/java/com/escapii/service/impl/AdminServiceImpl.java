@@ -512,6 +512,24 @@ public class AdminServiceImpl implements AdminService {
                         "Rezervacija ne postoji: " + id));
 
         BookingStatus oldStatus = booking.getStatus();
+
+        // Guard: booking ne sme u CONFIRMED bez agencije - inače bi bio "nevidljiv"
+        // u earnings dashboardu (grupiše se po agencyIdSnapshot). Privatni termin sme
+        // ostati bez agencije dok se ne pronađe organizator, ali potvrda bookinga
+        // zahteva da je agencija već dodeljena terminu (snapshot se pravi malo niže).
+        // Provera samo pri PRELAZU u CONFIRMED - CONFIRMED→CONFIRMED je no-op, a snapshot
+        // koji već postoji znači da je agencija u prošlosti bila vezana pa je sigurno.
+        if (status == BookingStatus.CONFIRMED && oldStatus != BookingStatus.CONFIRMED
+                && booking.getAgencyIdSnapshot() == null) {
+            AvailableDate confirmDate = availableDateRepository.findByBookingId(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Termin ne postoji za booking: " + id));
+            if (confirmDate.getAgency() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Termin nema dodeljenu agenciju. Dodeli agenciju terminu pre potvrde rezervacije.");
+            }
+        }
+
         booking.setOldStatus(oldStatus);
         booking.setStatus(status);
         Booking saved = bookingRepository.save(booking);
