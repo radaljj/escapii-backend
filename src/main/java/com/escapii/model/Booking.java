@@ -253,7 +253,7 @@ public class Booking {
 
     // ── Reveal Box ────────────────────────────────────────────────────
 
-    /** Korisnik je odabrao fizički Reveal Box (25€ flat). */
+    /** Korisnik je odabrao fizički Reveal Box (35€ flat). */
     @Column(name = "has_reveal_box", nullable = false)
     private Boolean hasRevealBox = false;
 

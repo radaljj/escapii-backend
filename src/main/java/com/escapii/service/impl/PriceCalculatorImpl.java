@@ -34,7 +34,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public static final Integer SEATS_PP         = 24;   // 12€/smer × 2 smera, po osobi
     private static final Integer EXCLUSION_PP    = 15;   // po osobi, za 2., 3. i 4. isključivanje
     public static final Integer SOLO_SURCHARGE   = 60;   // doplata za solo putnika
-    public static final Integer REVEAL_BOX_FLAT  = 25;   // flat po rezervaciji
+    public static final Integer REVEAL_BOX_FLAT  = 35;   // flat po rezervaciji
 
     @Override
     public PricePreviewResponse calculate(AvailableDate date, int n, AccommodationType accommodationType,

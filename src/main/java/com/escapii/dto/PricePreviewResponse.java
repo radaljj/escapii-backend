@@ -30,7 +30,7 @@ public class PricePreviewResponse {
     private Integer cabinSuitcaseTotal;          // cabinSuitcaseCount × 80
 
     // ── Reveal Box (flat po rezervaciji) ─────────────────────────────
-    private Integer revealBoxTotal;              // 0 ili 25
+    private Integer revealBoxTotal;              // 0 ili 35
 
     // ── Ukupno ────────────────────────────────────────────────────────
     /** eurPerPerson × n + cabinSuitcaseTotal + exclusionCostFlat + soloSurcharge + revealBoxTotal */

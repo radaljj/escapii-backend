@@ -127,7 +127,7 @@ public class BookingRequest {
 
     // ── Reveal Box (opciono) ──────────────────────────────────────────
 
-    /** Korisnik želi fizički Reveal Box (+25€ flat). */
+    /** Korisnik želi fizički Reveal Box (+35€ flat). */
     private boolean hasRevealBox = false;
 
     /** Adresa dostave - obavezno ako hasRevealBox=true. */
