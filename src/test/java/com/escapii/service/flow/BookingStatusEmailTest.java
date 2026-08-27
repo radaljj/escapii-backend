@@ -11,6 +11,7 @@ import com.escapii.repository.*;
 import com.escapii.service.*;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.impl.AdminServiceImpl;
+import com.escapii.service.impl.ConfirmationDocumentAutoSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,7 @@ class BookingStatusEmailTest {
     @Mock private AirportLookupService airportLookupService;
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
+    @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     private AdminServiceImpl svc;
 
@@ -59,7 +61,7 @@ class BookingStatusEmailTest {
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService);
+                confirmationDocumentEmailService, confirmationDocumentAutoSender);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 

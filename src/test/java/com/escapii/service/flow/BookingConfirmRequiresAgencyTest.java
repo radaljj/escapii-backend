@@ -10,6 +10,7 @@ import com.escapii.repository.*;
 import com.escapii.service.*;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.impl.AdminServiceImpl;
+import com.escapii.service.impl.ConfirmationDocumentAutoSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +52,7 @@ class BookingConfirmRequiresAgencyTest {
     @Mock private AirportLookupService airportLookupService;
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
+    @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     private AdminServiceImpl svc;
 
@@ -60,7 +62,7 @@ class BookingConfirmRequiresAgencyTest {
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService);
+                confirmationDocumentEmailService, confirmationDocumentAutoSender);
         // lenient - guard testovi rano puknu i ne dolaze do save() poziva.
         lenient().when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
     }

@@ -6,6 +6,7 @@ import com.escapii.repository.BookingRepository;
 import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.DigestEmailService;
+import com.escapii.service.impl.ConfirmationDocumentAutoSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,7 @@ public class DailyTaskScheduler {
     private final DigestEmailService           digestEmailService;
     private final AvailableDateRepository      availableDateRepository;
     private final CustomDateInquiryRepository  inquiryRepository;
+    private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -36,6 +38,10 @@ public class DailyTaskScheduler {
         // dana, pa je ovo jedino što drži redosled - lanac je sinhron.
         schedulingService.sendPendingForecasts();
         schedulingService.sendPendingReveals();
+        // Retry za dokumente cije auto-slanje unutar sendPendingReveals cycle-a
+        // je puklo (SMTP hiccup, race, restart). Bez ovoga box korisnik moze da
+        // "propadne kroz mrezu" - revealSentAt postavljen, dokument nikad ne krene.
+        confirmationDocumentAutoSender.sendAllPending();
         // cancelStalePendingBookings() je uklonjen - admin ručno potvrđuje ili otkazuje
         schedulingService.completeFinishedBookings();
         sendDigest();

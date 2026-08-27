@@ -38,6 +38,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private final RevealEmailService   revealEmailService;
     private final ForecastEmailService forecastEmailService;
     private final WeatherService       weatherService;
+    private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
@@ -176,6 +177,15 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
         log.info("[Admin] Ručni reveal poslan za {} → '{}' (siteUrl={})",
                 booking.getBookingRef(), booking.getAssignedDestination(), validatedUrl);
+
+        // Isti auto-send hook kao u sendReveals() - za box korisnika dokument moze
+        // odmah da ide (revealSentAt je postavljen), za non-box ceka klik pa retry.
+        try {
+            confirmationDocumentAutoSender.sendIfReadyAndPending(booking);
+        } catch (Exception ex) {
+            log.warn("[Admin] Auto-send dokumenta za {} pao, ostaje za retry: {}",
+                    booking.getBookingRef(), ex.getMessage());
+        }
         return Map.of("message", "Reveal email poslan za " + booking.getBookingRef() + ".");
     }
 
@@ -339,6 +349,17 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 bookingRepository.save(booking);
                 sent.add(booking);
                 log.info("[Reveal] {} → {}", booking.getBookingRef(), booking.getAssignedDestination());
+
+                // Auto-send dokumenta ako je uslov ispunjen. Za box korisnika ovo znaci
+                // odmah nakon reveala (revealSentAt je maloprije postavljen), za non-box
+                // tek kad kupac klikne link - to ide kroz DailyTaskScheduler retry, ne ovde.
+                // Pad je bez posledice: sendPendingConfirmationDocuments ce ga pokupiti sutra.
+                try {
+                    confirmationDocumentAutoSender.sendIfReadyAndPending(booking);
+                } catch (Exception ex) {
+                    log.warn("[Reveal] Auto-send dokumenta za {} pao, ostaje za retry: {}",
+                            booking.getBookingRef(), ex.getMessage());
+                }
             } catch (Exception e) {
                 log.error("[Reveal] Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
             }

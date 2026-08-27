@@ -6,6 +6,7 @@ import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.email.ForecastEmailService;
 import com.escapii.service.email.RevealEmailService;
 import com.escapii.service.impl.BookingSchedulingServiceImpl;
+import com.escapii.service.impl.ConfirmationDocumentAutoSender;
 import com.escapii.service.weather.DailyForecast;
 import com.escapii.service.weather.WeatherService;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,13 +39,15 @@ class ManualResendSentFlagTest {
     @Mock private RevealEmailService revealEmailService;
     @Mock private ForecastEmailService forecastEmailService;
     @Mock private WeatherService weatherService;
+    @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     private BookingSchedulingServiceImpl svc;
 
     @BeforeEach
     void setUp() {
         svc = new BookingSchedulingServiceImpl(
-                bookingRepository, giftVoucherRepository, revealEmailService, forecastEmailService, weatherService);
+                bookingRepository, giftVoucherRepository, revealEmailService, forecastEmailService,
+                weatherService, confirmationDocumentAutoSender);
     }
 
     private Booking booking() {

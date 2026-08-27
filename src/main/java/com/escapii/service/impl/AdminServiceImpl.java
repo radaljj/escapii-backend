@@ -98,6 +98,7 @@ public class AdminServiceImpl implements AdminService {
     private final AirportLookupService        airportLookupService;
     private final InvoiceService              invoiceService;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
+    private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -913,23 +914,14 @@ public class AdminServiceImpl implements AdminService {
         booking.setConfirmationSentAt(null);
         Booking saved = bookingRepository.save(booking);
 
-        // Ako je korisnik VEĆ potvrdio da je video reveal (RevealEvent postoji),
-        // šaljemo odmah - nema razloga da čekamo, dokument je upravo stigao.
-        // Vazi jednako i za Reveal Box rezervacije - i oni sada dobijaju digitalni reveal.
-        boolean alreadyViewed = revealEventRepository.findByBookingRef(booking.getBookingRef()).isPresent();
-        if (alreadyViewed) {
-            // Vreme se upisuje SAMO ako je mejl stvarno otišao - inače bi panel
-            // pokazivao "poslato" za mejl koji kupac nikad nije dobio.
-            if (confirmationDocumentEmailService.sendConfirmationDocument(saved)) {
-                saved.setConfirmationSentAt(LocalDateTime.now());
-                saved = bookingRepository.save(saved);
-                log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {} (reveal već viđen)", saved.getBookingRef());
-            } else {
-                log.error("[ConfirmationDocument] Slanje nije uspelo za {} - ostaje neposlat, može ponovo",
-                        saved.getBookingRef());
-            }
-        } else {
-            log.info("[ConfirmationDocument] Uploadovan za {} - čeka se da korisnik pogleda reveal", saved.getBookingRef());
+        // Auto-send ako je uslov ispunjen (RevealEvent za non-box, revealSentAt za box).
+        // Pravilo je centralizovano u autoSender.canReceive - isti izvor istine kao
+        // scheduler retry, da ne bi divergirali dva mesta iste odluke.
+        boolean sent = confirmationDocumentAutoSender.sendIfReadyAndPending(saved);
+        if (sent) {
+            log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {}", saved.getBookingRef());
+        } else if (saved.getConfirmationSentAt() == null) {
+            log.info("[ConfirmationDocument] Uploadovan za {} - ceka se uslov reveal-a (RevealEvent za non-box, revealSentAt za box)", saved.getBookingRef());
         }
 
         return adminBookingMapper.toResponse(saved);
@@ -950,15 +942,15 @@ public class AdminServiceImpl implements AdminService {
         // Dokument nosi destinaciju - i u telu i u naslovu mejla. Ne sme stići
         // pre nego što je kupac sazna, inače pokvari otkrivanje.
         //
-        // Reveal mejl NE sadrži destinaciju, samo link - kupac je sazna tek kad
-        // otvori stranicu. Zato se čeka RevealEvent (otvoreno), a ne revealSentAt
-        // (poslato); isti uslov koji koristi i automatski put posle upload-a.
-        // Vazi jednako i za Reveal Box rezervacije - kutija je fizicki dodatak,
-        // digitalni reveal je i za njih jedini nacin da sistem zna da je destinacija
-        // vec otkrivena kupcu.
-        if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Kupac još nije otvorio reveal. Dokument sadrži destinaciju i ne sme stići pre toga.");
+        // Pravilo (isti izvor istine kao ConfirmationDocumentAutoSender.canReceive):
+        //   - non-box: RevealEvent (kupac je kliknuo reveal link i vec zna grad)
+        //   - box:     revealSentAt (kutija je stigla na T-5..T-3 sa destinacijom,
+        //              nema smisla cekati klik jer nije obavezan)
+        if (!confirmationDocumentAutoSender.canReceive(booking)) {
+            String reason = Boolean.TRUE.equals(booking.getHasRevealBox())
+                    ? "Reveal mejl jos nije poslat. Dokument sadrži destinaciju i ne sme stići pre toga."
+                    : "Kupac još nije otvorio reveal. Dokument sadrži destinaciju i ne sme stići pre toga.";
+            throw new ResponseStatusException(HttpStatus.CONFLICT, reason);
         }
 
         if (!confirmationDocumentEmailService.sendConfirmationDocument(booking)) {

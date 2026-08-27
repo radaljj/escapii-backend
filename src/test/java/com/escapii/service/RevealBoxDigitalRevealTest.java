@@ -47,27 +47,16 @@ class RevealBoxDigitalRevealTest {
                 "rucni reveal ne sme bacati 409 kad je hasRevealBox=true");
     }
 
-    /** Upiti za viewing/reminder ukljucuju box - i on sad ima RevealEvent tok. */
+    /**
+     * findReadyForCompletion cezmi mora ostati centriran samo na revealSentAt -
+     * i box i non-box zavrsavaju putovanje isto. Nije mesto za hasRevealBox filter.
+     */
     @Test
-    void repositoryUpitiZaRevealNeIskljucujuBox() throws Exception {
+    void findReadyForCompletionNeFiltriraPoBoxu() throws Exception {
         String s = src("src/main/java/com/escapii/repository/BookingRepository.java");
-
-        // findRevealedAndViewed / findRevealedButNotViewed / findReadyForCompletion
-        // nekad su imali "hasRevealBox = false" / "OR hasRevealBox = true" - sve se sklanja.
-        int viewed  = s.indexOf("findRevealedAndViewed");
-        int notView = s.indexOf("findRevealedButNotViewed");
-        int compl   = s.indexOf("findReadyForCompletion");
-        assertTrue(viewed > 0 && notView > 0 && compl > 0, "upiti nisu pronađeni");
-
-        // Provera dorucnim opsegom oko svakog upita - ne sme se pominjati hasRevealBox.
-        String viewedQuery  = s.substring(viewed  - 400, viewed);
-        String notViewQuery = s.substring(notView - 400, notView);
-        String complQuery   = s.substring(compl   - 400, compl);
-
-        assertFalse(viewedQuery.contains("hasRevealBox"),
-                "findRevealedAndViewed ne sme filtrirati po hasRevealBox");
-        assertFalse(notViewQuery.contains("hasRevealBox"),
-                "findRevealedButNotViewed ne sme filtrirati po hasRevealBox");
+        int compl = s.indexOf("findReadyForCompletion");
+        assertTrue(compl > 0, "findReadyForCompletion nije pronađen");
+        String complQuery = s.substring(compl - 400, compl);
         assertFalse(complQuery.contains("hasRevealBox"),
                 "findReadyForCompletion ne sme filtrirati po hasRevealBox - svi cekaju revealSentAt");
     }
@@ -85,23 +74,56 @@ class RevealBoxDigitalRevealTest {
     }
 
     /**
-     * Dokument rezervacije (posle upload-a) mora cekati RevealEvent i za box.
-     * Ranije je box zaobilazio proveru; sad je izuzetak uklonjen.
+     * Dokument (upload i resend) ide kroz centralni autoSender - ne sme vise
+     * direktno da granata po hasRevealBox u AdminServiceImpl. Pravilo (canReceive)
+     * mora biti na jednom mestu da scheduler retry i sinhrono slanje daju isti odgovor.
      */
     @Test
-    void dokumentRezervacijeCekaRevealIZaBox() throws Exception {
+    void adminUsesCentralnaLogiku() throws Exception {
         String s = src("src/main/java/com/escapii/service/impl/AdminServiceImpl.java");
 
         int upload = s.indexOf("public AdminBookingResponse uploadConfirmationDocument");
         assertTrue(upload > 0, "uploadConfirmationDocument nije pronađen");
         String uploadBody = s.substring(upload, s.indexOf("\n    }", upload));
-        assertFalse(uploadBody.contains("getHasRevealBox()"),
-                "upload ne sme vise granati po hasRevealBox - box takodje ceka RevealEvent");
+        assertTrue(uploadBody.contains("confirmationDocumentAutoSender"),
+                "upload mora ici kroz autoSender (centralno pravilo canReceive)");
 
         int resend = s.indexOf("public AdminBookingResponse resendConfirmationDocument");
         assertTrue(resend > 0, "resendConfirmationDocument nije pronađen");
         String resendBody = s.substring(resend, s.indexOf("\n    }", resend));
-        assertFalse(resendBody.contains("getHasRevealBox()"),
-                "resend ne sme vise granati po hasRevealBox - box takodje ceka RevealEvent");
+        assertTrue(resendBody.contains("confirmationDocumentAutoSender.canReceive"),
+                "resend mora zvati autoSender.canReceive umesto direktne provere RevealEvent-a");
+    }
+
+    /**
+     * Scheduler cycle (sendReveals + retry) mora imati dve provere u DailyTaskScheduler-u:
+     * hook posle reveala (kroz autoSender u sendReveals) + dnevni retry za pukla slanja.
+     * Bez retry-a box korisnik moze "propadnuti kroz mrezu" - reveal poslat, dokument nikad.
+     */
+    @Test
+    void schedulerImaHookIRetry() throws Exception {
+        String reveal = src("src/main/java/com/escapii/service/impl/BookingSchedulingServiceImpl.java");
+        assertTrue(reveal.contains("confirmationDocumentAutoSender.sendIfReadyAndPending"),
+                "sendReveals i sendRevealForBooking moraju pozvati autoSender.sendIfReadyAndPending "
+                + "posle setovanja revealSentAt - da box korisnik dobije dokument bez klika");
+
+        String sched = src("src/main/java/com/escapii/config/DailyTaskScheduler.java");
+        assertTrue(sched.contains("confirmationDocumentAutoSender.sendAllPending"),
+                "DailyTaskScheduler mora zvati sendAllPending za retry - safety net za pukla slanja");
+    }
+
+    /**
+     * Box korisnik ne treba da bude alarmiran u "nije otvorio reveal" upozorenju:
+     * nije duzan da klikne link, dokument mu ide automatski cim reveal krene.
+     */
+    @Test
+    void findRevealedButNotViewedIskljucujeBox() throws Exception {
+        String s = src("src/main/java/com/escapii/repository/BookingRepository.java");
+        int m = s.indexOf("findRevealedButNotViewed");
+        assertTrue(m > 0, "findRevealedButNotViewed nije pronađen");
+        String around = s.substring(m - 500, m);
+        assertTrue(around.contains("b.hasRevealBox = false"),
+                "findRevealedButNotViewed mora eksplicitno iskljuciti box rezervacije - "
+                + "one nemaju obavezu klika, ne alarmirati tim ako nije otvorio");
     }
 }

@@ -76,22 +76,33 @@ class DestinationSecrecyTest {
 
     /**
      * Dokument rezervacije nosi destinaciju u naslovu mejla. Ni automatsko ni
-     * ručno slanje ne sme ići pre reveala.
+     * ručno slanje ne sme ići pre nego sto kupac zna destinaciju.
+     *
+     * Pravilo (centralizovano u ConfirmationDocumentAutoSender.canReceive):
+     *   - non-box: RevealEvent postoji (kupac je kliknuo reveal link)
+     *   - box:     revealSentAt postavljen (kutija je vec otkrila destinaciju
+     *              na T-5..T-3, digitalni reveal je poslat na T-2)
      */
     @Test
     void dokumentRezervacijeCekaReveal() throws Exception {
         String s = src("src/main/java/com/escapii/service/impl/AdminServiceImpl.java");
-
         int m = s.indexOf("public AdminBookingResponse resendConfirmationDocument");
         assertTrue(m > 0, "metoda nije pronađena");
         String body = s.substring(m, s.indexOf("\n    }", m));
-        // Uslov je "kupac ogrebao destinaciju" (RevealEvent), ne "mejl poslat" -
-        // reveal mejl sadrži samo link, grad se vidi tek na stranici.
-        assertTrue(body.contains("revealEventRepository.findByBookingRef"),
-                "dokument mora čekati da kupac ogrebe destinaciju, ne samo da mejl ode");
-        // Reveal Box vise NIJE izuzet - i on dobija digitalni reveal, pa dokument
-        // ceka RevealEvent kao i sve ostale. Kutija ide odvojeno kao fizicki dodatak.
-        assertFalse(body.contains("getHasRevealBox()"),
-                "Reveal Box vise ne sme biti izuzet - digitalni reveal ide svima");
+        assertTrue(body.contains("confirmationDocumentAutoSender.canReceive"),
+                "resend mora zvati centralno pravilo (canReceive), a ne inline provere");
+        // Napomena: hasRevealBox se sme pominjati u resend body-ju iskljucivo za
+        // tekst error poruke (razliciti razlog za box vs non-box), NE kao gard.
+        // Gard je iskljucivo canReceive - proverili smo gore.
+
+        // Isto centralno pravilo mora vaziti i za autoSender.
+        String as = src("src/main/java/com/escapii/service/impl/ConfirmationDocumentAutoSender.java");
+        int cr = as.indexOf("public boolean canReceive");
+        assertTrue(cr > 0, "canReceive nije pronađen");
+        String crBody = as.substring(cr, as.indexOf("\n    }", cr));
+        assertTrue(crBody.contains("getRevealSentAt()"),
+                "box grana canReceive mora traziti revealSentAt");
+        assertTrue(crBody.contains("revealEventRepository.findByBookingRef"),
+                "non-box grana canReceive mora traziti RevealEvent");
     }
 }

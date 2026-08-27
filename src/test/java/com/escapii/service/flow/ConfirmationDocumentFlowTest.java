@@ -8,6 +8,7 @@ import com.escapii.repository.*;
 import com.escapii.service.*;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.service.impl.AdminServiceImpl;
+import com.escapii.service.impl.ConfirmationDocumentAutoSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,14 +60,19 @@ class ConfirmationDocumentFlowTest {
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
 
     private AdminServiceImpl svc;
+    private ConfirmationDocumentAutoSender autoSender;
 
     @BeforeEach
     void setUp() {
+        // Realan autoSender preko mockovanih zavisnosti - da testiramo pravu logiku
+        // koja spaja pravilo (canReceive) i slanje na jednom mestu.
+        autoSender = new ConfirmationDocumentAutoSender(
+                bookingRepository, revealEventRepository, confirmationDocumentEmailService);
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService);
+                confirmationDocumentEmailService, autoSender);
     }
 
     private Booking bookingWithDocument(boolean hasRevealBox) {
@@ -105,32 +111,33 @@ class ConfirmationDocumentFlowTest {
     }
 
     /**
-     * Reveal Box vise NIJE izuzet - i on dobija digitalni reveal, pa dokument
-     * ceka RevealEvent kao i sve ostale. Kutija ide odvojeno kao fizicki dodatak.
+     * Box korisnik ceka revealSentAt (T-2) umesto RevealEvent - kutija je vec
+     * otkrila destinaciju pa nema smisla cekati klik. Bez revealSentAt-a je 409.
      */
     @Test
-    void revealBoxRezervacijaCekaRevealKaoSveOstale() {
+    void revealBoxBezRevealSentAtOdbija() {
         Booking b = bookingWithDocument(true);
+        // revealSentAt = null (nije stigao T-2 jos)
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
-        when(revealEventRepository.findByBookingRef("ESC-test1234")).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> svc.resendConfirmationDocument(1L));
         verifyNoInteractions(confirmationDocumentEmailService);
     }
 
-    /** Regresija: kad kupac sa Reveal Boxom otvori digitalni reveal, dokument moze da ide. */
+    /** Regresija: box + revealSentAt dobija dokument bez klika na RevealEvent. */
     @Test
-    void revealBoxSaOtvorenimRevealomDobijaDokument() {
+    void revealBoxSaRevealSentAtDobijaDokument() {
         Booking b = bookingWithDocument(true);
+        b.setRevealSentAt(java.time.LocalDateTime.now());
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
-        when(revealEventRepository.findByBookingRef("ESC-test1234"))
-                .thenReturn(Optional.of(new RevealEvent("ESC-test1234")));
         when(confirmationDocumentEmailService.sendConfirmationDocument(b)).thenReturn(true);
         when(bookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         svc.resendConfirmationDocument(1L);
 
         assertNotNull(b.getConfirmationSentAt());
+        // Box korisnik ne treba da bude proveravan kroz RevealEvent - kutija je vec stigla
+        verifyNoInteractions(revealEventRepository);
     }
 
     /** Srž zaštite: propalo slanje ne sme upisati vreme. */
@@ -181,6 +188,39 @@ class ConfirmationDocumentFlowTest {
 
         assertNull(b.getConfirmationSentAt());
         verifyNoInteractions(confirmationDocumentEmailService);
+    }
+
+    /** Box korisnik: upload posle T-2 (revealSentAt postavljen) → dokument ide odmah. */
+    @Test
+    void uploadBoxSaRevealSentAtSaljeOdmah() throws Exception {
+        Booking b = new Booking();
+        b.setId(1L); b.setBookingRef("ESC-test1234"); b.setHasRevealBox(true);
+        b.setRevealSentAt(java.time.LocalDateTime.now());
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(bookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(confirmationDocumentEmailService.sendConfirmationDocument(any())).thenReturn(true);
+
+        svc.uploadConfirmationDocument(1L, pdf());
+
+        assertNotNull(b.getConfirmationSentAt());
+        // Box korisnik: nema smisla proveravati RevealEvent, kutija je vec otkrila destinaciju
+        verifyNoInteractions(revealEventRepository);
+    }
+
+    /** Box korisnik: upload pre T-2 (nema revealSentAt) → ceka scheduler. */
+    @Test
+    void uploadBoxPreRevealSentAtCeka() throws Exception {
+        Booking b = new Booking();
+        b.setId(1L); b.setBookingRef("ESC-test1234"); b.setHasRevealBox(true);
+        // revealSentAt = null
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(bookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        svc.uploadConfirmationDocument(1L, pdf());
+
+        assertNull(b.getConfirmationSentAt());
+        verifyNoInteractions(confirmationDocumentEmailService);
+        verifyNoInteractions(revealEventRepository);
     }
 
     /**

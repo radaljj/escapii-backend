@@ -158,18 +158,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                          @Param("until") LocalDate until);
 
     /**
-     * CONFIRMED bookingovi kojima je reveal email poslan i korisnik je otvorio reveal stranicu
-     * (RevealEvent postoji), ALI im dokument rezervacije još nije poslat (confirmationSentAt
-     * IS NULL) — tim treba da uploaduje zvanični PDF od agencije (slanje je posle toga automatsko).
-     * Reveal Box rezervacije su ukljucene: i oni sada dobijaju digitalni reveal
-     * (kutija je odvojena, fizicka logistika).
+     * CONFIRMED bookingovi spremni za slanje dokumenta rezervacije (jos nije poslat).
+     * Digest sekcija za tim da uploaduje zvanicni PDF od agencije - slanje je automatsko posle toga.
+     *
+     * Pravilo kad je "spreman":
+     *   - non-box: postoji RevealEvent (kupac je kliknuo reveal link)
+     *   - box:     revealSentAt IS NOT NULL (kutija je vec otkrila destinaciju,
+     *              ne trazimo klik jer nije obavezan)
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.revealSentAt IS NOT NULL " +
            "AND b.confirmationSentAt IS NULL " +
            "AND b.selectedDate.returnDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff " +
-           "AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r) " +
+           "AND ((b.hasRevealBox = true) " +
+           "     OR (b.hasRevealBox = false AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r))) " +
            "ORDER BY b.selectedDate.departureDate ASC")
     List<Booking> findRevealedAndViewed(@Param("today") LocalDate today,
                                         @Param("cutoff") LocalDate cutoff);
@@ -177,10 +180,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /**
      * CONFIRMED bookingovi kojima je reveal email poslan ALI korisnik NIJE otvorio reveal stranicu,
      * a polazak je za <= 2 dana — hitno upozorenje u digestu.
-     * Reveal Box rezervacije su ukljucene - i oni sada dobijaju digitalni reveal.
+     *
+     * Reveal Box rezervacije su ISKLJUCENE: box korisnik nije duzan da klikne
+     * link (destinaciju je vec saznao iz kutije), pa nema smisla alarmirati tim
+     * da nije otvorio - dokument ce mu automatski otici cim reveal mejl bude poslat.
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.revealSentAt IS NOT NULL " +
+           "AND b.hasRevealBox = false " +
            "AND b.selectedDate.departureDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff " +
            "AND b.bookingRef NOT IN (SELECT r.bookingRef FROM RevealEvent r) " +
@@ -201,5 +208,26 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.airlineBookingCode IS NOT NULL " +
            "AND b.airlineBookingCode != ''")
     List<Booking> findReadyForCompletion(@Param("today") LocalDate today);
+
+    /**
+     * CONFIRMED bookingovi kojima dokument ceka na slanje: uploadovan je,
+     * confirmationSentAt jos nije upisan, i uslov reveal-a je ispunjen.
+     *
+     * Pravilo (isto kao u ConfirmationDocumentAutoSender.canReceive):
+     *   - box:     revealSentAt IS NOT NULL (kutija je vec otkrila destinaciju)
+     *   - non-box: postoji RevealEvent (kupac je kliknuo reveal link)
+     *
+     * Prozor: samo aktivni bookinzi (returnDate >= today) - istekle ne saljemo.
+     * Sluzi kao safety net za retry - ako auto-send u sendReveals cycle-u pukne
+     * (SMTP hiccup, restart scheduler-a), naredni dnevni prolaz ce ih pokupiti.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.confirmationDocument IS NOT NULL " +
+           "AND b.confirmationSentAt IS NULL " +
+           "AND b.selectedDate.returnDate >= :today " +
+           "AND ((b.hasRevealBox = true AND b.revealSentAt IS NOT NULL) " +
+           "     OR (b.hasRevealBox = false AND b.bookingRef IN (SELECT r.bookingRef FROM RevealEvent r))) " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findPendingConfirmationDocuments(@Param("today") LocalDate today);
 
 }
