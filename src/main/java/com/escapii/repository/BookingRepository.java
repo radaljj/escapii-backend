@@ -161,11 +161,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * CONFIRMED bookingovi kojima je reveal email poslan i korisnik je otvorio reveal stranicu
      * (RevealEvent postoji), ALI im dokument rezervacije još nije poslat (confirmationSentAt
      * IS NULL) — tim treba da uploaduje zvanični PDF od agencije (slanje je posle toga automatsko).
-     * Isključeni: Reveal Box rezervacije (oni dobijaju fizičku kutiju, ne email reveal).
+     * Reveal Box rezervacije su ukljucene: i oni sada dobijaju digitalni reveal
+     * (kutija je odvojena, fizicka logistika).
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.revealSentAt IS NOT NULL " +
-           "AND b.hasRevealBox = false " +
            "AND b.confirmationSentAt IS NULL " +
            "AND b.selectedDate.returnDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff " +
@@ -177,11 +177,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /**
      * CONFIRMED bookingovi kojima je reveal email poslan ALI korisnik NIJE otvorio reveal stranicu,
      * a polazak je za <= 2 dana — hitno upozorenje u digestu.
-     * Isključeni: Reveal Box rezervacije.
+     * Reveal Box rezervacije su ukljucene - i oni sada dobijaju digitalni reveal.
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.revealSentAt IS NOT NULL " +
-           "AND b.hasRevealBox = false " +
            "AND b.selectedDate.departureDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff " +
            "AND b.bookingRef NOT IN (SELECT r.bookingRef FROM RevealEvent r) " +
@@ -191,14 +190,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /**
      * CONFIRMED bookingovi čiji je returnDate <= today i ispunjeni svi uslovi:
-     * - reveal poslan (revealSentAt IS NOT NULL) ILI Reveal Box (destinacija se otkriva fizički)
+     * - reveal poslan (revealSentAt IS NOT NULL) - vazi i za Reveal Box rezervacije
      * - airline booking code unet (nije null niti prazan string)
      * Napomena: forecastSentAt nije uslov - forecast može biti propušten ako je
      * booking potvrđen unutar T-4 dana pre polaska (scheduler ga ne stigne poslati).
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.selectedDate.returnDate <= :today " +
-           "AND (b.revealSentAt IS NOT NULL OR b.hasRevealBox = true) " +
+           "AND b.revealSentAt IS NOT NULL " +
            "AND b.airlineBookingCode IS NOT NULL " +
            "AND b.airlineBookingCode != ''")
     List<Booking> findReadyForCompletion(@Param("today") LocalDate today);

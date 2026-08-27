@@ -89,9 +89,9 @@ class DestinationSecrecyTest {
         // reveal mejl sadrži samo link, grad se vidi tek na stranici.
         assertTrue(body.contains("revealEventRepository.findByBookingRef"),
                 "dokument mora čekati da kupac ogrebe destinaciju, ne samo da mejl ode");
-        // Reveal Box ide bez mejla - PDF je odštampan u kutiji. Ručno slanje
-        // mora ostati moguće (npr. kutija se izgubila), inače nema načina.
-        assertTrue(body.contains("getHasRevealBox()"),
-                "Reveal Box rezervacije moraju ostati izuzete");
+        // Reveal Box vise NIJE izuzet - i on dobija digitalni reveal, pa dokument
+        // ceka RevealEvent kao i sve ostale. Kutija ide odvojeno kao fizicki dodatak.
+        assertFalse(body.contains("getHasRevealBox()"),
+                "Reveal Box vise ne sme biti izuzet - digitalni reveal ide svima");
     }
 }

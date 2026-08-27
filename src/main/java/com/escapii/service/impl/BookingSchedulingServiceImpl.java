@@ -144,11 +144,6 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Booking nije pronađen."));
 
-        if (Boolean.TRUE.equals(booking.getHasRevealBox())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Ova rezervacija ima Reveal Box - destinacija se ne otkriva emailom.");
-        }
         if (booking.getRevealSentAt() != null) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -320,10 +315,8 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
         for (Booking booking : readyList) {
             try {
-                // Ako korisnik ima Reveal Box - preskačemo auto email reveal
-                if (Boolean.TRUE.equals(booking.getHasRevealBox())) {
-                    continue;
-                }
+                // Reveal ide SVIMA, i onima sa Reveal Boxom - kutija je fizicki
+                // dodatak i prati se odvojeno preko revealBoxSent/markRevealBoxSent.
 
                 // Reveal NIKAD pre prognoze - to je suština proizvoda. Redosled
                 // poziva (prognoza pa reveal) nije dovoljan: ako prognoza tiho

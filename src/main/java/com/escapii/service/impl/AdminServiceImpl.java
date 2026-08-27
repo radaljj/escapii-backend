@@ -915,8 +915,8 @@ public class AdminServiceImpl implements AdminService {
 
         // Ako je korisnik VEĆ potvrdio da je video reveal (RevealEvent postoji),
         // šaljemo odmah - nema razloga da čekamo, dokument je upravo stigao.
-        boolean alreadyViewed = Boolean.TRUE.equals(booking.getHasRevealBox()) == false
-                && revealEventRepository.findByBookingRef(booking.getBookingRef()).isPresent();
+        // Vazi jednako i za Reveal Box rezervacije - i oni sada dobijaju digitalni reveal.
+        boolean alreadyViewed = revealEventRepository.findByBookingRef(booking.getBookingRef()).isPresent();
         if (alreadyViewed) {
             // Vreme se upisuje SAMO ako je mejl stvarno otišao - inače bi panel
             // pokazivao "poslato" za mejl koji kupac nikad nije dobio.
@@ -953,12 +953,10 @@ public class AdminServiceImpl implements AdminService {
         // Reveal mejl NE sadrži destinaciju, samo link - kupac je sazna tek kad
         // otvori stranicu. Zato se čeka RevealEvent (otvoreno), a ne revealSentAt
         // (poslato); isti uslov koji koristi i automatski put posle upload-a.
-        //
-        // Kod Reveal Box-a nema šta da se čeka: sistem ne može znati kad je kupac
-        // otvorio fizičku kutiju, a scheduler te rezervacije preskače pa se
-        // revealSentAt nikad i ne postavi. Tu odluku donosi admin.
-        if (!Boolean.TRUE.equals(booking.getHasRevealBox())
-                && revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
+        // Vazi jednako i za Reveal Box rezervacije - kutija je fizicki dodatak,
+        // digitalni reveal je i za njih jedini nacin da sistem zna da je destinacija
+        // vec otkrivena kupcu.
+        if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Kupac još nije otvorio reveal. Dokument sadrži destinaciju i ne sme stići pre toga.");
         }

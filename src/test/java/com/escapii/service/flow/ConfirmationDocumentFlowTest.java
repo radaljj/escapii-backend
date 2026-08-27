@@ -29,7 +29,8 @@ import static org.mockito.Mockito.*;
  * moraju važiti u svakom trenutku:
  *
  *   1. Ne sme stići pre nego što kupac otvori reveal (destinacija ne sme
- *      procuriti ranije). Reveal Box je izuzet - PDF je u kutiji, nema mejla.
+ *      procuriti ranije). Vazi jednako i za Reveal Box - i on sad dobija
+ *      digitalni reveal, kutija je fizicki dodatak.
  *   2. "Poslato" u panelu mora značiti da je mejl stvarno otišao.
  *
  * DestinationSecrecyTest i SentFlagTruthfulnessTest čuvaju ova pravila kroz
@@ -103,25 +104,42 @@ class ConfirmationDocumentFlowTest {
         assertNotNull(b.getConfirmationSentAt());
     }
 
-    /** Reveal Box nema mejl za grebanje - sistem ne može znati kad je kutija otvorena. */
+    /**
+     * Reveal Box vise NIJE izuzet - i on dobija digitalni reveal, pa dokument
+     * ceka RevealEvent kao i sve ostale. Kutija ide odvojeno kao fizicki dodatak.
+     */
     @Test
-    void revealBoxRezervacijaIzuzetaOdCekanja() {
+    void revealBoxRezervacijaCekaRevealKaoSveOstale() {
         Booking b = bookingWithDocument(true);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(revealEventRepository.findByBookingRef("ESC-test1234")).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> svc.resendConfirmationDocument(1L));
+        verifyNoInteractions(confirmationDocumentEmailService);
+    }
+
+    /** Regresija: kad kupac sa Reveal Boxom otvori digitalni reveal, dokument moze da ide. */
+    @Test
+    void revealBoxSaOtvorenimRevealomDobijaDokument() {
+        Booking b = bookingWithDocument(true);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(revealEventRepository.findByBookingRef("ESC-test1234"))
+                .thenReturn(Optional.of(new RevealEvent("ESC-test1234")));
         when(confirmationDocumentEmailService.sendConfirmationDocument(b)).thenReturn(true);
         when(bookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         svc.resendConfirmationDocument(1L);
 
         assertNotNull(b.getConfirmationSentAt());
-        verifyNoInteractions(revealEventRepository);
     }
 
     /** Srž zaštite: propalo slanje ne sme upisati vreme. */
     @Test
     void rucnoSlanjePropadaNeUpisujeSentAt() {
-        Booking b = bookingWithDocument(true); // Reveal Box da preskočimo revealEvent proveru
+        Booking b = bookingWithDocument(false);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(revealEventRepository.findByBookingRef("ESC-test1234"))
+                .thenReturn(Optional.of(new RevealEvent("ESC-test1234")));
         when(confirmationDocumentEmailService.sendConfirmationDocument(b)).thenReturn(false);
 
         assertThrows(ResponseStatusException.class, () -> svc.resendConfirmationDocument(1L));
