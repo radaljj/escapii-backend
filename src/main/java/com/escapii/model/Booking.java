@@ -274,8 +274,10 @@ public class Booking {
     private String deliveryApartment;
 
     /**
-     * Admin označi da je Reveal Box fizički poslan korisniku.
-     * Ako je true → auto-reveal email se NE šalje (korisnik otvara kutiju).
+     * Admin označi da je Reveal Box fizički poslan kuriru. Cisto logisticki
+     * flag - koristi ga findPendingRevealBoxes za digest podsetnik i panel za
+     * "poslata/nije poslata" UI. Ne utice na digitalni reveal (koji ide svima
+     * na T-2, i sa kutijom i bez).
      */
     @Column(name = "reveal_box_sent", nullable = false)
     private Boolean revealBoxSent = false;

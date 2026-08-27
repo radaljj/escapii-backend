@@ -389,8 +389,9 @@ public class AdminController {
 
     /**
      * POST /api/admin/bookings/{id}/reveal-box-sent
-     * Označava da je Reveal Box fizički poslan korisniku.
-     * Nakon ovoga auto-reveal email se neće poslati.
+     * Označava da je Reveal Box fizički predat kuriru. Cisto logisticki flag -
+     * gasi podsetnik u digestu i menja UI badge. Ne dira digitalni reveal
+     * (koji ide svima na T-2, i sa kutijom i bez).
      */
     @PostMapping("/bookings/{id}/reveal-box-sent")
     public ResponseEntity<AdminBookingResponse> markRevealBoxSent(@PathVariable Long id) {
