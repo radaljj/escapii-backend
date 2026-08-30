@@ -58,6 +58,8 @@ class ConfirmationDocumentFlowTest {
     @Mock private AirportLookupService airportLookupService;
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
+    @Mock private com.escapii.service.AgencySettlementCalculator agencySettlementCalculator;
+    @Mock private com.escapii.repository.BookingFinancialItemRepository bookingFinancialItemRepository;
 
     private AdminServiceImpl svc;
     private ConfirmationDocumentAutoSender autoSender;
@@ -72,7 +74,8 @@ class ConfirmationDocumentFlowTest {
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService, autoSender);
+                confirmationDocumentEmailService, autoSender,
+                agencySettlementCalculator, bookingFinancialItemRepository);
     }
 
     private Booking bookingWithDocument(boolean hasRevealBox) {

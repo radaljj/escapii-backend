@@ -46,6 +46,7 @@ public class BookingServiceImpl implements BookingService {
     private final PriceCalculator          priceCalculator;
     private final ApplicationEventPublisher eventPublisher;
     private final BookingMapper            bookingMapper;
+    private final FinancialItemSnapshotService financialItemSnapshotService;
 
     @Override
     @Transactional
@@ -211,6 +212,11 @@ public class BookingServiceImpl implements BookingService {
                 log.warn("[Booking] Vaučer kod '{}' nije validan ili nije aktivan - ignorisan", LogUtils.maskVoucherCode(code));
             }
         }
+
+        // Snapshot finansijskih stavki - koristi ORIGINALNU cenu iz price objekta
+        // (pre vaucera), tako da zbir stavki uvek == totalPriceAll + voucherDiscount.
+        // Radi se pre save-a; JPA cascade persistira financialItems zajedno sa bookingom.
+        financialItemSnapshotService.snapshot(booking, price);
 
         Booking saved = bookingRepository.save(booking);
 

@@ -1,8 +1,10 @@
 package com.escapii.controller;
 
+import com.escapii.dto.AgencyCostsRequest;
 import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencyRequest;
 import com.escapii.dto.AgencyResponse;
+import com.escapii.dto.AgencySettlementResponse;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
@@ -477,7 +479,12 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    /** PATCH /api/admin/bookings/{id}/agency-cost — unesi ukupan trošak agencije za rezervaciju. */
+    /**
+     * PATCH /api/admin/bookings/{id}/agency-cost — legacy jedinstveni unos.
+     * Novi kod koristi PUT /agency-costs (strukturirani per-stavku unos).
+     * @deprecated
+     */
+    @Deprecated
     @PatchMapping("/bookings/{id}/agency-cost")
     public ResponseEntity<AdminBookingResponse> setAgencyCost(
             @PathVariable Long id,
@@ -490,6 +497,31 @@ public class AdminController {
     @GetMapping("/agencies/earnings")
     public ResponseEntity<List<AgencyEarningsResponse>> getAgencyEarnings() {
         return ResponseEntity.ok(adminService.getAgencyEarnings());
+    }
+
+    // ══ Obracun sa agencijom (per-booking faktura) ══════════════════════════
+
+    /**
+     * GET /api/admin/bookings/{id}/agency-settlement-preview
+     * Vraca kompletan breakdown obracuna: line items, marze, escapii/agencija delove,
+     * netto settlement sa vaucerom, whoPaysWhom, i {@code readyForInvoice} flag.
+     * Radi za PENDING (samo prikaz) i CONFIRMED (osnov za fakturu).
+     */
+    @GetMapping("/bookings/{id}/agency-settlement-preview")
+    public ResponseEntity<AgencySettlementResponse> agencySettlementPreview(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.previewAgencySettlement(id));
+    }
+
+    /**
+     * PUT /api/admin/bookings/{id}/agency-costs
+     * Admin unosi per-stavku troskove agencije (avion + hotel + zajednicki dodaci).
+     * Vraca svez preview posle unosa. Blokira se ako je booking vec fakturisan.
+     */
+    @PutMapping("/bookings/{id}/agency-costs")
+    public ResponseEntity<AgencySettlementResponse> setAgencyCosts(
+            @PathVariable Long id,
+            @RequestBody AgencyCostsRequest body) {
+        return ResponseEntity.ok(adminService.setAgencyCosts(id, body));
     }
 
 }

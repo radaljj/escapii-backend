@@ -14,6 +14,7 @@ import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.PriceCalculator;
 import com.escapii.service.impl.BookingServiceImpl;
+import com.escapii.service.impl.FinancialItemSnapshotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +59,8 @@ class BookingCreationFlowTest {
     @BeforeEach
     void setUp() {
         svc = new BookingServiceImpl(bookingRepository, availableDateRepository, destinationRepository,
-                giftVoucherRepository, priceCalculator, eventPublisher, bookingMapper);
+                giftVoucherRepository, priceCalculator, eventPublisher, bookingMapper,
+                new FinancialItemSnapshotService());
     }
 
     private BookingRequest validRequest() {

@@ -52,6 +52,8 @@ class BookingStatusEmailTest {
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
+    @Mock private com.escapii.service.AgencySettlementCalculator agencySettlementCalculator;
+    @Mock private com.escapii.repository.BookingFinancialItemRepository bookingFinancialItemRepository;
 
     private AdminServiceImpl svc;
 
@@ -61,7 +63,8 @@ class BookingStatusEmailTest {
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService, confirmationDocumentAutoSender);
+                confirmationDocumentEmailService, confirmationDocumentAutoSender,
+                agencySettlementCalculator, bookingFinancialItemRepository);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 

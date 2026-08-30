@@ -53,6 +53,8 @@ class BookingConfirmRequiresAgencyTest {
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
+    @Mock private com.escapii.service.AgencySettlementCalculator agencySettlementCalculator;
+    @Mock private com.escapii.repository.BookingFinancialItemRepository bookingFinancialItemRepository;
 
     private AdminServiceImpl svc;
 
@@ -62,7 +64,8 @@ class BookingConfirmRequiresAgencyTest {
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, invoiceService,
-                confirmationDocumentEmailService, confirmationDocumentAutoSender);
+                confirmationDocumentEmailService, confirmationDocumentAutoSender,
+                agencySettlementCalculator, bookingFinancialItemRepository);
         // lenient - guard testovi rano puknu i ne dolaze do save() poziva.
         lenient().when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
     }

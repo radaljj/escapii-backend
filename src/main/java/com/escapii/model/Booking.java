@@ -124,9 +124,41 @@ public class Booking {
     @Column(nullable = false)
     private Integer totalPriceAll = 0;       // kompletna cena rezervacije
 
-    /** Ukupan trošak agencije za ovu rezervaciju (EUR). Admin unosi po dobijanju ponude. */
+    /**
+     * Legacy jedinstveni trosak agencije. Ostavljen dok stari admin endpoint jos
+     * postoji; nova logika koristi {@link #financialItems} snapshot i per-stavku
+     * {@code agency_cost}. Ne koristiti u novom kodu - AgencySettlementCalculator
+     * ne cita ovu vrednost.
+     */
     @Column(name = "agency_cost")
     private Integer agencyCost;
+
+    // ── Obracun sa agencijom (per-booking faktura) ────────────────────
+
+    /**
+     * Stanje obracuna Escapii ↔ agencija za ovu rezervaciju. Nezavisno od
+     * {@link BookingStatus} - CONFIRMED booking moze biti NEEDS_COSTS ako
+     * admin nije uneo trosak aviona/hotela. Prelaz na INVOICED zakljucava
+     * troskove protiv izmene.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "settlement_status", nullable = false, length = 32)
+    private SettlementStatus settlementStatus = SettlementStatus.NEEDS_COSTS;
+
+    /** Broj Escapii→agencija fakture (npr. ESC-AG-2026-0001). Null dok se ne finalizuje. */
+    @Column(name = "agency_invoice_number", length = 25, unique = true)
+    private String agencyInvoiceNumber;
+
+    /** Trenutak kad je faktura poslata agenciji. Null dok se ne finalizuje. */
+    @Column(name = "agency_invoiced_at")
+    private LocalDateTime agencyInvoicedAt;
+
+    /** Trenutak kad je agencija platila fakturu. Null dok status nije PAID. */
+    @Column(name = "agency_paid_at")
+    private LocalDateTime agencyPaidAt;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<BookingFinancialItem> financialItems = new ArrayList<>();
 
     /** Snapshot ID-a agencije u trenutku kreiranja rezervacije. */
     @Column(name = "agency_id_snapshot")

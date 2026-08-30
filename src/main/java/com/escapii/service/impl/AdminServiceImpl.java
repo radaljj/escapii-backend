@@ -3,7 +3,14 @@ package com.escapii.service.impl;
 import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
+import com.escapii.dto.AgencyCostsRequest;
 import com.escapii.dto.AgencyEarningsResponse;
+import com.escapii.dto.AgencySettlementResponse;
+import com.escapii.model.BookingFinancialItem;
+import com.escapii.model.ItemType;
+import com.escapii.model.SettlementStatus;
+import com.escapii.repository.BookingFinancialItemRepository;
+import com.escapii.service.AgencySettlementCalculator;
 import com.escapii.dto.CreatePrivateDateRequest;
 import com.escapii.dto.CustomDateInquiryResponse;
 import com.escapii.dto.DestinationRequest;
@@ -99,6 +106,8 @@ public class AdminServiceImpl implements AdminService {
     private final InvoiceService              invoiceService;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
+    private final AgencySettlementCalculator agencySettlementCalculator;
+    private final BookingFinancialItemRepository bookingFinancialItemRepository;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -1106,6 +1115,113 @@ public class AdminServiceImpl implements AdminService {
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Agency cost za {} → {}€", saved.getBookingRef(), agencyCost);
         return adminBookingMapper.toResponse(saved);
+    }
+
+    // ══ AGENCIJSKI OBRACUN (per-booking faktura) ═════════════════════════════
+
+    @Override
+    @Transactional(readOnly = true)
+    public AgencySettlementResponse previewAgencySettlement(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+        return agencySettlementCalculator.calculate(booking);
+    }
+
+    @Override
+    @Transactional
+    public AgencySettlementResponse setAgencyCosts(Long bookingId, AgencyCostsRequest req) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+
+        // Zakljucana rezervacija - jednom fakturisana ne moze da menja troskove
+        // (mora ici storno/korekcija, ne tiho prepisivanje).
+        if (booking.getSettlementStatus() == SettlementStatus.INVOICED
+                || booking.getSettlementStatus() == SettlementStatus.PAID) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Rezervacija je vec fakturisana - promena troskova zahteva rucnu korekciju.");
+        }
+
+        validateNonNegative("flightAgencyCost", req.getFlightAgencyCost());
+        validateNonNegative("hotelAgencyCost", req.getHotelAgencyCost());
+        validateNonNegative("accommodationUpgradeAgencyCost", req.getAccommodationUpgradeAgencyCost());
+        validateNonNegative("breakfastAgencyCost", req.getBreakfastAgencyCost());
+        validateNonNegative("seatsTogetherAgencyCost", req.getSeatsTogetherAgencyCost());
+        validateNonNegative("cabinSuitcaseAgencyCost", req.getCabinSuitcaseAgencyCost());
+        validateNonNegative("insuranceAgencyCost", req.getInsuranceAgencyCost());
+
+        // BASE_PACKAGE: flight + hotel = base agencyCost. Oba se moraju uneti
+        // zajedno ili nijedno.
+        updateBaseIfPresent(booking, req.getFlightAgencyCost(), req.getHotelAgencyCost());
+
+        updateAgencyCostIfPresent(booking, ItemType.ACCOMMODATION_UPGRADE, req.getAccommodationUpgradeAgencyCost());
+        updateAgencyCostIfPresent(booking, ItemType.BREAKFAST,             req.getBreakfastAgencyCost());
+        updateAgencyCostIfPresent(booking, ItemType.SEATS_TOGETHER,        req.getSeatsTogetherAgencyCost());
+        updateAgencyCostIfPresent(booking, ItemType.CABIN_SUITCASE,        req.getCabinSuitcaseAgencyCost());
+        updateAgencyCostIfPresent(booking, ItemType.INSURANCE,             req.getInsuranceAgencyCost());
+
+        // Pusti kalkulator da odluci status - ako su svi troskovi tu i nema negativne
+        // marze, prelazak na READY_FOR_INVOICE.
+        AgencySettlementResponse preview = agencySettlementCalculator.calculate(booking);
+        if (preview.isReadyForInvoice()
+                && booking.getSettlementStatus() == SettlementStatus.NEEDS_COSTS) {
+            booking.setSettlementStatus(SettlementStatus.READY_FOR_INVOICE);
+        } else if (!preview.isReadyForInvoice()
+                && booking.getSettlementStatus() == SettlementStatus.READY_FOR_INVOICE) {
+            // ako je admin obrisao trosak posle sto je vec bilo READY, vraca u NEEDS_COSTS
+            booking.setSettlementStatus(SettlementStatus.NEEDS_COSTS);
+        }
+
+        bookingRepository.save(booking);
+        log.info("[ADMIN] Troskovi agencije azurirani za {} -> settlementStatus={}",
+                booking.getBookingRef(), booking.getSettlementStatus());
+        return preview;
+    }
+
+    private void validateNonNegative(String field, java.math.BigDecimal v) {
+        if (v != null && v.signum() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Trosak '" + field + "' ne sme biti negativan");
+        }
+    }
+
+    private void updateBaseIfPresent(Booking booking,
+                                     java.math.BigDecimal flight,
+                                     java.math.BigDecimal hotel) {
+        if (flight == null && hotel == null) return; // nema izmene
+        if (flight == null || hotel == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "flightAgencyCost i hotelAgencyCost moraju biti poslati zajedno");
+        }
+        BookingFinancialItem base = findOrThrow(booking, ItemType.BASE_PACKAGE);
+        base.setFlightAgencyCost(flight);
+        base.setHotelAgencyCost(hotel);
+        base.setAgencyCost(flight.add(hotel));
+    }
+
+    private void updateAgencyCostIfPresent(Booking booking, ItemType type, java.math.BigDecimal cost) {
+        if (cost == null) return;
+        BookingFinancialItem item = booking.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == type)
+                .findFirst()
+                .orElse(null);
+        if (item == null) {
+            // Booking ne sadrzi tu stavku (npr. nema doručka) - tiho preskoci umesto 400,
+            // admin panel ionako prikazuje samo unose za stavke koje booking ima.
+            log.warn("[ADMIN] Ignorisan trosak za {} na bookingu {} - stavka ne postoji",
+                    type, booking.getBookingRef());
+            return;
+        }
+        item.setAgencyCost(cost);
+    }
+
+    private BookingFinancialItem findOrThrow(Booking booking, ItemType type) {
+        return booking.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == type)
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Rezervacija nema stavku " + type + " - moguca korupcija podataka."));
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════
