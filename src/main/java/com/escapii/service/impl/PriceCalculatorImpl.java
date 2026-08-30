@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
  * Sedišta     → +24€/pp (12€/smer × 2 smera)
  * Osiguranje  → +12€/pp
  * <p>
- * Isključivanja: +15€/pp po isključenju, ali koliko ih je dozvoljeno i da li je
+ * Isključivanja: +10€/pp po isključenju, ali koliko ih je dozvoljeno i da li je
  * prvo besplatno definiše sam aerodrom (DepartureAirport) - npr. BEG i BUD imaju
  * 4 sa prvim gratis, INI nijedno (dostupnost letova).
  * <p>
@@ -32,7 +32,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public static final Integer INSURANCE_PP     = 12;
     public static final Integer BREAKFAST_PP     = 20;
     public static final Integer SEATS_PP         = 24;   // 12€/smer × 2 smera, po osobi
-    private static final Integer EXCLUSION_PP    = 15;   // po osobi, za 2., 3. i 4. isključivanje
+    private static final Integer EXCLUSION_PP    = 10;   // po osobi, za 2., 3. i 4. isključivanje
     public static final Integer SOLO_SURCHARGE   = 60;   // doplata za solo putnika
     public static final Integer REVEAL_BOX_FLAT  = 35;   // flat po rezervaciji
 

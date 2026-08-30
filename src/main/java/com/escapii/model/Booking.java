@@ -72,7 +72,7 @@ public class Booking {
     @Column(nullable = false)
     private Integer exclusionCount = 0;
 
-    /** Flat naknada za isključivanja (0, 10 ili 20€). */
+    /** Ukupna naknada = 10€ × broj naplativih isključivanja × broj putnika. */
     @Column(name = "exclusion_cost_eur", nullable = false)
     private Integer exclusionCostEur = 0;
 

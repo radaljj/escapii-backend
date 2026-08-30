@@ -22,7 +22,8 @@ public class PricePreviewResponse {
     private Integer eurPerPerson;                // zbir svih per-person stavki
 
     // ── Flat (jedna cena za celu rezervaciju) ─────────────────────────
-    private Integer exclusionCostFlat;           // 0, 10 ili 20 (2. i 3. isključivanje)
+    /** Ukupna naknada = 10€ × broj naplativih isključivanja × broj putnika. */
+    private Integer exclusionCostFlat;
     private Integer soloSurcharge;               // 60€ ako je 1 putnik, inače 0
 
     // ── Kabinski kofer (selektivan po putniku) ────────────────────────

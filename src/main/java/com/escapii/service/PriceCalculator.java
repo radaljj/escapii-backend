@@ -7,21 +7,21 @@ import com.escapii.model.AvailableDate;
 public interface PriceCalculator {
 
     /**
-     * Cenovnik:
+     * Cenovnik (autoritet: PriceCalculatorImpl):
      *
      *   Po osobi (× n putnika):
-     *     baza + doručak? +15 + sedišta? +10 + osiguranje? +20
+     *     baza + Superior? +100 + doručak? +20/noć + sedišta? +24 + osiguranje? +12
      *
      *   Flat (jedna cena za celu rezervaciju):
-     *     Superior? +100
-     *     Isključivanja: 1. besplatno | 2. +10 | 3. +10 (max 20)
+     *     Reveal Box? +35
+     *     Solo doplata (1 putnik)? +60
+     *     Isključivanja: ukupno = 10€ × broj naplativih isključivanja × broj putnika
      *
      *   Kabinski kofer (selektivan po putniku):
      *     cabinSuitcaseCount × 100
-     */
-    /**
+     *
      * @param departureAirport  IATA kod aerodroma - utiče na pravila isključivanja
-     *                          (INI: max 1, sve plaćeno 15€/os; ostali: max 4, 1. gratis)
+     *                          (INI: 0 dozvoljenih; ostali: max 4, 1. gratis, 10€/os za ostale)
      */
     PricePreviewResponse calculate(
             AvailableDate date,

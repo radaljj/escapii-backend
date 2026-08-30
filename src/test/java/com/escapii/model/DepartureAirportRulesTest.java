@@ -79,8 +79,10 @@ class DepartureAirportRulesTest {
     void prvoIskljucenjeJeGratisTamoGdeJeTakoDefinisano() {
         assertEquals(0, exclusionCost("BEG", 1, 2), "prvo isključenje je besplatno");
         assertEquals(0, exclusionCost("BUD", 1, 2), "prvo isključenje je besplatno");
-        // 2 isključenja = jedno naplaćeno × 15€ × 2 putnika
-        assertEquals(30, exclusionCost("BEG", 2, 2));
+        // 2 isključenja = jedno naplaćeno × 10€ × 2 putnika
+        assertEquals(20, exclusionCost("BEG", 2, 2));
+        // Regresija: 4 isključenja = 3 naplaćena × 10€ × 2 putnika
+        assertEquals(60, exclusionCost("BEG", 4, 2));
     }
 
     @Test
@@ -99,6 +101,6 @@ class DepartureAirportRulesTest {
     @Test
     void nepoznatAerodromNeDobijaBesplatnoIskljucenje() {
         // price-preview može stići bez aerodroma; tada se ne izmišlja popust
-        assertEquals(30, exclusionCost(null, 1, 2));
+        assertEquals(20, exclusionCost(null, 1, 2));
     }
 }

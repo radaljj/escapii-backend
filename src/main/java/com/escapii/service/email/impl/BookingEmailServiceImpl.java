@@ -913,13 +913,13 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     /**
      * Gradi label za red isključivanja u cenovniku.
-     * Pricing: 1. isključivanje besplatno, svako naredno +15€/po osobi (max 3 plaćena).
+     * Pricing: 1. isključivanje besplatno, svako naredno +10€/po osobi (max 3 plaćena).
      */
     private String exclusionLabel(int paid) {
         return switch (paid) {
-            case 1 -> "Isključivanje (1× 15€/os)";
-            case 2 -> "Isključivanja (2× 15€/os)";
-            default -> "Isključivanja (%d× 15€/os)".formatted(paid);
+            case 1 -> "Isključivanje (1× 10€/os)";
+            case 2 -> "Isključivanja (2× 10€/os)";
+            default -> "Isključivanja (%d× 10€/os)".formatted(paid);
         };
     }
 
