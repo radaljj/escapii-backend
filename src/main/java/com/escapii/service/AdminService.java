@@ -100,4 +100,12 @@ public interface AdminService {
     AgencySettlementResponse previewAgencySettlement(Long bookingId);
     /** Admin unosi per-stavku troskove agencije. Vraca svez preview posle unosa. */
     AgencySettlementResponse setAgencyCosts(Long bookingId, AgencyCostsRequest costs);
+    /** Finalizuje fakturu Escapii → agencija: generise agencyInvoiceNumber, prelaz na INVOICED. */
+    AgencySettlementResponse finalizeAgencyInvoice(Long bookingId);
+    /** Rucni prelaz izmedju settlement statusa (INVOICED→PAID, PAID→INVOICED, INVOICED→READY_FOR_INVOICE). */
+    AgencySettlementResponse updateSettlementStatus(Long bookingId, com.escapii.model.SettlementStatus newStatus);
+    /** Dashboard agregacija za tab "Obracun i fakturisanje agencija". */
+    java.util.List<com.escapii.dto.AgencyDashboardRow> agencyDashboard(
+            Long agencyId, java.time.LocalDate from, java.time.LocalDate to,
+            com.escapii.model.SettlementStatus status);
 }

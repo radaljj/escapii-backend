@@ -95,4 +95,10 @@ public class AdminBookingResponse {
     private String         confirmationDocumentFilename;
     private LocalDateTime  confirmationDocumentUploadedAt;
     private LocalDateTime  confirmationSentAt;
+
+    // Obračun sa agencijom (per-booking faktura, Faza 2)
+    private com.escapii.model.SettlementStatus settlementStatus;
+    private String        agencyInvoiceNumber;
+    private LocalDateTime agencyInvoicedAt;
+    private LocalDateTime agencyPaidAt;
 }

@@ -230,4 +230,23 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "ORDER BY b.selectedDate.departureDate ASC")
     List<Booking> findPendingConfirmationDocuments(@Param("today") LocalDate today);
 
+    /**
+     * Dashboard upit za tab "Obracun i fakturisanje agencija". Filtrira po opcionoj
+     * agenciji, opcionom rasponu datuma polaska i opcionom settlement statusu.
+     * CANCELLED bookinzi su iskljuceni - ne ulaze u naplatu.
+     *
+     * <p>Sortirano po datumu polaska descending da najnoviji dolaze prvi.
+     */
+    @Query("SELECT b FROM Booking b " +
+           "WHERE b.status <> com.escapii.model.BookingStatus.CANCELLED " +
+           "AND (:agencyId IS NULL OR b.agencyIdSnapshot = :agencyId) " +
+           "AND (:fromDate IS NULL OR b.selectedDate.departureDate >= :fromDate) " +
+           "AND (:toDate IS NULL OR b.selectedDate.departureDate <= :toDate) " +
+           "AND (:status IS NULL OR b.settlementStatus = :status) " +
+           "ORDER BY b.selectedDate.departureDate DESC, b.id DESC")
+    List<Booking> findForAgencyDashboard(@Param("agencyId") Long agencyId,
+                                         @Param("fromDate") LocalDate fromDate,
+                                         @Param("toDate") LocalDate toDate,
+                                         @Param("status") com.escapii.model.SettlementStatus status);
+
 }

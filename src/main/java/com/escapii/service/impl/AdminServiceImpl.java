@@ -108,6 +108,7 @@ public class AdminServiceImpl implements AdminService {
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     private final AgencySettlementCalculator agencySettlementCalculator;
     private final BookingFinancialItemRepository bookingFinancialItemRepository;
+    private final com.escapii.repository.AgencyInvoiceSequenceRepository agencyInvoiceSequenceRepository;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -1222,6 +1223,138 @@ public class AdminServiceImpl implements AdminService {
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
                         "Rezervacija nema stavku " + type + " - moguca korupcija podataka."));
+    }
+
+    // ══ FINALIZE + STATUS + DASHBOARD ════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public AgencySettlementResponse finalizeAgencyInvoice(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Otkazana rezervacija ne moze da se fakturise.");
+        }
+        if (booking.getStatus() == BookingStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Nepotvrdjena rezervacija (PENDING) ne moze da se fakturise - kupac jos nije platio.");
+        }
+        if (booking.getSettlementStatus() == SettlementStatus.INVOICED
+                || booking.getSettlementStatus() == SettlementStatus.PAID) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Rezervacija je vec fakturisana (broj " + booking.getAgencyInvoiceNumber()
+                    + "). Storno zahteva rucnu korekciju.");
+        }
+
+        AgencySettlementResponse preview = agencySettlementCalculator.calculate(booking);
+        if (!preview.isReadyForInvoice()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Obracun nije spreman za fakturu: " + String.join("; ", preview.getValidationErrors()));
+        }
+
+        String invoiceNumber = generateAgencyInvoiceNumber();
+        booking.setAgencyInvoiceNumber(invoiceNumber);
+        booking.setAgencyInvoicedAt(LocalDateTime.now());
+        booking.setSettlementStatus(SettlementStatus.INVOICED);
+        Booking saved = bookingRepository.save(booking);
+
+        log.info("[ADMIN] Faktura {} generisana za {} (agencija {}, Escapii duguje: {}€, agencija duguje: {}€)",
+                invoiceNumber, saved.getBookingRef(), saved.getAgencyNameSnapshot(),
+                preview.getNetSettlement().signum() < 0 ? preview.getNetSettlement().abs() : "0",
+                preview.getNetSettlement().signum() > 0 ? preview.getNetSettlement() : "0");
+        return agencySettlementCalculator.calculate(saved);
+    }
+
+    private String generateAgencyInvoiceNumber() {
+        int year = java.time.LocalDate.now().getYear();
+        com.escapii.model.AgencyInvoiceSequence seq = agencyInvoiceSequenceRepository.findByYear(year)
+                .orElseGet(() -> agencyInvoiceSequenceRepository.save(
+                        new com.escapii.model.AgencyInvoiceSequence(year)));
+        seq.setLastSeq(seq.getLastSeq() + 1);
+        agencyInvoiceSequenceRepository.save(seq);
+        return "ESC-AG-" + year + "-" + String.format("%04d", seq.getLastSeq());
+    }
+
+    @Override
+    @Transactional
+    public AgencySettlementResponse updateSettlementStatus(Long bookingId, SettlementStatus newStatus) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+
+        SettlementStatus current = booking.getSettlementStatus();
+        if (current == newStatus) {
+            return agencySettlementCalculator.calculate(booking);
+        }
+
+        boolean allowed = switch (current) {
+            case NEEDS_COSTS       -> newStatus == SettlementStatus.READY_FOR_INVOICE;
+            case READY_FOR_INVOICE -> newStatus == SettlementStatus.NEEDS_COSTS;
+            case INVOICED          -> newStatus == SettlementStatus.PAID
+                                   || newStatus == SettlementStatus.READY_FOR_INVOICE;
+            case PAID              -> newStatus == SettlementStatus.INVOICED;
+        };
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Nedozvoljen prelaz " + current + " -> " + newStatus);
+        }
+
+        booking.setSettlementStatus(newStatus);
+        if (newStatus == SettlementStatus.PAID) {
+            booking.setAgencyPaidAt(LocalDateTime.now());
+        } else if (newStatus == SettlementStatus.INVOICED && current == SettlementStatus.PAID) {
+            // Rollback iz PAID: brisemo paidAt ali invoice broj/datum ostaju
+            booking.setAgencyPaidAt(null);
+        } else if (newStatus == SettlementStatus.READY_FOR_INVOICE && current == SettlementStatus.INVOICED) {
+            // Storno fakture - brisemo invoice broj i datum. Broj se ne recikla
+            // (sekvenca ostaje inkrementovana) da revizija vidi rupu i pita zasto.
+            log.warn("[ADMIN] Storno fakture {} za {} - broj se ne reciklira (revizija).",
+                    booking.getAgencyInvoiceNumber(), booking.getBookingRef());
+            booking.setAgencyInvoiceNumber(null);
+            booking.setAgencyInvoicedAt(null);
+        }
+        Booking saved = bookingRepository.save(booking);
+        log.info("[ADMIN] Settlement status {} -> {} za {}",
+                current, newStatus, saved.getBookingRef());
+        return agencySettlementCalculator.calculate(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.escapii.dto.AgencyDashboardRow> agencyDashboard(
+            Long agencyId, java.time.LocalDate from, java.time.LocalDate to,
+            SettlementStatus status) {
+        List<Booking> bookings = bookingRepository.findForAgencyDashboard(agencyId, from, to, status);
+        return bookings.stream()
+                .map(this::toDashboardRow)
+                .toList();
+    }
+
+    private com.escapii.dto.AgencyDashboardRow toDashboardRow(Booking b) {
+        AgencySettlementResponse s = agencySettlementCalculator.calculate(b);
+        return com.escapii.dto.AgencyDashboardRow.builder()
+                .bookingId(b.getId())
+                .bookingRef(b.getBookingRef())
+                .agencyId(b.getAgencyIdSnapshot())
+                .agencyName(b.getAgencyNameSnapshot())
+                .departureDate(b.getSelectedDate() != null ? b.getSelectedDate().getDepartureDate() : null)
+                .returnDate(b.getSelectedDate() != null ? b.getSelectedDate().getReturnDate() : null)
+                .customerName(b.getFirstName() + " " + b.getLastName())
+                .numberOfTravelers(b.getNumberOfTravelers())
+                .settlementStatus(b.getSettlementStatus())
+                .agencyInvoiceNumber(b.getAgencyInvoiceNumber())
+                .agencyInvoicedAt(b.getAgencyInvoicedAt())
+                .agencyPaidAt(b.getAgencyPaidAt())
+                .grossBookingValue(s.getGrossBookingValue())
+                .voucherAmount(s.getVoucherAmount())
+                .escapiiEarnings(s.getEscapiiEarnings())
+                .netSettlement(s.getNetSettlement())
+                .agencyRetainedAmount(s.getAgencyRetainedAmount())
+                .readyForInvoice(s.isReadyForInvoice())
+                .build();
     }
 
     // ══ HELPERS ══════════════════════════════════════════════════════════════

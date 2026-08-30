@@ -524,4 +524,41 @@ public class AdminController {
         return ResponseEntity.ok(adminService.setAgencyCosts(id, body));
     }
 
+    /**
+     * POST /api/admin/bookings/{id}/agency-invoice
+     * Finalizuje Escapii → agencija fakturu za jednu rezervaciju: generise
+     * agencyInvoiceNumber (ESC-AG-YYYY-NNNN), prelaz na INVOICED, zakljucava
+     * troskove protiv izmene. Zahteva readyForInvoice=true.
+     */
+    @PostMapping("/bookings/{id}/agency-invoice")
+    public ResponseEntity<AgencySettlementResponse> finalizeAgencyInvoice(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.finalizeAgencyInvoice(id));
+    }
+
+    /**
+     * PATCH /api/admin/bookings/{id}/settlement-status?value=PAID
+     * Rucni prelaz izmedju settlement stanja (INVOICED→PAID, PAID→INVOICED
+     * kao rollback, INVOICED→READY_FOR_INVOICE kao storno).
+     */
+    @PatchMapping("/bookings/{id}/settlement-status")
+    public ResponseEntity<AgencySettlementResponse> updateSettlementStatus(
+            @PathVariable Long id,
+            @RequestParam("value") com.escapii.model.SettlementStatus value) {
+        return ResponseEntity.ok(adminService.updateSettlementStatus(id, value));
+    }
+
+    /**
+     * GET /api/admin/agencies/settlements/dashboard
+     * Dashboard rezervacija za tab "Obracun i fakturisanje agencija".
+     * Svi filteri su opcioni; sortirano po datumu polaska descending.
+     */
+    @GetMapping("/agencies/settlements/dashboard")
+    public ResponseEntity<List<com.escapii.dto.AgencyDashboardRow>> agencyDashboard(
+            @RequestParam(required = false) Long agencyId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam(required = false) com.escapii.model.SettlementStatus status) {
+        return ResponseEntity.ok(adminService.agencyDashboard(agencyId, from, to, status));
+    }
+
 }
