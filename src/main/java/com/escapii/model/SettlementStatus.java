@@ -26,7 +26,7 @@ package com.escapii.model;
  */
 public enum SettlementStatus {
 
-    /** Rezervacija je aktivna, ali admin jos nije uneo agencyCost za sve 50/50 stavke. */
+    /** Rezervacija je aktivna, ali admin jos nije uneo trosak agencije za sve 50/50 stavke. */
     NEEDS_COSTS,
 
     /** Svi troskovi uneseni, kalkulator vraca validan iznos. Faktura moze da se generise. */

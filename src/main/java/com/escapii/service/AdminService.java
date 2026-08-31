@@ -6,7 +6,6 @@ import com.escapii.dto.AgencySettlementResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.CreatePrivateDateRequest;
-import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencyRequest;
 import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.CustomDateInquiryResponse;
@@ -90,12 +89,8 @@ public interface AdminService {
     AgencyResponse updateAgency(Long id, AgencyRequest req);
     AgencyResponse toggleAgencyActive(Long id);
     void assignAgencyToDate(Long dateId, Long agencyId);
-    List<AgencyEarningsResponse> getAgencyEarnings();
-    /** @deprecated Legacy jedinstveni unos troska. Novi kod koristi {@link #setAgencyCosts(Long, AgencyCostsRequest)}. */
-    @Deprecated
-    AdminBookingResponse setAgencyCost(Long bookingId, Integer agencyCost);
 
-    // ── Novi obracun sa agencijom (per-booking faktura) ──
+    // ── Obracun sa agencijom (per-booking faktura) ──
     /** Preview obracuna Escapii ↔ agencija za jednu rezervaciju (ide kroz kalkulator). */
     AgencySettlementResponse previewAgencySettlement(Long bookingId);
     /** Admin unosi per-stavku troskove agencije. Vraca svez preview posle unosa. */

@@ -124,15 +124,6 @@ public class Booking {
     @Column(nullable = false)
     private Integer totalPriceAll = 0;       // kompletna cena rezervacije
 
-    /**
-     * Legacy jedinstveni trosak agencije. Ostavljen dok stari admin endpoint jos
-     * postoji; nova logika koristi {@link #financialItems} snapshot i per-stavku
-     * {@code agency_cost}. Ne koristiti u novom kodu - AgencySettlementCalculator
-     * ne cita ovu vrednost.
-     */
-    @Column(name = "agency_cost")
-    private Integer agencyCost;
-
     // ── Obracun sa agencijom (per-booking faktura) ────────────────────
 
     /**

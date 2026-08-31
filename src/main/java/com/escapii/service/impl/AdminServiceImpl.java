@@ -4,7 +4,6 @@ import com.escapii.dto.AdminBookingResponse;
 import com.escapii.dto.AdminDateRequest;
 import com.escapii.dto.AdminDateResponse;
 import com.escapii.dto.AgencyCostsRequest;
-import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencySettlementResponse;
 import com.escapii.model.BookingFinancialItem;
 import com.escapii.model.ItemType;
@@ -1060,73 +1059,6 @@ public class AdminServiceImpl implements AdminService {
                 .notes(a.getNotes())
                 .active(a.getActive())
                 .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AgencyEarningsResponse> getAgencyEarnings() {
-        // [agencyId, agencyName, dateId, depDate, retDate, airport, sumRevenue, sumCost, sumTravelers]
-        List<Object[]> rows = bookingRepository.findAgencyEarningsAggregated();
-        if (rows.isEmpty()) return List.of();
-
-        Map<Long, List<Object[]>> byAgency = rows.stream()
-                .collect(Collectors.groupingBy(r -> (Long) r[0]));
-
-        return byAgency.entrySet().stream().map(entry -> {
-            List<Object[]> agencyRows = entry.getValue();
-            String agencyName = (String) agencyRows.get(0)[1];
-
-            List<AgencyEarningsResponse.TermEarning> termEarnings = agencyRows.stream().map(r -> {
-                int travelers = ((Long) r[8]).intValue();
-                int paid      = ((Long) r[6]).intValue();
-                int cost      = ((Long) r[7]).intValue();
-                int voucher   = ((Long) r[9]).intValue();
-                int revenue   = paid + voucher;
-                return AgencyEarningsResponse.TermEarning.builder()
-                        .dateId((Long) r[2])
-                        .departureDate(r[3].toString())
-                        .returnDate(r[4].toString())
-                        .departureAirport((String) r[5])
-                        .travelers(travelers)
-                        .revenue(revenue)
-                        .cost(cost)
-                        .profit(revenue - cost)
-                        .voucher(voucher)
-                        .build();
-            }).toList();
-
-            int totalTravelers = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getTravelers).sum();
-            int totalRevenue = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getRevenue).sum();
-            int totalCost = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getCost).sum();
-            int totalVoucher = termEarnings.stream().mapToInt(AgencyEarningsResponse.TermEarning::getVoucher).sum();
-
-            return AgencyEarningsResponse.builder()
-                    .agencyId(entry.getKey())
-                    .agencyName(agencyName)
-                    .totalTerms(agencyRows.size())
-                    .totalTravelers(totalTravelers)
-                    .totalRevenue(totalRevenue)
-                    .totalCost(totalCost)
-                    .totalProfit(totalRevenue - totalCost)
-                    .totalVoucher(totalVoucher)
-                    .terms(termEarnings)
-                    .build();
-        }).toList();
-    }
-
-    @Transactional
-    public AdminBookingResponse setAgencyCost(Long bookingId, Integer agencyCost) {
-        if (agencyCost != null && agencyCost < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Trošak agencije ne može biti negativan");
-        }
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Rezervacija ne postoji: " + bookingId));
-        booking.setAgencyCost(agencyCost);
-        Booking saved = bookingRepository.save(booking);
-        log.info("[ADMIN] Agency cost za {} → {}€", saved.getBookingRef(), agencyCost);
-        return adminBookingMapper.toResponse(saved);
     }
 
     // ══ AGENCIJSKI OBRACUN (per-booking faktura) ═════════════════════════════

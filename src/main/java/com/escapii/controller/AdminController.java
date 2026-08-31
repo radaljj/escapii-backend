@@ -1,7 +1,6 @@
 package com.escapii.controller;
 
 import com.escapii.dto.AgencyCostsRequest;
-import com.escapii.dto.AgencyEarningsResponse;
 import com.escapii.dto.AgencyRequest;
 import com.escapii.dto.AgencyResponse;
 import com.escapii.dto.AgencySettlementResponse;
@@ -477,26 +476,6 @@ public class AdminController {
         Long agencyId = body != null ? body.get("agencyId") : null;
         adminService.assignAgencyToDate(id, agencyId);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * PATCH /api/admin/bookings/{id}/agency-cost — legacy jedinstveni unos.
-     * Novi kod koristi PUT /agency-costs (strukturirani per-stavku unos).
-     * @deprecated
-     */
-    @Deprecated
-    @PatchMapping("/bookings/{id}/agency-cost")
-    public ResponseEntity<AdminBookingResponse> setAgencyCost(
-            @PathVariable Long id,
-            @RequestBody Map<String, Integer> body) {
-        Integer cost = body.get("agencyCost");
-        return ResponseEntity.ok(adminService.setAgencyCost(id, cost));
-    }
-
-    /** GET /api/admin/agencies/earnings — zarada po agenciji (za fakturisanje). */
-    @GetMapping("/agencies/earnings")
-    public ResponseEntity<List<AgencyEarningsResponse>> getAgencyEarnings() {
-        return ResponseEntity.ok(adminService.getAgencyEarnings());
     }
 
     // ══ Obracun sa agencijom (per-booking faktura) ══════════════════════════
