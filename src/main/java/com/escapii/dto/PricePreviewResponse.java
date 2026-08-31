@@ -16,9 +16,9 @@ public class PricePreviewResponse {
     // ── Po osobi × n (važi za sve putnike) ───────────────────────────
     private Integer basePricePerPerson;
     private Integer accommodationExtraPerPerson; // 0, 50 (Superior) ili 130 (Premium)
-    private Integer breakfastPerPerson;          // 0 ili 15
+    private Integer breakfastPerPerson;          // 0 ili 12×noći
     private Integer seatsTogether;               // 0 ili 24 (12€/smer × 2 smera)
-    private Integer insurancePerPerson;          // 0 ili 15
+    private Integer insurancePerPerson;          // 0 ili 12
     private Integer eurPerPerson;                // zbir svih per-person stavki
 
     // ── Flat (jedna cena za celu rezervaciju) ─────────────────────────

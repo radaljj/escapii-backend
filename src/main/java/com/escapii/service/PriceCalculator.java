@@ -10,7 +10,7 @@ public interface PriceCalculator {
      * Cenovnik (autoritet: PriceCalculatorImpl):
      *
      *   Po osobi (× n putnika):
-     *     baza + Superior? +100 + doručak? +20/noć + sedišta? +24 + osiguranje? +12
+     *     baza + Superior? +100 + doručak? +12/noć + sedišta? +24 + osiguranje? +12
      *
      *   Flat (jedna cena za celu rezervaciju):
      *     Reveal Box? +35

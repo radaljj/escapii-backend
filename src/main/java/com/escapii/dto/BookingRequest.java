@@ -80,8 +80,8 @@ public class BookingRequest {
     @Max(value = 6, message = "Maksimum 6 kofera")
     private Integer cabinSuitcaseCount = 0;
 
-    private boolean hasInsurance         = false; // +20€/pp
-    private boolean hasBreakfast         = false; // +15€/pp
+    private boolean hasInsurance         = false; // +12€/pp
+    private boolean hasBreakfast         = false; // +12€/pp/noć
     private boolean hasSeatsTogether     = false; // +24€/pp (12€/smer × 2 smera)
     private boolean hasConnectingFlights = false; // besplatno - saglasnost na presedanje
 

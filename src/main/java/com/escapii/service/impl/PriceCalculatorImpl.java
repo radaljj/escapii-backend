@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * Po osobi (× n putnika):
  * Osnovna cena  → iz AvailableDate (definisana pri unosu termina)
  * Superior    → +100€/pp
- * Doručak     → +20€/pp
+ * Doručak     → +12€/pp
  * Sedišta     → +24€/pp (12€/smer × 2 smera)
  * Osiguranje  → +12€/pp
  * <p>
@@ -30,7 +30,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
     public static final Integer SUPERIOR_PP      = 100;
     private static final Integer CABIN_SUITCASE  = 100;  // 50€/smer × 2 smera
     public static final Integer INSURANCE_PP     = 12;
-    public static final Integer BREAKFAST_PP     = 20;
+    public static final Integer BREAKFAST_PP     = 12;
     public static final Integer SEATS_PP         = 24;   // 12€/smer × 2 smera, po osobi
     private static final Integer EXCLUSION_PP    = 10;   // po osobi, za 2., 3. i 4. isključivanje
     public static final Integer SOLO_SURCHARGE   = 60;   // doplata za solo putnika

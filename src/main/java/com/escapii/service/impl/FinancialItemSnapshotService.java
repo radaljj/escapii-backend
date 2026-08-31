@@ -53,13 +53,13 @@ public class FinancialItemSnapshotService {
             upgrade.setAgencyCost(BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP));
         }
 
-        // 3. BREAKFAST - jedinicna cena je 20€/osoba/noc, quantity = putnici × noci.
-        //    Ovo je jasnije za admin od "20€/os za sve noci × putnika" jer i unit
+        // 3. BREAKFAST - jedinicna cena je 12€/osoba/noc, quantity = putnici × noci.
+        //    Ovo je jasnije za admin od "12€/os za sve noci × putnika" jer i unit
         //    i total i description otvoreno kazu strukturu.
         int breakfastPP = nz(price.getBreakfastPerPerson());
         int nights      = nz(price.getNumberOfNights());
         if (breakfastPP > 0) {
-            // unit = breakfastPP / nights = 20€ po osobi po noci (default, ali se
+            // unit = breakfastPP / nights = 12€ po osobi po noci (default, ali se
             // izvodi iz preview-a da ne hardcodujemo cenu iz PriceCalculatora)
             int unitPerPersonPerNight = nights > 0 ? breakfastPP / nights : breakfastPP;
             int quantity              = nights > 0 ? n * nights : n;

@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
  * iz {@link AllocationType} - taj deo se izvodi u {@code AgencySettlementCalculator},
  * ne cuva se u bazi da se ne bi razlikovao od trenutne poslovne logike.
  *
- * <p>Zasto snapshot? Jer ako sutra promenimo cenu doručka sa 20€ na 25€, stara
- * rezervacija mora ostati u obračunu po 20€. Rekonstrukcija iz {@code PriceCalculatorImpl}
+ * <p>Zasto snapshot? Jer ako sutra promenimo cenu doručka (npr. sa 20€ na 12€), stara
+ * rezervacija mora ostati u obračunu po staroj ceni. Rekonstrukcija iz {@code PriceCalculatorImpl}
  * konstanti je izgubljena u trenutku promene - zato pamtimo iznose ovde.
  */
 @Getter
@@ -56,7 +56,7 @@ public class BookingFinancialItem {
     @Column(name = "quantity", nullable = false)
     private Integer quantity = 1;
 
-    /** Jedinicna cena naplacena kupcu (npr. 20€/os/noć za doručak). */
+    /** Jedinicna cena naplacena kupcu (npr. 12€/os/noć za doručak). */
     @Column(name = "unit_customer_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitCustomerPrice = BigDecimal.ZERO;
 

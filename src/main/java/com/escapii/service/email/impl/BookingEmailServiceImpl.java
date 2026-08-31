@@ -1,6 +1,8 @@
 package com.escapii.service.email.impl;
 
 import com.escapii.model.Booking;
+import com.escapii.model.BookingFinancialItem;
+import com.escapii.model.ItemType;
 import com.escapii.model.PassengerInfo;
 import com.escapii.util.LogUtils;
 import com.escapii.service.AppErrorService;
@@ -803,8 +805,13 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (booking.getAccommodationExtra() > 0)
             rows.append(priceRow(EmailHtmlBuilder.resolveAccomLabel(booking.getAccommodationType()) + " upgrade", EmailHtmlBuilder.eur(booking.getAccommodationExtra()) + " / os", n, booking.getAccommodationExtra() * n, false));
         if (Boolean.TRUE.equals(booking.getHasBreakfast())) {
-            int nights       = booking.getSelectedDate() != null ? booking.getSelectedDate().getNumberOfNights() : 1;
-            int bfstPP       = PriceCalculatorImpl.BREAKFAST_PP * nights;
+            int nights = booking.getSelectedDate() != null ? booking.getSelectedDate().getNumberOfNights() : 1;
+            // Cena iz snapshota (stare rez. po staroj ceni), fallback na trenutnu konstantu
+            int bfstPP = booking.getFinancialItems().stream()
+                    .filter(fi -> fi.getItemType() == ItemType.BREAKFAST)
+                    .findFirst()
+                    .map(fi -> fi.getCustomerTotal().intValue() / Math.max(n, 1))
+                    .orElse(PriceCalculatorImpl.BREAKFAST_PP * nights);
             rows.append(priceRow("Doručak (" + nights + " noći)", bfstPP + " € / os", n, bfstPP * n, false));
         }
         if (Boolean.TRUE.equals(booking.getHasSeatsTogether()))

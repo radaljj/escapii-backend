@@ -73,18 +73,18 @@ class FinancialItemSnapshotServiceTest {
     }
 
     /**
-     * Breakfast: unit mora biti 20€/os/noc, quantity = putnici × noci - inace
-     * admin breakdown izgleda kao "20 × 2 = 40" umesto "20 × (2 × 3) = 120".
+     * Breakfast: unit mora biti 12€/os/noc, quantity = putnici × noci - inace
+     * admin breakdown izgleda kao "12 × 2 = 24" umesto "12 × (2 × 3) = 72".
      */
     @Test
     void snapshot_breakfast_prikazuje_putnike_puta_noci() {
-        // 20€/os/noc × 2 osobe × 3 noci = 120€; PricePreview daje breakfastPerPerson = 60 (20 × 3)
+        // 12€/os/noc × 2 osobe × 3 noci = 72€; PricePreview daje breakfastPerPerson = 36 (12 × 3)
         PricePreviewResponse p = PricePreviewResponse.builder()
                 .basePricePerPerson(300).accommodationExtraPerPerson(0)
-                .breakfastPerPerson(60).seatsTogether(0).insurancePerPerson(0)
-                .eurPerPerson(360).exclusionCostFlat(0).soloSurcharge(0)
+                .breakfastPerPerson(36).seatsTogether(0).insurancePerPerson(0)
+                .eurPerPerson(336).exclusionCostFlat(0).soloSurcharge(0)
                 .cabinSuitcaseCount(0).cabinSuitcaseTotal(0).revealBoxTotal(0)
-                .totalEurAll(720).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
+                .totalEurAll(672).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
                 .build();
 
         Booking b = emptyBooking();
@@ -94,10 +94,10 @@ class FinancialItemSnapshotServiceTest {
                 .filter(i -> i.getItemType() == ItemType.BREAKFAST)
                 .findFirst().orElseThrow();
         assertEquals(6, br.getQuantity(), "quantity = 2 putnika × 3 noci");
-        assertEquals(new BigDecimal("20.00"), br.getUnitCustomerPrice(),
-                "unit = 20€/os/noc, ne 60€ (jer bi bio dupli racun)");
-        assertEquals(new BigDecimal("120.00"), br.getCustomerTotal(),
-                "total = 2 × 3 × 20 = 120");
+        assertEquals(new BigDecimal("12.00"), br.getUnitCustomerPrice(),
+                "unit = 12€/os/noc, ne 36€ (jer bi bio dupli racun)");
+        assertEquals(new BigDecimal("72.00"), br.getCustomerTotal(),
+                "total = 2 × 3 × 12 = 72");
         assertTrue(br.getDescription().contains("2 putnika"),
                 "opis mora spomenuti broj putnika");
         assertTrue(br.getDescription().contains("3 noći"),
