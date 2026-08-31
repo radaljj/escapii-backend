@@ -45,6 +45,7 @@ import com.escapii.service.InvoiceService;
 import com.escapii.event.BookingEmailEvent;
 import com.escapii.service.email.ConfirmationDocumentEmailService;
 import com.escapii.util.LogUtils;
+import org.hibernate.Hibernate;
 import com.escapii.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -640,6 +641,8 @@ public class AdminServiceImpl implements AdminService {
         }
 
         // Mejl se šalje kroz event - garantuje slanje tek POSLE commit-a
+        // financialItems se inicijalizuje dok je sesija aktivna, jer email thread nema Hibernate sesiju
+        Hibernate.initialize(saved.getFinancialItems());
         if (status == BookingStatus.CONFIRMED) {
             eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.BOOKING_CONFIRMED));
         } else if (status == BookingStatus.CANCELLED && oldStatus == BookingStatus.CONFIRMED) {

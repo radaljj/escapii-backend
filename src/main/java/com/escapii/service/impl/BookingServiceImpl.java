@@ -24,6 +24,7 @@ import com.escapii.repository.DestinationRepository;
 import com.escapii.repository.GiftVoucherRepository;
 import com.escapii.service.BookingService;
 import com.escapii.event.BookingEmailEvent;
+import org.hibernate.Hibernate;
 import com.escapii.service.PriceCalculator;
 import com.escapii.util.LogUtils;
 import lombok.RequiredArgsConstructor;
@@ -246,6 +247,7 @@ public class BookingServiceImpl implements BookingService {
                 saved.getDepartureAirport(),
                 date.getDepartureDate(), date.getReturnDate());
 
+        Hibernate.initialize(saved.getFinancialItems());
         eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.TEAM_NOTIFICATION));
         eventPublisher.publishEvent(new BookingEmailEvent(saved, BookingEmailEvent.Type.CUSTOMER_CONFIRMATION));
 

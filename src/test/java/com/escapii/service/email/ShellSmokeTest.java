@@ -171,6 +171,54 @@ class ShellSmokeTest {
         System.out.println("PREVIEW_DIR=" + System.getProperty("java.io.tmpdir"));
     }
 
+    /**
+     * Confirmed email sa doručkom mora koristiti snapshot cenu iz BookingFinancialItem,
+     * ne trenutnu konstantu. Simulira scenario gde je booking kreiran po staroj ceni
+     * (20€/noć) ali konstanta je sad 12€ — email mora prikazati 60€/os (20×3), ne 36€.
+     */
+    @Test
+    void confirmedEmailSaDoručkomKoristiSnapshotCenu() throws Exception {
+        AtomicReference<String> cap = new AtomicReference<>();
+        EmailSender sender = capturing(cap);
+
+        var be = new BookingEmailServiceImpl(sender, new com.escapii.service.DestinationService() {
+            public List<com.escapii.model.Destination> getDestinationsByAirport(String a) { return List.of(); }
+            public List<com.escapii.model.Destination> getAllDestinations() { return List.of(); }
+            public List<com.escapii.dto.CountryDto> fetchCountries() { return List.of(); }
+        });
+        set(be, "teamEmail", "escapii.team@gmail.com");
+        set(be, "contactEmail", "info@escapii.rs");
+        var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
+        init.setAccessible(true);
+        init.invoke(be);
+
+        Booking bb = booking();
+        bb.setHasBreakfast(true);
+        bb.setHasRevealBox(false);
+        bb.setBasePricePerPerson(300);
+        bb.setTotalPriceAll(720);
+
+        // Snapshot sa starom cenom (20€/noć × 3 noći = 60€/os, ukupno 120€ za 2 putnika)
+        BookingFinancialItem bfst = new BookingFinancialItem();
+        bfst.setBooking(bb);
+        bfst.setItemType(ItemType.BREAKFAST);
+        bfst.setAllocationType(AllocationType.MARGIN_50_50);
+        bfst.setDescription("Doručak u hotelu (2 putnika × 3 noći)");
+        bfst.setQuantity(6);
+        bfst.setUnitCustomerPrice(BigDecimal.valueOf(20).setScale(2));
+        bfst.setCustomerTotal(BigDecimal.valueOf(120).setScale(2));
+        bb.getFinancialItems().add(bfst);
+
+        be.sendBookingConfirmed(bb);
+        String html = cap.get();
+        assertNotNull(html, "email HTML ne sme biti null");
+        // Total za doručak: snapshot 120€ (20€/noć × 3 noći × 2 os), ne 72€ (12€ × 3 × 2)
+        assertTrue(html.contains("120 €"),
+                "email mora koristiti snapshot total (120€), ne trenutnu konstantu (72€)");
+        assertFalse(html.contains("72 €"),
+                "email ne sme koristiti trenutnu konstantu za staru rezervaciju");
+    }
+
     /** Oba shell-a (sa i bez mystery trake) se učitavaju i popunjavaju. */
     @Test
     void obaShellaRade() {
