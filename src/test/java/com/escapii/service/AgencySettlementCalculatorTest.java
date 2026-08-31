@@ -401,4 +401,20 @@ class AgencySettlementCalculatorTest {
         AgencySettlementResponse r = calc.calculate(b);
         assertFalse(r.isReadyForInvoice());
     }
+
+    /**
+     * Scheduler prebacuje zavrsena putovanja u COMPLETED. Bez ovoga bi rezervacija
+     * koja nije fakturisana pre povratka trajno izgubila mogucnost fakture.
+     */
+    @Test
+    void completed_je_takodje_fakturisiv() {
+        Booking b = booking(359, 0);
+        b.setStatus(com.escapii.model.BookingStatus.COMPLETED);
+        addItem(b, ItemType.BASE_PACKAGE, bd(359), bd(220));
+
+        AgencySettlementResponse r = calc.calculate(b);
+        assertTrue(r.isReadyForInvoice(),
+                "COMPLETED booking mora ostati fakturabilan (scheduler ga je vec prebacio, ali novac je i dalje na knjizima)");
+        assertTrue(r.getValidationErrors().isEmpty());
+    }
 }

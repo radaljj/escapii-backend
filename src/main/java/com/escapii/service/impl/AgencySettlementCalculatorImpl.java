@@ -119,18 +119,21 @@ public class AgencySettlementCalculatorImpl implements AgencySettlementCalculato
 
         boolean overallReconciled = reconciledLineItems && !anyMissingCost;
 
-        // Booking mora biti CONFIRMED da bi obracun bio spreman za fakturu.
-        // PENDING = kupac jos nije platio; CANCELLED = necega necega vise nema.
-        // Admin sme unapred da unese troskove, ali dok status nije CONFIRMED
-        // ne treba se prelaziti u READY_FOR_INVOICE ni dozvoliti finalize.
-        boolean confirmedBooking = booking.getStatus() == BookingStatus.CONFIRMED;
-        if (!confirmedBooking && !items.isEmpty()) {
-            validationErrors.add("Rezervacija nije CONFIRMED (trenutno "
+        // Booking mora biti CONFIRMED ili COMPLETED da bi obracun bio spreman za
+        // fakturu. PENDING = kupac jos nije platio; CANCELLED = nista vise nema.
+        // COMPLETED (scheduler postavi po povratku) mora ostati fakturabilan -
+        // inace bi rezervacija koja nije fakturisana pre povratka trajno izgubila
+        // mogucnost fakture. Admin sme uneti troskove i za PENDING, ali dok
+        // status nije confirmed/completed ne prelazi se u READY_FOR_INVOICE.
+        boolean fakturisiv = booking.getStatus() == BookingStatus.CONFIRMED
+                          || booking.getStatus() == BookingStatus.COMPLETED;
+        if (!fakturisiv && !items.isEmpty()) {
+            validationErrors.add("Rezervacija nije CONFIRMED/COMPLETED (trenutno "
                     + booking.getStatus() + ") - fakturisanje agenciji nije dozvoljeno.");
         }
 
         boolean readyForInvoice = overallReconciled && !anyNegativeMargin
-                && !items.isEmpty() && confirmedBooking;
+                && !items.isEmpty() && fakturisiv;
 
         return AgencySettlementResponse.builder()
                 .bookingId(booking.getId())
