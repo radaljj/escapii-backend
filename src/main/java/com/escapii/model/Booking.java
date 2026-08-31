@@ -157,6 +157,15 @@ public class Booking {
     @Column(name = "agency_paid_at")
     private LocalDateTime agencyPaidAt;
 
+    /** Trenutak kad je faktura ponistena. Setuje se na prelaz INVOICED→VOIDED
+     *  i ostaje zauvek kao audit trag (broj fakture takodje ostaje). */
+    @Column(name = "agency_voided_at")
+    private LocalDateTime agencyVoidedAt;
+
+    /** Razlog ponistenja fakture (kratki tekst iz admin panela). */
+    @Column(name = "agency_void_reason", length = 255)
+    private String agencyVoidReason;
+
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingFinancialItem> financialItems = new ArrayList<>();
 

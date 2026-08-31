@@ -139,6 +139,9 @@ public class AgencySettlementCalculatorImpl implements AgencySettlementCalculato
                 .agencyName(booking.getAgencyNameSnapshot())
                 .currency("EUR")
                 .settlementStatus(booking.getSettlementStatus())
+                .agencyInvoiceNumber(booking.getAgencyInvoiceNumber())
+                .agencyInvoicedAt(booking.getAgencyInvoicedAt())
+                .agencyPaidAt(booking.getAgencyPaidAt())
                 .lineItems(lineItems)
                 .grossBookingValue(grossBookingValue)
                 .customerCashAmount(customerCash)
@@ -201,6 +204,10 @@ public class AgencySettlementCalculatorImpl implements AgencySettlementCalculato
                 .unitCustomerPrice(money(item.getUnitCustomerPrice()))
                 .customerTotal(customerTotal)
                 .agencyCost(agencyCost)
+                .flightAgencyCost(item.getFlightAgencyCost() == null
+                        ? null : money(item.getFlightAgencyCost()))
+                .hotelAgencyCost(item.getHotelAgencyCost() == null
+                        ? null : money(item.getHotelAgencyCost()))
                 .margin(margin)
                 .escapiiShare(escapiiShare)
                 .agencyShare(agencyShare)

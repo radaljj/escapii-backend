@@ -101,4 +101,6 @@ public class AdminBookingResponse {
     private String        agencyInvoiceNumber;
     private LocalDateTime agencyInvoicedAt;
     private LocalDateTime agencyPaidAt;
+    private LocalDateTime agencyVoidedAt;
+    private String        agencyVoidReason;
 }

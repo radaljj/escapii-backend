@@ -524,6 +524,17 @@ public class AdminServiceImpl implements AdminService {
 
         BookingStatus oldStatus = booking.getStatus();
 
+        // Guard: fakturisana rezervacija (INVOICED/PAID) ne moze u CANCELLED
+        // dok se ne ponisti faktura (VOID). Bez ovog checka bi booking izaso iz
+        // aktivnog toka a faktura bi ostala u knjizima kao vazeca.
+        if (status == BookingStatus.CANCELLED && oldStatus != BookingStatus.CANCELLED
+                && (booking.getSettlementStatus() == SettlementStatus.INVOICED
+                 || booking.getSettlementStatus() == SettlementStatus.PAID)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Rezervacija ima aktivnu fakturu " + booking.getAgencyInvoiceNumber()
+                    + " (" + booking.getSettlementStatus() + "). Prvo ponisti fakturu (VOID) pa otkazi.");
+        }
+
         // Guard: booking ne sme u CONFIRMED bez agencije - inače bi bio "nevidljiv"
         // u earnings dashboardu (grupiše se po agencyIdSnapshot). Privatni termin sme
         // ostati bez agencije dok se ne pronađe organizator, ali potvrda bookinga
@@ -1263,7 +1274,10 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AgencySettlementResponse finalizeAgencyInvoice(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
+        // findByIdForUpdate: pesimisticki lock protiv dupliranja fakture pri
+        // paralelnim klikovima. Bez ovoga dva istovremena poziva mogu proci
+        // ready check-om i uzeti dva razlicita broja sekvence.
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + bookingId));
 
@@ -1279,7 +1293,12 @@ public class AdminServiceImpl implements AdminService {
                 || booking.getSettlementStatus() == SettlementStatus.PAID) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Rezervacija je vec fakturisana (broj " + booking.getAgencyInvoiceNumber()
-                    + "). Storno zahteva rucnu korekciju.");
+                    + "). Storno zahteva VOID (POST /agency-invoice/void).");
+        }
+        if (booking.getSettlementStatus() == SettlementStatus.VOIDED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Faktura je ranije bila ponistena (broj " + booking.getAgencyInvoiceNumber()
+                    + "). Nova faktura zahteva rucnu re-inicijalizaciju - kontaktiraj tim.");
         }
 
         AgencySettlementResponse preview = agencySettlementCalculator.calculate(booking);
@@ -1288,16 +1307,55 @@ public class AdminServiceImpl implements AdminService {
                     "Obracun nije spreman za fakturu: " + String.join("; ", preview.getValidationErrors()));
         }
 
+        // ESCAPII_PAYS_AGENCY = klasicna faktura Escapii→agencija nema smisla
+        // (agencija ne duguje nego prima novac zbog velikog vaucera). Blokiramo
+        // ovaj tok - potrebna je rucna intervencija u knjigovodstvu.
+        if (preview.getWhoPaysWhom() == AgencySettlementResponse.WhoPaysWhom.ESCAPII_PAYS_AGENCY) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Neto settlement je negativan (Escapii duguje agenciji " + preview.getNetSettlement().abs()
+                    + " EUR). Klasicna faktura Escapii→agencija ovde nije prava - agencija treba da posalje svoju fakturu Escapii-ju. Kontaktiraj tim.");
+        }
+
         String invoiceNumber = generateAgencyInvoiceNumber();
         booking.setAgencyInvoiceNumber(invoiceNumber);
         booking.setAgencyInvoicedAt(LocalDateTime.now());
         booking.setSettlementStatus(SettlementStatus.INVOICED);
         Booking saved = bookingRepository.save(booking);
 
-        log.info("[ADMIN] Faktura {} generisana za {} (agencija {}, Escapii duguje: {}€, agencija duguje: {}€)",
+        log.info("[ADMIN] Faktura {} generisana za {} (agencija {}, netSettlement: {}€ ka Escapii)",
                 invoiceNumber, saved.getBookingRef(), saved.getAgencyNameSnapshot(),
-                preview.getNetSettlement().signum() < 0 ? preview.getNetSettlement().abs() : "0",
-                preview.getNetSettlement().signum() > 0 ? preview.getNetSettlement() : "0");
+                preview.getNetSettlement());
+        return agencySettlementCalculator.calculate(saved);
+    }
+
+    @Override
+    @Transactional
+    public AgencySettlementResponse voidAgencyInvoice(Long bookingId, String reason) {
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Rezervacija ne postoji: " + bookingId));
+
+        if (booking.getSettlementStatus() != SettlementStatus.INVOICED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "VOID sme samo iz INVOICED. Trenutni status: " + booking.getSettlementStatus()
+                    + (booking.getSettlementStatus() == SettlementStatus.PAID
+                        ? " - prvo vrati na INVOICED (rollback uplate)." : ""));
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Razlog storna je obavezan (za audit).");
+        }
+
+        // Broj fakture, agencyInvoicedAt OSTAJU (audit) - dodaje se samo VOIDED status
+        // i void metadata. Sekvenca je vec inkrementovana pri finalize; nova faktura
+        // za ovu rezervaciju bi trazila novi broj (i rucnu odluku).
+        booking.setSettlementStatus(SettlementStatus.VOIDED);
+        booking.setAgencyVoidedAt(LocalDateTime.now());
+        booking.setAgencyVoidReason(reason.trim());
+        Booking saved = bookingRepository.save(booking);
+
+        log.warn("[ADMIN] Faktura {} PONISTENA za {} (razlog: {})",
+                saved.getAgencyInvoiceNumber(), saved.getBookingRef(), reason);
         return agencySettlementCalculator.calculate(saved);
     }
 
@@ -1314,7 +1372,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AgencySettlementResponse updateSettlementStatus(Long bookingId, SettlementStatus newStatus) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Rezervacija ne postoji: " + bookingId));
 
@@ -1323,16 +1381,18 @@ public class AdminServiceImpl implements AdminService {
             return agencySettlementCalculator.calculate(booking);
         }
 
+        // NEEDS_COSTS ⇄ READY_FOR_INVOICE su izvedeni iz kalkulatora - nisu
+        // rucni prelazi. Za storno postoji poseban VOID endpoint (INVOICED→VOIDED).
+        // Ovaj endpoint pokriva SAMO uplatu i njen rollback.
         boolean allowed = switch (current) {
-            case NEEDS_COSTS       -> newStatus == SettlementStatus.READY_FOR_INVOICE;
-            case READY_FOR_INVOICE -> newStatus == SettlementStatus.NEEDS_COSTS;
-            case INVOICED          -> newStatus == SettlementStatus.PAID
-                                   || newStatus == SettlementStatus.READY_FOR_INVOICE;
-            case PAID              -> newStatus == SettlementStatus.INVOICED;
+            case INVOICED -> newStatus == SettlementStatus.PAID;
+            case PAID     -> newStatus == SettlementStatus.INVOICED;
+            default       -> false;
         };
         if (!allowed) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Nedozvoljen prelaz " + current + " -> " + newStatus);
+                    "Nedozvoljen prelaz " + current + " -> " + newStatus
+                    + " (NEEDS/READY su izvedeni iz kalkulatora; za storno koristi VOID).");
         }
 
         booking.setSettlementStatus(newStatus);
@@ -1341,13 +1401,6 @@ public class AdminServiceImpl implements AdminService {
         } else if (newStatus == SettlementStatus.INVOICED && current == SettlementStatus.PAID) {
             // Rollback iz PAID: brisemo paidAt ali invoice broj/datum ostaju
             booking.setAgencyPaidAt(null);
-        } else if (newStatus == SettlementStatus.READY_FOR_INVOICE && current == SettlementStatus.INVOICED) {
-            // Storno fakture - brisemo invoice broj i datum. Broj se ne recikla
-            // (sekvenca ostaje inkrementovana) da revizija vidi rupu i pita zasto.
-            log.warn("[ADMIN] Storno fakture {} za {} - broj se ne reciklira (revizija).",
-                    booking.getAgencyInvoiceNumber(), booking.getBookingRef());
-            booking.setAgencyInvoiceNumber(null);
-            booking.setAgencyInvoicedAt(null);
         }
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Settlement status {} -> {} za {}",
@@ -1364,6 +1417,64 @@ public class AdminServiceImpl implements AdminService {
         return bookings.stream()
                 .map(this::toDashboardRow)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.escapii.dto.AgencyDashboardSummary agencyDashboardSummary(
+            Long agencyId, java.time.LocalDate from, java.time.LocalDate to) {
+        // Bez filtera po statusu - trebaju nam svi da mozemo napraviti agregat po grupama.
+        List<Booking> bookings = bookingRepository.findForAgencyDashboard(agencyId, from, to, null);
+
+        java.math.BigDecimal projected = java.math.BigDecimal.ZERO.setScale(2);
+        java.math.BigDecimal invoiced  = java.math.BigDecimal.ZERO.setScale(2);
+        java.math.BigDecimal paid      = java.math.BigDecimal.ZERO.setScale(2);
+        int projectedCount = 0, invoicedCount = 0, paidCount = 0;
+        int needsCosts = 0, readyForInvoice = 0, voided = 0;
+
+        for (Booking b : bookings) {
+            SettlementStatus st = b.getSettlementStatus();
+            AgencySettlementResponse s = agencySettlementCalculator.calculate(b);
+            java.math.BigDecimal earnings = s.getEscapiiEarnings() == null
+                    ? java.math.BigDecimal.ZERO : s.getEscapiiEarnings();
+
+            switch (st) {
+                case NEEDS_COSTS -> needsCosts++;
+                case READY_FOR_INVOICE -> readyForInvoice++;
+                case VOIDED -> voided++;
+                default -> { /* INVOICED/PAID broje se ispod */ }
+            }
+
+            // Projected = sve sto CONFIRMED + ready ili vec fakturisano/placeno.
+            // Ne ukljucuje CANCELLED (findForAgencyDashboard ih vec filtrira),
+            // ne ukljucuje NEEDS_COSTS/VOIDED (jos/vise nisu u knjigama).
+            if (st == SettlementStatus.READY_FOR_INVOICE
+             || st == SettlementStatus.INVOICED
+             || st == SettlementStatus.PAID) {
+                projected = projected.add(earnings);
+                projectedCount++;
+            }
+            if (st == SettlementStatus.INVOICED) {
+                invoiced = invoiced.add(earnings);
+                invoicedCount++;
+            }
+            if (st == SettlementStatus.PAID) {
+                paid = paid.add(earnings);
+                paidCount++;
+            }
+        }
+
+        return com.escapii.dto.AgencyDashboardSummary.builder()
+                .projectedEscapiiTotal(projected)
+                .projectedCount(projectedCount)
+                .invoicedEscapiiTotal(invoiced)
+                .invoicedCount(invoicedCount)
+                .paidEscapiiTotal(paid)
+                .paidCount(paidCount)
+                .needsCostsCount(needsCosts)
+                .readyForInvoiceCount(readyForInvoice)
+                .voidedCount(voided)
+                .build();
     }
 
     private com.escapii.dto.AgencyDashboardRow toDashboardRow(Booking b) {

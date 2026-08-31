@@ -354,6 +354,44 @@ class AgencySettlementCalculatorTest {
                 "validation error mora eksplicitno reci sto");
     }
 
+    // ── 21. Response nosi flight/hotel i broj fakture (za frontend modal) ──
+
+    @Test
+    void response_ima_flight_i_hotel_polje_za_BASE_PACKAGE() {
+        Booking b = booking(359, 0);
+        BookingFinancialItem base = new BookingFinancialItem();
+        base.setBooking(b);
+        base.setItemType(ItemType.BASE_PACKAGE);
+        base.setAllocationType(ItemType.BASE_PACKAGE.getAllocationType());
+        base.setQuantity(1);
+        base.setUnitCustomerPrice(bd(359));
+        base.setCustomerTotal(bd(359));
+        base.setAgencyCost(bd(220));
+        base.setFlightAgencyCost(new BigDecimal("150.00"));
+        base.setHotelAgencyCost(new BigDecimal("70.00"));
+        b.getFinancialItems().add(base);
+
+        AgencySettlementResponse r = calc.calculate(b);
+        var line = r.getLineItems().get(0);
+        assertEquals(new BigDecimal("150.00"), line.getFlightAgencyCost(),
+                "flight mora biti u response - modal ga prepopunjava pri drugom otvaranju");
+        assertEquals(new BigDecimal("70.00"), line.getHotelAgencyCost());
+    }
+
+    @Test
+    void response_ima_broj_fakture_i_datume() {
+        Booking b = booking(100, 0);
+        b.setAgencyInvoiceNumber("ESC-AG-2026-0007");
+        b.setAgencyInvoicedAt(java.time.LocalDateTime.of(2026, 1, 15, 10, 0));
+        b.setSettlementStatus(com.escapii.model.SettlementStatus.INVOICED);
+        addItem(b, ItemType.BASE_PACKAGE, bd(100), bd(60));
+
+        AgencySettlementResponse r = calc.calculate(b);
+        assertEquals("ESC-AG-2026-0007", r.getAgencyInvoiceNumber(),
+                "broj fakture mora biti u response - frontend ne treba drugi API poziv");
+        assertEquals(java.time.LocalDateTime.of(2026, 1, 15, 10, 0), r.getAgencyInvoicedAt());
+    }
+
     @Test
     void cancelled_takodje_nije_ready() {
         Booking b = booking(100, 0);

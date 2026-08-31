@@ -536,6 +536,19 @@ public class AdminController {
     }
 
     /**
+     * POST /api/admin/bookings/{id}/agency-invoice/void
+     * Storno fakture: INVOICED→VOIDED. Broj fakture ostaje na bookingu kao audit trag.
+     * Body: {"reason": "opis razloga"}
+     */
+    @PostMapping("/bookings/{id}/agency-invoice/void")
+    public ResponseEntity<AgencySettlementResponse> voidAgencyInvoice(
+            @PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body) {
+        String reason = body != null ? body.get("reason") : null;
+        return ResponseEntity.ok(adminService.voidAgencyInvoice(id, reason));
+    }
+
+    /**
      * PATCH /api/admin/bookings/{id}/settlement-status?value=PAID
      * Rucni prelaz izmedju settlement stanja (INVOICED→PAID, PAID→INVOICED
      * kao rollback, INVOICED→READY_FOR_INVOICE kao storno).
@@ -559,6 +572,19 @@ public class AdminController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @RequestParam(required = false) com.escapii.model.SettlementStatus status) {
         return ResponseEntity.ok(adminService.agencyDashboard(agencyId, from, to, status));
+    }
+
+    /**
+     * GET /api/admin/agencies/settlements/summary
+     * Razdvojeni agregat: projekcija vs stvarno fakturisano vs naplaceno.
+     * Uvek gleda sve statuse - filter je samo po agenciji i periodu.
+     */
+    @GetMapping("/agencies/settlements/summary")
+    public ResponseEntity<com.escapii.dto.AgencyDashboardSummary> agencyDashboardSummary(
+            @RequestParam(required = false) Long agencyId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to) {
+        return ResponseEntity.ok(adminService.agencyDashboardSummary(agencyId, from, to));
     }
 
 }

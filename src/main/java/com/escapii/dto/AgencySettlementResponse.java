@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -31,6 +32,12 @@ public class AgencySettlementResponse {
     private String agencyName;
     private String currency;
     private SettlementStatus settlementStatus;
+
+    // ── Faktura (INVOICED/PAID/VOIDED) ─────────────────────────
+    /** Broj fakture Escapii → agencija (ESC-AG-YYYY-NNNN). Null dok se ne finalizuje. */
+    private String agencyInvoiceNumber;
+    private LocalDateTime agencyInvoicedAt;
+    private LocalDateTime agencyPaidAt;
 
     private List<LineItem> lineItems;
 
@@ -87,6 +94,10 @@ public class AgencySettlementResponse {
         private BigDecimal customerTotal;
         /** Trosak agencije. Null = nije unet (samo za MARGIN_50_50); ne prikazuje se za ESCAPII_100. */
         private BigDecimal agencyCost;
+        /** BASE_PACKAGE podunosi: avion i hotel odvojeno.
+         *  Za sve ostale stavke oba su null. Frontend ih koristi da prepopuli modal. */
+        private BigDecimal flightAgencyCost;
+        private BigDecimal hotelAgencyCost;
         /** Marza stavke (customerTotal - agencyCost). Null ako trosak nije unet ili ESCAPII_100. */
         private BigDecimal margin;
         /** Escapii deo ove stavke. */
