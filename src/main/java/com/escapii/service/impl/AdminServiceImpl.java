@@ -1361,9 +1361,16 @@ public class AdminServiceImpl implements AdminService {
 
     private String generateAgencyInvoiceNumber() {
         int year = java.time.LocalDate.now().getYear();
+        // Prvo idempotentan INSERT (ON CONFLICT DO NOTHING) da red za godinu
+        // sigurno postoji. Bez ovoga bi dva paralelna finalize-a u prvoj
+        // fakturi nove godine oba trazila red, oba dobila prazno, oba
+        // pokusala INSERT - drugi pukne na PK constraint. Sa ensureYearRow-om
+        // je INSERT bezbedan, a naredni findByYear je pod PESSIMISTIC_WRITE
+        // lock-om pa serijalizuje inkrement.
+        agencyInvoiceSequenceRepository.ensureYearRow(year);
         com.escapii.model.AgencyInvoiceSequence seq = agencyInvoiceSequenceRepository.findByYear(year)
-                .orElseGet(() -> agencyInvoiceSequenceRepository.save(
-                        new com.escapii.model.AgencyInvoiceSequence(year)));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Sekvenca fakture za godinu " + year + " nije inicijalizovana"));
         seq.setLastSeq(seq.getLastSeq() + 1);
         agencyInvoiceSequenceRepository.save(seq);
         return "ESC-AG-" + year + "-" + String.format("%04d", seq.getLastSeq());
@@ -1435,8 +1442,17 @@ public class AdminServiceImpl implements AdminService {
         for (Booking b : bookings) {
             SettlementStatus st = b.getSettlementStatus();
             AgencySettlementResponse s = agencySettlementCalculator.calculate(b);
-            java.math.BigDecimal earnings = s.getEscapiiEarnings() == null
-                    ? java.math.BigDecimal.ZERO : s.getEscapiiEarnings();
+            // Namerno koristimo netSettlement (a ne escapiiEarnings) - dashboard
+            // prikazuje STVARNI transfer izmedju strana. Vaucer je novac koji
+            // Escapii vec drzi kod sebe (kupac ga je odavno platio), pa se ne
+            // fakturise ponovo agenciji. Primer: zarada 69,50€, vaucer 20€ →
+            // agencija plaća 49,50€. Sabirati escapiiEarnings bi laznо naduvavalo
+            // "Fakturisano/Naplaceno" jer bi ukljucivalo iznos koji agencija
+            // nikad ne transferise. Kada je netSettlement negativan (Escapii
+            // duzi agenciji - retko, samo sa velikim vaucerom) preskace se u
+            // projected/invoiced/paid: ne postoji "klasicna" faktura tog smera.
+            java.math.BigDecimal net = s.getNetSettlement() == null
+                    ? java.math.BigDecimal.ZERO : s.getNetSettlement();
 
             switch (st) {
                 case NEEDS_COSTS -> needsCosts++;
@@ -1451,15 +1467,15 @@ public class AdminServiceImpl implements AdminService {
             if (st == SettlementStatus.READY_FOR_INVOICE
              || st == SettlementStatus.INVOICED
              || st == SettlementStatus.PAID) {
-                projected = projected.add(earnings);
+                projected = projected.add(net);
                 projectedCount++;
             }
             if (st == SettlementStatus.INVOICED) {
-                invoiced = invoiced.add(earnings);
+                invoiced = invoiced.add(net);
                 invoicedCount++;
             }
             if (st == SettlementStatus.PAID) {
-                paid = paid.add(earnings);
+                paid = paid.add(net);
                 paidCount++;
             }
         }

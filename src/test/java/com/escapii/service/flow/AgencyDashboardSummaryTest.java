@@ -89,9 +89,11 @@ class AgencyDashboardSummaryTest {
         return b;
     }
 
-    private AgencySettlementResponse response(BigDecimal earnings) {
+    private AgencySettlementResponse response(BigDecimal net) {
+        // Dashboard summary koristi netSettlement (stvarni transfer izmedju
+        // strana, tj. escapiiEarnings - vaucer). Testovi popunjavaju taj field.
         return AgencySettlementResponse.builder()
-                .escapiiEarnings(earnings)
+                .netSettlement(net)
                 .build();
     }
 
@@ -126,6 +128,29 @@ class AgencyDashboardSummaryTest {
         assertEquals(1, s.getNeedsCostsCount());
         assertEquals(1, s.getReadyForInvoiceCount());
         assertEquals(1, s.getVoidedCount());
+    }
+
+    @Test
+    void summary_koristi_netSettlement_ne_escapiiEarnings_kad_ima_vaucera() {
+        // Regresija: dashboard je ranije sabirao escapiiEarnings, sto je
+        // prikazivalo iznos koji agencija nikad ne transferise. Sa vaucerom
+        // od 20€ i zaradom 69,50€, agencija duguje samo 49,50€ - i to je ono
+        // sto mora videti pod "Fakturisano/Naplaceno".
+        Booking inv = bookingWith(SettlementStatus.INVOICED);
+        AgencySettlementResponse s = AgencySettlementResponse.builder()
+                .escapiiEarnings(new BigDecimal("69.50"))
+                .voucherApplied(new BigDecimal("20.00"))
+                .netSettlement(new BigDecimal("49.50"))
+                .build();
+
+        when(bookingRepository.findForAgencyDashboard(any(), any(), any(), any()))
+                .thenReturn(List.of(inv));
+        when(agencySettlementCalculator.calculate(inv)).thenReturn(s);
+
+        AgencyDashboardSummary summary = svc.agencyDashboardSummary(null, null, null);
+        assertEquals(new BigDecimal("49.50"), summary.getInvoicedEscapiiTotal(),
+                "dashboard mora prikazati netSettlement, ne escapiiEarnings");
+        assertEquals(new BigDecimal("49.50"), summary.getProjectedEscapiiTotal());
     }
 
     @Test
