@@ -1152,6 +1152,14 @@ public class AdminServiceImpl implements AdminService {
         validateNonNegative("cabinSuitcaseAgencyCost", req.getCabinSuitcaseAgencyCost());
         validateNonNegative("insuranceAgencyCost", req.getInsuranceAgencyCost());
 
+        // Brisanje troskova (clear ide PRE popune - da admin moze u istom pozivu
+        // obrisati stari trosak i postaviti novi na drugoj stavci ako treba).
+        if (req.getClear() != null) {
+            for (ItemType type : req.getClear()) {
+                clearAgencyCost(booking, type);
+            }
+        }
+
         // BASE_PACKAGE: flight + hotel = base agencyCost. Oba se moraju uneti
         // zajedno ili nijedno.
         updateBaseIfPresent(booking, req.getFlightAgencyCost(), req.getHotelAgencyCost());
@@ -1177,7 +1185,32 @@ public class AdminServiceImpl implements AdminService {
         bookingRepository.save(booking);
         log.info("[ADMIN] Troskovi agencije azurirani za {} -> settlementStatus={}",
                 booking.getBookingRef(), booking.getSettlementStatus());
+
+        // Preview je izracunat pre eventualnog status prelaza, pa response mora
+        // odraziti aktuelni status posle save-a (inace API laze da je jos
+        // NEEDS_COSTS iako je booking sad READY_FOR_INVOICE).
+        preview.setSettlementStatus(booking.getSettlementStatus());
         return preview;
+    }
+
+    /** Brise agencyCost sa stavke (i flight/hotel podunose za BASE_PACKAGE).
+     *  Ako stavka ne postoji na bookingu, tiho preskace - admin panel ionako
+     *  salje samo tipove koji su vidljivi u UI. */
+    private void clearAgencyCost(Booking booking, ItemType type) {
+        BookingFinancialItem item = booking.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == type)
+                .findFirst()
+                .orElse(null);
+        if (item == null) {
+            log.warn("[ADMIN] Ignorisan clear za {} na bookingu {} - stavka ne postoji",
+                    type, booking.getBookingRef());
+            return;
+        }
+        item.setAgencyCost(null);
+        if (type == ItemType.BASE_PACKAGE) {
+            item.setFlightAgencyCost(null);
+            item.setHotelAgencyCost(null);
+        }
     }
 
     private void validateNonNegative(String field, java.math.BigDecimal v) {

@@ -48,12 +48,22 @@ public class FinancialItemSnapshotService {
                     n, BigDecimal.valueOf(upgradePP), BigDecimal.valueOf((long) upgradePP * n));
         }
 
-        // 3. BREAKFAST - iznos je vec ukupno po osobi za sve noci; quantity = putnici.
+        // 3. BREAKFAST - jedinicna cena je 20€/osoba/noc, quantity = putnici × noci.
+        //    Ovo je jasnije za admin od "20€/os za sve noci × putnika" jer i unit
+        //    i total i description otvoreno kazu strukturu.
         int breakfastPP = nz(price.getBreakfastPerPerson());
+        int nights      = nz(price.getNumberOfNights());
         if (breakfastPP > 0) {
+            // unit = breakfastPP / nights = 20€ po osobi po noci (default, ali se
+            // izvodi iz preview-a da ne hardcodujemo cenu iz PriceCalculatora)
+            int unitPerPersonPerNight = nights > 0 ? breakfastPP / nights : breakfastPP;
+            int quantity              = nights > 0 ? n * nights : n;
+            int total                 = breakfastPP * n;
             addItem(booking, ItemType.BREAKFAST,
-                    "Doručak u hotelu",
-                    n, BigDecimal.valueOf(breakfastPP), BigDecimal.valueOf((long) breakfastPP * n));
+                    "Doručak u hotelu (" + n + " putnika × " + nights + " noći)",
+                    quantity,
+                    BigDecimal.valueOf(unitPerPersonPerNight),
+                    BigDecimal.valueOf(total));
         }
 
         // 4. SEATS_TOGETHER - fiksno po osobi za oba smera.
@@ -91,14 +101,26 @@ public class FinancialItemSnapshotService {
                     1, BigDecimal.valueOf(solo), BigDecimal.valueOf(solo));
         }
 
-        // 8. DESTINATION_EXCLUSIONS - 100% Escapii, unit = 10€/os × broj naplativih.
+        // 8. DESTINATION_EXCLUSIONS - 100% Escapii. Jedinicna cena je 10€/os/isk,
+        //    quantity = broj NAPLATIVIH isk. × putnika (prvo isk. je besplatno pa
+        //    ne ulazi u quantity, inace jedinicna cena izgleda pogresno).
         int exclFlat = nz(price.getExclusionCostFlat());
         int exclCount = nz(price.getExclusionCount());
         if (exclFlat > 0) {
+            // izvedena unit iz totala: exclFlat = billable × unit × n
+            // unit = exclFlat / (billable × n); billable = exclFlat / (unit × n)
+            // Ne znamo unit direktno (10€), pa krecemo od pretpostavke default-a
+            // 10€ i validiramo. Ako je airport rule drugaciji, quantity ipak radi.
+            int unitPerPersonPerExclusion = 10;
+            int billable = unitPerPersonPerExclusion * n > 0
+                    ? exclFlat / (unitPerPersonPerExclusion * n)
+                    : 0;
+            int quantity = billable * n;
             addItem(booking, ItemType.DESTINATION_EXCLUSIONS,
-                    "Isključivanja destinacija (" + exclCount + " isk.)",
-                    exclCount, BigDecimal.valueOf(exclFlat).divide(BigDecimal.valueOf(Math.max(1, exclCount)),
-                            2, java.math.RoundingMode.HALF_UP),
+                    "Isključivanja destinacija (" + billable + " naplativa od "
+                            + exclCount + " × " + n + " putnika)",
+                    quantity,
+                    BigDecimal.valueOf(unitPerPersonPerExclusion),
                     BigDecimal.valueOf(exclFlat));
         }
 

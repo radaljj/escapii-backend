@@ -72,6 +72,69 @@ class FinancialItemSnapshotServiceTest {
                 "zbir stavki mora biti jednak totalEurAll (invariant za AgencySettlementCalculator)");
     }
 
+    /**
+     * Breakfast: unit mora biti 20€/os/noc, quantity = putnici × noci - inace
+     * admin breakdown izgleda kao "20 × 2 = 40" umesto "20 × (2 × 3) = 120".
+     */
+    @Test
+    void snapshot_breakfast_prikazuje_putnike_puta_noci() {
+        // 20€/os/noc × 2 osobe × 3 noci = 120€; PricePreview daje breakfastPerPerson = 60 (20 × 3)
+        PricePreviewResponse p = PricePreviewResponse.builder()
+                .basePricePerPerson(300).accommodationExtraPerPerson(0)
+                .breakfastPerPerson(60).seatsTogether(0).insurancePerPerson(0)
+                .eurPerPerson(360).exclusionCostFlat(0).soloSurcharge(0)
+                .cabinSuitcaseCount(0).cabinSuitcaseTotal(0).revealBoxTotal(0)
+                .totalEurAll(720).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
+                .build();
+
+        Booking b = emptyBooking();
+        svc.snapshot(b, p);
+
+        BookingFinancialItem br = b.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == ItemType.BREAKFAST)
+                .findFirst().orElseThrow();
+        assertEquals(6, br.getQuantity(), "quantity = 2 putnika × 3 noci");
+        assertEquals(new BigDecimal("20.00"), br.getUnitCustomerPrice(),
+                "unit = 20€/os/noc, ne 60€ (jer bi bio dupli racun)");
+        assertEquals(new BigDecimal("120.00"), br.getCustomerTotal(),
+                "total = 2 × 3 × 20 = 120");
+        assertTrue(br.getDescription().contains("2 putnika"),
+                "opis mora spomenuti broj putnika");
+        assertTrue(br.getDescription().contains("3 noći"),
+                "opis mora spomenuti broj noci");
+    }
+
+    /**
+     * Isključivanja: prvo je besplatno (BEG aerodrom pravilo), pa quantity mora
+     * biti SAMO naplativa isk. × putnici, ne ukupna. Unit = 10€/os/isk.
+     */
+    @Test
+    void snapshot_exclusion_prikazuje_samo_naplativa() {
+        // 3 isk. ukupno (1 besplatno + 2 naplativa) × 2 putnika × 10€ = 40€
+        PricePreviewResponse p = PricePreviewResponse.builder()
+                .basePricePerPerson(300).accommodationExtraPerPerson(0)
+                .breakfastPerPerson(0).seatsTogether(0).insurancePerPerson(0)
+                .eurPerPerson(300).exclusionCostFlat(40).soloSurcharge(0)
+                .cabinSuitcaseCount(0).cabinSuitcaseTotal(0).revealBoxTotal(0)
+                .totalEurAll(640).exclusionCount(3).numberOfTravelers(2).numberOfNights(3)
+                .build();
+
+        Booking b = emptyBooking();
+        svc.snapshot(b, p);
+
+        BookingFinancialItem ex = b.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == ItemType.DESTINATION_EXCLUSIONS)
+                .findFirst().orElseThrow();
+        // billable = exclFlat / (10 × n) = 40 / 20 = 2 → quantity = 2 × 2 putnika = 4
+        assertEquals(4, ex.getQuantity(),
+                "quantity mora biti samo naplativa × putnici (2 naplativa × 2 = 4), ne ukupno 6");
+        assertEquals(new BigDecimal("10.00"), ex.getUnitCustomerPrice(),
+                "unit = 10€/os/isk (deterministicna vrednost, ne izvedena deljenjem exclFlat/exclCount)");
+        assertEquals(new BigDecimal("40.00"), ex.getCustomerTotal());
+        assertTrue(ex.getDescription().contains("2 naplativa"));
+        assertTrue(ex.getDescription().contains("3"), "opis mora spomenuti ukupno 3 isk.");
+    }
+
     @Test
     void snapshot_soloDoplata_kao_zasebna_stavka() {
         PricePreviewResponse p = PricePreviewResponse.builder()

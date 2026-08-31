@@ -42,6 +42,10 @@ class AgencySettlementCalculatorTest {
         b.setAgencyIdSnapshot(7L);
         b.setAgencyNameSnapshot("Ipanema Travel");
         b.setFinancialItems(new ArrayList<>());
+        // Default: CONFIRMED (kupac je platio) - jedini status u kome je
+        // readyForInvoice moguce. Testovi koji zele PENDING/CANCELLED to
+        // eksplicitno postave posle.
+        b.setStatus(com.escapii.model.BookingStatus.CONFIRMED);
         return b;
     }
 
@@ -328,5 +332,35 @@ class AgencySettlementCalculatorTest {
         AgencySettlementResponse r = calc.calculate(b);
         assertEquals(bd(40), r.getSharedMarginTotal());
         assertEquals(bd(20), r.getEscapiiSharedMarginPart());
+    }
+
+    // ── 20. PENDING/CANCELLED ne moze biti readyForInvoice ──────────────
+
+    /**
+     * Kupac jos nije platio (PENDING) - Escapii ne sme fakturisati agenciji
+     * jer je novac jos rizican. Ceo obracun mora reci "nije ready" cak i ako
+     * su svi troskovi popunjeni.
+     */
+    @Test
+    void pending_ne_moze_biti_ready_iako_su_troskovi_popunjeni() {
+        Booking b = booking(359, 0);
+        b.setStatus(com.escapii.model.BookingStatus.PENDING);
+        addItem(b, ItemType.BASE_PACKAGE, bd(359), bd(220));
+
+        AgencySettlementResponse r = calc.calculate(b);
+        assertFalse(r.isReadyForInvoice(),
+                "PENDING booking ne sme biti ready za fakturu");
+        assertTrue(r.getValidationErrors().stream().anyMatch(e -> e.contains("CONFIRMED")),
+                "validation error mora eksplicitno reci sto");
+    }
+
+    @Test
+    void cancelled_takodje_nije_ready() {
+        Booking b = booking(100, 0);
+        b.setStatus(com.escapii.model.BookingStatus.CANCELLED);
+        addItem(b, ItemType.BASE_PACKAGE, bd(100), bd(60));
+
+        AgencySettlementResponse r = calc.calculate(b);
+        assertFalse(r.isReadyForInvoice());
     }
 }

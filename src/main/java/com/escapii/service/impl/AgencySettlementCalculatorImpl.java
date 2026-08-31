@@ -7,6 +7,7 @@ import com.escapii.dto.AgencySettlementResponse.WhoPaysWhom;
 import com.escapii.model.AllocationType;
 import com.escapii.model.Booking;
 import com.escapii.model.BookingFinancialItem;
+import com.escapii.model.BookingStatus;
 import com.escapii.service.AgencySettlementCalculator;
 import org.springframework.stereotype.Service;
 
@@ -117,7 +118,19 @@ public class AgencySettlementCalculatorImpl implements AgencySettlementCalculato
         }
 
         boolean overallReconciled = reconciledLineItems && !anyMissingCost;
-        boolean readyForInvoice = overallReconciled && !anyNegativeMargin && !items.isEmpty();
+
+        // Booking mora biti CONFIRMED da bi obracun bio spreman za fakturu.
+        // PENDING = kupac jos nije platio; CANCELLED = necega necega vise nema.
+        // Admin sme unapred da unese troskove, ali dok status nije CONFIRMED
+        // ne treba se prelaziti u READY_FOR_INVOICE ni dozvoliti finalize.
+        boolean confirmedBooking = booking.getStatus() == BookingStatus.CONFIRMED;
+        if (!confirmedBooking && !items.isEmpty()) {
+            validationErrors.add("Rezervacija nije CONFIRMED (trenutno "
+                    + booking.getStatus() + ") - fakturisanje agenciji nije dozvoljeno.");
+        }
+
+        boolean readyForInvoice = overallReconciled && !anyNegativeMargin
+                && !items.isEmpty() && confirmedBooking;
 
         return AgencySettlementResponse.builder()
                 .bookingId(booking.getId())
