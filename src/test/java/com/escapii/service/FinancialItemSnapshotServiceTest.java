@@ -135,6 +135,37 @@ class FinancialItemSnapshotServiceTest {
         assertTrue(ex.getDescription().contains("3"), "opis mora spomenuti ukupno 3 isk.");
     }
 
+    /**
+     * Upgrade (Superior/Premium) je fiksan fee/osoba - cista 50/50 zarada bez
+     * troska agencije. Snapshot ga mora postaviti na 0 vec pri kreiranju, da
+     * admin ne mora rucno da unosi i da kalkulator ne prijavljuje MISSING_COST.
+     */
+    @Test
+    void snapshot_upgrade_ima_agencyCost_nula_odmah() {
+        PricePreviewResponse p = PricePreviewResponse.builder()
+                .basePricePerPerson(300).accommodationExtraPerPerson(100)
+                .breakfastPerPerson(0).seatsTogether(0).insurancePerPerson(0)
+                .eurPerPerson(400).exclusionCostFlat(0).soloSurcharge(0)
+                .cabinSuitcaseCount(0).cabinSuitcaseTotal(0).revealBoxTotal(0)
+                .totalEurAll(800).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
+                .build();
+
+        Booking b = emptyBooking();
+        svc.snapshot(b, p);
+
+        BookingFinancialItem upgrade = b.getFinancialItems().stream()
+                .filter(i -> i.getItemType() == ItemType.ACCOMMODATION_UPGRADE)
+                .findFirst().orElseThrow();
+        assertEquals(AllocationType.MARGIN_50_50, upgrade.getAllocationType(),
+                "upgrade je i dalje 50/50 - marza od kupceve doplate se deli");
+        assertEquals(new BigDecimal("200.00"), upgrade.getCustomerTotal(),
+                "100€/os × 2 putnika = 200€ kupceva doplata");
+        assertNotNull(upgrade.getAgencyCost(),
+                "agencyCost NE sme biti null - to bi trazilo unos od admin-a");
+        assertEquals(0, upgrade.getAgencyCost().compareTo(BigDecimal.ZERO),
+                "upgrade agencyCost mora biti 0 - cist fee, nema troska agencije");
+    }
+
     @Test
     void snapshot_soloDoplata_kao_zasebna_stavka() {
         PricePreviewResponse p = PricePreviewResponse.builder()

@@ -36,7 +36,9 @@ public class AgencyCostsRequest {
     private BigDecimal hotelAgencyCost;
 
     // ── Ostali zajednicki dodaci (MARGIN_50_50) ────────────────────
-    private BigDecimal accommodationUpgradeAgencyCost;
+    // Napomena: ACCOMMODATION_UPGRADE nema unos - upgrade je fiksan fee/osoba
+    // koji predstavlja cistu 50/50 zaradu bez troska agencije (snapshot ga
+    // odmah postavi na 0). Videti FinancialItemSnapshotService.
     private BigDecimal breakfastAgencyCost;
     private BigDecimal seatsTogetherAgencyCost;
     private BigDecimal cabinSuitcaseAgencyCost;

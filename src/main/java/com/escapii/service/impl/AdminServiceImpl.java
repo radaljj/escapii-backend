@@ -1089,11 +1089,13 @@ public class AdminServiceImpl implements AdminService {
 
         validateNonNegative("flightAgencyCost", req.getFlightAgencyCost());
         validateNonNegative("hotelAgencyCost", req.getHotelAgencyCost());
-        validateNonNegative("accommodationUpgradeAgencyCost", req.getAccommodationUpgradeAgencyCost());
         validateNonNegative("breakfastAgencyCost", req.getBreakfastAgencyCost());
         validateNonNegative("seatsTogetherAgencyCost", req.getSeatsTogetherAgencyCost());
         validateNonNegative("cabinSuitcaseAgencyCost", req.getCabinSuitcaseAgencyCost());
         validateNonNegative("insuranceAgencyCost", req.getInsuranceAgencyCost());
+        // Napomena: accommodationUpgradeAgencyCost je uklonjen iz obrade. Upgrade
+        // je fiksan fee/osoba i predstavlja cistu 50/50 zaradu bez troska agencije -
+        // snapshot vec setuje agencyCost=0 pri kreiranju bookinga.
 
         // Brisanje troskova (clear ide PRE popune - da admin moze u istom pozivu
         // obrisati stari trosak i postaviti novi na drugoj stavci ako treba).
@@ -1107,7 +1109,6 @@ public class AdminServiceImpl implements AdminService {
         // zajedno ili nijedno.
         updateBaseIfPresent(booking, req.getFlightAgencyCost(), req.getHotelAgencyCost());
 
-        updateAgencyCostIfPresent(booking, ItemType.ACCOMMODATION_UPGRADE, req.getAccommodationUpgradeAgencyCost());
         updateAgencyCostIfPresent(booking, ItemType.BREAKFAST,             req.getBreakfastAgencyCost());
         updateAgencyCostIfPresent(booking, ItemType.SEATS_TOGETHER,        req.getSeatsTogetherAgencyCost());
         updateAgencyCostIfPresent(booking, ItemType.CABIN_SUITCASE,        req.getCabinSuitcaseAgencyCost());

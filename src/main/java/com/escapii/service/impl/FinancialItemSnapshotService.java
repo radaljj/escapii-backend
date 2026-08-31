@@ -41,11 +41,16 @@ public class FinancialItemSnapshotService {
                 n, BigDecimal.valueOf(base), BigDecimal.valueOf((long) base * n));
 
         // 2. ACCOMMODATION_UPGRADE - samo ako je Superior/Premium izabran (extra > 0).
+        //    Poslovno pravilo: upgrade je fiksan fee/osoba (npr. 100€) i predstavlja
+        //    cistu zajednicku zaradu Escapii+agencije, agencija tu NEMA dodatan trosak
+        //    (rezervise hotel po dogovorenoj base ceni koju admin unosi u BASE_PACKAGE).
+        //    Zato agencyCost setujemo na 0 vec u snapshotu, admin ne unosi rucno.
         int upgradePP = nz(price.getAccommodationExtraPerPerson());
         if (upgradePP > 0) {
-            addItem(booking, ItemType.ACCOMMODATION_UPGRADE,
+            BookingFinancialItem upgrade = addItem(booking, ItemType.ACCOMMODATION_UPGRADE,
                     "Superior/Premium upgrade smestaja",
                     n, BigDecimal.valueOf(upgradePP), BigDecimal.valueOf((long) upgradePP * n));
+            upgrade.setAgencyCost(BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP));
         }
 
         // 3. BREAKFAST - jedinicna cena je 20€/osoba/noc, quantity = putnici × noci.
@@ -133,7 +138,7 @@ public class FinancialItemSnapshotService {
         }
     }
 
-    private void addItem(Booking booking, ItemType type, String description,
+    private BookingFinancialItem addItem(Booking booking, ItemType type, String description,
                          int quantity, BigDecimal unitPrice, BigDecimal customerTotal) {
         BookingFinancialItem item = new BookingFinancialItem();
         item.setBooking(booking);
@@ -146,8 +151,8 @@ public class FinancialItemSnapshotService {
         // agencyCost, flight/hotel ostaju null dok admin ne unese (za Escapii-only nije potrebno)
         // Escapii-only stavke ne blokiraju fakturisanje - AllocationType.ESCAPII_100
         // se u kalkulatoru ne testira na agencyCost.
-        item.setAllocationType(type.getAllocationType());
         booking.getFinancialItems().add(item);
+        return item;
     }
 
     private static int nz(Integer v) {
