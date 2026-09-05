@@ -28,6 +28,7 @@ public class RevealServiceImpl implements RevealService {
     private final BookingRepository      bookingRepository;
     private final RevealEventRepository  revealEventRepository;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
+    private final TravelAddonsService    travelAddonsService;
 
     @Override
     public Map<String, Object> getRevealInfo(String token) {
@@ -102,7 +103,13 @@ public class RevealServiceImpl implements RevealService {
                 Map.entry("totalPriceAll",        booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
                 Map.entry("firstName",            booking.getFirstName() != null ? booking.getFirstName() : ""),
                 Map.entry("airlineName",           booking.getAirlineName() != null ? booking.getAirlineName() : ""),
-                Map.entry("airlineBookingCode",   booking.getAirlineBookingCode() != null ? booking.getAirlineBookingCode() : "")
+                Map.entry("airlineBookingCode",   booking.getAirlineBookingCode() != null ? booking.getAirlineBookingCode() : ""),
+                // Partnerski linkovi za popup sa dodacima (ture, eSIM, prtljag).
+                // Smeju ovde jer je destinacija u istom odgovoru vec otkrivena - ovaj
+                // endpoint prolazi kupac tek posto je reveal zvanicno otkljucan.
+                // Prazna mapa je normalno stanje (partner nije odobren, slug nije
+                // popunjen, grad nije pokriven) i frontend tada ne prikazuje popup.
+                Map.entry("partnerLinks",         travelAddonsService.linksFor(booking.getAssignedDestination()))
         );
     }
 
