@@ -119,7 +119,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String uri = request.getRequestURI();
+        // DEKODIRANA putanja, ne getRequestURI(). Sirova putanja se ne poklapa sa onim
+        // po cemu Spring rutira, pa je npr. POST /api/l%61unch-notify promasivao sve
+        // provere ispod i time zaobilazio limit - a zahtev je svejedno stizao do
+        // kontrolera i slao mejl. Sa Resend kvotom od 100 mejlova dnevno, stotinak
+        // takvih zahteva potrosi ceo dan i prave potvrde rezervacija ne stignu.
+        String uri = RequestPaths.decodedPath(request);
 
         String ip = extractClientIp(request);
 

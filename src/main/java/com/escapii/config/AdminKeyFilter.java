@@ -44,7 +44,14 @@ public class AdminKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/admin/");
+        // NIKAD ne poredi getRequestURI() direktno: vraca NEDEKODIRANU putanju, a
+        // Spring rutira po dekodiranoj. Zbog te razlike je GET /api/%61dmin/bookings
+        // ("%61" je slovo "a") prolazio pored ovog filtera - sirova putanja ne pocinje
+        // sa "/api/admin/" pa se filter preskakao - ali ga je DispatcherServlet
+        // svejedno rutirao na AdminController. Posledica je bila neautentikovan
+        // pristup svim rezervacijama sa licnim podacima i dodeljenim destinacijama,
+        // plus DELETE rute. Videti RequestPaths.
+        return !RequestPaths.startsWith(request, "/api/admin/");
     }
 
     @Override
