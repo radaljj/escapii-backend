@@ -38,7 +38,7 @@ public class WeatherServiceImpl implements WeatherService {
     private static final String MET_NORWAY_URL =
             "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.4f&lon=%.4f";
 
-    private static final String USER_AGENT = "Escapii/1.0 (contact@escapii.com)";
+    private static final String USER_AGENT = "Escapii/1.0 (info@escapii.rs)";
     private static final int    TIMEOUT_SEC = 10;
 
     // Open-Meteo/Nominatim povremeno vrate 503 (privremeno preopterećenje) -
