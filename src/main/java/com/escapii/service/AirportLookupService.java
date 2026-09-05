@@ -50,16 +50,46 @@ public class AirportLookupService {
         }
     }
 
-    public Optional<String> cityEn(String iataCode) {
+    /**
+     * Ispravke za aerodrome gde je airports.dat (OpenFlights) star ili netačan.
+     *
+     * <p>Ovo nije kozmetika: engleski naziv grada i države je ono iz čega se izvode
+     * partnerski slugovi ({@code vienna}, {@code czech-republic-esim}), pa pogrešan
+     * naziv znači da za tu destinaciju nema linka. Ispravlja se ovde a ne popuštanjem
+     * poređenja, jer bi labavije poklapanje pravilo tihe promašaje (Rim/Rimini).
+     *
+     * <p>Ima ih malo i svaki je proveren u sitemapima partnera.
+     */
+    private static final Map<String, AirportInfo> ISPRAVKE = Map.of(
+            // Berlin Brandenburg je otvoren 2020 - noviji je od skupa podataka, fali ceo.
+            "BER", new AirportInfo("Berlin", "Germany"),
+            // EuroAirport Bazel-Miluz - takođe ga nema. Destinacija je Bazel.
+            "MLH", new AirportInfo("Basel", "Switzerland"),
+            // Zapisan kao "Karlsruhe/Baden-Baden"; partneri koriste samo ime grada.
+            "FKB", new AirportInfo("Karlsruhe", "Germany"),
+            // Zapisan kao "Malmoe".
+            "MMX", new AirportInfo("Malmo", "Sweden"),
+            // Zapisan kao "Gothenborg" - prosto pogrešno napisano.
+            "GOT", new AirportInfo("Gothenburg", "Sweden"),
+            // Kod partnera Malta nije grad nego država; grad je Valeta. Država ostaje
+            // Malta, pa Airalo i dalje dobija ispravno malta-esim.
+            "MLA", new AirportInfo("Valletta", "Malta")
+    );
+
+    /** Ispravka ima prednost nad airports.dat; ako nema ni jednog, prazno. */
+    private Optional<AirportInfo> info(String iataCode) {
         if (iataCode == null) return Optional.empty();
-        AirportInfo info = cache.get(iataCode.toUpperCase());
-        return info == null ? Optional.empty() : Optional.of(info.cityEn());
+        String kod = iataCode.toUpperCase();
+        AirportInfo ispravka = ISPRAVKE.get(kod);
+        return Optional.ofNullable(ispravka != null ? ispravka : cache.get(kod));
+    }
+
+    public Optional<String> cityEn(String iataCode) {
+        return info(iataCode).map(AirportInfo::cityEn);
     }
 
     public Optional<String> countryEn(String iataCode) {
-        if (iataCode == null) return Optional.empty();
-        AirportInfo info = cache.get(iataCode.toUpperCase());
-        return info == null ? Optional.empty() : Optional.of(info.countryEn());
+        return info(iataCode).map(AirportInfo::countryEn);
     }
 
     private String[] splitCsv(String line) {

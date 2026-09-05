@@ -103,6 +103,7 @@ public class AdminServiceImpl implements AdminService {
     private final AvailableDateService        availableDateService;
     private final CustomDateInquiryService    inquiryService;
     private final AirportLookupService        airportLookupService;
+    private final PartnerSlugFiller           partnerSlugFiller;
     private final InvoiceService              invoiceService;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
@@ -140,7 +141,12 @@ public class AdminServiceImpl implements AdminService {
         d.setActive(true);
         d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
         d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
+        // Partnerski slugovi se popunjavaju sami - admin ih ne kuca i ne mora da pamti
+        // format. Airalo i Bounce imaju male spiskove pa idu odmah pri cuvanju; GYG
+        // trazi prolaz kroz ~96MB sitemapa, zato ide u pozadinu posle save-a.
+        partnerSlugFiller.popuniBrzeSlugove(d);
         Destination saved = destinationRepository.save(d);
+        partnerSlugFiller.popuniGygSlugoveUPozadini();
         log.info("[ADMIN] Nova destinacija kreirana: '{}' (id={}) EN: {}/{}", saved.getName(), saved.getId(), saved.getNameEn(), saved.getCountryEn());
         return destinationMapper.toResponse(saved);
     }
@@ -164,8 +170,13 @@ public class AdminServiceImpl implements AdminService {
                 .map(String::toUpperCase).collect(Collectors.toSet()));
         d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
         d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
+        // Isto kao pri kreiranju: popunjava samo prazna polja, rucno uneto ne dira.
+        // Bitno je i pri izmeni jer promena IATA koda menja i englesko ime grada.
+        partnerSlugFiller.popuniBrzeSlugove(d);
+        Destination sacuvana = destinationRepository.save(d);
+        partnerSlugFiller.popuniGygSlugoveUPozadini();
         log.info("[ADMIN] Destinacija '{}' (id={}) ažurirana EN: {}/{}", d.getName(), id, d.getNameEn(), d.getCountryEn());
-        return destinationMapper.toResponse(destinationRepository.save(d));
+        return destinationMapper.toResponse(sacuvana);
     }
 
     @Override

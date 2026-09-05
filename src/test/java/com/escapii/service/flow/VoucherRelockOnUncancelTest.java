@@ -52,6 +52,7 @@ class VoucherRelockOnUncancelTest {
     @Mock private AvailableDateService availableDateService;
     @Mock private CustomDateInquiryService inquiryService;
     @Mock private AirportLookupService airportLookupService;
+    @Mock private com.escapii.service.impl.PartnerSlugFiller partnerSlugFiller;
     @Mock private InvoiceService invoiceService;
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
@@ -66,7 +67,7 @@ class VoucherRelockOnUncancelTest {
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
-                availableDateService, inquiryService, airportLookupService, invoiceService,
+                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
                 agencySettlementCalculator, bookingFinancialItemRepository,
                 agencyInvoiceSequenceRepository);
