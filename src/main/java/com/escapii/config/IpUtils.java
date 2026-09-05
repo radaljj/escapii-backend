@@ -6,16 +6,35 @@ import java.util.regex.Pattern;
 /**
  * Zajednička logika za ekstrakciju pravog client IP-a.
  *
- * Uzima POSLEDNJI unos iz X-Forwarded-For - taj dodaje naš trusted reverse proxy
- * (Render/Railway), pa klijent ne može da ga spoofuje stavljanjem lažnog IP-a ispred.
+ * <p>Redosled izvora nije proizvoljan:
  *
- * Primer: klijent šalje "X-Forwarded-For: fake-ip"
- *         Render dodaje:  "X-Forwarded-For: fake-ip, 5.6.7.8"  ← 5.6.7.8 je pravi IP
- *         Vraćamo:        "5.6.7.8"
+ * <ol>
+ *   <li><b>CF-Connecting-IP</b> — Cloudflare ga postavlja na svakom zahtevu i
+ *       <i>prepisuje</i> vrednost koju je klijent poslao. Kroz Cloudflare se zato ne
+ *       može lažirati, dok se X-Forwarded-For može napuniti unapred.</li>
+ *   <li><b>Poslednji unos iz X-Forwarded-For</b> — rezerva kad zahtev ne ide kroz
+ *       Cloudflare (lokalni razvoj, poziv sa samog servera). Poslednji jer proxy dopisuje
+ *       pravu adresu na kraj, pa je klijent ne može pomeriti stavljanjem lažne ispred.</li>
+ *   <li>remoteAddr — direktan peer, kad nema nijednog zaglavlja.</li>
+ * </ol>
+ *
+ * <p><b>Ovo vredi samo dok je origin zatvoren.</b> Nijedno zaglavlje nije dokaz samo po
+ * sebi: ko god otvori vezu direktno ka serveru, mimo Cloudflare-a, može poslati i
+ * CF-Connecting-IP i X-Forwarded-For po želji, i time zaobići svaku zaštitu koja se meri
+ * po IP-u - rate limit rezervacija, brojač pogrešnih admin ključeva, limit na vaučere.
+ * To stvarno sprečava jedino firewall koji na portovima 80/443 pušta samo Cloudflare
+ * opsege. Ako se ta pravila ikad uklone, ova klasa je opet samo pretpostavka.
+ *
+ * <p>Ranija verzija je gledala isključivo poslednji X-Forwarded-For unos, jer je aplikacija
+ * bila na Renderu gde je platformski proxy dopisivao pravu adresu poslednji. Infrastruktura
+ * je sada Cloudflare -> nginx -> Spring, a nginx X-Forwarded-For uopšte ne dira.
  */
 public final class IpUtils {
 
     private IpUtils() {}
+
+    /** Zaglavlje u koje Cloudflare upisuje pravu adresu posetioca. */
+    private static final String CF_CONNECTING_IP = "CF-Connecting-IP";
 
     /** IPv4: npr. 192.168.1.1 */
     private static final Pattern IPV4 = Pattern.compile(
@@ -26,6 +45,16 @@ public final class IpUtils {
             "^[0-9a-fA-F:]{2,45}$");
 
     public static String extractClientIp(HttpServletRequest request) {
+        // Cloudflare prepisuje ovo zaglavlje svojom vrednošću i briše ono što je klijent
+        // poslao - zato ima primat nad X-Forwarded-For, koji se može napuniti unapred.
+        String cf = request.getHeader(CF_CONNECTING_IP);
+        if (cf != null && !cf.isBlank()) {
+            String cfIp = cf.trim();
+            if (isValidIp(cfIp)) {
+                return cfIp;
+            }
+        }
+
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
             String[] parts = xff.split(",");
