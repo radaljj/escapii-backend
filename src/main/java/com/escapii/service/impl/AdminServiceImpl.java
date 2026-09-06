@@ -191,8 +191,15 @@ public class AdminServiceImpl implements AdminService {
                         "Destinacija ne postoji: " + id));
         // Ukloni FK reference iz term_destination tabele
         termDestinationRepository.deleteByDestinationId(id);
-        deleteImageFile(d.getImageUrl());
+        // Redosled je bitan: PRVO baza, tek onda fajl sa diska. Brisanje fajla nije
+        // deo transakcije i nema povratka - ako brisanje reda padne (npr. neka
+        // rezervacija je ovu destinaciju upisala kao isključenu, pa FK ne da), a
+        // fajl je već obrisan, slika je trajno izgubljena dok destinacija ostaje.
+        // Obrnuto je bezopasno: ako otkaže brisanje fajla, ostane samo siroče na disku.
+        String slika = d.getImageUrl();
         destinationRepository.delete(d);
+        destinationRepository.flush();   // FK greška mora pući ovde, pre diranja diska
+        deleteImageFile(slika);
         log.info("[ADMIN] Destinacija '{}' (id={}) obrisana", d.getName(), id);
     }
 
@@ -479,12 +486,16 @@ public class AdminServiceImpl implements AdminService {
         BookingStatus status    = booking.getStatus();
         BookingStatus oldStatus = booking.getOldStatus();
 
+        // COMPLETED je tu namerno: zavrseno putovanje je istorija i ne brise se. Uz to
+        // zatvara i rupu kroz API - CANCELLED -> COMPLETED (kontroler prima svaku vrednost
+        // enuma) pa delete bi zaobisao guard za otkazane ispod i vratio vaucer drugi put.
         boolean wasPaidOrConfirmed = status    == BookingStatus.CONFIRMED
+                                  || status    == BookingStatus.COMPLETED
                                   || oldStatus == BookingStatus.CONFIRMED;
         if (wasPaidOrConfirmed) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Rezervacija " + booking.getBookingRef() +
-                    " ne može biti obrisana jer je bila potvrđena. " +
+                    " ne može biti obrisana jer je bila potvrđena ili završena. " +
                     "Otkaži je ako je to potrebno.");
         }
 
@@ -493,8 +504,16 @@ public class AdminServiceImpl implements AdminService {
         // RESERVED → ACTIVE (u potpunosti oslobađamo reserve).
         // ACTIVE sa usedAmount > 0 → smanjujemo usedAmount (delimično oslobađamo).
         // USED vaučer se NE menja - putovanje je završeno pre brisanja.
+        //
+        // OTKAZANA rezervacija se PRESKAČE: njoj je iznos već vraćen u trenutku
+        // otkazivanja (updateBookingStatus, grana status == CANCELLED, koja ne gleda
+        // prethodni status). Bez ovog uslova bi niz "otkaži pa obriši" oduzeo isti
+        // iznos dvaput i vaučer bi prijavljivao više novca nego što stvarno ima -
+        // kupac bi istim kodom mogao da rezerviše drugi put. Brisanje potvrđene
+        // rezervacije je ionako blokirano iznad, pa je otkazana jedini slučaj u kome
+        // je vraćanje već obavljeno.
         String voucherCode = booking.getAppliedVoucherCode();
-        if (voucherCode != null) {
+        if (voucherCode != null && booking.getStatus() != BookingStatus.CANCELLED) {
             // findByCodeForUpdate (ne findByCode) - zaključava red da ne bi istovremeni
             // booking sa istim kodom video zastarelo stanje (izgubljena izmena/race).
             giftVoucherRepository.findByCodeForUpdate(voucherCode).ifPresent(v -> {
@@ -953,6 +972,12 @@ public class AdminServiceImpl implements AdminService {
         // scheduler retry, da ne bi divergirali dva mesta iste odluke.
         boolean sent = confirmationDocumentAutoSender.sendIfReadyAndPending(saved);
         if (sent) {
+            // Auto-sender upisuje flag ISKLJUCIVO ciljanim upitom u bazu i namerno ne dira
+            // entitet (iz scheduler petlji stize detached, a iz sendAllPending managed -
+            // setter bi tamo pravio stetu). Ovde je entitet managed i svez, pa polje
+            // postavljamo sami, isto kao sto resendConfirmationDocument vec radi - inace bi
+            // odgovor panelu odmah posle uploada tvrdio da dokument nije poslat.
+            saved.setConfirmationSentAt(LocalDateTime.now());
             log.info("[ConfirmationDocument] Uploadovan i odmah poslat za {}", saved.getBookingRef());
         } else if (saved.getConfirmationSentAt() == null) {
             log.info("[ConfirmationDocument] Uploadovan za {} - ceka se uslov reveal-a (RevealEvent za non-box, revealSentAt za box)", saved.getBookingRef());

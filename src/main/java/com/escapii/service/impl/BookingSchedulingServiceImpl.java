@@ -302,8 +302,15 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
                 forecastEmailService.sendForecastEmail(booking, forecast.get());
 
-                booking.setForecastSentAt(LocalDateTime.now());
-                bookingRepository.save(booking);
+                // Ciljani upis umesto save(). Ova petlja nema @Transactional, pa je
+                // booking DETACHED - lista je učitana pre nekoliko minuta. save() bi za
+                // detached entitet bio merge, a merge prepisuje SVE kolone vrednostima
+                // iz starog snapshot-a: PDF koji je admin uploadovao u međuvremenu,
+                // otkazivanje, interne beleške. Booking nema @Version pa to ništa ne bi
+                // ni primetilo. Videti BookingRepository.markForecastSent.
+                LocalDateTime sada = LocalDateTime.now();
+                bookingRepository.markForecastSent(booking.getId(), sada);
+                booking.setForecastSentAt(sada);   // samo da jutarnji digest prikaže tačno
                 sent.add(booking);
                 log.info("[Forecast] {} → dest='{}' dana={}",
                         booking.getBookingRef(),
@@ -340,13 +347,23 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 }
 
                 if (booking.getRevealToken() == null) {
-                    booking.setRevealToken(TokenUtils.generate());
-                    bookingRepository.saveAndFlush(booking); // token mora biti u bazi pre nego korisnik klikne link
+                    // Token mora biti u bazi pre nego što korisnik klikne link. Upisuje
+                    // se ciljano (i samo ako ga još nema) umesto saveAndFlush, koji bi
+                    // kao merge detached entiteta pregazio ostale kolone.
+                    String noviToken = TokenUtils.generate();
+                    bookingRepository.saveRevealTokenIfAbsent(booking.getId(), noviToken);
+                    // Ako je token u međuvremenu upisao neko drugi (ručno slanje iz
+                    // panela), mejl mora nositi TAJ token, ne naš - inače bi link u
+                    // mejlu bio mrtav.
+                    booking.setRevealToken(
+                            bookingRepository.findRevealTokenById(booking.getId()).orElse(noviToken));
                 }
                 revealEmailService.sendRevealEmail(booking);
 
-                booking.setRevealSentAt(LocalDateTime.now());
-                bookingRepository.save(booking);
+                // Ciljani upis - isti razlog kao kod prognoze iznad.
+                LocalDateTime sada = LocalDateTime.now();
+                bookingRepository.markRevealSent(booking.getId(), sada);
+                booking.setRevealSentAt(sada);
                 sent.add(booking);
                 log.info("[Reveal] {} → {}", booking.getBookingRef(), booking.getAssignedDestination());
 

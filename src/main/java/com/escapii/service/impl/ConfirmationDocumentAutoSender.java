@@ -7,7 +7,6 @@ import com.escapii.service.email.ConfirmationDocumentEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,7 +58,6 @@ public class ConfirmationDocumentAutoSender {
      * Vraca true ako je slanje uspelo u ovom pozivu, false u svim ostalim
      * slucajevima (nije bilo sta da se salje ILI je slanje puklo).
      */
-    @Transactional
     public boolean sendIfReadyAndPending(Booking booking) {
         if (booking.getConfirmationDocument() == null) return false;
         if (booking.getConfirmationSentAt() != null) return false;
@@ -70,8 +68,16 @@ public class ConfirmationDocumentAutoSender {
                     booking.getBookingRef());
             return false;
         }
-        booking.setConfirmationSentAt(LocalDateTime.now());
-        bookingRepository.save(booking);
+        // Ciljani upis, ne save(). Booking ovamo stiže DETACHED iz scheduler petlje
+        // koja nema transakciju, pa bi save() bio merge i prepisao bi sve kolone
+        // vrednostima od trenutka kad je lista učitana - uključujući i sam PDF koji
+        // upravo šaljemo. Videti BookingRepository.markConfirmationSent.
+        // NAMERNO bez booking.setConfirmationSentAt(...): iz sendAllPending rezervacija
+        // stize kao MANAGED entitet, i setter bi je zaprljao - Hibernate bi na commit-u
+        // upisao CEO red iz snapshot-a starog koliko i cela petlja slanja. To je isti
+        // bag koji ciljani upit resava, samo drugim putem. Niko posle ovoga ne cita
+        // polje sa objekta; vraceni boolean je jedini signal koji pozivaoci koriste.
+        bookingRepository.markConfirmationSent(booking.getId(), LocalDateTime.now());
         log.info("[ConfirmationDocument] Auto-send za {} - dokument poslat", booking.getBookingRef());
         return true;
     }
@@ -82,7 +88,6 @@ public class ConfirmationDocumentAutoSender {
      * Sluzi kao safety net za slucaj kada auto-send u istom cycle-u sa reveal-om
      * pukne (SMTP hiccup) ili scheduler restartuje pre poziva.
      */
-    @Transactional
     public int sendAllPending() {
         List<Booking> pending = bookingRepository.findPendingConfirmationDocuments(java.time.LocalDate.now());
         int sent = 0;

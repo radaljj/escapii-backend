@@ -36,17 +36,43 @@ public class DailyTaskScheduler {
         // kao najava ("kada dobiješ email sa otkrićem destinacije...") i namerno
         // ne imenuje grad. Kod kasno potvrđenih rezervacija oba padaju istog
         // dana, pa je ovo jedino što drži redosled - lanac je sinhron.
-        schedulingService.sendPendingForecasts();
-        schedulingService.sendPendingReveals();
+        //
+        // Svaki korak je izolovan: greška u jednom ne sme pojesti ostatak dana.
+        // Ranije je izuzetak u prvom koraku značio da tog dana nema ni reveala, ni
+        // dokumenata, ni digesta - i to bez ijednog traga osim prekinutog loga.
+        // Redosled ostaje isti, a izolacija ga ne kvari: sendReveals i sam proverava
+        // da je prognoza stvarno poslata za taj booking, pa neuspela prognoza samo
+        // odloži reveal za sutra umesto da ga pusti prerano.
+        //
+        // Pozivi su namerno ispisani kao lambde sa punim izrazom, ne kao reference na
+        // metode: strukturni testovi (ForecastBeforeRevealTest, ForecastRevealOrderTest,
+        // RevealBoxDigitalRevealTest) čitaju ovaj izvor i traže doslovno
+        // "sendPendingForecasts()" pre "sendPendingReveals()". To je zaštita od toga da
+        // neko kasnije zameni redosled - i mora ostati čitljiva iz teksta.
+        korak("prognoze",        () -> schedulingService.sendPendingForecasts());
+        korak("reveal",          () -> schedulingService.sendPendingReveals());
         // Retry za dokumente cije auto-slanje unutar sendPendingReveals cycle-a
         // je puklo (SMTP hiccup, race, restart). Bez ovoga box korisnik moze da
         // "propadne kroz mrezu" - revealSentAt postavljen, dokument nikad ne krene.
-        confirmationDocumentAutoSender.sendAllPending();
+        korak("dokumenti",       () -> confirmationDocumentAutoSender.sendAllPending());
         // cancelStalePendingBookings() je uklonjen - admin ručno potvrđuje ili otkazuje
-        schedulingService.completeFinishedBookings();
-        sendDigest();
-        cleanupExpiredDates();
-        cleanupClosedInquiries();
+        korak("zavrsavanje",     () -> schedulingService.completeFinishedBookings());
+        korak("digest",          this::sendDigest);
+        korak("cleanup termina", this::cleanupExpiredDates);
+        korak("cleanup upita",   this::cleanupClosedInquiries);
+    }
+
+    /**
+     * Pokreće jedan dnevni korak i hvata sve iz njega. Greška se loguje sa imenom
+     * koraka pa se u logu odmah vidi šta je palo, a ostali koraci se svejedno izvrše.
+     */
+    private void korak(String ime, Runnable posao) {
+        try {
+            posao.run();
+        } catch (Exception e) {
+            log.error("[Scheduler] Korak '{}' je pao - ostali koraci se nastavljaju: {}",
+                    ime, e.toString(), e);
+        }
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────

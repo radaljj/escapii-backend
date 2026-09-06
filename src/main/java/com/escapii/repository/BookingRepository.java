@@ -6,9 +6,11 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -238,4 +240,57 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                          @Param("toDate") LocalDate toDate,
                                          @Param("status") com.escapii.model.SettlementStatus status);
 
+
+    // ── Ciljani upisi za dnevni scheduler ────────────────────────────────────
+    //
+    // sendReveals i sendForecasts NAMERNO nemaju @Transactional na nivou metode
+    // (da pad jednog bookinga ne poništi flag onima kojima je mejl već otišao).
+    // Posledica je da su svi Booking objekti u tim petljama DETACHED: lista se
+    // učita u 10:00:00, a obrada traje minutima jer svaki booking zove geokodiranje,
+    // prognozu i SMTP.
+    //
+    // Zbog toga se ovde NE SME zvati save(booking): za detached entitet to je
+    // em.merge(), a merge prepisuje SVE kolone vrednostima iz snapshot-a od 10:00.
+    // Ako admin u međuvremenu uploaduje PDF ili otkaže rezervaciju, ta izmena se
+    // tiho gubi - Booking nema @Version pa ništa ne primeti.
+    //
+    // Zato svaki od ovih upita dira TAČNO JEDNU kolonu. Uslov "IS NULL" uz to čini
+    // upis idempotentnim: drugi prolaz ne pomera već upisano vreme.
+    //
+    // flushAutomatically=true je za ADMIN putanju (upload/resend), gde je booking MANAGED i
+    // prljav (upravo mu je upisan PDF) u ISTOJ transakciji. Bez toga bi redosled "prvo
+    // entitet, pa ciljani upis" zavisio od Hibernate auto-flush pravila; ovako je
+    // deterministican: prljavi entitet se izbaci PRE ciljanog upisa, snapshot mu se
+    // osvezi, pa na commit-u nema drugog UPDATE-a koji bi flag vratio na NULL.
+    // clearAutomatically NAMERNO nema: ocistio bi ceo persistence context, a pozivalac
+    // posle toga jos cita lazy kolekcije sa istog bookinga za odgovor panelu.
+
+    @Transactional
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Booking b SET b.forecastSentAt = :kad WHERE b.id = :id AND b.forecastSentAt IS NULL")
+    int markForecastSent(@Param("id") Long id, @Param("kad") LocalDateTime kad);
+
+    @Transactional
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Booking b SET b.revealSentAt = :kad WHERE b.id = :id AND b.revealSentAt IS NULL")
+    int markRevealSent(@Param("id") Long id, @Param("kad") LocalDateTime kad);
+
+    @Transactional
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Booking b SET b.confirmationSentAt = :kad WHERE b.id = :id AND b.confirmationSentAt IS NULL")
+    int markConfirmationSent(@Param("id") Long id, @Param("kad") LocalDateTime kad);
+
+    /**
+     * Upisuje reveal token samo ako ga još nema. Vraća 0 ako je neko drugi
+     * (npr. ručno slanje iz panela) upisao svoj u međuvremenu - pozivalac tada
+     * mora pročitati token iz baze, jer mejl mora nositi onaj koji je zaista
+     * sačuvan.
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Booking b SET b.revealToken = :token WHERE b.id = :id AND b.revealToken IS NULL")
+    int saveRevealTokenIfAbsent(@Param("id") Long id, @Param("token") String token);
+
+    @Query("SELECT b.revealToken FROM Booking b WHERE b.id = :id")
+    Optional<String> findRevealTokenById(@Param("id") Long id);
 }
