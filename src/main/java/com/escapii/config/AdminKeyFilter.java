@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -112,6 +113,31 @@ public class AdminKeyFilter extends OncePerRequestFilter {
 
     private String getClientIp(HttpServletRequest request) {
         return IpUtils.extractClientIp(request);
+    }
+
+    /**
+     * Izbacuje IP-ove kojima je prozor odavno istekao - svakih sat vremena.
+     *
+     * Bez ovoga mape rastu doveka: uspešna autentikacija briše svoj unos, ali svaki
+     * IP koji je ikad promašio ključ ostaje zauvek, a promašuju uglavnom skeneri sa
+     * uvek novih adresa. RateLimitingFilter ima isto čišćenje; ovde je bilo
+     * propušteno.
+     */
+    @Scheduled(fixedRate = 3_600_000)
+    public void evictStaleEntries() {
+        long cutoff = System.currentTimeMillis() - WINDOW_MS;
+        int pre = windowStart.size();
+        windowStart.entrySet().removeIf(e -> {
+            if (e.getValue() >= cutoff) return false;
+            attempts.remove(e.getKey());
+            return true;
+        });
+        // Zaostatak: unos u attempts bez para u windowStart ne bi imao ko da obriše.
+        attempts.keySet().removeIf(ip -> !windowStart.containsKey(ip));
+        int obrisano = pre - windowStart.size();
+        if (obrisano > 0) {
+            log.debug("[Admin] Eviction: obrisano {} IP-ova, ostalo {}", obrisano, windowStart.size());
+        }
     }
 
     private void reject(HttpServletResponse response, int status, String message) throws IOException {

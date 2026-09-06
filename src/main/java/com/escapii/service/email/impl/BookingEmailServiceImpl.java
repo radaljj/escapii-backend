@@ -69,7 +69,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         );
         if (!ok) {
             log.warn("[Email] Tim-notifikacija NIJE poslata za booking {}", booking.getBookingRef());
-            recordEmailError("EMAIL team-notification ref=" + booking.getBookingRef());
+            recordEmailError("EMAIL team-notification", booking.getBookingRef());
         }
     }
 
@@ -84,7 +84,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (!ok) {
             log.warn("[Email] Potvrda korisniku NIJE poslata za booking {} ({})",
                     booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
-            recordEmailError("EMAIL customer-confirmation ref=" + booking.getBookingRef());
+            recordEmailError("EMAIL customer-confirmation", booking.getBookingRef());
         }
     }
 
@@ -101,7 +101,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         } else {
             log.warn("[Email] CONFIRMED email NIJE poslat za booking {} ({})",
                     booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
-            recordEmailError("EMAIL booking-confirmed ref=" + booking.getBookingRef());
+            recordEmailError("EMAIL booking-confirmed", booking.getBookingRef());
         }
     }
 
@@ -118,18 +118,25 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         } else {
             log.warn("[Email] CANCELLED email NIJE poslat za booking {} ({})",
                     booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
-            recordEmailError("EMAIL booking-cancelled ref=" + booking.getBookingRef());
+            recordEmailError("EMAIL booking-cancelled", booking.getBookingRef());
         }
     }
 
     /**
      * Snima grešku slanja emaila u AppError dashboard (vidljivo adminu u 🚨 Greške tabu).
      * Koristi RuntimeException kao nosač poruke - stack trace nije relevantan za email greške.
+     *
+     * {@code kontekst} mora biti STABILAN, bez broja rezervacije: AppError grupiše po njemu
+     * i šalje alarm samo za prvu pojavu. Sa referencom u ključu svaka neuspela poruka izgleda
+     * kao nova greška, pa ispad provajdera pošalje onoliko alarma koliko je poruka palo - kroz
+     * istog provajdera koji ne radi, i uz dnevnu kvotu koju onda potroše alarmi umesto potvrda.
+     * Referenca ide u telo poruke: brojač kaže koliko, poruka koja je poslednja.
      */
-    private void recordEmailError(String context) {
+    private void recordEmailError(String kontekst, String bookingRef) {
         try {
-            appErrorService.record(context, 0,
-                new RuntimeException("Email nije poslat - proveriti SMTP konfiguraciju i log"));
+            appErrorService.record(kontekst, 0,
+                new RuntimeException("Email nije poslat (poslednja: " + bookingRef
+                        + ") - proveriti SMTP konfiguraciju i log"));
         } catch (Exception ex) {
             log.error("[Email] Nije moguće snimiti email grešku u AppErrorService: {}", ex.getMessage());
         }

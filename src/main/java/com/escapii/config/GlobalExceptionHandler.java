@@ -153,13 +153,38 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex, HttpServletRequest request) {
         // Endpoint izvlačimo SINHRONO - request se reciklira pre nego što async thread počne
-        String endpoint = request.getMethod() + " " + request.getRequestURI();
-        log.error("[GREŠKA] Neočekivana greška na {}: {}", endpoint, ex.getMessage(), ex);
+        String stvarnaPutanja = request.getMethod() + " " + request.getRequestURI();
+        log.error("[GREŠKA] Neočekivana greška na {}: {}", stvarnaPutanja, ex.getMessage(), ex);
         if (appErrorService != null) {
-            appErrorService.record(endpoint, 500, ex);
+            appErrorService.record(
+                    request.getMethod() + " " + sabijPutanju(RequestPaths.decodedPath(request)), 500, ex);
         }
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Došlo je do greške na serveru. Pokušajte ponovo."));
+    }
+
+    /**
+     * Putanja bez promenljivih delova: {@code /api/admin/bookings/42} → {@code /api/admin/bookings/{id}}.
+     *
+     * AppError grupiše po endpointu i alarmira samo na prvu pojavu. Sa id-em u ključu
+     * jedan isti bag na deset rezervacija izgleda kao deset različitih grešaka i pošalje
+     * deset mejlova - a dnevna kvota mejlova je zajednička sa potvrdama kupcima.
+     * Menjaju se samo segmenti koji su očigledno vrednost (ceo broj ili dugačak
+     * heksadecimalni token), pa {@code /api/dates/private} ostaje kakav jeste.
+     *
+     * Dekodirana putanja, ne sirova: {@code /api/%61dmin/x} i {@code /api/admin/x} su
+     * ista ruta i moraju pasti u istu grupu. Videti {@link RequestPaths}.
+     */
+    private static String sabijPutanju(String putanja) {
+        String[] delovi = putanja.split("/", -1);
+        for (int i = 0; i < delovi.length; i++) {
+            String d = delovi[i];
+            if (d.isEmpty()) continue;
+            boolean broj  = d.chars().allMatch(Character::isDigit);
+            boolean token = d.length() >= 16 && d.chars().allMatch(c -> Character.digit(c, 16) >= 0);
+            if (broj || token) delovi[i] = "{id}";
+        }
+        return String.join("/", delovi);
     }
 }

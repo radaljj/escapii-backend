@@ -16,7 +16,6 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -31,6 +30,20 @@ public class AppErrorServiceImpl implements AppErrorService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
+    /**
+     * Ključ za grupisanje ima neograničenu kardinalnost, pa se ne zaključava po ključu
+     * nego po traci: fiksan broj brava, izbor po hešu. Memorija je konstantna, a dva
+     * ista pada nikad ne prođu kroz "nađi pa upiši" istovremeno.
+     */
+    private static final Object[] BRAVE = new Object[32];
+    static {
+        for (int i = 0; i < BRAVE.length; i++) BRAVE[i] = new Object();
+    }
+
+    private static Object brava(String kljuc) {
+        return BRAVE[Math.floorMod(kljuc.hashCode(), BRAVE.length)];
+    }
+
     @Async
     @Override
     public void record(String endpoint, int statusCode, Exception ex) {
@@ -40,33 +53,43 @@ public class AppErrorServiceImpl implements AppErrorService {
                     ? ex.getMessage().substring(0, Math.min(ex.getMessage().length(), 500))
                     : "(no message)";
 
-            Optional<AppError> existing =
-                    repo.findByEndpointAndExceptionTypeAndResolvedFalse(endpoint, exType);
+            AppError err;
 
-            if (existing.isPresent()) {
-                // Ista greška - samo povećaj brojač
-                AppError err = existing.get();
-                err.setCount(err.getCount() + 1);
-                err.setLastSeenAt(LocalDateTime.now());
-                repo.save(err);
-                log.debug("[AppError] Ponavljanje #{} - {} {}", err.getCount(), exType, endpoint);
-            } else {
-                // Nova greška - sačuvaj i pošalji email
-                AppError err = new AppError();
-                err.setEndpoint(endpoint);
-                err.setExceptionType(exType);
-                err.setMessage(exMessage);
-                err.setStackTrace(extractStackTrace(ex));
-                err.setStatusCode(statusCode);
-                err.setCount(1);
-                err.setFirstSeenAt(LocalDateTime.now());
-                err.setLastSeenAt(LocalDateTime.now());
-                err.setResolved(false);
-                repo.save(err);
+            // Ceo "nađi pa upiši" je pod bravom. Bez nje dve @Async niti sa istom greškom
+            // naprave dva nerešena reda za isti par - a onda svaki sledeći upit vrati dva
+            // rezultata i beleženje se za taj endpoint tiho ugasi. Instanca je jedna
+            // (jedan systemd servis), pa je brava u procesu dovoljna.
+            synchronized (brava(endpoint + '|' + exType)) {
+                List<AppError> postojece =
+                        repo.findByEndpointAndExceptionTypeAndResolvedFalseOrderByIdAsc(endpoint, exType);
 
-                sendAlertEmail(err);
-                log.info("[AppError] Nova greška zabeležena i email poslat: {} {}", exType, endpoint);
+                if (!postojece.isEmpty()) {
+                    AppError stara = postojece.get(0);
+                    repo.zabeleziPonavljanje(stara.getId(), LocalDateTime.now(), exMessage);
+                    log.debug("[AppError] Ponavljanje #{} - {} {}", stara.getCount() + 1, exType, endpoint);
+                    if (postojece.size() > 1) {
+                        log.warn("[AppError] {} nerešenih redova za isti par ({} {}) - zaostatak iz ranije verzije, spoji ih u panelu",
+                                postojece.size(), exType, endpoint);
+                    }
+                    return;
+                }
+
+                AppError nova = new AppError();
+                nova.setEndpoint(endpoint);
+                nova.setExceptionType(exType);
+                nova.setMessage(exMessage);
+                nova.setStackTrace(extractStackTrace(ex));
+                nova.setStatusCode(statusCode);
+                nova.setCount(1);
+                nova.setFirstSeenAt(LocalDateTime.now());
+                nova.setLastSeenAt(LocalDateTime.now());
+                nova.setResolved(false);
+                err = repo.save(nova);
             }
+
+            // Mejl ide VAN brave - SMTP ume da traje, a brava drži i ostale greške iz iste trake.
+            sendAlertEmail(err);
+            log.info("[AppError] Nova greška zabeležena i email poslat: {} {}", exType, endpoint);
         } catch (Exception recordEx) {
             // Nikad ne sme da padne sam error handler
             log.error("[AppError] Greška pri belezenju greške: {}", recordEx.getMessage(), recordEx);

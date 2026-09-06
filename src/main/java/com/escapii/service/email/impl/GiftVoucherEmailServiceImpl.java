@@ -120,7 +120,7 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
                 "application/pdf");
         if (!ok) {
             log.warn("[GiftVoucher] PDF email nije poslat kupcu za vaučer id={}", v.getId());
-            recordEmailError("EMAIL gift-voucher-pdf voucherId=" + v.getId());
+            recordEmailError("EMAIL gift-voucher-pdf", "vaučer id=" + v.getId());
         }
     }
 
@@ -128,11 +128,14 @@ public class GiftVoucherEmailServiceImpl implements GiftVoucherEmailService {
      * Snima grešku slanja emaila u AppError dashboard (vidljivo adminu u 🚨 Greške tabu).
      * Bez ovoga, neuspeh slanja PDF vaučera (metoda je @Async pa ga pozivalac ne može uhvatiti)
      * ostaje nevidljiv adminu - kupac plati, a vaučer nikad ne stigne.
+     *
+     * {@code kontekst} je bez id-a vaučera namerno - videti BookingEmailServiceImpl.
      */
-    private void recordEmailError(String context) {
+    private void recordEmailError(String kontekst, String detalj) {
         try {
-            appErrorService.record(context, 0,
-                new RuntimeException("Email nije poslat - proveriti SMTP konfiguraciju i log"));
+            appErrorService.record(kontekst, 0,
+                new RuntimeException("Email nije poslat (poslednji: " + detalj
+                        + ") - proveriti SMTP konfiguraciju i log"));
         } catch (Exception ex) {
             log.error("[GiftVoucher] Nije moguće snimiti email grešku u AppErrorService: {}", ex.getMessage());
         }
