@@ -60,7 +60,7 @@ class BookingCreationFlowTest {
     void setUp() {
         svc = new BookingServiceImpl(bookingRepository, availableDateRepository, destinationRepository,
                 giftVoucherRepository, priceCalculator, eventPublisher, bookingMapper,
-                new FinancialItemSnapshotService());
+                new FinancialItemSnapshotService(), new com.escapii.service.impl.VoucherLedger());
     }
 
     private BookingRequest validRequest() {

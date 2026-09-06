@@ -219,6 +219,25 @@ public class Booking {
     @Column(name = "voucher_discount")
     private Integer voucherDiscount;
 
+    /**
+     * Koliko OVA rezervacija stvarno drži zaključano na vaučeru.
+     *
+     * <p>Nije isto što i {@link #voucherDiscount}: popust je iznos koji je rezervacija
+     * tražila, a ovo je iznos koji je stvarno uzet. Razlikuju se kad se rezervacija
+     * vrati iz otkazanog stanja - u međuvremenu je neko drugi mogao potrošiti deo istog
+     * vaučera, pa se zaključa samo ono što je preostalo. Oslobađanje po popustu je zato
+     * vraćalo više nego što je uzeto i vaučer je dobijao novac ni iz čega.
+     *
+     * <p>Oslobađanje ide ISKLJUČIVO po ovom polju. Time važi invarijanta:
+     * {@code voucher.usedAmount == zbir zaključanih iznosa svih živih rezervacija}.
+     *
+     * <p>{@code null} znači "ne drži ništa" - ili nikad nije zaključala, ili je već
+     * oslobodila. Zato je i dvostruko oslobađanje nemoguće: drugi poziv vidi null i
+     * nema šta da oduzme.
+     */
+    @Column(name = "voucher_locked_amount", precision = 12, scale = 2)
+    private java.math.BigDecimal voucherLockedAmount;
+
     // ── Otkrivanje destinacije ────────────────────────────────────────
 
     /** Destinacija koju admin dodjeljuje - šalje se korisniku T-2 dana (48h) pre polaska. */

@@ -293,4 +293,34 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b.revealToken FROM Booking b WHERE b.id = :id")
     Optional<String> findRevealTokenById(@Param("id") Long id);
+
+    /**
+     * Da li je rezervacija JOS UVEK podobna za slanje reveala, u ovom trenutku.
+     *
+     * <p>Dnevne petlje ucitaju listu odjednom pa je obradjuju minutima (geokodiranje,
+     * prognoza, SMTP). Odluka "posalji" se zato donosi na snimku starom koliko i cela
+     * petlja: ako admin u medjuvremenu rucno posalje reveal ili skloni destinaciju,
+     * petlja to ne vidi i posalje drugi put. Ciljani upisi to ne resavaju - oni stite
+     * upis, ne odluku.
+     *
+     * <p>Zove se neposredno pre slanja, pa je prozor sveden na milisekunde.
+     */
+    @Query("""
+           SELECT COUNT(b) FROM Booking b
+            WHERE b.id = :id
+              AND b.revealSentAt IS NULL
+              AND b.assignedDestination IS NOT NULL
+              AND b.status = com.escapii.model.BookingStatus.CONFIRMED
+           """)
+    long jeLiJosZaReveal(@Param("id") Long id);
+
+    /** Isto za prognozu - vidi {@link #jeLiJosZaReveal}. */
+    @Query("""
+           SELECT COUNT(b) FROM Booking b
+            WHERE b.id = :id
+              AND b.forecastSentAt IS NULL
+              AND b.assignedDestination IS NOT NULL
+              AND b.status = com.escapii.model.BookingStatus.CONFIRMED
+           """)
+    long jeLiJosZaPrognozu(@Param("id") Long id);
 }

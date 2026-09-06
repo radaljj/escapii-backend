@@ -39,6 +39,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private final ForecastEmailService forecastEmailService;
     private final WeatherService       weatherService;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
+    private final VoucherLedger        voucherLedger;
 
     @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
@@ -91,18 +92,15 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             if (b.getAppliedVoucherCode() != null) {
                 giftVoucherRepository.findByCodeForUpdate(b.getAppliedVoucherCode()).ifPresent(v -> {
                     if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
-                        Integer disc = b.getVoucherDiscount();
-                        if (disc != null && disc > 0) {
-                            java.math.BigDecimal reversed = v.getUsedAmount()
-                                    .subtract(java.math.BigDecimal.valueOf(disc));
-                            v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
-                                    ? java.math.BigDecimal.ZERO : reversed);
-                        }
-                        v.setStatus(VoucherStatus.ACTIVE);
-                        v.setUsedInBookingRef(null);
+                        // Isti ledger kao rucno otkazivanje i brisanje - oslobadja tacno
+                        // ono sto je rezervacija drzala. Ranije je ovde bila treca kopija
+                        // iste racunice, i bas su se te kopije vremenom razisle.
+                        java.math.BigDecimal oslobodjeno = voucherLedger.release(b, v);
+                        if (oslobodjeno.signum() == 0) return;
                         giftVoucherRepository.save(v);
-                        log.info("[Voucher] {} → ACTIVE (auto-cancel booking {}, reversovano {}€)",
-                                com.escapii.util.LogUtils.maskVoucherCode(v.getCode()), b.getBookingRef(), disc);
+                        log.info("[Voucher] {} → {} (auto-cancel booking {}, oslobođeno {}€, novo usedAmount={}€)",
+                                com.escapii.util.LogUtils.maskVoucherCode(v.getCode()), v.getStatus(),
+                                b.getBookingRef(), oslobodjeno, v.getUsedAmount());
                     }
                 });
             }
@@ -300,6 +298,15 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     continue;
                 }
 
+                // Ista provera kao kod reveala: stanje iz baze, ne iz snimka od početka
+                // petlje. Sprečava dupli mejl kad admin ručno pošalje prognozu dok
+                // petlja jos traje.
+                if (bookingRepository.jeLiJosZaPrognozu(booking.getId()) == 0) {
+                    log.info("[Forecast] {} preskočen - stanje se promenilo otkad je lista učitana",
+                            booking.getBookingRef());
+                    continue;
+                }
+
                 forecastEmailService.sendForecastEmail(booking, forecast.get());
 
                 // Ciljani upis umesto save(). Ova petlja nema @Transactional, pa je
@@ -343,6 +350,17 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 // može ručno poslati reveal (sendRevealForBooking to namerno ne proverava).
                 if (booking.getForecastSentAt() == null) {
                     log.warn("[Reveal] {} preskočen - prognoza još nije poslata, reveal čeka", booking.getBookingRef());
+                    continue;
+                }
+
+                // Odluka o slanju se donosi na stanju iz BAZE, ne na snimku od početka
+                // petlje. Lista je učitana pre nekoliko minuta i za to vreme je admin
+                // mogao ručno poslati reveal, skloniti destinaciju ili otkazati
+                // rezervaciju - bez ove provere bi kupac dobio drugi reveal mejl.
+                // Ciljani upisi to ne rešavaju: oni štite upis, ne odluku.
+                if (bookingRepository.jeLiJosZaReveal(booking.getId()) == 0) {
+                    log.info("[Reveal] {} preskočen - stanje se promenilo otkad je lista učitana",
+                            booking.getBookingRef());
                     continue;
                 }
 

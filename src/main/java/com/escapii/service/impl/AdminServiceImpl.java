@@ -104,6 +104,7 @@ public class AdminServiceImpl implements AdminService {
     private final CustomDateInquiryService    inquiryService;
     private final AirportLookupService        airportLookupService;
     private final PartnerSlugFiller           partnerSlugFiller;
+    private final VoucherLedger               voucherLedger;
     private final InvoiceService              invoiceService;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
@@ -505,33 +506,24 @@ public class AdminServiceImpl implements AdminService {
         // ACTIVE sa usedAmount > 0 → smanjujemo usedAmount (delimično oslobađamo).
         // USED vaučer se NE menja - putovanje je završeno pre brisanja.
         //
-        // OTKAZANA rezervacija se PRESKAČE: njoj je iznos već vraćen u trenutku
-        // otkazivanja (updateBookingStatus, grana status == CANCELLED, koja ne gleda
-        // prethodni status). Bez ovog uslova bi niz "otkaži pa obriši" oduzeo isti
-        // iznos dvaput i vaučer bi prijavljivao više novca nego što stvarno ima -
-        // kupac bi istim kodom mogao da rezerviše drugi put. Brisanje potvrđene
-        // rezervacije je ionako blokirano iznad, pa je otkazana jedini slučaj u kome
-        // je vraćanje već obavljeno.
+        // Dvostruko oslobađanje više nije moguće ni po nizu "otkaži pa obriši":
+        // otkazivanje je već oslobodilo i obrisalo zapis o zaključanom iznosu, pa
+        // release() ovde vidi null i nema šta da oduzme. Zato uslov na statusu više
+        // nije potreban - garancija je u podatku, ne u zaključku iz statusa.
+        // Kratak prekid ako rezervacija ništa ne drži (već oslobođeno pri otkazivanju):
+        // nema šta da se vrati, a nema ni razloga uzimati pesimistički lock nad vaučerom.
         String voucherCode = booking.getAppliedVoucherCode();
-        if (voucherCode != null && booking.getStatus() != BookingStatus.CANCELLED) {
+        if (voucherCode != null && booking.getVoucherLockedAmount() != null) {
             // findByCodeForUpdate (ne findByCode) - zaključava red da ne bi istovremeni
             // booking sa istim kodom video zastarelo stanje (izgubljena izmena/race).
             giftVoucherRepository.findByCodeForUpdate(voucherCode).ifPresent(v -> {
                 if (v.getStatus() == VoucherStatus.RESERVED || v.getStatus() == VoucherStatus.ACTIVE) {
-                    Integer disc = booking.getVoucherDiscount();
-                    if (disc != null && disc > 0) {
-                        java.math.BigDecimal reversed = v.getUsedAmount()
-                                .subtract(java.math.BigDecimal.valueOf(disc));
-                        v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
-                                ? java.math.BigDecimal.ZERO : reversed);
-                    }
-                    if (v.getStatus() == VoucherStatus.RESERVED) {
-                        v.setStatus(VoucherStatus.ACTIVE);
-                        v.setUsedAt(null);
-                    }
+                    java.math.BigDecimal oslobodjeno = voucherLedger.release(booking, v);
+                    if (oslobodjeno.signum() == 0) return;   // rezervacija nije ništa držala
                     giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → usedAmount reversovano za {}€ (booking {} obrisan), novo usedAmount={}€",
-                            LogUtils.maskVoucherCode(v.getCode()), booking.getVoucherDiscount(), booking.getBookingRef(), v.getUsedAmount());
+                    log.info("[Voucher] {} → {} (booking {} obrisan, oslobođeno {}€, novo usedAmount={}€)",
+                            LogUtils.maskVoucherCode(v.getCode()), v.getStatus(),
+                            booking.getBookingRef(), oslobodjeno, v.getUsedAmount());
                 }
                 // USED vaučer ostaje USED - putovanje je završeno, vaučer je trajno iskorišćen
             });
@@ -618,20 +610,14 @@ public class AdminServiceImpl implements AdminService {
                     }
                     // Delimično potrošen (ACTIVE) - ostaje ACTIVE, usedAmount je već tačan
                 } else if (status == BookingStatus.CANCELLED) {
-                    // Reversiraj usedAmount za ovaj booking
-                    Integer disc = saved.getVoucherDiscount();
-                    if (disc != null && disc > 0) {
-                        java.math.BigDecimal reversed = v.getUsedAmount()
-                                .subtract(java.math.BigDecimal.valueOf(disc));
-                        v.setUsedAmount(reversed.compareTo(java.math.BigDecimal.ZERO) < 0
-                                ? java.math.BigDecimal.ZERO : reversed);
-                    }
-                    v.setStatus(VoucherStatus.ACTIVE);
-                    v.setUsedAt(null);
-                    v.setUsedInBookingRef(null);
+                    // Oslobađa se tačno ono što je ova rezervacija držala, ne traženi
+                    // popust. Ta dva iznosa se razlikuju kad je rezervacija ranije
+                    // vraćena iz otkazanog stanja pa je zaključala manje nego što traži.
+                    java.math.BigDecimal oslobodjeno = voucherLedger.release(saved, v);
                     giftVoucherRepository.save(v);
-                    log.info("[Voucher] {} → ACTIVE (booking {} CANCELLED, reversovano {}€, novo usedAmount={}€)",
-                            LogUtils.maskVoucherCode(v.getCode()), saved.getBookingRef(), saved.getVoucherDiscount(), v.getUsedAmount());
+                    log.info("[Voucher] {} → {} (booking {} CANCELLED, oslobođeno {}€, novo usedAmount={}€)",
+                            LogUtils.maskVoucherCode(v.getCode()), v.getStatus(),
+                            saved.getBookingRef(), oslobodjeno, v.getUsedAmount());
                 } else if ((status == BookingStatus.PENDING || status == BookingStatus.CONFIRMED)
                         && oldStatus == BookingStatus.CANCELLED) {
                     // Un-cancel: rezervacija se vraća u aktivan status, pa vaučer mora
@@ -643,16 +629,16 @@ public class AdminServiceImpl implements AdminService {
                     // drugi u međuvremenu delimično potrošio isti vaučer dok je bio ACTIVE.
                     Integer disc = saved.getVoucherDiscount();
                     if (disc != null && disc > 0) {
-                        java.math.BigDecimal remaining = v.getAmount().subtract(v.getUsedAmount())
-                                .max(java.math.BigDecimal.ZERO);
-                        java.math.BigDecimal relock    = remaining.min(java.math.BigDecimal.valueOf(disc));
-                        java.math.BigDecimal newUsed    = v.getUsedAmount().add(relock);
-                        v.setUsedAmount(newUsed);
-                        v.setUsedInBookingRef(saved.getId());
-                        v.setStatus(newUsed.compareTo(v.getAmount()) >= 0 ? VoucherStatus.RESERVED : VoucherStatus.ACTIVE);
+                        // Zaključava se samo ono što je STVARNO preostalo - neko drugi je
+                        // mogao potrošiti deo istog vaučera dok je ova bila otkazana.
+                        // Ledger taj iznos upiše na rezervaciju, pa će sledeće otkazivanje
+                        // osloboditi baš njega, a ne originalni popust.
+                        java.math.BigDecimal relock = voucherLedger.lock(
+                                saved, v, java.math.BigDecimal.valueOf(disc));
                         giftVoucherRepository.save(v);
-                        log.info("[Voucher] {} → {} (booking {} vraćen iz CANCELLED u {}, ponovo zaključano {}€ od originalnih {}€, novo usedAmount={}€)",
-                                LogUtils.maskVoucherCode(v.getCode()), v.getStatus(), saved.getBookingRef(), status, relock, disc, newUsed);
+                        log.info("[Voucher] {} → {} (booking {} vraćen iz CANCELLED u {}, ponovo zaključano {}€ od traženih {}€, novo usedAmount={}€)",
+                                LogUtils.maskVoucherCode(v.getCode()), v.getStatus(), saved.getBookingRef(),
+                                status, relock, disc, v.getUsedAmount());
                     }
                 }
                 // Ostali prelazi (npr. PENDING → CONFIRMED bez prethodnog CANCELLED) - nema promene

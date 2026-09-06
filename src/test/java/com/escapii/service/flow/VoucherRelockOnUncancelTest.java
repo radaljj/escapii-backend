@@ -67,7 +67,7 @@ class VoucherRelockOnUncancelTest {
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
-                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, invoiceService,
+                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
                 agencySettlementCalculator, bookingFinancialItemRepository,
                 agencyInvoiceSequenceRepository);
@@ -84,6 +84,12 @@ class VoucherRelockOnUncancelTest {
         b.setNumberOfTravelers(2);
         b.setAppliedVoucherCode(code);
         b.setVoucherDiscount(discount);
+        // Živa rezervacija sa vaučerom uvek ima zapisano koliko drži - postavlja ga
+        // kreiranje, a za starije redove migracija V17. Otkazanoj je iznos već vraćen
+        // pa ne drži ništa; baš ta razlika sprečava dvostruko oslobađanje.
+        b.setVoucherLockedAmount(status == BookingStatus.CANCELLED
+                ? null
+                : java.math.BigDecimal.valueOf(discount));
         return b;
     }
 

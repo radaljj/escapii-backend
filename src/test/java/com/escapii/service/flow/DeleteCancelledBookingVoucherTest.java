@@ -71,7 +71,7 @@ class DeleteCancelledBookingVoucherTest {
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
-                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, invoiceService,
+                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
                 agencySettlementCalculator, bookingFinancialItemRepository,
                 agencyInvoiceSequenceRepository);
@@ -79,7 +79,12 @@ class DeleteCancelledBookingVoucherTest {
 
     private static final String KOD = "ESC-AAAA-BBBB-CCCC";
 
-    private Booking rezervacija(BookingStatus status, BookingStatus stariStatus) {
+    /**
+     * @param zakljucano koliko rezervacija STVARNO drži na vaučeru; {@code null} znači
+     *                   da ne drži ništa - tako izgleda otkazana, kojoj je iznos već
+     *                   vraćen. Ta razlika je i cela zaštita od duplog vraćanja.
+     */
+    private Booking rezervacija(BookingStatus status, BookingStatus stariStatus, BigDecimal zakljucano) {
         Booking b = new Booking();
         b.setId(7L);
         b.setBookingRef("ESC-test0007");
@@ -88,6 +93,7 @@ class DeleteCancelledBookingVoucherTest {
         b.setNumberOfTravelers(2);
         b.setAppliedVoucherCode(KOD);
         b.setVoucherDiscount(150);
+        b.setVoucherLockedAmount(zakljucano);
         return b;
     }
 
@@ -105,12 +111,13 @@ class DeleteCancelledBookingVoucherTest {
     /** Glavni nalaz: rezervacija koja je vec otkazana ne sme ponovo da vrati iznos. */
     @Test
     void brisanjeOtkazaneRezervacijeNeVracaVaucerDrugiPut() {
-        Booking otkazana = rezervacija(BookingStatus.CANCELLED, BookingStatus.PENDING);
+        Booking otkazana = rezervacija(BookingStatus.CANCELLED, BookingStatus.PENDING, null);
         when(bookingRepository.findById(7L)).thenReturn(Optional.of(otkazana));
 
         svc.deleteBooking(7L);
 
-        // Vaučer se uopšte ne dira - iznos je već vraćen u trenutku otkazivanja.
+        // Vaučer se uopšte ne dira: rezervacija ne drži ništa (voucherLockedAmount je null,
+        // obrisan pri otkazivanju), pa nema šta da se vrati - i nema razloga ni za lock.
         verify(giftVoucherRepository, never()).findByCodeForUpdate(anyString());
         verify(giftVoucherRepository, never()).save(any(GiftVoucher.class));
         verify(bookingRepository).deleteById(7L);
@@ -119,7 +126,7 @@ class DeleteCancelledBookingVoucherTest {
     /** Kontrola: nepotvrđena a NEotkazana rezervacija i dalje vraća iznos - tačno jednom. */
     @Test
     void brisanjeNepotvrdjeneRezervacijeVracaVaucerJednom() {
-        Booking pending = rezervacija(BookingStatus.PENDING, null);
+        Booking pending = rezervacija(BookingStatus.PENDING, null, BigDecimal.valueOf(150));
         when(bookingRepository.findById(7L)).thenReturn(Optional.of(pending));
         GiftVoucher v = vaucerPosleOtkazivanja();   // 150 od 300 u upotrebi - ovom rezervacijom
         when(giftVoucherRepository.findByCodeForUpdate(KOD)).thenReturn(Optional.of(v));
@@ -140,7 +147,7 @@ class DeleteCancelledBookingVoucherTest {
      */
     @Test
     void brisanjeZavrseneJeBlokiranoIKadJePreTogaBilaOtkazana() {
-        Booking otkazanaPaZavrsena = rezervacija(BookingStatus.COMPLETED, BookingStatus.CANCELLED);
+        Booking otkazanaPaZavrsena = rezervacija(BookingStatus.COMPLETED, BookingStatus.CANCELLED, null);
         when(bookingRepository.findById(7L)).thenReturn(Optional.of(otkazanaPaZavrsena));
 
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
@@ -152,7 +159,7 @@ class DeleteCancelledBookingVoucherTest {
     /** Brisanje potvrđene ostaje blokirano - to je i razlog što je otkazana jedini rizični slučaj. */
     @Test
     void brisanjePotvrdjeneJeIDaljeBlokirano() {
-        Booking potvrdjenaPaOtkazana = rezervacija(BookingStatus.CANCELLED, BookingStatus.CONFIRMED);
+        Booking potvrdjenaPaOtkazana = rezervacija(BookingStatus.CANCELLED, BookingStatus.CONFIRMED, null);
         when(bookingRepository.findById(7L)).thenReturn(Optional.of(potvrdjenaPaOtkazana));
 
         assertThrows(org.springframework.web.server.ResponseStatusException.class,

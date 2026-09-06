@@ -48,6 +48,7 @@ public class BookingServiceImpl implements BookingService {
     private final ApplicationEventPublisher eventPublisher;
     private final BookingMapper            bookingMapper;
     private final FinancialItemSnapshotService financialItemSnapshotService;
+    private final VoucherLedger                voucherLedger;
 
     @Override
     @Transactional
@@ -225,21 +226,19 @@ public class BookingServiceImpl implements BookingService {
         // Ako je vaučer u potpunosti potrošen → RESERVED (čeka potvrdu).
         // Ako preostaje iznos → ostaje ACTIVE (može se koristiti za druge rezervacije).
         if (appliedVoucher != null) {
-            java.math.BigDecimal newUsed = appliedVoucher.getUsedAmount()
-                    .add(java.math.BigDecimal.valueOf(saved.getVoucherDiscount()));
-            appliedVoucher.setUsedAmount(newUsed);
-            appliedVoucher.setUsedInBookingRef(saved.getId());
-            if (newUsed.compareTo(appliedVoucher.getAmount()) >= 0) {
-                appliedVoucher.setStatus(VoucherStatus.RESERVED); // u potpunosti potrošen, čeka potvrdu
-                log.info("[Voucher] {} → RESERVED ({}€ potrošeno od {}€) za booking {}",
-                        LogUtils.maskVoucherCode(appliedVoucher.getCode()), newUsed, appliedVoucher.getAmount(), saved.getBookingRef());
-            } else {
-                // Delimično potrošen - ostaje ACTIVE sa preostalim iznosom
-                java.math.BigDecimal preostalo = appliedVoucher.getAmount().subtract(newUsed);
-                log.info("[Voucher] {} ostaje ACTIVE ({}€ potrošeno, preostaje {}€) za booking {}",
-                        LogUtils.maskVoucherCode(appliedVoucher.getCode()), newUsed, preostalo, saved.getBookingRef());
-            }
+            // Zaključavanje ide kroz VoucherLedger, koji uz iznos na vaučeru upiše i na
+            // rezervaciju KOLIKO je stvarno uzeto. Bez tog zapisa se kasnije oslobađa po
+            // traženom popustu, a to nije uvek isti iznos - videti VoucherLedger.
+            java.math.BigDecimal zakljucano = voucherLedger.lock(
+                    saved, appliedVoucher, java.math.BigDecimal.valueOf(saved.getVoucherDiscount()));
+            java.math.BigDecimal preostalo = appliedVoucher.getAmount()
+                    .subtract(appliedVoucher.getUsedAmount());
+            log.info("[Voucher] {} → {} (zaključano {}€ za booking {}, potrošeno {}€ od {}€, preostaje {}€)",
+                    LogUtils.maskVoucherCode(appliedVoucher.getCode()), appliedVoucher.getStatus(),
+                    zakljucano, saved.getBookingRef(),
+                    appliedVoucher.getUsedAmount(), appliedVoucher.getAmount(), preostalo);
             giftVoucherRepository.save(appliedVoucher);
+            bookingRepository.save(saved);   // upiši voucherLockedAmount na rezervaciju
         }
 
         log.info("[Booking] Kreiran {} | {} put. | aerodrom {} | termin {}→{}",

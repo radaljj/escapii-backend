@@ -81,7 +81,7 @@ class AgencyInvoiceFinalizeTest {
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
-                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, invoiceService,
+                availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
                 agencySettlementCalculator, bookingFinancialItemRepository,
                 agencyInvoiceSequenceRepository);

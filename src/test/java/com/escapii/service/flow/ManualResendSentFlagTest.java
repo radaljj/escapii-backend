@@ -47,7 +47,7 @@ class ManualResendSentFlagTest {
     void setUp() {
         svc = new BookingSchedulingServiceImpl(
                 bookingRepository, giftVoucherRepository, revealEmailService, forecastEmailService,
-                weatherService, confirmationDocumentAutoSender);
+                weatherService, confirmationDocumentAutoSender, new com.escapii.service.impl.VoucherLedger());
     }
 
     private Booking booking() {

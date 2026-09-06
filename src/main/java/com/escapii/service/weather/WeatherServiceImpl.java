@@ -106,7 +106,24 @@ public class WeatherServiceImpl implements WeatherService {
         Exception lastError = null;
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
-                HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+                // sendAsync + get(rok) umesto send(): HttpRequest.timeout() u JDK klijentu
+                // ograničava SAMO prijem zaglavlja, ne i čitanje tela odgovora. Server koji
+                // pošalje zaglavlja pa zaćuti visio bi zauvek, a ovo je u dnevnom lancu -
+                // isti scenario kao SMTP bez timeouta: zaglavi ceo scheduler.
+                HttpResponse<String> response;
+                java.util.concurrent.CompletableFuture<HttpResponse<String>> buducnost =
+                        HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                try {
+                    response = buducnost.get(TIMEOUT_SEC, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (java.util.concurrent.TimeoutException te) {
+                    buducnost.cancel(true);
+                    // IOException da postojeći retry na mrežne greške pokrije i ovo.
+                    throw new java.io.IOException("istekao rok od " + TIMEOUT_SEC + "s", te);
+                } catch (java.util.concurrent.ExecutionException ee) {
+                    Throwable uzrok = ee.getCause();
+                    if (uzrok instanceof java.io.IOException io) throw io;
+                    throw new java.io.IOException(String.valueOf(uzrok), uzrok);
+                }
                 int sc = response.statusCode();
                 if (sc >= 500 && attempt < MAX_ATTEMPTS) {
                     log.warn("[Weather] {} HTTP {} (pokušaj {}/{}) - ponavljam", label, sc, attempt, MAX_ATTEMPTS);
