@@ -14,7 +14,6 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
@@ -47,10 +46,6 @@ public class VoucherPdfService {
     /** Srpski zapis datuma - sa tačkom na kraju, kao na profakturi i na sajtu. */
     private static final DateTimeFormatter DATE_FMT  = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
     private static final DateTimeFormatter SHORT_FMT = DateTimeFormatter.ofPattern("dd.MM.");
-
-    private static final String[] DANI   = {"ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota", "nedelja"};
-    private static final String[] MESECI = {"januar", "februar", "mart", "april", "maj", "jun",
-                                            "jul", "avgust", "septembar", "oktobar", "novembar", "decembar"};
 
     /**
      * Semafor: maksimalno 3 PDF-a simultano.
@@ -110,7 +105,6 @@ public class VoucherPdfService {
         ctx.setVariable("departureDate",  data.departureDate().format(DATE_FMT));
         ctx.setVariable("returnDate",     data.returnDate().format(DATE_FMT));
         ctx.setVariable("departureShort", data.departureDate().format(SHORT_FMT));
-        ctx.setVariable("departureLong",  dugDatum(data.departureDate()));
         ctx.setVariable("nights",         data.nights());
         ctx.setVariable("travelers",      data.travelers());
         ctx.setVariable("airportCode",    safe(data.airportCode()));
@@ -202,12 +196,6 @@ public class VoucherPdfService {
     }
 
     private static String safe(String s) { return s == null ? "" : s; }
-
-    /** "petak, 12. jun 2026." - dan i mesec srpski, bez zavisnosti od Locale podataka JVM-a. */
-    static String dugDatum(LocalDate d) {
-        return DANI[d.getDayOfWeek().getValue() - 1] + ", "
-             + d.getDayOfMonth() + ". " + MESECI[d.getMonthValue() - 1] + " " + d.getYear() + ".";
-    }
 
     /**
      * Imena putnika razdvojena tačkom u boji; imena su escape-ovana ovde jer

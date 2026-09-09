@@ -93,7 +93,7 @@ class VoucherPdfRenderTest {
         assertTrue(new String(pdf, 0, 5).startsWith("%PDF-"));
         String t = tekst(pdf);
         for (String ocekivano : new String[]{"ESC-A3F8B2C1", "BEG", "Beograd", "Aerodrom Nikola Tesla",
-                                             "12.06.2026.", "15.06.2026.", "petak, 12. jun 2026.",
+                                             "12.06.2026.", "15.06.2026.", "12.06.",
                                              "Ana Anić", "Marko Marković", "Tvoja avantura", "je rezervisana",
                                              "Polazak", "Povratak", "Noći", "Putnici", "Poklon od",
                                              "Vaučer kod", "Bez roka", "escapii.rs/poklon"}) {
@@ -113,15 +113,8 @@ class VoucherPdfRenderTest {
                 "INI", "Niš", "Aerodrom Konstantin Veliki", List.of("Uroš Đorđević"), null));
         String t = tekst(pdf);
         assertTrue(t.contains("Uroš Đorđević"), "dijakritika mora da se renderuje: " + t);
-        assertTrue(t.contains("četvrtak, 31. decembar 2026."), t);
+        assertFalse(sadrzi(t, "decembar"), "ispod krupnog datuma nema ispisanog datuma - sekao se sa brojevima");
         assertFalse(sadrzi(t, "Poklon od"), "bez kupca nema kolone 'Poklon od'");
-    }
-
-    @Test
-    void dugDatumNaSrpskom() {
-        assertEquals("petak, 12. jun 2026.",        VoucherPdfService.dugDatum(LocalDate.of(2026, 6, 12)));
-        assertEquals("ponedeljak, 1. septembar 2025.", VoucherPdfService.dugDatum(LocalDate.of(2025, 9, 1)));
-        assertEquals("nedelja, 1. mart 2026.",     VoucherPdfService.dugDatum(LocalDate.of(2026, 3, 1)));
     }
 
     @Test
