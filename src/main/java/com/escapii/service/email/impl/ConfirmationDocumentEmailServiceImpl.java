@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumentEmailService {
 
     private final EmailSender emailSender;
+    /** "Zdravo, Uroše," - vokativ imena; nikad ne baca, na sve vraca nominativ. */
+    private final com.escapii.service.VocativeService vocativeService;
 
 
     /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
@@ -35,7 +37,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
-            salutation + " " + EmailHtmlBuilder.esc(booking.travellerFirstName()) + ",</p>" +
+            salutation + " " + EmailHtmlBuilder.esc(vocativeService.vocative(booking.travellerFirstName())) + ",</p>" +
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 22px;\">" +
             "sad kad znaš svoju destinaciju, evo i zvaničnih podataka tvoje rezervacije - " +

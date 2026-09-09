@@ -33,6 +33,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
     private final EmailSender sender;
     private final DestinationService destinationService;
+    /** "Zdravo, Uroše," - vokativ imena; nikad ne baca, na sve vraca nominativ. */
+    private final com.escapii.service.VocativeService vocativeService;
 
     /** @Lazy sprečava circular dependency: AppErrorService → emailAlert → BookingEmailServiceImpl */
     @Autowired @Lazy
@@ -262,7 +264,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         return loadEmailTemplate("upit-primljen.html")
             .replace("{{SALUTATION}}",        EmailHtmlBuilder.salutation())
-            .replace("{{FIRST_NAME}}",        EmailHtmlBuilder.esc(booking.getFirstName()))
+            .replace("{{FIRST_NAME}}",        EmailHtmlBuilder.esc(vocativeService.vocative(booking.getFirstName())))
             .replace("{{REF_CODE}}",           EmailHtmlBuilder.esc(booking.getBookingRef()))
             .replace("{{BOARDING_PASS_HTML}}", buildBoardingPassBlock(booking, depDate, retDate, n))
             .replace("{{REVEAL_STEP_TITLE}}",  revealTitle)
@@ -285,7 +287,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (confirmed) {
             return loadEmailTemplate("potvrda-rezervacije.html")
                 .replace("{{SALUTATION}}",         EmailHtmlBuilder.salutation())
-                .replace("{{FIRST_NAME}}",         EmailHtmlBuilder.esc(booking.getFirstName()))
+                .replace("{{FIRST_NAME}}",         EmailHtmlBuilder.esc(vocativeService.vocative(booking.getFirstName())))
                 .replace("{{REF_CODE}}",            EmailHtmlBuilder.esc(booking.getBookingRef()))
                 .replace("{{AIRPORT_CODE}}",        EmailHtmlBuilder.esc(booking.getDepartureAirport()))
                 .replace("{{BOARDING_PASS_HTML}}",  buildBoardingPassBlock(booking, depDate, retDate, n))
@@ -298,7 +300,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         } else {
             return loadEmailTemplate("otkaz-rezervacije.html")
                 .replace("{{SALUTATION}}",     EmailHtmlBuilder.salutation())
-                .replace("{{FIRST_NAME}}",     EmailHtmlBuilder.esc(booking.getFirstName()))
+                .replace("{{FIRST_NAME}}",     EmailHtmlBuilder.esc(vocativeService.vocative(booking.getFirstName())))
                 .replace("{{REF_CODE}}",        EmailHtmlBuilder.esc(booking.getBookingRef()))
                 .replace("{{TRIP_CARD_HTML}}",  customerTripCardStyled(booking, depDate, retDate, n, true))
                 .replace("{{CONTACT_EMAIL}}",   EmailHtmlBuilder.esc(contactEmail))

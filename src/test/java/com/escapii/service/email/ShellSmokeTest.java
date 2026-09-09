@@ -77,7 +77,8 @@ class ShellSmokeTest {
         EmailSender sender = capturing(cap);
 
         // 1-2. Fakture (rezervacija + vaučer)
-        var inv = new InvoiceEmailServiceImpl(sender);
+        com.escapii.service.VocativeService ident = ime -> ime;
+        var inv = new InvoiceEmailServiceImpl(sender, ident);
         set(inv, "contactEmail", "info@escapii.rs");
         inv.sendInvoiceToClient(booking(), new byte[]{1}, "ESC-INV-2026-0001");
         check("faktura-rezervacija", cap.get());
@@ -92,7 +93,7 @@ class ShellSmokeTest {
         check("reveal", cap.get());
 
         // 4. Dokument rezervacije
-        var cd = new ConfirmationDocumentEmailServiceImpl(sender);
+        var cd = new ConfirmationDocumentEmailServiceImpl(sender, ident);
         set(cd, "contactEmail", "info@escapii.rs");
         cd.sendConfirmationDocument(booking());
         check("dokument-rezervacije", cap.get());
@@ -140,7 +141,7 @@ class ShellSmokeTest {
                 return List.of(new com.escapii.dto.CountryDto("RS", "Serbia", "Srbija"),
                                new com.escapii.dto.CountryDto("ES", "Spain", "Španija"));
             }
-        });
+        }, ime -> ime);
         set(be, "teamEmail", "escapii.team@gmail.com");
         set(be, "contactEmail", "info@escapii.rs");
         var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
@@ -185,7 +186,7 @@ class ShellSmokeTest {
             public List<com.escapii.model.Destination> getDestinationsByAirport(String a) { return List.of(); }
             public List<com.escapii.model.Destination> getAllDestinations() { return List.of(); }
             public List<com.escapii.dto.CountryDto> fetchCountries() { return List.of(); }
-        });
+        }, ime -> ime);
         set(be, "teamEmail", "escapii.team@gmail.com");
         set(be, "contactEmail", "info@escapii.rs");
         var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");

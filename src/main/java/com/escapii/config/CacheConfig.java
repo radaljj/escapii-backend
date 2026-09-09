@@ -26,16 +26,24 @@ public class CacheConfig {
             // destinacije po aerodromu polaska (per-termin logika)
             buildCache("destinations-by-airport",  30, TimeUnit.MINUTES),
             // aktivni termini - admin menja retko, @CacheEvict čisti odmah kad se promeni
-            buildCache("active-dates",             15, TimeUnit.MINUTES)
+            buildCache("active-dates",             15, TimeUnit.MINUTES),
+            // vokativ imena za "Zdravo, Uroše," - odgovor tudjeg servisa. Vokativ se
+            // ne menja nikad, pa dug rok; promasaji (nepoznato ime -> nominativ) se
+            // takodje cuvaju da isto ime ne ide na mrezu pri svakom mejlu.
+            buildCache("vocatives",                 7, TimeUnit.DAYS, 5000)
         ));
         return manager;
     }
 
     private CaffeineCache buildCache(String name, long duration, TimeUnit unit) {
+        return buildCache(name, duration, unit, 200);
+    }
+
+    private CaffeineCache buildCache(String name, long duration, TimeUnit unit, long maximumSize) {
         return new CaffeineCache(name,
             Caffeine.newBuilder()
                 .expireAfterWrite(duration, unit)
-                .maximumSize(200)
+                .maximumSize(maximumSize)
                 .build());
     }
 }

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
     private final EmailSender emailSender;
+    /** "Zdravo, Uroše," - vokativ imena; nikad ne baca, na sve vraca nominativ. */
+    private final com.escapii.service.VocativeService vocativeService;
 
 
     /** Javna kontakt adresa koju kupac vidi (nije adresa na koju tim prima). */
@@ -30,7 +32,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
-            salutation + " " + EmailHtmlBuilder.esc(booking.getFirstName()) + ",</p>" +
+            salutation + " " + EmailHtmlBuilder.esc(vocativeService.vocative(booking.getFirstName())) + ",</p>" +
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
             "hvala na rezervaciji! Jedva čekamo da te pošaljemo na put 🌍" +
@@ -88,7 +90,9 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
-            EmailHtmlBuilder.salutation() + " " + EmailHtmlBuilder.esc(voucher.getBuyerName() != null ? voucher.getBuyerName() : "kupče") + ",</p>" +
+            // buyerName je "Ime Prezime"; vocative() sam uzima prvo ime, pa u pozdravu
+            // ostaje samo ono - "Zdravo, Uroše," a ne "Zdravo, Uroše Petrović,".
+            EmailHtmlBuilder.salutation() + " " + EmailHtmlBuilder.esc(voucher.getBuyerName() != null ? vocativeService.vocative(voucher.getBuyerName()) : "kupče") + ",</p>" +
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
             "hvala na kupovini Escapii poklon vaučera! U prilogu se nalazi profaktura sa detaljima za uplatu." +
