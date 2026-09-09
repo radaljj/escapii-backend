@@ -75,7 +75,8 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
                 ? rawName : "escapii-rezervacija-" + booking.getBookingRef() + ".pdf";
 
         boolean ok = emailSender.sendWithAttachment(
-            booking.getEmail(),
+            // Putni dokumenti idu onome ko putuje - kod poklona obdarenom.
+            booking.travellerEmail(),
             "📎 Zvanični podaci tvoje rezervacije · Escapii",
             html,
             attachmentName,

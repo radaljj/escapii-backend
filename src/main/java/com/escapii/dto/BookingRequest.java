@@ -173,6 +173,30 @@ public class BookingRequest {
     @Size(max = 20, message = "Verzija saglasnosti ne sme biti duža od 20 karaktera")
     private String consentVersion;
 
+    // ── Poklon (opciono) ──────────────────────────────────────────────
+
+    /**
+     * Putovanje je poklon: mejlovi o putu idu obdarenom, novac ostaje na kupcu.
+     *
+     * <p>{@code @JsonProperty} NIJE ukras. Lombok za {@code boolean isGift} pravi
+     * getter {@code isGift()}, a Jackson iz takvog gettera izvodi ime svojstva
+     * {@code "gift"} - skida "is" prefiks. Bez ovoga bi JSON kljuc {@code isGift}
+     * koji forma salje bio ignorisan, polje bi ostalo {@code false}, i svaki
+     * poklon bi se ponasao kao obicna rezervacija. Otkrilo bi se tek kad otkrice
+     * destinacije stigne kupcu umesto obdarenom.
+     */
+    @JsonProperty("isGift")
+    private boolean isGift = false;
+
+    /** Ime obdarenog - forma ga bira iz liste putnika. Obavezno ako isGift=true. */
+    @Size(max = 200, message = "Ime osobe kojoj poklanjate ne sme biti duže od 200 karaktera")
+    private String giftRecipientName;
+
+    /** Mejl obdarenog. Obavezno ako isGift=true. */
+    @Size(max = 180, message = "Email osobe kojoj poklanjate ne sme biti duži od 180 karaktera")
+    @Email(message = "Email osobe kojoj poklanjate nije validan")
+    private String giftRecipientEmail;
+
     /** Jezik na kom su dokumenti prikazani ("sr" ili "en"). */
     @Pattern(regexp = "^$|^(sr|en)$", message = "Jezik saglasnosti mora biti sr ili en")
     private String consentLang;
@@ -183,6 +207,18 @@ public class BookingRequest {
         return deliveryAddress != null && !deliveryAddress.isBlank()
             && deliveryCity    != null && !deliveryCity.isBlank()
             && deliveryPhone   != null && !deliveryPhone.isBlank();
+    }
+
+    /**
+     * Poklon bez primaoca nema kome da posalje otkrice destinacije, a to se
+     * otkriva tek na dan slanja - dva dana pre puta, kad je kasno. Ista provera
+     * stoji i kao CHECK constraint u V18: forma se moze zaobici, baza ne.
+     */
+    @AssertTrue(message = "Ime i email osobe kojoj poklanjate su obavezni kada je putovanje poklon")
+    public boolean isGiftRecipientComplete() {
+        if (!isGift) return true;
+        return giftRecipientName  != null && !giftRecipientName.isBlank()
+            && giftRecipientEmail != null && !giftRecipientEmail.isBlank();
     }
 
     /**
@@ -202,6 +238,8 @@ public class BookingRequest {
         if (deliveryCity      != null) deliveryCity      = deliveryCity.trim();
         if (deliveryPhone     != null) deliveryPhone     = deliveryPhone.trim();
         if (deliveryApartment != null) deliveryApartment = deliveryApartment.trim();
+        if (giftRecipientName  != null) giftRecipientName  = giftRecipientName.trim();
+        if (giftRecipientEmail != null) giftRecipientEmail = giftRecipientEmail.trim().toLowerCase();
         if (consentVersion    != null) consentVersion    = consentVersion.trim();
         if (consentLang       != null) consentLang       = consentLang.trim().toLowerCase();
         if (passengers != null) passengers.forEach(p -> {

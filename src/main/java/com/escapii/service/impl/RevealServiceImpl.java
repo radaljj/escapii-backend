@@ -88,7 +88,7 @@ public class RevealServiceImpl implements RevealService {
         // Plaćeni dodaci (za popup)
         List<String> addons = getAddons(booking);
 
-        return Map.ofEntries(
+        java.util.Map<String, Object> odgovor = new java.util.LinkedHashMap<>(Map.ofEntries(
                 Map.entry("destination",          booking.getAssignedDestination()),
                 Map.entry("departureDate",        booking.getSelectedDate().getDepartureDate().toString()),
                 Map.entry("returnDate",           booking.getSelectedDate().getReturnDate() != null
@@ -110,7 +110,16 @@ public class RevealServiceImpl implements RevealService {
                 // Prazna mapa je normalno stanje (partner nije odobren, slug nije
                 // popunjen, grad nije pokriven) i frontend tada ne prikazuje popup.
                 Map.entry("partnerLinks",         travelAddonsService.linksFor(booking.getAssignedDestination()))
-        );
+        ));
+
+        // Kod poklona ovu stranicu otvara obdareni. Cena je ono sto je NEKO DRUGI
+        // platio za njega, pa se ne salje - poklon kome vidis racun nije poklon.
+        // Uklanja se ovde, a ne na frontendu: podatak koji ne sme da se vidi ne
+        // sme ni da stigne u odgovor, jer je odgovor vidljiv u alatkama pregledaca.
+        if (Boolean.TRUE.equals(booking.getIsGift())) {
+            odgovor.remove("totalPriceAll");
+        }
+        return odgovor;
     }
 
     private static @NonNull List<String> getAddons(Booking booking) {

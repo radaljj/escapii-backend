@@ -324,6 +324,58 @@ public class Booking {
     @Column(name = "delivery_apartment", length = 150)
     private String deliveryApartment;
 
+    // ── Poklon ────────────────────────────────────────────────────────
+
+    /**
+     * Putovanje je poklon: placa jedna osoba, putuje druga.
+     *
+     * Deli mejlove na dva toka. Kupac zadrzava sve sto ima veze sa novcem i
+     * stanjem rezervacije - potvrdu upita, fakturu, potvrdu i otkazivanje.
+     * Obdareni dobija ono sto se tice puta - prognozu, otkrice destinacije i
+     * putne dokumente.
+     */
+    @Column(name = "is_gift", nullable = false)
+    private Boolean isGift = false;
+
+    /** Ime obdarenog. Bira se iz liste putnika na formi, pa se poklapa sa putnom listom. */
+    @Column(name = "gift_recipient_name", length = 200)
+    private String giftRecipientName;
+
+    /** Mejl obdarenog. Jedina adresa koja kod poklona sme da vidi destinaciju. */
+    @Column(name = "gift_recipient_email", length = 180)
+    private String giftRecipientEmail;
+
+    /**
+     * Adresa na koju idu mejlovi PUTNIKA: prognoza, otkrice destinacije i putni
+     * dokumenti.
+     *
+     * <p>Postoji da bi pravilo "ko sta prima" zivelo na jednom mestu. Tri mejl
+     * servisa su ranije svaki zvali {@code getEmail()}; da svaki od njih sam
+     * izvodi uslov, prvi koji se zaboravi posalje destinaciju kupcu umesto
+     * obdarenom - a to je greska koja se ne moze povuci.
+     *
+     * <p>Pada nazad na kupca kad polje nedostaje. To se ne bi smelo desiti -
+     * forma validira, a V18 ima CHECK constraint - ali mejl koji nema gde da
+     * ode je gori ishod od mejla koji ode pogresnoj osobi u estate-u gde su
+     * oboje znali za rezervaciju.
+     */
+    public String travellerEmail() {
+        if (Boolean.TRUE.equals(isGift)
+                && giftRecipientEmail != null && !giftRecipientEmail.isBlank()) {
+            return giftRecipientEmail;
+        }
+        return email;
+    }
+
+    /** Ime kojim se obracamo putniku - obdareni kod poklona, inace nosilac. */
+    public String travellerDisplayName() {
+        if (Boolean.TRUE.equals(isGift)
+                && giftRecipientName != null && !giftRecipientName.isBlank()) {
+            return giftRecipientName;
+        }
+        return firstName;
+    }
+
     /**
      * Admin označi da je Reveal Box fizički poslan kuriru. Cisto logisticki
      * flag - koristi ga findPendingRevealBoxes za digest podsetnik i panel za

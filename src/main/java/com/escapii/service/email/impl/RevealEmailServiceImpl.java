@@ -33,7 +33,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
     @Override
     public void sendRevealEmail(Booking booking, String siteUrl) {
         String usedUrl   = (siteUrl != null && !siteUrl.isBlank()) ? siteUrl : frontendUrl;
-        String firstName = EmailHtmlBuilder.esc(booking.getFirstName());
+        String firstName = EmailHtmlBuilder.esc(booking.travellerDisplayName());
         String ref       = EmailHtmlBuilder.esc(booking.getBookingRef());
         String magicLink = usedUrl.stripTrailing() + "/otkrivanje?token=" + booking.getRevealToken();
         String departure = booking.getSelectedDate().getDepartureDate()
@@ -87,7 +87,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         );
 
         boolean sent = sender.send(
-            booking.getEmail(),
+            booking.travellerEmail(),
             "✉ Tvoja destinacija je spremna - otkrij je! | Escapii",
             html
         );
@@ -96,6 +96,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             throw new RuntimeException("[Reveal] Email slanje nije uspelo za " + booking.getBookingRef());
         }
         log.info("[Reveal] Email poslan korisniku {} za rezervaciju {}",
-                LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+                LogUtils.maskEmail(booking.travellerEmail()), booking.getBookingRef());
+
     }
 }

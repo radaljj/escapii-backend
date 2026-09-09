@@ -351,6 +351,15 @@ public class BookingServiceImpl implements BookingService {
         b.setHasConnectingFlights(Boolean.TRUE.equals(date.getIsPrivate())
                 || request.isHasConnectingFlights());
 
+        // Poklon: mejlovi o putu se preusmeravaju na obdarenog (Booking.travellerEmail()).
+        // Polja se pisu samo kad je zastavica upaljena - ime i mejl iz odbacene
+        // varijante ne smeju da ostanu u bazi i procure u mejl kasnije.
+        b.setIsGift(request.isGift());
+        if (request.isGift()) {
+            b.setGiftRecipientName(request.getGiftRecipientName());
+            b.setGiftRecipientEmail(request.getGiftRecipientEmail());
+        }
+
         // Reveal Box
         b.setHasRevealBox(request.isHasRevealBox());
         if (request.isHasRevealBox()) {

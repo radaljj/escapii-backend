@@ -77,6 +77,14 @@ public class AdminBookingResponse {
     private String  appliedVoucherCode;
     private Integer voucherDiscount;
 
+    // Poklon: dve adrese na jednoj rezervaciji. Panel mora da pokaze koja je koja,
+    // jer se od tima trazi da zna kome ide otkrice a kome faktura.
+    // @JsonProperty jer bi Jackson iz gettera isGift() izveo ime "gift".
+    @com.fasterxml.jackson.annotation.JsonProperty("isGift")
+    private Boolean isGift;
+    private String  giftRecipientName;
+    private String  giftRecipientEmail;
+
     // Reveal Box
     private Boolean hasRevealBox;
     private String  deliveryAddress;

@@ -40,11 +40,14 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
         String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
 
-        boolean sent = sender.send(booking.getEmail(), subject, html);
+        // travellerEmail(), ne getEmail(): kod poklona prognoza ide obdarenom.
+        // Poklanjaocu se ne salje - prognoza namerno ne imenuje grad, pa mu ne
+        // govori nista sto mu kopija reveala vec ne kaze.
+        boolean sent = sender.send(booking.travellerEmail(), subject, html);
         if (!sent) {
             throw new RuntimeException("[Forecast] Email slanje nije uspelo za " + booking.getBookingRef());
         }
-        log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
+        log.info("[Forecast] ✅ Email poslan za {} ({})", booking.getBookingRef(), LogUtils.maskEmail(booking.travellerEmail()));
     }
 
     // ── HTML template ─────────────────────────────────────────────────────────
