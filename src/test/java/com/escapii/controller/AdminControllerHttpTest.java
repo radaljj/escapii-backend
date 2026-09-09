@@ -40,6 +40,7 @@ class AdminControllerHttpTest {
     @Autowired private MockMvc mockMvc;
     @MockitoBean   private AdminService adminService;
     @MockitoBean   private DailyTaskScheduler dailyTaskScheduler;
+    @MockitoBean   private com.escapii.service.GiftTripVoucherService giftTripVoucherService;
 
     @Test
     void promenaStatusaProsledjujeServisu() throws Exception {
@@ -145,5 +146,29 @@ class AdminControllerHttpTest {
                         .param("desiredDepartureDate", proslostDatum.toString())
                         .param("nights", "2"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── Vaučer poklonjenog putovanja: ponovo pošalji potvrdu sa prilogom ──
+
+    @Test
+    void resendGiftVoucheraProsledjujeServisu() throws Exception {
+        when(giftTripVoucherService.resend(7L))
+                .thenReturn(AdminBookingResponse.builder().bookingRef("ESC-abcd1234").build());
+
+        mockMvc.perform(post("/api/admin/bookings/7/gift-voucher/resend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingRef").value("ESC-abcd1234"));
+
+        verify(giftTripVoucherService).resend(7L);
+    }
+
+    @Test
+    void resendGiftVouchera_poslovnaGreskaStizeKao409() throws Exception {
+        when(giftTripVoucherService.resend(7L))
+                .thenThrow(new ResponseStatusException(CONFLICT, "Rezervacija nije poklon - nema vaučera za putovanje."));
+
+        mockMvc.perform(post("/api/admin/bookings/7/gift-voucher/resend"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Rezervacija nije poklon - nema vaučera za putovanje."));
     }
 }

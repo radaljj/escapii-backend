@@ -73,6 +73,7 @@ class GiftFlowEndToEndTest {
     @Mock private BookingMapper bookingMapper;
     @Mock private TravelAddonsService travelAddonsService;
     @Mock private EmailSender sender;
+    @Mock private com.escapii.service.voucher.VoucherPdfService voucherPdfService;
 
     /** Jedan zabelezen mejl. */
     private record Poslat(String kome, String naslov, String prviRed, String prilog) {}
@@ -134,11 +135,13 @@ class GiftFlowEndToEndTest {
             String nn = com.escapii.service.impl.DeklinacijaVocativeService.normalize(ime);
             return nn.equals("Uroš") ? "Uroše" : nn;
         };
+        // PDF vaučera poklonjenog putovanja je lažan (bajtovi) - sam PDF proverava VoucherPdfRenderTest
+        when(voucherPdfService.generateTrip(any())).thenReturn(new byte[]{7, 7, 7});
         bookingMail = new BookingEmailServiceImpl(sender, new DestinationService() {
             public List<Destination> getDestinationsByAirport(String a) { return List.of(); }
             public List<Destination> getAllDestinations() { return List.of(); }
             public List<CountryDto> fetchCountries() { return List.of(new CountryDto("RS", "Serbia", "Srbija")); }
-        }, vok);
+        }, vok, voucherPdfService);
         set(bookingMail, "teamEmail", "tim@escapii.rs");
         set(bookingMail, "contactEmail", "info@escapii.rs");
         Method init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
@@ -295,6 +298,7 @@ class GiftFlowEndToEndTest {
         Booking b = provedi(false);
 
         assertEquals(6, poslato.size(), "sest mejlova kupcu: upit, profaktura, potvrda, prognoza, reveal, dokumenti");
+        assertNull(mejl("potvrđena").prilog(), "bez poklona potvrda nema vaučer u prilogu");
         for (Poslat p : poslato) {
             assertEquals("marko@primer.rs", p.kome(), p.naslov() + " nije otisao kupcu");
         }
@@ -324,6 +328,9 @@ class GiftFlowEndToEndTest {
         // Marko ne dobija nista o putu
         assertEquals(3, poslato.stream().filter(p -> p.kome().equals("marko@primer.rs")).count(),
                 "kupac dobija tacno tri mejla, sva o novcu i stanju");
+        // potvrda nosi PDF vaučer za putovanje u prilogu - sifra rezervacije u imenu fajla
+        assertEquals("escapii-poklon-putovanje-ESC-E2E00001.pdf", mejl("potvrđena").prilog(),
+                "kupac uz potvrdu dobija vaučer koji prosleđuje obdarenoj");
         assertEquals(3, poslato.stream().filter(p -> p.kome().equals("ana@primer.rs")).count(),
                 "obdarena dobija tacno tri mejla, sva o putu");
 

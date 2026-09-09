@@ -35,6 +35,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     private final DestinationService destinationService;
     /** "Zdravo, Uroše," - vokativ imena; nikad ne baca, na sve vraca nominativ. */
     private final com.escapii.service.VocativeService vocativeService;
+    /**
+     * Poklon: potvrda rezervacije nosi PDF vaučer za putovanje u prilogu.
+     * Null u testovima koji ne prolaze kroz poklon.
+     */
+    private final com.escapii.service.voucher.VoucherPdfService voucherPdfService;
 
     /** @Lazy sprečava circular dependency: AppErrorService → emailAlert → BookingEmailServiceImpl */
     @Autowired @Lazy
@@ -93,17 +98,51 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     @Override
     @Async
     public void sendBookingConfirmed(Booking booking) {
-        boolean ok = sender.send(
-            booking.getEmail(),
-            "Rezervacija potvrđena - %s".formatted(booking.getBookingRef()),
-            buildCustomerStatusHtml(booking, true)
-        );
+        sendBookingConfirmedNow(booking, giftVoucherPdf(booking));
+    }
+
+    @Override
+    public boolean sendBookingConfirmedNow(Booking booking, byte[] giftVoucherPdf) {
+        String naslov = "Rezervacija potvrđena - %s".formatted(booking.getBookingRef());
+        String html   = buildCustomerStatusHtml(booking, true, giftVoucherPdf != null);
+        boolean ok = giftVoucherPdf != null
+            ? sender.sendWithAttachment(booking.getEmail(), naslov, html,
+                    "escapii-poklon-putovanje-" + com.escapii.service.voucher.TripVoucherData.code(booking) + ".pdf",
+                    giftVoucherPdf, "application/pdf")
+            : sender.send(booking.getEmail(), naslov, html);
         if (ok) {
-            log.info("[Email] Poslat CONFIRMED email na adresu {} za booking {}", LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
+            log.info("[Email] Poslat CONFIRMED email{} na adresu {} za booking {}",
+                    giftVoucherPdf != null ? " (sa poklon vaučerom u prilogu)" : "",
+                    LogUtils.maskEmail(booking.getEmail()), booking.getBookingRef());
         } else {
             log.warn("[Email] CONFIRMED email NIJE poslat za booking {} ({})",
                     booking.getBookingRef(), LogUtils.maskEmail(booking.getEmail()));
             recordEmailError("EMAIL booking-confirmed", booking.getBookingRef());
+        }
+        return ok;
+    }
+
+    /**
+     * PDF vaučer za poklonjeno putovanje, ili null: kad rezervacija nije poklon,
+     * i kad generisanje pukne. U drugom slučaju potvrda svejedno ide - bez priloga,
+     * sa rečenicom da vaučer stiže naknadno - a greška je u 🚨 Greške tabu, pa
+     * admin šalje ponovo iz panela. Potvrda uplate ne sme da čeka na PDF.
+     */
+    private byte[] giftVoucherPdf(Booking booking) {
+        if (!Boolean.TRUE.equals(booking.getIsGift()) || voucherPdfService == null) return null;
+        try {
+            return voucherPdfService.generateTrip(com.escapii.service.voucher.TripVoucherData.from(booking));
+        } catch (Exception e) {
+            log.error("[Email] PDF vaučera poklonjenog putovanja nije generisan za {} - potvrda ide bez priloga: {}",
+                    booking.getBookingRef(), e.getMessage(), e);
+            try {
+                appErrorService.record("PDF gift-trip-voucher", 0,
+                    new RuntimeException("Vaučer poklonjenog putovanja nije generisan (poslednja: "
+                            + booking.getBookingRef() + "): " + e.getMessage(), e));
+            } catch (Exception ex) {
+                log.error("[Email] Nije moguće snimiti PDF grešku u AppErrorService: {}", ex.getMessage());
+            }
+            return null;
         }
     }
 
@@ -280,6 +319,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     // ═══════════════════════════════════════════════════════════════════════════
 
     private String buildCustomerStatusHtml(Booking booking, boolean confirmed) {
+        return buildCustomerStatusHtml(booking, confirmed, false);
+    }
+
+    private String buildCustomerStatusHtml(Booking booking, boolean confirmed, boolean vaucerUPrilogu) {
         String depDate = booking.getSelectedDate().getDepartureDate().format(EmailHtmlBuilder.DATE_FMT);
         String retDate = booking.getSelectedDate().getReturnDate().format(EmailHtmlBuilder.DATE_FMT);
         int n = booking.getNumberOfTravelers();
@@ -296,6 +339,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 .replace("{{TOTAL_BOX_HTML}}",      EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
                 .replace("{{PRICE_TABLE_HTML}}",    buildPriceTable(booking, n))
                 .replace("{{TIMELINE_HTML}}",       buildConfirmedTimeline(booking))
+                .replace("{{GIFT_INTRO_HTML}}",     giftIntroHtml(booking, vaucerUPrilogu))
                 .replace("{{SENDER_EMAIL}}",        EmailHtmlBuilder.esc(contactEmail));
         } else {
             return loadEmailTemplate("otkaz-rezervacije.html")
@@ -312,6 +356,21 @@ public class BookingEmailServiceImpl implements BookingEmailService {
     // Confirmed timeline
     // ═══════════════════════════════════════════════════════════════════════════
 
+    /**
+     * Nastavak uvodnog pasusa potvrde kad je putovanje poklon: rečenica o vaučeru u
+     * prilogu i podsetnik kome idu mejlovi o samom putu. Prazno kad nije poklon.
+     * Kad PDF nije napravljen, ne obećava prilog koji ne postoji.
+     */
+    private String giftIntroHtml(Booking booking, boolean vaucerUPrilogu) {
+        if (!Boolean.TRUE.equals(booking.getIsGift())) return "";
+        String vaucer = vaucerUPrilogu
+            ? "U prilogu ti šaljemo <strong style=\"color:#1E2D2F;\">PDF vaučer za poklonjeno putovanje</strong>, koji možeš da odštampaš ili proslediš osobi kojoj ga poklanjaš."
+            : "PDF vaučer za poklonjeno putovanje, koji možeš da odštampaš ili proslediš osobi kojoj ga poklanjaš, stiže ti u posebnom mejlu.";
+        return "<br><br>🎁 " + vaucer + " Na vaučeru nema cene, samo termin, aerodrom polaska i imena putnika."
+             + "<br><br>Vremenska prognoza, reveal destinacije i putni dokumenti stižu na <strong style=\"color:#1E2D2F;\">"
+             + EmailHtmlBuilder.esc(booking.travellerEmail()) + "</strong>.";
+    }
+
     private String buildConfirmedTimeline(Booking booking) {
         var dep         = booking.getSelectedDate().getDepartureDate();
         var weatherDate = dep.minusDays(7);
@@ -319,6 +378,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         var boxEarliest = dep.minusDays(5);
         var boxLatest   = dep.minusDays(3);
         boolean hasBox  = Boolean.TRUE.equals(booking.getHasRevealBox());
+        // Poklon: kupac cita potvrdu, ali prognozu, otkrice i dokumente dobija obdarena
+        // osoba - "stižu na tvoj email" bi kupcu bilo netacno. "Obdarena osoba" je
+        // gramaticki zenski rod bez obzira na pol, pa "njen mejl" radi za sve.
+        boolean poklon  = Boolean.TRUE.equals(booking.getIsGift());
 
         String today      = java.time.LocalDate.now().format(EmailHtmlBuilder.DATE_FMT);
         String weatherStr = weatherDate.format(EmailHtmlBuilder.DATE_FMT);
@@ -328,8 +391,10 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         String step3When = hasBox ? (boxStr + " · 3-5 dana pre polaska") : (revealStr + " · 48h pre polaska");
         String step3Desc = hasBox
-            ? "Reveal Box stiže na tvoju adresu! Otvori ga i saznaš gde putuješ. 📦"
-            : "Konačno - otkrivaš gde ideš! Detalji putovanja stižu na tvoj email.";
+            ? (poklon ? "Reveal Box stiže na unetu adresu i otkriva gde se putuje. 📦"
+                      : "Reveal Box stiže na tvoju adresu! Otvori ga i saznaš gde putuješ. 📦")
+            : (poklon ? "Konačno - obdarena osoba saznaje gde ide! Detalji putovanja stižu na njen mejl."
+                      : "Konačno - otkrivaš gde ideš! Detalji putovanja stižu na tvoj email.");
 
         return """
             <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
@@ -353,7 +418,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("🌤", "#fff5eb", "#a85e44",
                 "Vremenska prognoza",
                 weatherStr + " · 7 dana pre polaska",
-                "Dobijaš prognozu da znaš šta da spakovač. Destinacija? I dalje tajna!"),
+                poklon ? "Obdarena osoba dobija prognozu da zna šta da spakuje. Destinacija? I dalje tajna!"
+                       : "Dobijaš prognozu da znaš šta da spakuješ. Destinacija? I dalje tajna!"),
             EmailHtmlBuilder.timelineItem(hasBox ? "📦" : "✉", "#eaf0f3", "#2D5F6B",
                 hasBox ? "Escapii Reveal Box ✉️" : "Koverta s destinacijom",
                 step3When,
@@ -361,7 +427,8 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             EmailHtmlBuilder.timelineItem("✈", "#f5efe2", "#a85e44",
                 "Avantura počinje!",
                 depStr + " · Dan polaska",
-                "Dođi na aerodrom 3h pre leta i dozvoli sebi da budeš iznenađen/a.")
+                poklon ? "Obdarena osoba dolazi na aerodrom 3h pre leta - i dozvoljava sebi da bude iznenađena."
+                       : "Dođi na aerodrom 3h pre leta i dozvoli sebi da budeš iznenađen/a.")
         );
     }
 
@@ -758,11 +825,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   </tr>
                   <tr>
-                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Zemlja pa&#353;o&#353;a</td>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Zemlja paso&#353;a</td>
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   </tr>
                   <tr>
-                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Br. pa&#353;o&#353;a</td>
+                    <td width="38%%" style="width:38%%;padding:9px 14px;font-size:12px;color:#a89888;font-weight:600;border-bottom:1px solid #ebe1cf;">Br. paso&#353;a</td>
                     <td width="62%%" style="width:62%%;padding:9px 14px;font-size:13px;color:#1a1410;border-bottom:1px solid #ebe1cf;">%s</td>
                   </tr>
                   <tr>

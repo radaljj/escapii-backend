@@ -69,6 +69,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     java.util.Optional<Booking> findByRevealToken(String revealToken);
 
     /**
+     * Šifra rezervacije bez obzira na velika/mala slova. Kod vaučera poklonjenog
+     * putovanja je šifra rezervacije, a /poklon stranica kod uvek diže u velika slova.
+     */
+    java.util.Optional<Booking> findByBookingRefIgnoreCase(String bookingRef);
+
+    /**
      * Učitava booking sa pesimističkim lock-om - serijalizuje istovremene admin akcije
      * (npr. dvostruki klik na "Pošalji Reveal"/"Pošalji Prognozu") da se ne pošalje duplo.
      */

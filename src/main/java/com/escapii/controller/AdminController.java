@@ -43,6 +43,7 @@ public class AdminController {
 
     private final AdminService       adminService;
     private final DailyTaskScheduler dailyTaskScheduler;
+    private final com.escapii.service.GiftTripVoucherService giftTripVoucherService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -432,6 +433,15 @@ public class AdminController {
     @PostMapping("/bookings/{id}/confirmation-document/resend")
     public ResponseEntity<AdminBookingResponse> resendConfirmationDocument(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.resendConfirmationDocument(id));
+    }
+
+    /**
+     * POST /api/admin/bookings/{id}/gift-voucher/resend — ponovo šalje kupcu potvrdu
+     * rezervacije sa PDF vaučerom poklonjenog putovanja u prilogu.
+     */
+    @PostMapping("/bookings/{id}/gift-voucher/resend")
+    public ResponseEntity<AdminBookingResponse> resendGiftTripVoucher(@PathVariable Long id) {
+        return ResponseEntity.ok(giftTripVoucherService.resend(id));
     }
 
     // ══ AGENCIJE ═════════════════════════════════════════════════════════════

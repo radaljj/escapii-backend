@@ -141,7 +141,7 @@ class ShellSmokeTest {
                 return List.of(new com.escapii.dto.CountryDto("RS", "Serbia", "Srbija"),
                                new com.escapii.dto.CountryDto("ES", "Spain", "Španija"));
             }
-        }, ime -> ime);
+        }, ime -> ime, null);
         set(be, "teamEmail", "escapii.team@gmail.com");
         set(be, "contactEmail", "info@escapii.rs");
         var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");
@@ -186,7 +186,7 @@ class ShellSmokeTest {
             public List<com.escapii.model.Destination> getDestinationsByAirport(String a) { return List.of(); }
             public List<com.escapii.model.Destination> getAllDestinations() { return List.of(); }
             public List<com.escapii.dto.CountryDto> fetchCountries() { return List.of(); }
-        }, ime -> ime);
+        }, ime -> ime, null);
         set(be, "teamEmail", "escapii.team@gmail.com");
         set(be, "contactEmail", "info@escapii.rs");
         var init = BookingEmailServiceImpl.class.getDeclaredMethod("initCountryNames");

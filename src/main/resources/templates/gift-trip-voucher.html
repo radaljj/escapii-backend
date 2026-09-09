@@ -4,17 +4,12 @@
   <meta charset="UTF-8"/>
   <style>
     /*
-      Poklon vaučer (novčani) - boarding-pass list, 1123x794 px (A4 položeno).
+      Vaučer za POKLONJENO PUTOVANJE - isti list kao novčani vaučer
+      (gift-voucher.html), ali umesto iznosa nosi termin, aerodrom polaska i
+      putnike. Cena se ne pojavljuje nigde: ovo prima obdareni, a poklon ne
+      nosi cenu. Nema ni roka važenja - putovanje je već rezervisano.
 
-      Fontovi su familije registrovane u VoucherPdfService.registerFonts:
-        VoucherSerif = Cormorant Garamond (400, 400i, 700, 700i)
-        VoucherSans  = Manrope (400, 600, 800)   - koristiti SAMO ove težine
-      (Ovo je XML: nikakav "manje od" znak ne sme u komentar, parser pada.)
-        VoucherMono  = JetBrains Mono (700)
-      Isti trio kao boarding pass na /hvala stranici sajta.
-
-      openhtmltopdf: flex/grid ne postoje, sve je tabela; centriranje bloka
-      radi pouzdano samo preko align="center" na td i table elementima.
+      Fontovi: vidi gift-voucher.html (VoucherSerif / VoucherSans / VoucherMono).
     */
     @page { size: 1123px 794px; margin: 0; }
     html, body { margin: 0; padding: 0; }
@@ -25,23 +20,19 @@
     .bar { width: 1123px; height: 8px; background-color: #a85e44; }
     .bar td { padding: 0; font-size: 0; line-height: 0; height: 8px; }
 
-    /* main=650 + stub=473 = 1123 */
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
     .main { width: 650px; vertical-align: top; padding: 46px 46px 32px; }
     .stub { width: 473px; vertical-align: middle; background-color: #1a1410; border-left: 2px dashed #d8cab2; padding: 0; }
 
-    /* ── MAIN: zaglavlje ── */
     .hdr { width: 100%; }
     .hdr td { vertical-align: middle; }
     .tag { font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 800; border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 8px 16px; border-radius: 100px; white-space: nowrap; }
 
-    /* ── MAIN: naslov ── */
     .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 26px 0 30px; margin-top: 26px; }
     .eyebrow { font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase; color: #a85e44; font-weight: 800; padding-bottom: 12px; }
     .h1 { font-family: 'VoucherSerif', serif; font-size: 58px; font-weight: 700; color: #1a1410; line-height: 1.0; letter-spacing: -0.5px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; font-weight: 700; }
 
-    /* ── MAIN: ruta ── */
     .route { width: 100%; margin-top: 30px; }
     .route td { vertical-align: top; }
     .iata { font-family: 'VoucherSerif', serif; font-size: 72px; font-weight: 700; color: #1a1410; line-height: 0.95; letter-spacing: -1px; }
@@ -56,32 +47,29 @@
     .path .dot { width: 8px; height: 8px; background-color: #c8775a; border-radius: 4px; font-size: 0; line-height: 0; }
     .plane { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 16px solid #c8775a; margin: 0 6px; }
 
-    /* ── MAIN: meta ── */
-    .meta { width: 100%; margin-top: 30px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 12px; }
-    .meta td { padding: 15px 18px; border-right: 1px solid #ebe1cf; vertical-align: top; }
+    .meta { width: 100%; margin-top: 30px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 12px; table-layout: fixed; }
+    .meta td { padding: 15px 16px; border-right: 1px solid #ebe1cf; vertical-align: top; }
     .meta td.last { border-right: none; }
     .meta .k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; }
-    .meta .v { font-family: 'VoucherMono', monospace; font-size: 14px; font-weight: 700; color: #1a1410; padding-top: 6px; }
+    .meta .v { font-family: 'VoucherMono', monospace; font-size: 14px; font-weight: 700; color: #1a1410; padding-top: 6px; white-space: nowrap; }
     .meta .v.terra { color: #a85e44; }
 
-    /* ── MAIN: lična poruka ── */
-    .msg-box { width: 100%; table-layout: fixed; margin-top: 22px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 12px; }
-    .msg-box td { padding: 16px 20px; }
-    .msg-k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; padding-bottom: 7px; }
-    .msg-text { font-family: 'VoucherSerif', serif; font-style: italic; font-size: 18px; color: #2b231b; line-height: 1.35; word-wrap: break-word; }
-    .msg-sig { font-size: 11px; color: #6b5d4f; padding-top: 8px; font-weight: 600; }
-    .msg-sig b { color: #1a1410; font-weight: 800; }
+    /* putnici + od koga */
+    .pax-box { width: 100%; table-layout: fixed; margin-top: 22px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 12px; }
+    .pax-box td { padding: 16px 20px; vertical-align: top; }
+    .pax-box td.from { width: 190px; border-left: 1px solid #ebe1cf; }
+    .pax-k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; padding-bottom: 7px; }
+    .pax-v { font-size: 14px; font-weight: 800; color: #1a1410; line-height: 1.5; word-wrap: break-word; }
+    .pax-v span { color: #c8775a; font-weight: 400; padding: 0 4px; }
+    .from-v { font-family: 'VoucherSerif', serif; font-style: italic; font-size: 19px; color: #2b231b; line-height: 1.3; word-wrap: break-word; }
 
-    /* ── MAIN: podnožje ── */
     .lfoot { width: 100%; margin-top: 30px; font-size: 9.5px; color: #a89888; font-weight: 600; }
     .lfoot td.right { text-align: right; color: #a85e44; }
 
-    /* ── STUB ── */
     .s-head { padding: 36px 28px 40px; font-size: 9.5px; letter-spacing: 3.5px; text-transform: uppercase; color: #8a8079; font-weight: 800; }
     .s-head span { color: #d98a6a; }
     .s-k { padding: 0 28px 8px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a89b90; font-weight: 800; }
-    .s-big { padding: 0 28px 2px; font-family: 'VoucherSerif', serif; font-size: 92px; font-weight: 700; color: #ffffff; line-height: 1; letter-spacing: -2px; }
-    .s-big span { color: #d98a6a; font-size: 40px; font-style: italic; }
+    .s-big { padding: 0 28px 4px; font-family: 'VoucherSerif', serif; font-size: 84px; font-weight: 700; color: #ffffff; line-height: 1; letter-spacing: -2px; white-space: nowrap; }
     .s-sub { padding: 0 28px 36px; font-family: 'VoucherSerif', serif; font-style: italic; font-size: 21px; color: #a59c94; }
     .s-code { font-family: 'VoucherMono', monospace; font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 2px; white-space: nowrap; background-color: #251d16; border: 1px dashed #5a4d42; padding: 13px 22px; border-radius: 8px; }
     .s-qr { background-color: #ffffff; padding: 10px; border-radius: 12px; width: 170px; height: 170px; }
@@ -100,21 +88,21 @@
           <table class="hdr">
             <tr>
               <td><img th:attr="src=${logoDataUri}" alt="escapii" width="150" height="34" style="display:block;"/></td>
-              <td style="text-align:right;"><span class="tag">Poklon vau&#269;er</span></td>
+              <td style="text-align:right;"><span class="tag">Poklon putovanje</span></td>
             </tr>
           </table>
 
           <div class="title-area">
-            <div class="eyebrow">Iskoristi vau&#269;er za Escapii putovanje</div>
-            <h1 class="h1">Tvoja slede&#263;a<br/><em>avantura te &#269;eka.</em></h1>
+            <div class="eyebrow">Putovanje iznena&#273;enja &#183; sve je rezervisano</div>
+            <h1 class="h1">Tvoja avantura<br/><em>je rezervisana.</em></h1>
           </div>
 
           <table class="route">
             <tr>
               <td>
-                <div class="iata">???</div>
-                <div class="city">Polazak</div>
-                <div class="cap">Aerodrom po tvom izboru</div>
+                <div class="iata" th:text="${airportCode}">BEG</div>
+                <div class="city" th:text="${airportCity}">Beograd</div>
+                <div class="cap" th:text="${airportName}">Aerodrom Nikola Tesla</div>
               </td>
               <td class="r-mid">
                 <table class="path" align="center">
@@ -131,18 +119,24 @@
 
           <table class="meta">
             <tr>
-              <td><div class="k">Izdato</div><div class="v" th:text="${issuedAt}">27.05.2026.</div></td>
-              <td><div class="k">Va&#382;i do</div><div class="v terra" th:text="${expiresAt}">27.05.2027.</div></td>
-              <td class="last"><div class="k">Vrednost</div><div class="v" th:text="${amount} + ' &#8364;'">500 &#8364;</div></td>
+              <td><div class="k">Polazak</div><div class="v terra" th:text="${departureDate}">12.06.2026.</div></td>
+              <td><div class="k">Povratak</div><div class="v" th:text="${returnDate}">15.06.2026.</div></td>
+              <td><div class="k">No&#263;i</div><div class="v" th:text="${nights}">3</div></td>
+              <td class="last"><div class="k">Putnici</div><div class="v" th:text="${travelers}">2</div></td>
             </tr>
           </table>
 
-          <table class="msg-box" th:if="${not #strings.isEmpty(personalMessage)}">
-            <tr><td>
-              <div class="msg-k">Li&#269;na poruka</div>
-              <div class="msg-text" th:text="${personalMessage}">Marko, &#269;estitam ti ro&#273;endan!</div>
-              <div class="msg-sig" th:if="${not #strings.isEmpty(buyerName)}">&#8212; <b th:text="${buyerName}">Ana</b></div>
-            </td></tr>
+          <table class="pax-box">
+            <tr>
+              <td>
+                <div class="pax-k">Putnici</div>
+                <div class="pax-v" th:utext="${passengersHtml}">Ana Ani&#263; <span>&#183;</span> Marko Markovi&#263;</div>
+              </td>
+              <td class="from" th:if="${not #strings.isEmpty(buyerName)}">
+                <div class="pax-k">Poklon od</div>
+                <div class="from-v" th:text="${buyerName}">Marko Markovi&#263;</div>
+              </td>
+            </tr>
           </table>
 
           <table class="lfoot">
@@ -158,14 +152,14 @@
           <table width="100%" style="border-collapse:collapse;">
             <tr><td align="center" class="s-head">BOARDING PASS &#183; <span>GIFT</span></td></tr>
 
-            <tr><td align="center" class="s-k">Vrednost</td></tr>
-            <tr><td align="center" class="s-big"><span style="color:#ffffff;font-size:92px;font-style:normal;" th:text="${amount}">500</span><span>&#160;&#8364;</span></td></tr>
-            <tr><td align="center" class="s-sub" th:text="${amountWords}">petsto evra</td></tr>
+            <tr><td align="center" class="s-k">Polazak</td></tr>
+            <tr><td align="center" class="s-big" th:text="${departureShort}">12.06.</td></tr>
+            <tr><td align="center" class="s-sub" th:text="${departureLong}">petak, 12. jun 2026.</td></tr>
 
             <tr><td align="center" class="s-k">Vau&#269;er kod</td></tr>
             <tr><td align="center" style="padding: 0 28px 40px;">
               <table align="center" style="border-collapse:collapse;">
-                <tr><td class="s-code" th:text="${voucherCode}">ESC-GIFT-7K9X-2M4P</td></tr>
+                <tr><td class="s-code" th:text="${code}">ESC-A3F8B2C1</td></tr>
               </table>
             </td></tr>
 
@@ -177,7 +171,7 @@
 
             <tr><td align="center" class="s-foot">
               <b>Skeniraj ili unesi kod na escapii.rs/poklon</b><br/>
-              Va&#382;i 12 meseci od aktivacije &#183; unosi se pri rezervaciji
+              Bez roka va&#382;enja &#183; destinacija sti&#382;e 48h pre polaska
             </td></tr>
           </table>
         </td>

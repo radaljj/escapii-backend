@@ -1,15 +1,28 @@
-# Fontovi za PDF vaučer
+# Fontovi za PDF (vaučeri i profaktura)
 
-Ovaj direktorijum mora da sadrži sledeće TTF fajlove pre deploy-a:
+openhtmltopdf renderuje SAMO fontove registrovane u kodu - sistemski Georgia/Arial
+ne postoje u PDF-u. Svi fajlovi ovde su statični TTF, licenca SIL OFL 1.1
+(dozvoljeno ugrađivanje i komercijalna upotreba).
 
-| Fajl | Font | Preuzmi sa |
-|------|------|------------|
-| `PlayfairDisplay-Regular.ttf` | Playfair Display 400 | https://fonts.google.com/specimen/Playfair+Display |
-| `PlayfairDisplay-Bold.ttf` | Playfair Display 700 | https://fonts.google.com/specimen/Playfair+Display |
-| `PlayfairDisplay-Italic.ttf` | Playfair Display 400 Italic | https://fonts.google.com/specimen/Playfair+Display |
-| `Inter-Regular.ttf` | Inter 400 | https://fonts.google.com/specimen/Inter |
-| `Inter-Bold.ttf` | Inter 700 | https://fonts.google.com/specimen/Inter |
+| Fajl | Font | CSS familija (kod) | Koristi |
+|------|------|--------------------|---------|
+| `CormorantGaramond-Regular.ttf`    | Cormorant Garamond 400        | `VoucherSerif` | vaučeri |
+| `CormorantGaramond-Italic.ttf`     | Cormorant Garamond 400 Italic | `VoucherSerif` | vaučeri |
+| `CormorantGaramond-Bold.ttf`       | Cormorant Garamond 700        | `VoucherSerif` | vaučeri |
+| `CormorantGaramond-BoldItalic.ttf` | Cormorant Garamond 700 Italic | `VoucherSerif` | vaučeri |
+| `Manrope-Regular.ttf`              | Manrope 400                   | `VoucherSans`  | vaučeri |
+| `Manrope-SemiBold.ttf`             | Manrope 600                   | `VoucherSans`  | vaučeri |
+| `Manrope-ExtraBold.ttf`            | Manrope 800                   | `VoucherSans`  | vaučeri |
+| `JetBrainsMono-Bold.ttf`           | JetBrains Mono 700            | `VoucherMono`  | vaučeri (kod, datumi) |
+| `Inter-Regular.ttf`                | Inter 400                     | `InvoiceSans`  | profaktura |
+| `Inter-Bold.ttf`                   | Inter 700                     | `InvoiceSans`  | profaktura |
 
-Fajlove postavi direktno u ovaj direktorijum (`src/main/resources/fonts/`).
+Vaučeri koriste isti trio kao stranica /hvala (boarding pass na sajtu):
+Cormorant Garamond za naslove i velike brojeve, Manrope za tekst, JetBrains Mono
+za kodove. Preuzeti sa Google Fonts kao statične instance sa `latin-ext`
+podskupom (š, đ, č, ć, ž su provereni), 2026-09-09.
 
-openhtmltopdf renderuje SAMO eksplicitno registrovane fontove - sistemski Georgia/Arial ne rade u PDF-u.
+Skidanje (statični TTF, ne varijabilni - PDFBox 2.x varijabilne fontove
+ugrađuje samo u podrazumevanoj težini):
+`curl "https://fonts.googleapis.com/css?family=Manrope:400,600,800&subset=latin,latin-ext"`
+vraća .ttf linkove kad se pozove bez browser User-Agent-a.

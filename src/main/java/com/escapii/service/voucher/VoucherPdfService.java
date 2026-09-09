@@ -14,8 +14,10 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -24,27 +26,31 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.logging.Level;
 
 /**
- * Generiše PDF poklon vaučera (boarding-pass dizajn) iz Thymeleaf template-a
- * pomoću openhtmltopdf-a.
+ * Generiše PDF vaučere (boarding-pass dizajn) iz Thymeleaf šablona pomoću
+ * openhtmltopdf-a. Dva vaučera, jedan list:
+ * <ul>
+ *   <li>{@link #generate(VoucherData)} - novčani poklon vaučer, {@code templates/gift-voucher.html}</li>
+ *   <li>{@link #generateTrip(TripVoucherData)} - vaučer poklonjenog putovanja, {@code templates/gift-trip-voucher.html}</li>
+ * </ul>
  *
- * Resursi (src/main/resources):
- *   templates/gift-voucher.html
- *   fonts/PlayfairDisplay-Regular.ttf
- *   fonts/PlayfairDisplay-Bold.ttf
- *   fonts/PlayfairDisplay-Italic.ttf
- *   fonts/Inter-Regular.ttf
- *   fonts/Inter-Bold.ttf
- *
- * Napomena: openhtmltopdf renderuje SAMO fontove koje ovde registrujemo.
- * Familije 'GiftSerif' (Playfair Display) i 'GiftSans' (Inter) moraju
- * da se poklope sa CSS-om u template-u.
+ * <p>Fontovi (src/main/resources/fonts, vidi DOWNLOAD_FONTS.md): openhtmltopdf
+ * renderuje SAMO fontove koje ovde registrujemo, sistemskih nema. Familije u
+ * CSS-u šablona moraju da se poklope sa {@link #registerFonts}:
+ * {@code VoucherSerif} (Cormorant Garamond), {@code VoucherSans} (Manrope),
+ * {@code VoucherMono} (JetBrains Mono) - isti trio kao boarding pass na /hvala.
  */
 @Slf4j
 @Lazy   // inicijalizuje se tek pri prvom PDF pozivu, ne blokira startup ako openhtmltopdf ima problem
 @Service
 public class VoucherPdfService {
 
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    /** Srpski zapis datuma - sa tačkom na kraju, kao na profakturi i na sajtu. */
+    private static final DateTimeFormatter DATE_FMT  = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+    private static final DateTimeFormatter SHORT_FMT = DateTimeFormatter.ofPattern("dd.MM.");
+
+    private static final String[] DANI   = {"ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota", "nedelja"};
+    private static final String[] MESECI = {"januar", "februar", "mart", "april", "maj", "jun",
+                                            "jul", "avgust", "septembar", "oktobar", "novembar", "decembar"};
 
     /**
      * Semafor: maksimalno 3 PDF-a simultano.
@@ -57,9 +63,13 @@ public class VoucherPdfService {
     private final TemplateEngine templateEngine;
     private final QrCodeGenerator qrCodeGenerator;
 
-    /** Bazni URL na koji vodi QR kod; vaučer kod se dodaje kao ?code=... */
+    /** Bazni URL na koji vodi QR kod; kod se dodaje kao ?code=... Isti za oba vaučera. */
     @Value("${escapii.voucher.redeem-url:https://escapii.rs/poklon}")
     private String redeemBaseUrl;
+
+    /** Javna kontakt adresa u podnožju vaučera - ista koju kupac vidi u mejlovima. */
+    @Value("${app.contact-email:info@escapii.rs}")
+    private String contactEmail;
 
     public VoucherPdfService(QrCodeGenerator qrCodeGenerator) {
         this.qrCodeGenerator = qrCodeGenerator;
@@ -77,18 +87,52 @@ public class VoucherPdfService {
         XRLog.setLevel(XRLog.GENERAL, Level.WARNING);
     }
 
-    /**
-     * Glavni ulaz - generiše PDF kao byte[] (pogodno za prilog mejlu).
-     * Semafor ograničava na max 3 simultana generisanja - ostali čekaju.
-     */
+    /** Novčani poklon vaučer kao byte[] (pogodno za prilog mejlu). */
     public byte[] generate(VoucherData data) {
+        Context ctx = new Context(new Locale("sr"));
+        ctx.setVariable("amount",          data.amount());
+        ctx.setVariable("amountWords",     amountInWords(data.amount()));
+        ctx.setVariable("voucherCode",     safe(data.voucherCode()));
+        ctx.setVariable("issuedAt",        data.issuedAt().format(DATE_FMT));
+        ctx.setVariable("expiresAt",       data.expiresAt().format(DATE_FMT));
+        ctx.setVariable("buyerName",       safe(data.buyerName()));
+        ctx.setVariable("personalMessage", wrapLongWords(data.personalMessage()));
+        return render("gift-voucher", data.voucherCode(), ctx);
+    }
+
+    /**
+     * Vaučer poklonjenog putovanja kao byte[]. Kupac ga štampa ili prosleđuje
+     * obdarenom; QR i kod vode na istu /poklon stranicu kao novčani vaučer.
+     */
+    public byte[] generateTrip(TripVoucherData data) {
+        Context ctx = new Context(new Locale("sr"));
+        ctx.setVariable("code",           safe(data.code()));
+        ctx.setVariable("departureDate",  data.departureDate().format(DATE_FMT));
+        ctx.setVariable("returnDate",     data.returnDate().format(DATE_FMT));
+        ctx.setVariable("departureShort", data.departureDate().format(SHORT_FMT));
+        ctx.setVariable("departureLong",  dugDatum(data.departureDate()));
+        ctx.setVariable("nights",         data.nights());
+        ctx.setVariable("travelers",      data.travelers());
+        ctx.setVariable("airportCode",    safe(data.airportCode()));
+        ctx.setVariable("airportCity",    safe(data.airportCity()));
+        ctx.setVariable("airportName",    safe(data.airportName()));
+        ctx.setVariable("passengersHtml", passengersHtml(data.passengers()));
+        ctx.setVariable("buyerName",      safe(data.buyerName()));
+        return render("gift-trip-voucher", data.code(), ctx);
+    }
+
+    /**
+     * Zajednički deo: QR, logo, kontakt, šablon → HTML → PDF, pod semaforom.
+     * Semafor se traži PRE try/finally, da neuspelo čekanje ne oslobodi tuđi permit.
+     */
+    private byte[] render(String template, String code, Context ctx) {
         try {
             // Čekaj max 10 minuta - u normalnim uslovima PDF traje 2-5 sekundi,
             // pa je 10 minuta čekanja signal da je nešto pošlo po krivu
             boolean acquired = PDF_SEMAPHORE.tryAcquire(10, TimeUnit.MINUTES);
             if (!acquired) {
                 log.error("[PDF] Timeout čekanja na semafor za vaučer kod={} - server je prezauzet",
-                        LogUtils.maskVoucherCode(data.voucherCode()));
+                        LogUtils.maskVoucherCode(code));
                 throw new RuntimeException("PDF generisanje nije moglo da počne - server prezauzet");
             }
         } catch (InterruptedException e) {
@@ -96,30 +140,14 @@ public class VoucherPdfService {
             throw new RuntimeException("PDF generisanje prekinuto dok je čekalo na semafor", e);
         }
         try {
-            // 1) QR kod -> PNG data URI; link vodi na redeem stranicu sa kodom
-            String redeemUrl = redeemBaseUrl + "?code=" + urlEncode(data.voucherCode());
-            String qrDataUri = qrCodeGenerator.pngDataUri(redeemUrl, 480); // hi-res za štampu
+            // QR kod -> PNG data URI; link vodi na redeem stranicu sa kodom
+            String redeemUrl = redeemBaseUrl + "?code=" + urlEncode(safe(code));
+            ctx.setVariable("qrDataUri",    qrCodeGenerator.pngDataUri(redeemUrl, 480)); // hi-res za štampu
+            ctx.setVariable("logoDataUri",  loadImageDataUri("static/images/logo-black.png", "image/png"));
+            ctx.setVariable("contactEmail", contactEmail);
 
-            // 2) Logo -> PNG data URI (logo-black na svetloj pozadini)
-            String logoDataUri = loadImageDataUri("static/images/logo-black.png", "image/png");
+            String html = templateEngine.process(template, ctx);
 
-            // 3) Thymeleaf kontekst
-            Context ctx = new Context(new Locale("sr"));
-            ctx.setVariable("amount",          data.amount());
-            ctx.setVariable("amountFormatted", data.amount() + " €");
-            ctx.setVariable("amountWords",     amountInWords(data.amount()));
-            ctx.setVariable("voucherCode",     safe(data.voucherCode()));
-            ctx.setVariable("issuedAt",        data.issuedAt().format(DATE_FMT));
-            ctx.setVariable("expiresAt",       data.expiresAt().format(DATE_FMT));
-            ctx.setVariable("buyerName",       safe(data.buyerName()));
-            ctx.setVariable("personalMessage", wrapLongWords(data.personalMessage()));
-            ctx.setVariable("qrDataUri",       qrDataUri);
-            ctx.setVariable("logoDataUri",     logoDataUri);
-
-            // 4) Render HTML
-            String html = templateEngine.process("gift-voucher", ctx);
-
-            // 5) HTML -> PDF
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 PdfRendererBuilder builder = new PdfRendererBuilder();
                 builder.useFastMode();
@@ -130,21 +158,25 @@ public class VoucherPdfService {
                 return os.toByteArray();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Neuspelo generisanje PDF vaučera: " + e.getMessage(), e);
+            throw new RuntimeException("Neuspelo generisanje PDF vaučera (" + template + "): " + e.getMessage(), e);
         } finally {
             PDF_SEMAPHORE.release(); // uvek oslobodi permit, čak i ako je došlo do greške
         }
     }
 
-    /** Registruje fontove - familije i weight/style moraju da prate CSS template-a. */
+    /** Registruje fontove - familije, težine i stilovi moraju da prate CSS šablona. */
     private void registerFonts(PdfRendererBuilder builder) {
-        // GiftSerif = Playfair Display
-        builder.useFont(() -> classpath("fonts/PlayfairDisplay-Regular.ttf"), "GiftSerif", 400, FontStyle.NORMAL, true);
-        builder.useFont(() -> classpath("fonts/PlayfairDisplay-Bold.ttf"),    "GiftSerif", 700, FontStyle.NORMAL, true);
-        builder.useFont(() -> classpath("fonts/PlayfairDisplay-Italic.ttf"),  "GiftSerif", 400, FontStyle.ITALIC, true);
-        // GiftSans = Inter
-        builder.useFont(() -> classpath("fonts/Inter-Regular.ttf"), "GiftSans", 400, FontStyle.NORMAL, true);
-        builder.useFont(() -> classpath("fonts/Inter-Bold.ttf"),    "GiftSans", 700, FontStyle.NORMAL, true);
+        // VoucherSerif = Cormorant Garamond (naslovi, IATA kodovi, veliki brojevi)
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Regular.ttf"),    "VoucherSerif", 400, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Italic.ttf"),     "VoucherSerif", 400, FontStyle.ITALIC, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Bold.ttf"),       "VoucherSerif", 700, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-BoldItalic.ttf"), "VoucherSerif", 700, FontStyle.ITALIC, true);
+        // VoucherSans = Manrope (tekst, natpisi) - u CSS-u koristiti tačno 400 / 600 / 800
+        builder.useFont(() -> classpath("fonts/Manrope-Regular.ttf"),   "VoucherSans", 400, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/Manrope-SemiBold.ttf"),  "VoucherSans", 600, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/Manrope-ExtraBold.ttf"), "VoucherSans", 800, FontStyle.NORMAL, true);
+        // VoucherMono = JetBrains Mono (kod vaučera, datumi u meta polju)
+        builder.useFont(() -> classpath("fonts/JetBrainsMono-Bold.ttf"), "VoucherMono", 700, FontStyle.NORMAL, true);
     }
 
     /** Učitava sliku sa classpath-a i vraća je kao base64 data URI za inline ugrađivanje u HTML/PDF. */
@@ -170,6 +202,42 @@ public class VoucherPdfService {
     }
 
     private static String safe(String s) { return s == null ? "" : s; }
+
+    /** "petak, 12. jun 2026." - dan i mesec srpski, bez zavisnosti od Locale podataka JVM-a. */
+    static String dugDatum(LocalDate d) {
+        return DANI[d.getDayOfWeek().getValue() - 1] + ", "
+             + d.getDayOfMonth() + ". " + MESECI[d.getMonthValue() - 1] + " " + d.getYear() + ".";
+    }
+
+    /**
+     * Imena putnika razdvojena tačkom u boji; imena su escape-ovana ovde jer
+     * šablon ovaj deo ubacuje kao HTML ({@code th:utext}).
+     */
+    static String passengersHtml(List<String> passengers) {
+        if (passengers == null || passengers.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (String p : passengers) {
+            if (p == null || p.isBlank()) continue;
+            if (sb.length() > 0) sb.append("<span>&#183;</span>");
+            sb.append(escapeHtml(p.trim()));
+        }
+        return sb.toString();
+    }
+
+    private static String escapeHtml(String s) {
+        StringBuilder sb = new StringBuilder(s.length() + 8);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '<' -> sb.append("&lt;");
+                case '>' -> sb.append("&gt;");
+                case '&' -> sb.append("&amp;");
+                case '"' -> sb.append("&quot;");
+                default  -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * Ubacuje razmak svakih MAX_WORD_LEN karaktera unutar "reči" bez razmaka,

@@ -5,6 +5,7 @@ import com.escapii.dto.GiftVoucherResponse;
 import com.escapii.dto.GiftVoucherRevealResponse;
 import com.escapii.dto.GiftVoucherValidateRequest;
 import com.escapii.dto.GiftVoucherValidateResponse;
+import com.escapii.service.GiftTripVoucherService;
 import com.escapii.service.GiftVoucherService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class GiftVoucherController {
 
     private final GiftVoucherService voucherService;
+    private final GiftTripVoucherService tripVoucherService;
 
     /**
      * POST /api/gifts/vouchers
@@ -58,12 +60,19 @@ public class GiftVoucherController {
     /**
      * GET /api/gifts/vouchers/reveal?code=ESC-XXXX-XXXX-XXXX
      * Reveal endpoint za primaoca na /poklon stranici.
-     * Vraća: iznos, ime davaoca, poruku - bez email adrese kupca.
+     * Novčani vaučer: iznos, ime davaoca, poruka. Poklonjeno putovanje (kod je
+     * šifra rezervacije): termin, aerodrom, putnici - nikad cena. Nikad email kupca.
      * Rate limited: isti limit kao validate (5/15min po IP).
      */
     @GetMapping("/vouchers/reveal")
     public ResponseEntity<GiftVoucherRevealResponse> revealVoucher(
             @RequestParam String code) {
-        return ResponseEntity.ok(voucherService.reveal(code));
+        GiftVoucherRevealResponse odgovor = voucherService.reveal(code);
+        if (!odgovor.valid()) {
+            // Nije novčani vaučer - možda je šifra poklonjenog putovanja. Isti ulaz,
+            // ista stranica, isti rate limit; kind u odgovoru kaže šta je stiglo.
+            odgovor = tripVoucherService.reveal(code);
+        }
+        return ResponseEntity.ok(odgovor);
     }
 }
