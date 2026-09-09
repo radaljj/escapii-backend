@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -85,6 +86,62 @@ class VocativeServiceTest {
         assertEquals("Marko", DeklinacijaVocativeService.parse(body, "Marko"));
     }
 
+    // ── varijante sa dijakritikom: sta se proba kad servis ne nadje ─────────
+
+    @Test
+    void jednaZamenaIdePrva() {
+        List<String> v = DeklinacijaVocativeService.diacriticVariants("Uros");
+        assertEquals(List.of("Uroš"), v, "jedan s, jedna varijanta");
+    }
+
+    @Test
+    void dvaKandidataDajuPrvoPojedinacnePaZajednicku() {
+        List<String> v = DeklinacijaVocativeService.diacriticVariants("Sasa");
+        assertEquals(List.of("Šasa", "Saša", "Šaša"), v,
+                "prvo varijante sa jednom zamenom (sleva nadesno), pa sa dve");
+    }
+
+    @Test
+    void cImaDveMogucnosti() {
+        List<String> v = DeklinacijaVocativeService.diacriticVariants("Cica");
+        assertTrue(v.contains("Čica") && v.contains("Ćica"), v.toString());
+    }
+
+    @Test
+    void djPostajeDjSaKvacicom() {
+        List<String> v = DeklinacijaVocativeService.diacriticVariants("Djordje");
+        assertTrue(v.contains("Đordje") && v.contains("Djorđe") && v.contains("Đorđe"), v.toString());
+    }
+
+    @Test
+    void velikaSlovaSeCuvaju() {
+        assertEquals(List.of("ŠASA", "SAŠA", "ŠAŠA"), DeklinacijaVocativeService.diacriticVariants("SASA"));
+    }
+
+    @Test
+    void imeBezKandidataNemaVarijanti() {
+        assertTrue(DeklinacijaVocativeService.diacriticVariants("Marko").isEmpty());
+        assertTrue(DeklinacijaVocativeService.diacriticVariants("Ana").isEmpty());
+    }
+
+    @Test
+    void brojVarijantiJeOgranicen() {
+        // "Cascasc": tri c (po 2) + dva s... eksplozija se seče na MAX_VARIJANTI
+        assertTrue(DeklinacijaVocativeService.diacriticVariants("Cascasc").size()
+                <= DeklinacijaVocativeService.MAX_VARIJANTI);
+    }
+
+    @Test
+    void pogodakNaVarijantiVracaVokativ() {
+        // parseOptional razlikuje "nije nadjeno" od "isti u oba padeza" - to je ono
+        // sto omogucava da se uopste zna KADA treba probati varijantu
+        assertTrue(DeklinacijaVocativeService.parseOptional(
+                "{\"status\":\"Not found\",\"vocative\":null}").isEmpty());
+        assertEquals("Marko", DeklinacijaVocativeService.parseOptional(
+                "{\"status\":\"Success\",\"vocative\":\"Marko\"}").orElseThrow(),
+                "Marko->Marko je USPEH, ne promasaj - ne sme da okine varijante");
+    }
+
     // ── ceo servis: gasenje i pad nazad ─────────────────────────────────────
 
     private static DeklinacijaVocativeService saUrlom(String url) throws Exception {
@@ -114,8 +171,13 @@ class VocativeServiceTest {
 
         DeklinacijaVocativeService s = saUrlom("https://deklinacija.com/api/");
         assertEquals("Uroše",  s.vocative("Uroš"));
-        assertEquals("Uroše",  s.vocative("uros") .equals("Uros") ? "Uroše" : s.vocative("Uroš"),
-                "bez dijakritike servis mozda ne zna - sme nominativ, ne sme greska");
+        // Najcesci realan unos - tastatura bez s/c/c. Servis sam ne zna "Uros";
+        // varijanta "Uroš" ga nadje. Ovo je razlog sto varijante postoje.
+        assertEquals("Uroše",  s.vocative("Uros"),  "bez dijakritike, preko varijante");
+        assertEquals("Uroše",  s.vocative("uros"),  "malim slovima i bez dijakritike");
+        assertEquals("Miloše", s.vocative("Milos"));
+        assertEquals("Saša",   s.vocative("Sasa"));
+        assertEquals("Milice", s.vocative("Milica"), "i zensko ime ume da se menja");
         assertEquals("Petre",  s.vocative("Petar"));
         assertEquals("Marko",  s.vocative("Marko"));
         assertEquals("Ana",    s.vocative("Ana"));

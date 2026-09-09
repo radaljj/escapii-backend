@@ -15,6 +15,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -70,6 +73,29 @@ public class DeklinacijaVocativeService implements VocativeService {
         String ime = normalize(firstName);
         if (ime.isEmpty() || apiUrl == null || apiUrl.isBlank()) return ime;
 
+        Optional<String> vok = upit(ime);
+        if (vok.isPresent()) return vok.get();
+
+        // Servis ne zna ime. Najčešći razlog nije retko ime nego tastatura bez š/č/ć:
+        // "Uros" vraća Not found, "Uroš" vraća Uroše. Izmereno: dj→đ servis sam
+        // mapira, s→š ne. Probaju se varijante sa dijakritikom - prvo sa jednom
+        // zamenom (skoro sva imena imaju tačno jednu), pa sa dve - i prva koju servis
+        // prepozna pobeđuje. Bez pogotka ostaje nominativ, kako je otkucan.
+        for (String varijanta : diacriticVariants(ime)) {
+            Optional<String> v = upit(varijanta);
+            if (v.isPresent()) {
+                log.info("[Vokativ] '{}' razrešeno preko varijante '{}' -> '{}'", ime, varijanta, v.get());
+                return v.get();
+            }
+        }
+        return ime;
+    }
+
+    /**
+     * Jedan poziv servisa. Prazno znači "nije razrešeno" iz bilo kog razloga -
+     * Not found, rok, HTTP greška, loš JSON - i pozivalac odlučuje šta dalje.
+     */
+    private Optional<String> upit(String ime) {
         try {
             String url = apiUrl.endsWith("/") ? apiUrl : apiUrl + "/";
             HttpRequest request = HttpRequest.newBuilder()
@@ -88,22 +114,87 @@ public class DeklinacijaVocativeService implements VocativeService {
             } catch (TimeoutException te) {
                 buducnost.cancel(true);
                 log.warn("[Vokativ] rok od {}s istekao za '{}' - ostaje nominativ", TIMEOUT_SEC, ime);
-                return ime;
+                return Optional.empty();
             }
-
             if (response.statusCode() != 200) {
                 log.warn("[Vokativ] HTTP {} za '{}' - ostaje nominativ", response.statusCode(), ime);
-                return ime;
+                return Optional.empty();
             }
-            return parse(response.body(), ime);
-
+            return parseOptional(response.body());
         } catch (Exception e) {
             // Sve, uključujući InterruptedException i loš JSON: obraćanje nikad ne
             // sme da bude razlog da mejl ne ode.
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
             log.warn("[Vokativ] '{}' nije razrešeno ({}) - ostaje nominativ", ime, e.toString());
-            return ime;
+            return Optional.empty();
         }
+    }
+
+    /** Najviše ovoliko mrežnih poziva po imenu, i to samo kad prvi ne nađe. */
+    public static final int MAX_VARIJANTI = 8;
+
+    /**
+     * Varijante imena sa dijakritikom, poređane po broju zamena rastuće.
+     *
+     * <p>s→š, z→ž, c→č i c→ć, dj→đ. Velika slova se čuvaju: "SASA"→"SAŠA". Ime bez
+     * ijednog kandidata daje praznu listu. Kod dva kandidata prvo idu sve varijante
+     * sa jednom zamenom, pa one sa dve - "Sasa" daje [Šasa, Saša, Šaša], jer je
+     * jedna zamena daleko najverovatniji slučaj.
+     */
+    public static List<String> diacriticVariants(String ime) {
+        // pozicije kandidata: svaki element je (indeks, dužina, zamene)
+        List<int[]> poz = new ArrayList<>();
+        List<String[]> zamene = new ArrayList<>();
+        for (int i = 0; i < ime.length(); i++) {
+            char c = ime.charAt(i);
+            char lc = Character.toLowerCase(c);
+            boolean veliko = Character.isUpperCase(c);
+            if (lc == 'd' && i + 1 < ime.length() && Character.toLowerCase(ime.charAt(i + 1)) == 'j') {
+                poz.add(new int[]{i, 2}); zamene.add(new String[]{veliko ? "Đ" : "đ"}); i++;
+            } else if (lc == 's') {
+                poz.add(new int[]{i, 1}); zamene.add(new String[]{veliko ? "Š" : "š"});
+            } else if (lc == 'z') {
+                poz.add(new int[]{i, 1}); zamene.add(new String[]{veliko ? "Ž" : "ž"});
+            } else if (lc == 'c') {
+                poz.add(new int[]{i, 1}); zamene.add(new String[]{veliko ? "Č" : "č", veliko ? "Ć" : "ć"});
+            }
+        }
+        if (poz.isEmpty()) return List.of();
+
+        List<String> rezultat = new ArrayList<>();
+        // po broju zamena: 1, pa 2 - dublje retko treba, a svaka varijanta je HTTP poziv
+        for (int koliko = 1; koliko <= Math.min(2, poz.size()); koliko++) {
+            kombinuj(ime, poz, zamene, 0, koliko, new ArrayList<>(), rezultat);
+            if (rezultat.size() >= MAX_VARIJANTI) break;
+        }
+        return rezultat.size() > MAX_VARIJANTI ? rezultat.subList(0, MAX_VARIJANTI) : rezultat;
+    }
+
+    /** Sve varijante koje menjaju tačno {@code koliko} pozicija od {@code od} nadalje. */
+    private static void kombinuj(String ime, List<int[]> poz, List<String[]> zamene,
+                                 int od, int koliko, List<int[]> izbor, List<String> out) {
+        if (koliko == 0) {
+            out.add(primeni(ime, poz, zamene, izbor));
+            return;
+        }
+        for (int i = od; i <= poz.size() - koliko; i++) {
+            for (int z = 0; z < zamene.get(i).length; z++) {
+                izbor.add(new int[]{i, z});
+                kombinuj(ime, poz, zamene, i + 1, koliko - 1, izbor, out);
+                izbor.remove(izbor.size() - 1);
+            }
+        }
+    }
+
+    private static String primeni(String ime, List<int[]> poz, List<String[]> zamene, List<int[]> izbor) {
+        StringBuilder sb = new StringBuilder(ime);
+        // zdesna nalevo, da se indeksi ne pomeraju
+        for (int k = izbor.size() - 1; k >= 0; k--) {
+            int pi = izbor.get(k)[0], zi = izbor.get(k)[1];
+            int start = poz.get(pi)[0], len = poz.get(pi)[1];
+            sb.replace(start, start + len, zamene.get(pi)[zi]);
+        }
+        return sb.toString();
     }
 
     /**
@@ -134,18 +225,23 @@ public class DeklinacijaVocativeService implements VocativeService {
         return s;
     }
 
-    /** {@code status == "Success"} i nepraznо {@code vocative} → vokativ; sve ostalo → nominativ. */
+    /** {@code status == "Success"} i neprazno {@code vocative} → vokativ; sve ostalo → nominativ. */
     public static String parse(String body, String nominativ) {
+        return parseOptional(body).orElse(nominativ);
+    }
+
+    /** Kao {@link #parse}, ali razlikuje "nije razrešeno" od "vokativ je isti kao nominativ". */
+    public static Optional<String> parseOptional(String body) {
         try {
             JsonNode n = MAPPER.readTree(body);
             String status = n.path("status").asText("");
             String vok = n.path("vocative").isNull() ? "" : n.path("vocative").asText("");
             if ("Success".equalsIgnoreCase(status) && !vok.isBlank()) {
-                return vok.trim();
+                return Optional.of(vok.trim());
             }
-            return nominativ;
+            return Optional.empty();
         } catch (Exception e) {
-            return nominativ;
+            return Optional.empty();
         }
     }
 }
