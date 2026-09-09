@@ -30,7 +30,6 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
     @Override
     public void sendForecastEmail(Booking booking, List<DailyForecast> forecast) {
-        String firstName = EmailHtmlBuilder.esc(booking.getFirstName());
         LocalDate depDate = booking.getSelectedDate().getDepartureDate();
         LocalDate retDate = booking.getSelectedDate().getReturnDate();
         String depDateStr = depDate.format(EmailHtmlBuilder.DATE_FMT);
@@ -38,7 +37,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         DailyForecast today = forecast.get(0);
         String subject = "🌤 Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
         long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
-        String html = buildHtml(firstName, depDate, retDate, depDateStr, daysUntil, forecast, today);
+        String html = buildHtml(depDate, retDate, depDateStr, daysUntil, forecast, today);
 
         // travellerEmail(), ne getEmail(): kod poklona prognoza ide obdarenom.
         // Poklanjaocu se ne salje - prognoza namerno ne imenuje grad, pa mu ne
@@ -52,7 +51,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
     // ── HTML template ─────────────────────────────────────────────────────────
 
-    private String buildHtml(String firstName, LocalDate depDate, LocalDate retDate,
+    private String buildHtml(LocalDate depDate, LocalDate retDate,
                              String depDateStr, long daysUntil,
                              List<DailyForecast> forecast, DailyForecast today) {
 
@@ -66,7 +65,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
                 <!-- Pozdrav -->
                 <p style="margin:0 0 24px;font-size:13px;color:#6b5d4f;letter-spacing:0.5px;">
-                  Zdravo, %s! Tvoje putovanje je za <strong style="color:#2D5F6B;">%d %s</strong> - evo šta te čeka.
+                  Tvoje putovanje je za <strong style="color:#2D5F6B;">%d %s</strong> - evo šta te čeka.
                 </p>
 
                 <!-- Glavna temperatura -->
@@ -136,7 +135,6 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
               Srećan put! 🌍
             </p>
             """.formatted(
-                firstName,
                 daysUntil, daysUntil == 1 ? "dan" : "dana",
                 today.emoji(), today.maxTemp(), today.description(),
                 depDateStr,

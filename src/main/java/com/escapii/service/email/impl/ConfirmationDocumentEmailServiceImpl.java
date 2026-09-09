@@ -23,7 +23,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
 
     @Override
     public boolean sendConfirmationDocument(Booking booking) {
-        String salutation = EmailHtmlBuilder.salutation(booking);
+        String salutation = EmailHtmlBuilder.salutation();
         var date = booking.getSelectedDate();
 
         String depStr = date.getDepartureDate().format(EmailHtmlBuilder.DATE_FMT);
@@ -35,7 +35,7 @@ public class ConfirmationDocumentEmailServiceImpl implements ConfirmationDocumen
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
-            salutation + " " + EmailHtmlBuilder.esc(booking.getFirstName()) + ",</p>" +
+            salutation + " " + EmailHtmlBuilder.esc(booking.travellerFirstName()) + ",</p>" +
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 22px;\">" +
             "sad kad znaš svoju destinaciju, evo i zvaničnih podataka tvoje rezervacije - " +

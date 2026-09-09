@@ -101,7 +101,10 @@ public class RevealServiceImpl implements RevealService {
                 Map.entry("numberOfTravelers",    booking.getNumberOfTravelers() != null ? booking.getNumberOfTravelers() : 1),
                 Map.entry("addons",               addons),
                 Map.entry("totalPriceAll",        booking.getTotalPriceAll() != null ? booking.getTotalPriceAll() : 0),
-                Map.entry("firstName",            booking.getFirstName() != null ? booking.getFirstName() : ""),
+                // travellerFirstName(): ovu stranicu kod poklona otvara obdareni, a
+                // naslov je prvo sto vidi. Sa getFirstName() bi mu pisalo ime osobe
+                // koja je platila - najvidljivije mesto na kome bi poklon procurio.
+                Map.entry("firstName",            booking.travellerFirstName() != null ? booking.travellerFirstName() : ""),
                 Map.entry("airlineName",           booking.getAirlineName() != null ? booking.getAirlineName() : ""),
                 Map.entry("airlineBookingCode",   booking.getAirlineBookingCode() != null ? booking.getAirlineBookingCode() : ""),
                 // Partnerski linkovi za popup sa dodacima (ture, eSIM, prtljag).

@@ -36,7 +36,6 @@ class GiftRecipientRoutingTest {
     void obicnaRezervacijaSaljeSveKupcu() {
         Booking b = rezervacija(false, "kupac@example.com", null, null);
         assertEquals("kupac@example.com", b.travellerEmail());
-        assertEquals("Marko", b.travellerDisplayName());
     }
 
     @Test
@@ -44,7 +43,6 @@ class GiftRecipientRoutingTest {
         Booking b = rezervacija(true, "kupac@example.com", "obdareni@example.com", "Ana Anić");
         assertEquals("obdareni@example.com", b.travellerEmail(),
                 "prognoza, otkrice i dokumenti idu obdarenom");
-        assertEquals("Ana Anić", b.travellerDisplayName());
     }
 
     /**
@@ -58,9 +56,20 @@ class GiftRecipientRoutingTest {
                 rezervacija(true, "kupac@example.com", null, "Ana").travellerEmail());
         assertEquals("kupac@example.com",
                 rezervacija(true, "kupac@example.com", "   ", "Ana").travellerEmail());
-        assertEquals("Marko",
-                rezervacija(true, "kupac@example.com", "o@e.com", "  ").travellerDisplayName(),
-                "prazno ime ne sme da proizvede prazan pozdrav");
+    }
+
+    /** Posle "Dragi" ide SAMO ime, i kad je poklon i kad nije. */
+    @Test
+    void obracanjeKoristiSamoPrvoIme() {
+        Booking poklon = rezervacija(true, "kupac@example.com", "d@example.com", "Dragan Radalj");
+        assertEquals("Dragan", poklon.travellerFirstName(),
+                "iz liste putnika dolazi puno ime - mora se skratiti");
+
+        Booking obicna = rezervacija(false, "kupac@example.com", null, null);
+        assertEquals("Marko", obicna.travellerFirstName());
+
+        Booking jednoIme = rezervacija(true, "kupac@example.com", "d@example.com", "Dragan");
+        assertEquals("Dragan", jednoIme.travellerFirstName(), "ime bez prezimena ostaje celo");
     }
 
     // ── Strukturno: oblik koda, ne samo ponasanje ────────────────────────────
@@ -124,6 +133,35 @@ class GiftRecipientRoutingTest {
               + "pravilo 'put ide putniku' dobilo izuzetak - vidi javadoc iznad.");
         assertFalse(kod.contains("getEmail()"),
                 "reveal ne sme da adresira kupca ni u jednom pozivu");
+    }
+
+    /**
+     * Putni mejlovi ne smeju da pozdrave imenom NARUCIOCA.
+     *
+     * <p>Prognoza je to radila: primalac je vec bio prebacen na travellerEmail(),
+     * ali je pozdrav unutra ostao getFirstName() - a to je kupac. Kod poklona bi
+     * obdareni dobio mejl adresiran njemu koji pocinje tudjim imenom, i time
+     * saznao da je putovanje neko drugi platio pre nego sto mu ta osoba kaze.
+     *
+     * <p>Resenje je da pozdrava nema. Ime nije bilo dosledno ni pre poklona -
+     * reveal je koristio samo ime, a kod poklona bi stajalo ime i prezime, jer se
+     * bira iz liste putnika. Bez imena nema ni nesklada ni curenja.
+     */
+    @Test
+    void putniMejloviNePozdravljajuImenom() throws Exception {
+        String[] servisi = {
+            "src/main/java/com/escapii/service/email/impl/ForecastEmailServiceImpl.java",
+            "src/main/java/com/escapii/service/email/impl/RevealEmailServiceImpl.java",
+            "src/main/java/com/escapii/service/email/impl/ConfirmationDocumentEmailServiceImpl.java",
+        };
+        for (String s : servisi) {
+            String kod = bezKomentara(izvor(s));
+            assertFalse(kod.contains("getFirstName()"),
+                    s + " koristi ime narucioca. Kod poklona putni mejl ide obdarenom, "
+                      + "pa bi ga oslovio tudjim imenom - koristi travellerFirstName().");
+            assertFalse(kod.contains("getLastName()"),
+                    s + " koristi prezime narucioca - ista greska.");
+        }
     }
 
     /** Faktura mora da ostane na kupcu - obdareni ne placa i ne treba da vidi iznos. */

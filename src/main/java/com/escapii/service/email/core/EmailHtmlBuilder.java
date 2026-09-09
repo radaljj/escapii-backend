@@ -19,12 +19,23 @@ public final class EmailHtmlBuilder {
 
     private EmailHtmlBuilder() {}
 
-    /** "Dragi" ili "Draga" na osnovu pola nosioca rezervacije. Fallback: "Dragi/a" za stare rezervacije. */
-    public static String salutation(Booking booking) {
-        String g = booking.getLeadPassengerGender();
-        if ("M".equals(g)) return "Dragi";
-        if ("F".equals(g)) return "Draga";
-        return "Dragi/a";
+    /**
+     * Pozdrav na pocetku svakog mejla koji se nekome obraca: "Zdravo, Ime,".
+     *
+     * <p>Bio je "Dragi" / "Draga" po polu, i to je u jednom danu proizvelo tri
+     * greske - sve iste: "ko cita ovaj mejl" i "ciji pol koristim" su dva pitanja
+     * koja su se razisla cim je poklon razdvojio narucioca od putnika. Prognoza
+     * je isla obdarenom sa kupcevim imenom; dokumenti su Ani stizali sa "Dragi";
+     * fakture su Jeleni koja ne putuje stizale sa polom prvog putnika, jer se pol
+     * nikad ne unosi za narucioca.
+     *
+     * <p>"Zdravo" ukida drugo pitanje. Nema pola, nema fallback-a, nema nagadjanja
+     * po imenu (koje pada na Nikoli, Luki, Sasi, Nemanji). Sa zarezom, jer sabloni
+     * lepe ime odmah iza. leadPassengerGender ostaje u bazi kao podatak o putniku,
+     * ali ga nijedan mejl vise ne cita.
+     */
+    public static String salutation() {
+        return "Zdravo,";
     }
 
     public static String statusBadge(String label, String type) {

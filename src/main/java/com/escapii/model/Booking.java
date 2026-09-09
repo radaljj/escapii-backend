@@ -345,6 +345,42 @@ public class Booking {
     @Column(name = "gift_recipient_email", length = 180)
     private String giftRecipientEmail;
 
+
+    /**
+     * Ima li ova rezervacija upotrebljivog obdarenog?
+     *
+     * <p>Tri stvari zavise od istog odgovora - adresa, ime i pol putnog mejla - i
+     * moraju da ga daju ZAJEDNO. Dok su svaka za sebe gledale svoje polje, poklon
+     * kome nedostaje mejl je slao poruku kupcu ali je oslovljavao obdarenog:
+     * "Dragi Marko" na Aninom mejlu, ili obrnuto. Trazi se i ime i mejl, isto sto
+     * trazi i CHECK constraint u V18.
+     */
+    private boolean poklonSaPrimaocem() {
+        return Boolean.TRUE.equals(isGift)
+            && giftRecipientEmail != null && !giftRecipientEmail.isBlank()
+            && giftRecipientName  != null && !giftRecipientName.isBlank();
+    }
+
+    /**
+     * Ime kojim se PUTNI mejl obraca posle "Zdravo,".
+     *
+     * <p>SAMO ime, nikad ime i prezime. Kupcevo {@code firstName} je vec samo ime
+     * jer je zasebno polje u formi, ali {@code giftRecipientName} nosi puno ime -
+     * bira se iz liste putnika, gde stoji "Dragan Radalj". Bez skracivanja bi
+     * obdareni dobio "Zdravo, Dragan Radalj," a kupac "Zdravo, Dragan,".
+     *
+     * <p>Deli se po prvom razmaku, ne regexom: escape sekvence u ovom repou ne
+     * prezive pouzdano put od uredjivaca do fajla.
+     */
+    public String travellerFirstName() {
+        if (poklonSaPrimaocem()) {
+            String ime = giftRecipientName.trim();
+            int razmak = ime.indexOf(' ');
+            return razmak > 0 ? ime.substring(0, razmak) : ime;
+        }
+        return firstName;
+    }
+
     /**
      * Adresa na koju idu mejlovi PUTNIKA: prognoza, otkrice destinacije i putni
      * dokumenti.
@@ -360,22 +396,11 @@ public class Booking {
      * oboje znali za rezervaciju.
      */
     public String travellerEmail() {
-        if (Boolean.TRUE.equals(isGift)
-                && giftRecipientEmail != null && !giftRecipientEmail.isBlank()) {
+        if (poklonSaPrimaocem()) {
             return giftRecipientEmail;
         }
         return email;
     }
-
-    /** Ime kojim se obracamo putniku - obdareni kod poklona, inace nosilac. */
-    public String travellerDisplayName() {
-        if (Boolean.TRUE.equals(isGift)
-                && giftRecipientName != null && !giftRecipientName.isBlank()) {
-            return giftRecipientName;
-        }
-        return firstName;
-    }
-
     /**
      * Admin označi da je Reveal Box fizički poslan kuriru. Cisto logisticki
      * flag - koristi ga findPendingRevealBoxes za digest podsetnik i panel za

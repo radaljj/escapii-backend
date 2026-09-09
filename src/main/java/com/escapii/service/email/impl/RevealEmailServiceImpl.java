@@ -33,7 +33,6 @@ public class RevealEmailServiceImpl implements RevealEmailService {
     @Override
     public void sendRevealEmail(Booking booking, String siteUrl) {
         String usedUrl   = (siteUrl != null && !siteUrl.isBlank()) ? siteUrl : frontendUrl;
-        String firstName = EmailHtmlBuilder.esc(booking.travellerDisplayName());
         String ref       = EmailHtmlBuilder.esc(booking.getBookingRef());
         String magicLink = usedUrl.stripTrailing() + "/otkrivanje?token=" + booking.getRevealToken();
         String departure = booking.getSelectedDate().getDepartureDate()
@@ -42,7 +41,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
         String body = """
             <div style="text-align:center;padding:8px 0 24px;">
               <div style="font-size:52px;margin-bottom:14px;">✉</div>
-              <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#1a1410;margin-bottom:8px;font-weight:normal;">Vreme je, %s!</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#1a1410;margin-bottom:8px;font-weight:normal;">Vreme je za tvoj reveal!</div>
               <div style="font-size:14px;color:#6b5d4f;line-height:1.65;">
                 Tvoje putovanje počinje <strong style="color:#2D5F6B;">%s</strong>.<br>
                 Koverta s tvojom tajnom destinacijom je gotova.
@@ -72,7 +71,7 @@ public class RevealEmailServiceImpl implements RevealEmailService {
               Ako dugme ne radi, kopiraj ovaj link u browser:<br>
               <span style="color:#6b5d4f;word-break:break-all;">%s</span>
             </p>
-            """.formatted(firstName, departure, magicLink, magicLink);
+            """.formatted(departure, magicLink, magicLink);
 
         String html = EmailHtmlBuilder.wrapBase(
             "#a85e44",

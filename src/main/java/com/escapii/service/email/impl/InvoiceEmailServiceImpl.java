@@ -24,7 +24,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
     @Override
     public boolean sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber) {
-        String salutation = EmailHtmlBuilder.salutation(booking);
+        String salutation = EmailHtmlBuilder.salutation();
 
         int total = booking.getTotalPriceAll();
 
@@ -88,7 +88,7 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">" +
-            "Dragi/a " + EmailHtmlBuilder.esc(voucher.getBuyerName() != null ? voucher.getBuyerName() : "kupče") + ",</p>" +
+            EmailHtmlBuilder.salutation() + " " + EmailHtmlBuilder.esc(voucher.getBuyerName() != null ? voucher.getBuyerName() : "kupče") + ",</p>" +
 
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
             "hvala na kupovini Escapii poklon vaučera! U prilogu se nalazi profaktura sa detaljima za uplatu." +

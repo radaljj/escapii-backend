@@ -261,7 +261,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             : "Koverta otkriva gde putujete. ✉";
 
         return loadEmailTemplate("upit-primljen.html")
-            .replace("{{SALUTATION}}",        EmailHtmlBuilder.salutation(booking))
+            .replace("{{SALUTATION}}",        EmailHtmlBuilder.salutation())
             .replace("{{FIRST_NAME}}",        EmailHtmlBuilder.esc(booking.getFirstName()))
             .replace("{{REF_CODE}}",           EmailHtmlBuilder.esc(booking.getBookingRef()))
             .replace("{{BOARDING_PASS_HTML}}", buildBoardingPassBlock(booking, depDate, retDate, n))
@@ -284,7 +284,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
 
         if (confirmed) {
             return loadEmailTemplate("potvrda-rezervacije.html")
-                .replace("{{SALUTATION}}",         EmailHtmlBuilder.salutation(booking))
+                .replace("{{SALUTATION}}",         EmailHtmlBuilder.salutation())
                 .replace("{{FIRST_NAME}}",         EmailHtmlBuilder.esc(booking.getFirstName()))
                 .replace("{{REF_CODE}}",            EmailHtmlBuilder.esc(booking.getBookingRef()))
                 .replace("{{AIRPORT_CODE}}",        EmailHtmlBuilder.esc(booking.getDepartureAirport()))
@@ -297,7 +297,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
                 .replace("{{SENDER_EMAIL}}",        EmailHtmlBuilder.esc(contactEmail));
         } else {
             return loadEmailTemplate("otkaz-rezervacije.html")
-                .replace("{{SALUTATION}}",     EmailHtmlBuilder.salutation(booking))
+                .replace("{{SALUTATION}}",     EmailHtmlBuilder.salutation())
                 .replace("{{FIRST_NAME}}",     EmailHtmlBuilder.esc(booking.getFirstName()))
                 .replace("{{REF_CODE}}",        EmailHtmlBuilder.esc(booking.getBookingRef()))
                 .replace("{{TRIP_CARD_HTML}}",  customerTripCardStyled(booking, depDate, retDate, n, true))
