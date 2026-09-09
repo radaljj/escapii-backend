@@ -5,7 +5,9 @@ import com.escapii.model.Booking;
 import com.escapii.model.DepartureAirport;
 import com.escapii.model.PassengerInfo;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -27,7 +29,8 @@ import java.util.Optional;
  * @param airportCity   grad na srpskom (Beograd)
  * @param airportName   naziv aerodroma (Aerodrom Nikola Tesla)
  * @param passengers    imena putnika, redom sa rezervacije
- * @param buyerName     ko poklanja ("Ime Prezime"); prazno sakriva kolonu
+ * @param buyerName     ko poklanja ("Ime Prezime"); prazno sakriva kolonu - i namerno je prazno
+ *                      kad je kupac ista osoba kao obdareni (vidi {@link #buyerName})
  */
 public record TripVoucherData(
     String code,
@@ -76,9 +79,33 @@ public record TripVoucherData(
                 .toList();
     }
 
+    /**
+     * Ko poklanja = kontakt iz forme ("Tvoji podaci" kod poklona - onaj ko plaća i
+     * dobija profakturu). Ako je tu ukucano isto ime kao ime obdarenog, "Poklon od"
+     * bi glasilo na samog obdarenog - besmisleno - pa se tada ne prikazuje nigde
+     * (ni na PDF-u ni na /poklon). Poređenje ne gleda velika slova, redosled
+     * ime/prezime ni dijakritiku: "markovic marko" je isti čovek kao "Marko Marković".
+     */
     static String buyerName(Booking b) {
         String ime     = b.getFirstName() == null ? "" : b.getFirstName().trim();
         String prezime = b.getLastName()  == null ? "" : b.getLastName().trim();
-        return (ime + " " + prezime).trim();
+        String kupac = (ime + " " + prezime).trim();
+        return istaOsoba(kupac, b.getGiftRecipientName()) ? "" : kupac;
+    }
+
+    /** Ista osoba: isti skup reči imena, bez obzira na velika slova, redosled i dijakritiku. */
+    static boolean istaOsoba(String a, String b) {
+        if (a == null || b == null || a.isBlank() || b.isBlank()) return false;
+        return kljuc(a).equals(kljuc(b));
+    }
+
+    private static String kljuc(String ime) {
+        String bez = Normalizer.normalize(ime, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")      // č→c, š→s, ž→z, ć→c
+                .replace('đ', 'd').replace('Đ', 'D') // đ nema dekompoziciju
+                .toLowerCase(Locale.ROOT).trim();
+        String[] reci = bez.split("\\s+");
+        Arrays.sort(reci);
+        return String.join(" ", reci);
     }
 }

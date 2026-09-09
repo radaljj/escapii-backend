@@ -44,7 +44,8 @@ public class GiftTripVoucherServiceImpl implements GiftTripVoucherService {
                         return GiftVoucherRevealResponse.invalid();
                     }
                     log.info("[PoklonPut] Reveal uspešan za {}", LogUtils.maskVoucherCode(ref));
-                    return GiftVoucherRevealResponse.trip(b, details(b));
+                    TripVoucherData d = TripVoucherData.from(b);
+                    return GiftVoucherRevealResponse.trip(d.buyerName(), details(d, b));
                 })
                 .orElseGet(() -> {
                     log.info("[PoklonPut] Reveal: nema rezervacije za {}", LogUtils.maskVoucherCode(ref));
@@ -62,8 +63,7 @@ public class GiftTripVoucherServiceImpl implements GiftTripVoucherService {
             && (b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.COMPLETED);
     }
 
-    private static GiftVoucherRevealResponse.TripDetails details(Booking b) {
-        TripVoucherData d = TripVoucherData.from(b);
+    private static GiftVoucherRevealResponse.TripDetails details(TripVoucherData d, Booking b) {
         return new GiftVoucherRevealResponse.TripDetails(
                 d.departureDate(), d.returnDate(), d.nights(), d.travelers(),
                 d.airportCode(), d.airportCity(), d.airportName(),

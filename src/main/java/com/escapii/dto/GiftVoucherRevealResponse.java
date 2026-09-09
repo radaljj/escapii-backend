@@ -1,6 +1,5 @@
 package com.escapii.dto;
 
-import com.escapii.model.Booking;
 import com.escapii.model.GiftVoucher;
 
 import java.math.BigDecimal;
@@ -63,15 +62,16 @@ public record GiftVoucherRevealResponse(
         );
     }
 
-    /** Poklonjeno putovanje: {@code buyerName} je ko poklanja, sve o putu je u {@code trip}. */
-    public static GiftVoucherRevealResponse trip(Booking b, TripDetails trip) {
-        String ime     = b.getFirstName() == null ? "" : b.getFirstName().trim();
-        String prezime = b.getLastName()  == null ? "" : b.getLastName().trim();
+    /**
+     * Poklonjeno putovanje: {@code buyerName} je ko poklanja (null kad se ne prikazuje -
+     * istu odluku donosi {@code TripVoucherData} i za PDF), sve o putu je u {@code trip}.
+     */
+    public static GiftVoucherRevealResponse trip(String buyerName, TripDetails trip) {
         return new GiftVoucherRevealResponse(
                 true,
                 KIND_TRIP,
                 null,
-                (ime + " " + prezime).trim(),
+                (buyerName == null || buyerName.isBlank()) ? null : buyerName,
                 null,
                 null,
                 null,

@@ -109,6 +109,31 @@ class GiftTripVoucherServiceTest {
         }
     }
 
+    /**
+     * "Poklon od" glasi na kontakt iz forme (ko plaća). Ako je tu ukucano ime obdarenog,
+     * vaučer bi rekao da Marko poklanja Marku - pa se tada ne prikazuje, ni na PDF-u ni
+     * na /poklon. Poređenje trpi velika slova, obrnut redosled i tastaturu bez kvačica.
+     */
+    @Test
+    void poklonOd_seSakrivaKadJeKupacIstaOsobaKaoObdareni() {
+        for (String kontakt : new String[]{"Ana Anić", "ana anić", "Anić Ana", "Ana Anic", "  Ana   Anić "}) {
+            Booking b = poklon(BookingStatus.CONFIRMED);
+            String[] d = kontakt.trim().split("\\s+", 2);
+            b.setFirstName(d[0]); b.setLastName(d.length > 1 ? d[1] : "");
+            assertEquals("", TripVoucherData.from(b).buyerName(), "PDF: kontakt '" + kontakt + "' je obdarena");
+            when(bookingRepository.findByBookingRefIgnoreCase(anyString())).thenReturn(Optional.of(b));
+            assertNull(svc.reveal("ESC-A3F8B2C1").buyerName(), "/poklon: kontakt '" + kontakt + "' je obdarena");
+        }
+        // druga osoba - prikazuje se, i na PDF-u i na stranici, isto ime
+        Booking b = poklon(BookingStatus.CONFIRMED);
+        assertEquals("Marko Marković", TripVoucherData.from(b).buyerName());
+        when(bookingRepository.findByBookingRefIgnoreCase(anyString())).thenReturn(Optional.of(b));
+        assertEquals("Marko Marković", svc.reveal("ESC-A3F8B2C1").buyerName());
+        // bez obdarenog (ne bi smelo, ali) - nema poređenja, kupac ostaje
+        b.setGiftRecipientName(null);
+        assertEquals("Marko Marković", TripVoucherData.from(b).buyerName());
+    }
+
     @Test
     void nepoznatAerodrom_padaNaKod() {
         Booking b = poklon(BookingStatus.CONFIRMED);
