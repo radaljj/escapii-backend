@@ -5,9 +5,7 @@ import com.escapii.model.Booking;
 import com.escapii.model.DepartureAirport;
 import com.escapii.model.PassengerInfo;
 
-import java.text.Normalizer;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -20,6 +18,9 @@ import java.util.Optional;
  * cenu ovde, {@code GiftTripVoucherServiceTest} pada na imenu polja, a
  * {@code VoucherPdfRenderTest} na "€" u tekstu PDF-a.
  *
+ * <p>Nema ni imena kupca ("Poklon od"): izvodilo se iz kontakta na formi, a taj
+ * kontakt ume da bude bilo ko. Umesto toga kupac sam upiše poruku - ili ne.
+ *
  * @param code          kod koji QR i /poklon stranica razumeju - šifra rezervacije, velikim slovima
  * @param departureDate datum polaska
  * @param returnDate    datum povratka
@@ -29,8 +30,7 @@ import java.util.Optional;
  * @param airportCity   grad na srpskom (Beograd)
  * @param airportName   naziv aerodroma (Aerodrom Nikola Tesla)
  * @param passengers    imena putnika, redom sa rezervacije
- * @param buyerName     ko poklanja ("Ime Prezime"); prazno sakriva kolonu - i namerno je prazno
- *                      kad je kupac ista osoba kao obdareni (vidi {@link #buyerName})
+ * @param giftMessage   poruka kupca obdarenom, kako je ukucana; prazno sakriva blok
  */
 public record TripVoucherData(
     String code,
@@ -42,7 +42,7 @@ public record TripVoucherData(
     String airportCity,
     String airportName,
     List<String> passengers,
-    String buyerName
+    String giftMessage
 ) {
     /**
      * Iz rezervacije. Ovde, a ne u servisu, da mejl potvrde (PDF u prilogu) i
@@ -62,7 +62,7 @@ public record TripVoucherData(
                 ap.map(DepartureAirport::citySr).orElse(b.getDepartureAirport()),
                 ap.map(DepartureAirport::airportName).orElse(""),
                 pax,
-                buyerName(b));
+                giftMessage(b));
     }
 
     /** Šifra rezervacije velikim slovima - tako je na vaučeru, u imenu PDF-a i u polju za unos na /poklon. */
@@ -79,33 +79,8 @@ public record TripVoucherData(
                 .toList();
     }
 
-    /**
-     * Ko poklanja = kontakt iz forme ("Tvoji podaci" kod poklona - onaj ko plaća i
-     * dobija profakturu). Ako je tu ukucano isto ime kao ime obdarenog, "Poklon od"
-     * bi glasilo na samog obdarenog - besmisleno - pa se tada ne prikazuje nigde
-     * (ni na PDF-u ni na /poklon). Poređenje ne gleda velika slova, redosled
-     * ime/prezime ni dijakritiku: "markovic marko" je isti čovek kao "Marko Marković".
-     */
-    static String buyerName(Booking b) {
-        String ime     = b.getFirstName() == null ? "" : b.getFirstName().trim();
-        String prezime = b.getLastName()  == null ? "" : b.getLastName().trim();
-        String kupac = (ime + " " + prezime).trim();
-        return istaOsoba(kupac, b.getGiftRecipientName()) ? "" : kupac;
-    }
-
-    /** Ista osoba: isti skup reči imena, bez obzira na velika slova, redosled i dijakritiku. */
-    static boolean istaOsoba(String a, String b) {
-        if (a == null || b == null || a.isBlank() || b.isBlank()) return false;
-        return kljuc(a).equals(kljuc(b));
-    }
-
-    private static String kljuc(String ime) {
-        String bez = Normalizer.normalize(ime, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")      // č→c, š→s, ž→z, ć→c
-                .replace('đ', 'd').replace('Đ', 'D') // đ nema dekompoziciju
-                .toLowerCase(Locale.ROOT).trim();
-        String[] reci = bez.split("\\s+");
-        Arrays.sort(reci);
-        return String.join(" ", reci);
+    /** Poruka kupca, isečena; prazno kad je nema. Ne izvodi se ni iz čega - ili je kupac ukucao, ili je nema. */
+    static String giftMessage(Booking b) {
+        return b.getGiftMessage() == null ? "" : b.getGiftMessage().trim();
     }
 }

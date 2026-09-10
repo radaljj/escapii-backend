@@ -23,19 +23,19 @@
     .layout { width: 1123px; height: 786px; table-layout: fixed; }
     /* width na td je SADRZAJ bez paddinga: 558 + 2x46 = 650. Sa 650 se stub gurao
        92 px udesno i ispadao van lista, pa su QR i kod izgledali pomereno udesno. */
-    .main { width: 558px; vertical-align: top; padding: 46px 46px 32px; }
+    .main { width: 558px; vertical-align: top; padding: 40px 46px 30px; }
     .stub { width: 473px; vertical-align: middle; background-color: #1a1410; border-left: 2px dashed #d8cab2; padding: 0; }
 
     .hdr { width: 100%; }
     .hdr td { vertical-align: middle; }
     .tag { font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 800; border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 8px 16px; border-radius: 100px; white-space: nowrap; }
 
-    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 26px 0 30px; margin-top: 26px; }
+    .title-area { border-top: 1px dashed #d8cab2; border-bottom: 1px dashed #d8cab2; padding: 20px 0 24px; margin-top: 20px; }
     .eyebrow { font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase; color: #a85e44; font-weight: 800; padding-bottom: 12px; }
-    .h1 { font-family: 'VoucherSerif', serif; font-size: 58px; font-weight: 700; color: #1a1410; line-height: 1.0; letter-spacing: -0.5px; margin: 0; }
+    .h1 { font-family: 'VoucherSerif', serif; font-size: 54px; font-weight: 700; color: #1a1410; line-height: 1.0; letter-spacing: -0.5px; margin: 0; }
     .h1 em { color: #a85e44; font-style: italic; font-weight: 700; }
 
-    .route { width: 100%; margin-top: 30px; }
+    .route { width: 100%; margin-top: 24px; }
     .route td { vertical-align: top; }
     .iata { font-family: 'VoucherSerif', serif; font-size: 72px; font-weight: 700; color: #1a1410; line-height: 0.95; letter-spacing: -1px; }
     .iata.dest { color: #a85e44; font-style: italic; text-align: right; }
@@ -49,23 +49,42 @@
     .path .dot { width: 8px; height: 8px; background-color: #c8775a; border-radius: 4px; font-size: 0; line-height: 0; }
     .plane { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 16px solid #c8775a; margin: 0 6px; }
 
-    .meta { width: 100%; margin-top: 30px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 12px; table-layout: fixed; }
+    .meta { width: 100%; margin-top: 24px; border: 1px solid #ebe1cf; background-color: #ffffff; border-radius: 12px; table-layout: fixed; }
     .meta td { padding: 15px 16px; border-right: 1px solid #ebe1cf; vertical-align: top; }
     .meta td.last { border-right: none; }
     .meta .k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; }
     .meta .v { font-family: 'VoucherMono', monospace; font-size: 14px; font-weight: 700; color: #1a1410; padding-top: 6px; white-space: nowrap; }
     .meta .v.terra { color: #a85e44; }
 
-    /* putnici + od koga */
-    .pax-box { width: 100%; table-layout: fixed; margin-top: 22px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 12px; }
-    .pax-box td { padding: 16px 20px; vertical-align: top; }
-    .pax-box td.from { width: 190px; border-left: 1px solid #ebe1cf; }
+    /* putnici */
+    .pax-box { width: 100%; table-layout: fixed; margin-top: 18px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 12px; }
+    .pax-box td { padding: 14px 20px; vertical-align: top; }
     .pax-k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; padding-bottom: 7px; }
     .pax-v { font-size: 14px; font-weight: 800; color: #1a1410; line-height: 1.5; word-wrap: break-word; }
     .pax-v span { color: #c8775a; font-weight: 400; padding: 0 4px; }
-    .from-v { font-family: 'VoucherSerif', serif; font-style: italic; font-size: 19px; color: #2b231b; line-height: 1.3; word-wrap: break-word; }
+    /* poruka kupca - samo kad postoji; do 200 znakova, da list ostane jedan */
+    .msg-box { width: 100%; table-layout: fixed; margin-top: 14px; background-color: #ffffff; border: 1px solid #ebe1cf; border-left: 3px solid #a85e44; border-radius: 12px; }
+    .msg-box td { padding: 12px 20px 14px; }
+    .msg-k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; padding-bottom: 6px; }
+    .msg-text { font-family: 'VoucherSerif', serif; font-style: italic; font-size: 17px; color: #2b231b; line-height: 1.35; word-wrap: break-word; }
 
-    .lfoot { width: 100%; margin-top: 30px; font-size: 9.5px; color: #a89888; font-weight: 600; }
+    .lfoot { width: 100%; margin-top: 20px; font-size: 9.5px; color: #a89888; font-weight: 600; }
+
+    /* Gusto: duga poruka ili vise od tri putnika - sve malo tesnje, da list ostane jedan */
+    .gusto .main { padding-top: 32px; }
+    .gusto .title-area { padding: 14px 0 16px; margin-top: 14px; }
+    .gusto .h1 { font-size: 44px; }
+    .gusto .route { margin-top: 16px; }
+    .gusto .iata { font-size: 60px; }
+    .gusto .meta { margin-top: 18px; }
+    .gusto .meta td { padding: 11px 16px; }
+    .gusto .pax-box { margin-top: 12px; }
+    .gusto .pax-box td { padding: 11px 20px; }
+    .gusto .pax-v { font-size: 13px; line-height: 1.4; }
+    .gusto .msg-box { margin-top: 10px; }
+    .gusto .msg-box td { padding: 10px 20px 12px; }
+    .gusto .msg-text { font-size: 15px; line-height: 1.3; }
+    .gusto .lfoot { margin-top: 14px; }
     .lfoot td.right { text-align: right; color: #a85e44; }
 
     .s-head { padding: 36px 28px 40px; font-size: 9.5px; letter-spacing: 3.5px; text-transform: uppercase; color: #8a8079; font-weight: 800; }
@@ -79,7 +98,7 @@
   </style>
 </head>
 <body>
-  <div class="sheet">
+  <div class="sheet" th:classappend="${gusto} ? 'gusto' : ''">
     <table class="bar"><tr><td></td></tr></table>
     <table class="layout">
       <tr>
@@ -133,11 +152,14 @@
                 <div class="pax-k">Putnici</div>
                 <div class="pax-v" th:utext="${passengersHtml}">Ana Ani&#263; <span>&#183;</span> Marko Markovi&#263;</div>
               </td>
-              <td class="from" th:if="${not #strings.isEmpty(buyerName)}">
-                <div class="pax-k">Poklon od</div>
-                <div class="from-v" th:text="${buyerName}">Marko Markovi&#263;</div>
-              </td>
             </tr>
+          </table>
+
+          <table class="msg-box" th:if="${not #strings.isEmpty(giftMessage)}">
+            <tr><td>
+              <div class="msg-k">Poruka</div>
+              <div class="msg-text" th:text="${giftMessage}">Sre&#263;an ro&#273;endan! Spakuj kofer.</div>
+            </td></tr>
           </table>
 
           <table class="lfoot">

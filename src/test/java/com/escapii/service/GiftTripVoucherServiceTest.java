@@ -99,7 +99,7 @@ class GiftTripVoucherServiceTest {
         assertEquals("Beograd", d.airportCity(), "grad iz DepartureAirport enuma");
         assertEquals("Aerodrom Nikola Tesla", d.airportName());
         assertEquals(List.of("Ana Anić", "Marko Marković"), d.passengers());
-        assertEquals("Marko Marković", d.buyerName());
+        assertEquals("", d.giftMessage(), "bez poruke - prazno; ime kupca se ne prikazuje nigde");
 
         // Strukturno: PDF podaci NEMAJU polje za cenu. Ko ga doda, mora ovde da objasni zašto.
         for (var comp : TripVoucherData.class.getRecordComponents()) {
@@ -109,29 +109,18 @@ class GiftTripVoucherServiceTest {
         }
     }
 
-    /**
-     * "Poklon od" glasi na kontakt iz forme (ko plaća). Ako je tu ukucano ime obdarenog,
-     * vaučer bi rekao da Marko poklanja Marku - pa se tada ne prikazuje, ni na PDF-u ni
-     * na /poklon. Poređenje trpi velika slova, obrnut redosled i tastaturu bez kvačica.
-     */
+    /** Poruka koju kupac ukuca ide i na PDF i na /poklon - ista, isečena; prazna se ne prikazuje. */
     @Test
-    void poklonOd_seSakrivaKadJeKupacIstaOsobaKaoObdareni() {
-        for (String kontakt : new String[]{"Ana Anić", "ana anić", "Anić Ana", "Ana Anic", "  Ana   Anić "}) {
-            Booking b = poklon(BookingStatus.CONFIRMED);
-            String[] d = kontakt.trim().split("\\s+", 2);
-            b.setFirstName(d[0]); b.setLastName(d.length > 1 ? d[1] : "");
-            assertEquals("", TripVoucherData.from(b).buyerName(), "PDF: kontakt '" + kontakt + "' je obdarena");
-            when(bookingRepository.findByBookingRefIgnoreCase(anyString())).thenReturn(Optional.of(b));
-            assertNull(svc.reveal("ESC-A3F8B2C1").buyerName(), "/poklon: kontakt '" + kontakt + "' je obdarena");
-        }
-        // druga osoba - prikazuje se, i na PDF-u i na stranici, isto ime
+    void porukaKupcaIdeNaPdfIStranicu() {
         Booking b = poklon(BookingStatus.CONFIRMED);
-        assertEquals("Marko Marković", TripVoucherData.from(b).buyerName());
+        b.setGiftMessage("  Srećan rođendan, Ana! Spakuj kofer.  ");
+        assertEquals("Srećan rođendan, Ana! Spakuj kofer.", TripVoucherData.from(b).giftMessage());
         when(bookingRepository.findByBookingRefIgnoreCase(anyString())).thenReturn(Optional.of(b));
-        assertEquals("Marko Marković", svc.reveal("ESC-A3F8B2C1").buyerName());
-        // bez obdarenog (ne bi smelo, ali) - nema poređenja, kupac ostaje
-        b.setGiftRecipientName(null);
-        assertEquals("Marko Marković", TripVoucherData.from(b).buyerName());
+        assertEquals("Srećan rođendan, Ana! Spakuj kofer.", svc.reveal("ESC-A3F8B2C1").giftMessage());
+
+        b.setGiftMessage("   ");
+        assertEquals("", TripVoucherData.from(b).giftMessage(), "prazno - blok se ne prikazuje");
+        assertNull(svc.reveal("ESC-A3F8B2C1").giftMessage());
     }
 
     @Test
@@ -157,7 +146,8 @@ class GiftTripVoucherServiceTest {
         assertNull(r.amount(),    "poklonjeno putovanje nema iznos");
         assertNull(r.expiresAt(), "poklonjeno putovanje nema rok");
         assertNull(r.giftMessage());
-        assertEquals("Marko Marković", r.buyerName(), "ko poklanja");
+        assertNull(r.buyerName(), "ime kupca se ne salje - 'Poklon od' je ukinut");
+        assertNull(r.giftMessage(), "bez poruke");
         assertNotNull(r.trip());
         assertEquals(LocalDate.of(2026, 6, 12), r.trip().departureDate());
         assertEquals(LocalDate.of(2026, 6, 15), r.trip().returnDate());

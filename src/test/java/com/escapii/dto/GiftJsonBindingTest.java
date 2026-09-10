@@ -30,7 +30,8 @@ class GiftJsonBindingTest {
         String json = """
             {"isGift": true,
              "giftRecipientName": "Ana Anić",
-             "giftRecipientEmail": "ana@primer.rs"}
+             "giftRecipientEmail": "ana@primer.rs",
+             "giftMessage": "Srećan rođendan!"}
             """;
 
         BookingRequest r = om.readValue(json, BookingRequest.class);
@@ -40,6 +41,7 @@ class GiftJsonBindingTest {
               + "@JsonProperty(\"isGift\") - bez njega Jackson trazi kljuc \"gift\".");
         assertEquals("Ana Anić", r.getGiftRecipientName());
         assertEquals("ana@primer.rs", r.getGiftRecipientEmail());
+        assertEquals("Srećan rođendan!", r.getGiftMessage(), "poruka na vaučeru se vezuje kao obican kljuc");
     }
 
     /**

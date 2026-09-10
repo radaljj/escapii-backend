@@ -84,6 +84,7 @@ public class AdminBookingResponse {
     private Boolean isGift;
     private String  giftRecipientName;
     private String  giftRecipientEmail;
+    private String  giftMessage;
 
     // Reveal Box
     private Boolean hasRevealBox;

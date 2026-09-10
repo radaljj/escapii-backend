@@ -88,14 +88,15 @@ class VoucherPdfRenderTest {
         byte[] pdf = servis().generateTrip(new TripVoucherData(
                 "ESC-A3F8B2C1", LocalDate.of(2026, 6, 12), LocalDate.of(2026, 6, 15), 3, 2,
                 "BEG", "Beograd", "Aerodrom Nikola Tesla",
-                List.of("Ana Anić", "Marko Marković"), "Marko Marković"));
+                List.of("Ana Anić", "Marko Marković"),
+                "Srećan rođendan, Ana! Spakuj kofer - idemo na put. Neka ti ovo bude najlepši vikend u godini. Voli te Marko"));
 
         assertTrue(new String(pdf, 0, 5).startsWith("%PDF-"));
         String t = tekst(pdf);
         for (String ocekivano : new String[]{"ESC-A3F8B2C1", "BEG", "Beograd", "Aerodrom Nikola Tesla",
                                              "12.06.2026.", "15.06.2026.", "12.06.",
                                              "Ana Anić", "Marko Marković", "Tvoja avantura", "je rezervisana",
-                                             "Polazak", "Povratak", "Noći", "Putnici", "Poklon od",
+                                             "Polazak", "Povratak", "Noći", "Putnici", "Poruka", "Srećan rođendan, Ana",
                                              "Vaučer kod", "Bez roka", "escapii.rs/poklon"}) {
             assertTrue(sadrzi(t, ocekivano), "u PDF-u nema: " + ocekivano + "\n--- tekst ---\n" + t);
         }
@@ -114,7 +115,24 @@ class VoucherPdfRenderTest {
         String t = tekst(pdf);
         assertTrue(t.contains("Uroš Đorđević"), "dijakritika mora da se renderuje: " + t);
         assertFalse(sadrzi(t, "decembar"), "ispod krupnog datuma nema ispisanog datuma - sekao se sa brojevima");
-        assertFalse(sadrzi(t, "Poklon od"), "bez kupca nema kolone 'Poklon od'");
+        assertFalse(sadrzi(t, "Poruka"), "bez poruke nema bloka - ni praznog");
+        assertFalse(sadrzi(t, "Poklon od"), "ime kupca se vise ne prikazuje");
+    }
+
+    /** Najduža dozvoljena poruka (200) sa 6 putnika mora da ostane na JEDNOM listu. */
+    @Test
+    void putniVaucer_najduzaPorukaISestPutnika_jedanList() throws Exception {
+        String poruka = "Srećan rođendan! ".repeat(20).substring(0, 200);
+        assertEquals(200, poruka.length());
+        byte[] pdf = servis().generateTrip(new TripVoucherData(
+                "ESC-FFFFFFFF", LocalDate.of(2026, 8, 7), LocalDate.of(2026, 8, 10), 3, 6,
+                "BEG", "Beograd", "Aerodrom Nikola Tesla",
+                List.of("Aleksandra Aleksandrović", "Bogoljub Bogoljubović", "Cvetanka Cvetanović",
+                        "Dragoljub Dragoljubović", "Emilija Emilijanović", "Filipina Filipović"), poruka));
+        String t = tekst(pdf);   // tekst() tvrdi tacno jednu stranu
+        assertTrue(sadrzi(t, "Filipina Filipović"));
+        assertTrue(sadrzi(t, "Srećan rođendan"));
+        snimi("poklon-putovanje-max", pdf);
     }
 
     @Test

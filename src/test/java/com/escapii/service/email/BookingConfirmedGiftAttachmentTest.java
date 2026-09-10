@@ -98,6 +98,7 @@ class BookingConfirmedGiftAttachmentTest {
             b.setIsGift(true);
             b.setGiftRecipientName("Ana Anić");
             b.setGiftRecipientEmail("ana@primer.rs");
+            b.setGiftMessage("Srećan rođendan!");
         }
         return b;
     }
@@ -137,6 +138,7 @@ class BookingConfirmedGiftAttachmentTest {
         verify(voucherPdfService).generateTrip(data.capture());
         assertEquals("ESC-A3F8B2C1", data.getValue().code());
         assertEquals(List.of("Ana Anić", "Marko Marković"), data.getValue().passengers());
+        assertEquals("Srećan rođendan!", data.getValue().giftMessage(), "poruka kupca ide na PDF");
         verifyNoInteractions(appErrorService);
     }
 

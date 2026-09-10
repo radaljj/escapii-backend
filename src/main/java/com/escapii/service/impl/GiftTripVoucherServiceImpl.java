@@ -45,7 +45,7 @@ public class GiftTripVoucherServiceImpl implements GiftTripVoucherService {
                     }
                     log.info("[PoklonPut] Reveal uspešan za {}", LogUtils.maskVoucherCode(ref));
                     TripVoucherData d = TripVoucherData.from(b);
-                    return GiftVoucherRevealResponse.trip(d.buyerName(), details(d, b));
+                    return GiftVoucherRevealResponse.trip(d.giftMessage(), details(d, b));
                 })
                 .orElseGet(() -> {
                     log.info("[PoklonPut] Reveal: nema rezervacije za {}", LogUtils.maskVoucherCode(ref));

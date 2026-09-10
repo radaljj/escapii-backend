@@ -63,16 +63,17 @@ public record GiftVoucherRevealResponse(
     }
 
     /**
-     * Poklonjeno putovanje: {@code buyerName} je ko poklanja (null kad se ne prikazuje -
-     * istu odluku donosi {@code TripVoucherData} i za PDF), sve o putu je u {@code trip}.
+     * Poklonjeno putovanje: {@code giftMessage} je poruka kupca (null kad je nema; isti
+     * tekst ide i na PDF), sve o putu je u {@code trip}. Ime kupca se ne šalje - ko
+     * poklanja piše u poruci ako kupac tako hoće.
      */
-    public static GiftVoucherRevealResponse trip(String buyerName, TripDetails trip) {
+    public static GiftVoucherRevealResponse trip(String giftMessage, TripDetails trip) {
         return new GiftVoucherRevealResponse(
                 true,
                 KIND_TRIP,
                 null,
-                (buyerName == null || buyerName.isBlank()) ? null : buyerName,
                 null,
+                (giftMessage == null || giftMessage.isBlank()) ? null : giftMessage.trim(),
                 null,
                 null,
                 null,

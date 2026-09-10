@@ -208,6 +208,7 @@ class GiftFlowEndToEndTest {
             r.setGift(true);
             r.setGiftRecipientName("Ana Anić");      // sto padajuca lista ponudi
             r.setGiftRecipientEmail("ana@primer.rs");
+            r.setGiftMessage("Srećan rođendan, Ana!");
         }
         return r;
     }
@@ -313,6 +314,7 @@ class GiftFlowEndToEndTest {
 
         assertTrue(Boolean.TRUE.equals(b.getIsGift()));
         assertEquals("ana@primer.rs", b.getGiftRecipientEmail(), "forma je poslala mejl obdarene i sacuvan je");
+        assertEquals("Srećan rođendan, Ana!", b.getGiftMessage(), "poruka sa forme je sacuvana");
 
         // novac -> Marko
         for (String n : new String[]{"Upit primljen", "Profaktura", "potvrđena"}) {

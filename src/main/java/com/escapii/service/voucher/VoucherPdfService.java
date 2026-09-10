@@ -111,7 +111,11 @@ public class VoucherPdfService {
         ctx.setVariable("airportCity",    safe(data.airportCity()));
         ctx.setVariable("airportName",    safe(data.airportName()));
         ctx.setVariable("passengersHtml", passengersHtml(data.passengers()));
-        ctx.setVariable("buyerName",      safe(data.buyerName()));
+        ctx.setVariable("giftMessage",    wrapLongWords(safe(data.giftMessage())));
+        // Duga poruka ili vise od tri putnika: "gusto" sabija razmake i naslov da list
+        // ostane JEDAN. Uobicajen slucaj (2 putnika, recenica-dve) zadrzava siri raspored.
+        ctx.setVariable("gusto", safe(data.giftMessage()).length() > 110
+                || (data.passengers() != null && data.passengers().size() > 3));
         return render("gift-trip-voucher", data.code(), ctx);
     }
 

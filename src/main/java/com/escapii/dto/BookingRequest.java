@@ -197,6 +197,10 @@ public class BookingRequest {
     @Email(message = "Email osobe kojoj poklanjate nije validan")
     private String giftRecipientEmail;
 
+    /** Poruka na vaučeru poklonjenog putovanja (opciono). Kratka namerno - staje na PDF. */
+    @Size(max = 200, message = "Poruka na vaučeru ne sme biti duža od 200 karaktera")
+    private String giftMessage;
+
     /** Jezik na kom su dokumenti prikazani ("sr" ili "en"). */
     @Pattern(regexp = "^$|^(sr|en)$", message = "Jezik saglasnosti mora biti sr ili en")
     private String consentLang;
@@ -240,6 +244,10 @@ public class BookingRequest {
         if (deliveryApartment != null) deliveryApartment = deliveryApartment.trim();
         if (giftRecipientName  != null) giftRecipientName  = giftRecipientName.trim();
         if (giftRecipientEmail != null) giftRecipientEmail = giftRecipientEmail.trim().toLowerCase();
+        if (giftMessage != null) {
+            giftMessage = giftMessage.trim();
+            if (giftMessage.isEmpty()) giftMessage = null;   // prazno polje = bez poruke, ne prazan string
+        }
         if (consentVersion    != null) consentVersion    = consentVersion.trim();
         if (consentLang       != null) consentLang       = consentLang.trim().toLowerCase();
         if (passengers != null) passengers.forEach(p -> {

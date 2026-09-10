@@ -358,6 +358,7 @@ public class BookingServiceImpl implements BookingService {
         if (request.isGift()) {
             b.setGiftRecipientName(request.getGiftRecipientName());
             b.setGiftRecipientEmail(request.getGiftRecipientEmail());
+            b.setGiftMessage(request.getGiftMessage());
         }
 
         // Reveal Box

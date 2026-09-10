@@ -24,6 +24,7 @@ public abstract class AdminBookingMapper {
     @Mapping(source = "isGift",                      target = "isGift")
     @Mapping(source = "giftRecipientName",           target = "giftRecipientName")
     @Mapping(source = "giftRecipientEmail",          target = "giftRecipientEmail")
+    @Mapping(source = "giftMessage",                 target = "giftMessage")
     @Mapping(source = "hasRevealBox",                target = "hasRevealBox")
     @Mapping(source = "deliveryAddress",             target = "deliveryAddress")
     @Mapping(source = "deliveryApartment",           target = "deliveryApartment")

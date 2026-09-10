@@ -345,6 +345,14 @@ public class Booking {
     @Column(name = "gift_recipient_email", length = 180)
     private String giftRecipientEmail;
 
+    /**
+     * Poruka koju kupac napise obdarenom - ide na PDF vaucer u prilogu potvrde i na
+     * /poklon stranicu. Kratka namerno (200), da stane na list. Null = bez poruke,
+     * blok se ne prikazuje. Kolona: V19.
+     */
+    @Column(name = "gift_message", length = 200)
+    private String giftMessage;
+
 
     /**
      * Ima li ova rezervacija upotrebljivog obdarenog?
