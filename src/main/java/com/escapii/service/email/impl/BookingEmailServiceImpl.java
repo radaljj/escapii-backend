@@ -321,8 +321,9 @@ public class BookingEmailServiceImpl implements BookingEmailService {
      */
     private String giftInquiryIntroHtml(Booking booking) {
         if (!Boolean.TRUE.equals(booking.getIsGift())) return "";
-        return "<br><br>🎁 Pošto je ovo putovanje poklon, <strong style=\"color:#1E2D2F;\">poklon vaučer u PDF formatu</strong> "
-             + "dobijaš uz potvrdu rezervacije - da ga odštampaš ili proslediš osobi kojoj ga poklanjaš.";
+        return "<br><br>🎁 Pošto je ovo putovanje poklon, uz potvrdu rezervacije stiže ti i "
+             + "<strong style=\"color:#1E2D2F;\">poklon vaučer u PDF formatu</strong> koji možeš odštampati "
+             + "ili jednostavno proslediti osobi kojoj želiš da prirediš iznenađenje.";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
