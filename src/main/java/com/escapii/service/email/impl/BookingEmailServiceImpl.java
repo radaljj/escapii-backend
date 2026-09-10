@@ -311,7 +311,18 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             .replace("{{PASSENGERS_HTML}}",    buildPassengersSection(booking))
             .replace("{{TOTAL_BOX_HTML}}",     EmailHtmlBuilder.totalBox(booking.getTotalPriceAll(), n))
             .replace("{{PRICE_TABLE_HTML}}",   buildPriceTable(booking, n))
+            .replace("{{GIFT_INTRO_HTML}}",    giftInquiryIntroHtml(booking))
             .replace("{{SENDER_EMAIL}}",       EmailHtmlBuilder.esc(contactEmail));
+    }
+
+    /**
+     * "Upit primljen" kad je putovanje poklon: najava PDF vaučera koji stiže uz
+     * potvrdu, odmah ispod pasusa o roku od 24 sata. Prazno kad nije poklon.
+     */
+    private String giftInquiryIntroHtml(Booking booking) {
+        if (!Boolean.TRUE.equals(booking.getIsGift())) return "";
+        return "<br><br>🎁 Pošto je ovo putovanje poklon, <strong style=\"color:#1E2D2F;\">poklon vaučer u PDF formatu</strong> "
+             + "dobijaš uz potvrdu rezervacije - da ga odštampaš ili proslediš osobi kojoj ga poklanjaš.";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

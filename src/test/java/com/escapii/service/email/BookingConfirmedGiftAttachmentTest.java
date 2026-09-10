@@ -181,6 +181,27 @@ class BookingConfirmedGiftAttachmentTest {
         verify(appErrorService).record(eq("PDF gift-trip-voucher"), eq(0), any());
     }
 
+    /** "Upit primljen": kod poklona najavljuje PDF vaučer ispod pasusa o roku od 24 sata. */
+    @Test
+    void upitPrimljen_poklonNajavljujeVaucer_obicnaNe() {
+        svc.sendCustomerConfirmation(rezervacija(true));
+        ArgumentCaptor<String> html = ArgumentCaptor.forClass(String.class);
+        verify(sender).send(eq("marko@primer.rs"), eq("Upit primljen - ESC-a3f8b2c1"), html.capture());
+        String h = html.getValue();
+        assertTrue(h.contains("poklon vaučer u PDF formatu"), "najava vaučera u upitu");
+        assertTrue(h.indexOf("informacijama za plaćanje.") < h.indexOf("poklon vaučer u PDF formatu")
+                && h.indexOf("poklon vaučer u PDF formatu") < h.indexOf("Gde putuješ?"),
+                "pasus ide ODMAH ispod roka od 24 sata, pre napomene o tajni");
+        assertFalse(h.contains("{{"));
+
+        reset(sender);
+        when(sender.send(anyString(), anyString(), anyString())).thenReturn(true);
+        svc.sendCustomerConfirmation(rezervacija(false));
+        verify(sender).send(eq("marko@primer.rs"), anyString(), html.capture());
+        assertFalse(html.getValue().contains("poklon vaučer"), "obicna rezervacija: bez najave");
+        assertFalse(html.getValue().contains("{{"));
+    }
+
     @Test
     void sinhronaVarijanta_vracaIshodSlanja() {
         Booking b = rezervacija(true);
