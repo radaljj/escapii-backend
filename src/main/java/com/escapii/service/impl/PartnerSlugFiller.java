@@ -260,6 +260,62 @@ public class PartnerSlugFiller {
         }
     }
 
+    // ── Doslednost sluga sa trenutnim IATA kodom ─────────────────────────────
+    //
+    // Slug je izveden iz engleskog imena grada/države, a ono iz IATA koda. Kad
+    // admin promeni kod (Milano: BGY Bergamo -> MXP Malpensa), staro ime nestane,
+    // ali slugovi "bergamo" ostanu i linkovi vode u pogrešan grad. Pravilo
+    // "ručno uneto se ne pregazi" tu ne štiti ništa - panel nema polja za slugove -
+    // a štetu pravi. Zato: slug koji ne odgovara TRENUTNOM imenu je zastareo.
+    // Kad je ime nepoznato (nema ga u airports.dat), nema osnova za sud - slug ostaje.
+
+    /** GYG slug "florence-l32" važi za grad "Florence"; "bergamo-l123" za "Milan" ne. */
+    public static boolean gygVaziZa(String slug, String nameEn) {
+        if (prazno(slug)) return false;
+        if (prazno(nameEn)) return true;
+        String grad = slug.trim().toLowerCase(Locale.ROOT).replaceAll("-l\\d+$", "");
+        return grad.equals(kljuc(nameEn));
+    }
+
+    /** Bounce slug je tačno kebab-case engleskog imena grada. */
+    public static boolean bounceVaziZa(String slug, String nameEn) {
+        if (prazno(slug)) return false;
+        if (prazno(nameEn)) return true;
+        return slug.trim().toLowerCase(Locale.ROOT).equals(kljuc(nameEn));
+    }
+
+    /** Airalo slug je kebab-case engleskog imena DRŽAVE + "-esim". */
+    public static boolean airaloVaziZa(String slug, String countryEn) {
+        if (prazno(slug)) return false;
+        if (prazno(countryEn)) return true;
+        return slug.trim().toLowerCase(Locale.ROOT).equals(kljuc(countryEn) + "-esim");
+    }
+
+    /**
+     * Briše slugove koji ne odgovaraju trenutnom engleskom imenu grada/države,
+     * da bi ih popunjavanje ispod izvelo ponovo iz novog koda. Vraća da li je
+     * nešto obrisano. Zove se pri izmeni destinacije, PRE popunjavanja.
+     */
+    public boolean ocistiZastarele(Destination d) {
+        boolean menjano = false;
+        if (!prazno(d.getGygSlug()) && !gygVaziZa(d.getGygSlug(), d.getNameEn())) {
+            log.info("[Slugovi] {} - gyg_slug '{}' ne odgovara gradu '{}', brišem", d.getName(), d.getGygSlug(), d.getNameEn());
+            d.setGygSlug(null);
+            menjano = true;
+        }
+        if (!prazno(d.getBounceSlug()) && !bounceVaziZa(d.getBounceSlug(), d.getNameEn())) {
+            log.info("[Slugovi] {} - bounce_slug '{}' ne odgovara gradu '{}', brišem", d.getName(), d.getBounceSlug(), d.getNameEn());
+            d.setBounceSlug(null);
+            d.setBounceCovered(false);
+            menjano = true;
+        }
+        if (!prazno(d.getAiraloSlug()) && !airaloVaziZa(d.getAiraloSlug(), d.getCountryEn())) {
+            log.info("[Slugovi] {} - airalo_slug '{}' ne odgovara državi '{}', brišem", d.getName(), d.getAiraloSlug(), d.getCountryEn());
+            d.setAiraloSlug(null);
+            menjano = true;
+        }
+        return menjano;
+    }
     // ── Pomoćno ──────────────────────────────────────────────────────────────
 
     /** Skida dijakritiku i svodi na kebab-case, isto kako partneri prave slugove. */

@@ -75,12 +75,18 @@ public class TravelAddonsService {
             return links;
         }
 
-        addIfPossible(links, "tours",   gygTemplate,    dest.getGygSlug());
-        addIfPossible(links, "esim",    airaloTemplate, dest.getAiraloSlug());
+        // Slug mora da odgovara TRENUTNOM imenu grada/države iz IATA koda. Kad admin
+        // promeni kod (BGY -> MXP), stari slug "bergamo" bi kupca odveo u pogrešan grad -
+        // takav se preskače; izmena destinacije u panelu ga briše i popunjava ponovo.
+        addIfPossible(links, "tours",   gygTemplate,
+                vazeci(dest, "gyg", dest.getGygSlug(), PartnerSlugFiller.gygVaziZa(dest.getGygSlug(), dest.getNameEn())));
+        addIfPossible(links, "esim",    airaloTemplate,
+                vazeci(dest, "airalo", dest.getAiraloSlug(), PartnerSlugFiller.airaloVaziZa(dest.getAiraloSlug(), dest.getCountryEn())));
 
         // Prtljag ima uslov više: slug ume biti tačan a grad nepokriven.
         if (Boolean.TRUE.equals(dest.getBounceCovered())) {
-            addIfPossible(links, "luggage", bounceTemplate, dest.getBounceSlug());
+            addIfPossible(links, "luggage", bounceTemplate,
+                    vazeci(dest, "bounce", dest.getBounceSlug(), PartnerSlugFiller.bounceVaziZa(dest.getBounceSlug(), dest.getNameEn())));
         }
 
         return links;
@@ -99,6 +105,15 @@ public class TravelAddonsService {
                     naziv, found.size(), found.get(0).getId());
         }
         return found.get(0);
+    }
+
+    /** Slug ili null kad je zastareo - uz zapis, da se u logu vidi zašto kartice nema. */
+    private static String vazeci(Destination d, String partner, String slug, boolean vazi) {
+        if (slug == null || slug.isBlank() || vazi) return slug;
+        log.warn("[Dodaci] '{}' ima {} slug '{}' koji ne odgovara trenutnom imenu ({}/{}) - preskačem; "
+               + "sačuvaj destinaciju u panelu da se slug osveži",
+                d.getName(), partner, slug, d.getNameEn(), d.getCountryEn());
+        return null;
     }
 
     /** Ubacuje link samo ako imamo i šablon (partner odobren) i slug (skript pušten). */

@@ -143,6 +143,39 @@ class PartnerSlugFillerTest {
     }
 
     /** Dijakritika i razmaci se svode isto kako partneri prave slugove. */
+    /**
+     * Milano je imao BGY (Bergamo) pa su slugovi "bergamo". Admin menja kod na MXP,
+     * englesko ime postaje "Milan": stari slugovi se brišu i popunjavaju iz novog
+     * imena. Airalo ostaje - država je ista. Dosledni slugovi se ne diraju.
+     */
+    @Test
+    void zastareliSlugoviSeBrisuKadSePromeniGrad() {
+        Destination d = dest("Milano", "Milan", "Italy");
+        d.setGygSlug("bergamo-l123");
+        d.setBounceSlug("bergamo");
+        d.setBounceCovered(true);
+        d.setAiraloSlug("italy-esim");
+
+        PartnerSlugFiller f = filler(AIRALO, Set.of("milan", "bergamo"));
+        assertTrue(f.ocistiZastarele(d), "nesto je bilo zastarelo");
+        assertNull(d.getGygSlug(),    "gyg iz starog grada obrisan - GYG prolaz ga popunjava u pozadini");
+        assertNull(d.getBounceSlug(), "bounce iz starog grada obrisan");
+        assertFalse(d.getBounceCovered());
+        assertEquals("italy-esim", d.getAiraloSlug(), "drzava ista - ostaje");
+
+        f.popuniBrzeSlugove(d);
+        assertEquals("milan", d.getBounceSlug(), "popunjen iz NOVOG imena");
+        assertTrue(d.getBounceCovered());
+        assertFalse(f.ocistiZastarele(d), "dosledni slugovi se ne diraju");
+
+        assertTrue(PartnerSlugFiller.gygVaziZa("milan-l70", "Milan"));
+        assertFalse(PartnerSlugFiller.gygVaziZa("bergamo-l123", "Milan"));
+        assertTrue(PartnerSlugFiller.gygVaziZa("bergamo-l123", null), "bez imena nema osnova za sud");
+        assertFalse(PartnerSlugFiller.gygVaziZa(null, "Milan"));
+        assertTrue(PartnerSlugFiller.airaloVaziZa("czech-republic-esim", "Czech Republic"));
+        assertFalse(PartnerSlugFiller.airaloVaziZa("italy-esim", "Czech Republic"));
+    }
+
     @Test
     void normalizacijaImena() {
         assertEquals("prague", PartnerSlugFiller.kljuc("Prague"));

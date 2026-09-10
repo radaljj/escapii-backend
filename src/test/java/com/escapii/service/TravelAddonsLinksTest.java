@@ -72,6 +72,48 @@ class TravelAddonsLinksTest {
         assertEquals("https://bounce.com/luggage-storage/florence", links.get("luggage"));
     }
 
+    /**
+     * Admin je Milanu promenio IATA kod sa BGY (Bergamo) na MXP: englesko ime je sad
+     * "Milan", ali slugovi izvedeni iz starog koda kažu "bergamo". Takav link je gori
+     * od nikakvog - vodi u drugi grad - pa se kartica preskače dok se slug ne osveži.
+     * Airalo ostaje: država je ista.
+     */
+    @Test
+    void slugIzStarogIataKodaSeNeKoristi() {
+        Destination milano = new Destination();
+        milano.setId(2L);
+        milano.setName("Milano");
+        milano.setNameEn("Milan");
+        milano.setCountryEn("Italy");
+        milano.setGygSlug("bergamo-l123");
+        milano.setBounceSlug("bergamo");
+        milano.setBounceCovered(true);
+        milano.setAiraloSlug("italy-esim");
+        when(destinationRepository.findByAnyNameIgnoreCase(anyString())).thenReturn(List.of(milano));
+
+        Map<String, String> links = service.linksFor("Milano");
+
+        assertNull(links.get("tours"),   "ture za Bergamo ne smeju pod Milano");
+        assertNull(links.get("luggage"), "prtljag u Bergamu ne sme pod Milano");
+        assertEquals("https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2Fitaly-esim", links.get("esim"),
+                "eSIM je za državu, a ona se nije promenila");
+
+        // posle osvežavanja (kao što updateDestination radi) linkovi se vraćaju
+        milano.setGygSlug("milan-l70");
+        milano.setBounceSlug("milan");
+        assertEquals("https://www.getyourguide.com/sr-rs/milan-l70/?partner_id=TEST", service.linksFor("Milano").get("tours"));
+        assertEquals("https://bounce.com/luggage-storage/milan", service.linksFor("Milano").get("luggage"));
+    }
+
+    /** Nepoznat IATA kod (nema ga u airports.dat): nema imena, nema ni osnova da se slug odbaci. */
+    @Test
+    void bezEngleskogImenaSlugOstaje() {
+        Destination d = firenca();
+        d.setNameEn(null);
+        d.setCountryEn(null);
+        when(destinationRepository.findByAnyNameIgnoreCase(anyString())).thenReturn(List.of(d));
+        assertEquals(3, service.linksFor("Firenca").size());
+    }
     /** Kad partnerski nalog jos nije odobren, env varijabla je prazna - kartica izostaje. */
     @Test
     void prazanSablonZnaciDaKarticeNema() {

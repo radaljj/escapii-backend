@@ -171,8 +171,14 @@ public class AdminServiceImpl implements AdminService {
                 .map(String::toUpperCase).collect(Collectors.toSet()));
         d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
         d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
-        // Isto kao pri kreiranju: popunjava samo prazna polja, rucno uneto ne dira.
-        // Bitno je i pri izmeni jer promena IATA koda menja i englesko ime grada.
+        // Promena IATA koda menja englesko ime grada/drzave, a slugovi izvedeni iz
+        // STAROG imena bi i dalje vodili u stari grad (Milano: BGY -> "bergamo").
+        // Zastareli se brisu, pa ih popunjavanje ispod izvede ponovo iz novog imena;
+        // GYG ide u pozadini i do tada za tu destinaciju nema kartice sa turama.
+        if (partnerSlugFiller.ocistiZastarele(d)) {
+            log.info("[ADMIN] Destinacija '{}' (id={}): slugovi izvedeni iz starog koda obrisani, popunjavaju se ponovo", d.getName(), id);
+        }
+        // Popunjava samo prazna polja - posle ciscenja iznad, to su bas zastarela.
         partnerSlugFiller.popuniBrzeSlugove(d);
         Destination sacuvana = destinationRepository.save(d);
         partnerSlugFiller.popuniGygSlugoveUPozadini();
