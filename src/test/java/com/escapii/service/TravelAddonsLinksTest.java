@@ -2,6 +2,7 @@ package com.escapii.service;
 
 import com.escapii.model.Destination;
 import com.escapii.repository.DestinationRepository;
+import com.escapii.service.impl.PartnerSlugFiller;
 import com.escapii.service.impl.TravelAddonsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Zaključava pravila po kojima se prave partnerski linkovi na reveal stranici.
@@ -33,12 +34,13 @@ class TravelAddonsLinksTest {
     private static final String BOUNCE = "https://bounce.com/luggage-storage/{slug}";
 
     @Mock DestinationRepository destinationRepository;
+    @Mock PartnerSlugFiller partnerSlugFiller;
 
     private TravelAddonsService service;
 
     @BeforeEach
     void setUp() {
-        service = new TravelAddonsService(destinationRepository);
+        service = new TravelAddonsService(destinationRepository, partnerSlugFiller);
         postaviSablone(GYG, AIRALO, BOUNCE);
     }
 
@@ -70,6 +72,7 @@ class TravelAddonsLinksTest {
         assertEquals("https://www.getyourguide.com/sr-rs/florence-l32/?partner_id=TEST", links.get("tours"));
         assertEquals("https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2Fitaly-esim", links.get("esim"));
         assertEquals("https://bounce.com/luggage-storage/florence", links.get("luggage"));
+        verifyNoInteractions(partnerSlugFiller);
     }
 
     /**
@@ -97,6 +100,7 @@ class TravelAddonsLinksTest {
         assertNull(links.get("luggage"), "prtljag u Bergamu ne sme pod Milano");
         assertEquals("https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2Fitaly-esim", links.get("esim"),
                 "eSIM je za državu, a ona se nije promenila");
+        verify(partnerSlugFiller).osveziDestinacijuUPozadini(2L);
 
         // posle osvežavanja (kao što updateDestination radi) linkovi se vraćaju
         milano.setGygSlug("milan-l70");

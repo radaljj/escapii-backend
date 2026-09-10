@@ -36,6 +36,8 @@ public class TravelAddonsService {
     private static final String SLUG = "{slug}";
 
     private final DestinationRepository destinationRepository;
+    /** Kad naiđemo na zastareo slug, ova destinacija se osveži u pozadini. */
+    private final PartnerSlugFiller partnerSlugFiller;
 
     /** npr. https://www.getyourguide.com/sr-rs/{slug}/?partner_id=XXXX */
     @Value("${app.affiliate.gyg-url-template:}")
@@ -77,16 +79,23 @@ public class TravelAddonsService {
 
         // Slug mora da odgovara TRENUTNOM imenu grada/države iz IATA koda. Kad admin
         // promeni kod (BGY -> MXP), stari slug "bergamo" bi kupca odveo u pogrešan grad -
-        // takav se preskače; izmena destinacije u panelu ga briše i popunjava ponovo.
-        addIfPossible(links, "tours",   gygTemplate,
-                vazeci(dest, "gyg", dest.getGygSlug(), PartnerSlugFiller.gygVaziZa(dest.getGygSlug(), dest.getNameEn())));
-        addIfPossible(links, "esim",    airaloTemplate,
-                vazeci(dest, "airalo", dest.getAiraloSlug(), PartnerSlugFiller.airaloVaziZa(dest.getAiraloSlug(), dest.getCountryEn())));
+        // takav se preskače, a destinacija se osveži u pozadini (sledeća poseta vidi kartice).
+        boolean gygVazi    = PartnerSlugFiller.gygVaziZa(dest.getGygSlug(), dest.getNameEn());
+        boolean airaloVazi = PartnerSlugFiller.airaloVaziZa(dest.getAiraloSlug(), dest.getCountryEn());
+        boolean bounceVazi = PartnerSlugFiller.bounceVaziZa(dest.getBounceSlug(), dest.getNameEn());
+        addIfPossible(links, "tours",   gygTemplate,    vazeci(dest, "gyg",    dest.getGygSlug(),    gygVazi));
+        addIfPossible(links, "esim",    airaloTemplate, vazeci(dest, "airalo", dest.getAiraloSlug(), airaloVazi));
 
         // Prtljag ima uslov više: slug ume biti tačan a grad nepokriven.
         if (Boolean.TRUE.equals(dest.getBounceCovered())) {
-            addIfPossible(links, "luggage", bounceTemplate,
-                    vazeci(dest, "bounce", dest.getBounceSlug(), PartnerSlugFiller.bounceVaziZa(dest.getBounceSlug(), dest.getNameEn())));
+            addIfPossible(links, "luggage", bounceTemplate, vazeci(dest, "bounce", dest.getBounceSlug(), bounceVazi));
+        }
+
+        boolean zastareo = (!prazno(dest.getGygSlug()) && !gygVazi)
+                || (!prazno(dest.getAiraloSlug()) && !airaloVazi)
+                || (!prazno(dest.getBounceSlug()) && !bounceVazi);
+        if (zastareo && partnerSlugFiller != null) {
+            partnerSlugFiller.osveziDestinacijuUPozadini(dest.getId());
         }
 
         return links;
@@ -107,11 +116,13 @@ public class TravelAddonsService {
         return found.get(0);
     }
 
+    private static boolean prazno(String s) { return s == null || s.isBlank(); }
+
     /** Slug ili null kad je zastareo - uz zapis, da se u logu vidi zašto kartice nema. */
     private static String vazeci(Destination d, String partner, String slug, boolean vazi) {
         if (slug == null || slug.isBlank() || vazi) return slug;
         log.warn("[Dodaci] '{}' ima {} slug '{}' koji ne odgovara trenutnom imenu ({}/{}) - preskačem; "
-               + "sačuvaj destinaciju u panelu da se slug osveži",
+               + "osvežava se u pozadini",
                 d.getName(), partner, slug, d.getNameEn(), d.getCountryEn());
         return null;
     }

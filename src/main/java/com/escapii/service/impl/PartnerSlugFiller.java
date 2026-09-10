@@ -2,9 +2,12 @@ package com.escapii.service.impl;
 
 import com.escapii.model.Destination;
 import com.escapii.repository.DestinationRepository;
+import com.escapii.service.AirportLookupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +68,8 @@ public class PartnerSlugFiller {
     private static final Pattern BOUNCE_GRAD   = Pattern.compile("href=\"/luggage-storage/([^\"/]+)\"");
 
     private final DestinationRepository destinationRepository;
+    /** Englesko ime grada/države iz IATA koda - iz njega se izvode slugovi. */
+    private final AirportLookupService airportLookupService;
 
     @Value("${app.affiliate.airalo-sitemap:https://www.airalo.com/sitemap-v2-countries.xml}")
     private String airaloSitemap;
@@ -260,6 +265,83 @@ public class PartnerSlugFiller {
         }
     }
 
+    // ── Samoisceljenje: imena iz koda + zastareli slugovi, bez admina ────────
+    //
+    // Slugovi zavise od engleskog imena, a ono od IATA koda i tabele ispravki u
+    // AirportLookupService. Kad se bilo šta od toga promeni (admin promeni kod,
+    // ispravka se doda u kod), zapis u bazi ostane star. Tri ulaza to popravljaju:
+    // izmena destinacije u panelu, reveal koji naiđe na zastareo slug (u pozadini),
+    // i prolaz kroz sve destinacije pri svakom startu.
+
+    /** Ponovo izvodi englesko ime grada/države iz IATA koda. Vraća da li se nešto promenilo. */
+    public boolean osveziImenaIzKoda(Destination d) {
+        if (airportLookupService == null || prazno(d.getAirportCode())) return false;
+        String grad   = airportLookupService.cityEn(d.getAirportCode()).orElse(null);
+        String drzava = airportLookupService.countryEn(d.getAirportCode()).orElse(null);
+        boolean menjano = false;
+        if (grad != null && !grad.equals(d.getNameEn())) {
+            log.info("[Slugovi] {} - englesko ime grada '{}' -> '{}' (iz koda {})", d.getName(), d.getNameEn(), grad, d.getAirportCode());
+            d.setNameEn(grad);
+            menjano = true;
+        }
+        if (drzava != null && !drzava.equals(d.getCountryEn())) {
+            log.info("[Slugovi] {} - engleska država '{}' -> '{}' (iz koda {})", d.getName(), d.getCountryEn(), drzava, d.getAirportCode());
+            d.setCountryEn(drzava);
+            menjano = true;
+        }
+        return menjano;
+    }
+
+    /**
+     * Jedna destinacija, u pozadini: imena iz koda, brisanje zastarelih, brzo
+     * popunjavanje, pa GYG ako fali. Zove ga reveal kad naiđe na zastareo slug -
+     * ta poseta još ne vidi kartice, sledeća ih dobija.
+     */
+    @Async("taskExecutor")
+    @Transactional
+    public void osveziDestinacijuUPozadini(Long id) {
+        try {
+            Destination d = destinationRepository.findById(id).orElse(null);
+            if (d == null) return;
+            boolean menjano = osveziImenaIzKoda(d) | ocistiZastarele(d);
+            if (!menjano) return;
+            popuniBrzeSlugove(d);
+            destinationRepository.save(d);
+            log.info("[Slugovi] {} osvežena u pozadini (gyg={}, bounce={}, airalo={})",
+                    d.getName(), d.getGygSlug(), d.getBounceSlug(), d.getAiraloSlug());
+            if (prazno(d.getGygSlug())) popuniGygSlugoveUPozadini();
+        } catch (Exception e) {
+            log.warn("[Slugovi] Osvežavanje destinacije id={} nije uspelo: {}", id, e.toString());
+        }
+    }
+
+    /**
+     * Pri svakom startu, u pozadini: sve destinacije dobiju ime iz koda (i iz
+     * novih ispravki), zastareli slugovi se obrišu i popune ponovo. Zbog ovoga
+     * deploy sa novom ispravkom (npr. MXP -> Milan) popravi bazu sam, bez klika
+     * u panelu. Jeftino: spiskovi partnera su keširani; GYG ide samo ako nekome fali.
+     */
+    @Async("taskExecutor")
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void osveziSveNaStartu() {
+        try {
+            List<Destination> sve = destinationRepository.findAll();
+            int osvezeno = 0;
+            for (Destination d : sve) {
+                boolean menjano = osveziImenaIzKoda(d) | ocistiZastarele(d);
+                if (!menjano) continue;
+                popuniBrzeSlugove(d);
+                destinationRepository.save(d);
+                osvezeno++;
+            }
+            boolean nekomeFaliGyg = sve.stream().anyMatch(d -> prazno(d.getGygSlug()) && !prazno(d.getNameEn()));
+            log.info("[Slugovi] Startni prolaz: {} destinacija, {} osveženo, GYG prolaz: {}", sve.size(), osvezeno, nekomeFaliGyg ? "da" : "ne");
+            if (nekomeFaliGyg) popuniGygSlugoveUPozadini();
+        } catch (Exception e) {
+            log.warn("[Slugovi] Startni prolaz pao: {}", e.toString());
+        }
+    }
     // ── Doslednost sluga sa trenutnim IATA kodom ─────────────────────────────
     //
     // Slug je izveden iz engleskog imena grada/države, a ono iz IATA koda. Kad

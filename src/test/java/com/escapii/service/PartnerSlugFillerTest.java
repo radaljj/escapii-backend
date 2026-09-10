@@ -8,9 +8,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Zaključava pravila po kojima se partnerski slugovi popunjavaju sami.
@@ -26,11 +28,15 @@ class PartnerSlugFillerTest {
 
     @Mock DestinationRepository destinationRepository;
 
-    /** Podmeće spiskove umesto mrežnog poziva. */
+    /** Koliko puta je pokrenut GYG prolaz (pravi bi skidao 96 MB sitemapa). */
+    private final java.util.concurrent.atomic.AtomicInteger gygProlaza = new java.util.concurrent.atomic.AtomicInteger();
+
+    /** Podmeće spiskove umesto mrežnog poziva; lookup bez airports.dat (samo tabela ispravki). */
     private PartnerSlugFiller filler(Set<String> airalo, Set<String> bounce) {
-        return new PartnerSlugFiller(destinationRepository) {
+        return new PartnerSlugFiller(destinationRepository, new com.escapii.service.AirportLookupService()) {
             @Override protected Set<String> airaloSpisak() { return airalo; }
             @Override protected Set<String> bounceSpisak() { return bounce; }
+            @Override public void popuniGygSlugoveUPozadini() { gygProlaza.incrementAndGet(); }
         };
     }
 
@@ -174,6 +180,66 @@ class PartnerSlugFillerTest {
         assertFalse(PartnerSlugFiller.gygVaziZa(null, "Milan"));
         assertTrue(PartnerSlugFiller.airaloVaziZa("czech-republic-esim", "Czech Republic"));
         assertFalse(PartnerSlugFiller.airaloVaziZa("italy-esim", "Czech Republic"));
+    }
+
+    /**
+     * Prod slučaj: Milano preko MXP je iz airports.dat dobio "Milano" (italijanski),
+     * pa partnerski slugovi ("milan") nisu mogli da se nađu, a stari "bergamo" su
+     * ostali. Startni prolaz: ime iz koda (ispravka MXP -> Milan), brisanje
+     * zastarelih, popunjavanje iz novog imena, GYG prolaz jer fali.
+     */
+    @Test
+    void startniProlaz_imeIzKoda_zastareliSlugovi_gygPozadina() {
+        Destination milano = dest("Milano", "Milano", "Italy");
+        milano.setId(35L);
+        milano.setAirportCode("MXP");
+        milano.setGygSlug("bergamo-l123");
+        milano.setBounceSlug("bergamo");
+        milano.setBounceCovered(true);
+        milano.setAiraloSlug("italy-esim");
+        Destination firenca = dest("Firenca", "Florence", "Italy");
+        firenca.setAirportCode("FLR");
+        firenca.setGygSlug("florence-l32");
+        firenca.setBounceSlug("florence");
+        firenca.setBounceCovered(true);
+        firenca.setAiraloSlug("italy-esim");
+        when(destinationRepository.findAll()).thenReturn(List.of(milano, firenca));
+
+        PartnerSlugFiller f = filler(AIRALO, Set.of("milan", "florence", "bergamo"));
+        f.osveziSveNaStartu();
+
+        assertEquals("Milan", milano.getNameEn(), "ime iz ispravke za MXP");
+        assertNull(milano.getGygSlug(), "bergamo obrisan, GYG ce popuniti u pozadini");
+        assertEquals("milan", milano.getBounceSlug(), "bounce popunjen iz novog imena");
+        assertTrue(milano.getBounceCovered());
+        assertEquals("italy-esim", milano.getAiraloSlug());
+        verify(destinationRepository).save(milano);
+        verify(destinationRepository, never()).save(firenca);   // dosledna - ne dira se
+        assertEquals(1, gygProlaza.get(), "GYG prolaz pokrenut jer Milanu fali slug");
+
+        // drugi prolaz: nema sta da se menja, GYG ide samo ako i dalje fali
+        f.osveziSveNaStartu();
+        assertEquals("Milan", milano.getNameEn());
+        assertEquals(2, gygProlaza.get());
+    }
+
+    /** Reveal koji naiđe na zastareo slug osvežava tu destinaciju u pozadini. */
+    @Test
+    void osvezavanjeJedneDestinacije() {
+        Destination milano = dest("Milano", "Milano", "Italy");
+        milano.setId(35L);
+        milano.setAirportCode("MXP");
+        milano.setGygSlug("bergamo-l123");
+        when(destinationRepository.findById(35L)).thenReturn(java.util.Optional.of(milano));
+
+        PartnerSlugFiller f = filler(AIRALO, Set.of("milan"));
+        f.osveziDestinacijuUPozadini(35L);
+
+        assertEquals("Milan", milano.getNameEn());
+        assertNull(milano.getGygSlug());
+        assertEquals("milan", milano.getBounceSlug());
+        verify(destinationRepository).save(milano);
+        assertEquals(1, gygProlaza.get());
     }
 
     @Test

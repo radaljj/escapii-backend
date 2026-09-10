@@ -73,7 +73,11 @@ public class AirportLookupService {
             "GOT", new AirportInfo("Gothenburg", "Sweden"),
             // Kod partnera Malta nije grad nego država; grad je Valeta. Država ostaje
             // Malta, pa Airalo i dalje dobija ispravno malta-esim.
-            "MLA", new AirportInfo("Valletta", "Malta")
+            "MLA", new AirportInfo("Valletta", "Malta"),
+            // Malpensa je zapisana kao "Milano" (italijanski); LIN je "Milan". Partneri
+            // (GetYourGuide milan-l70, Bounce milan) koriste engleski - bez ovoga Milano
+            // preko MXP nema nijedan partnerski link.
+            "MXP", new AirportInfo("Milan", "Italy")
     );
 
     /** Ispravka ima prednost nad airports.dat; ako nema ni jednog, prazno. */
