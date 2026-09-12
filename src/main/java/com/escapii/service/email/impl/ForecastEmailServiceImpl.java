@@ -35,7 +35,8 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         String depDateStr = depDate.format(EmailHtmlBuilder.DATE_FMT);
 
         DailyForecast today = forecast.get(0);
-        String subject = "🌤 Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
+        // Bez emodžija u naslovu: marketinški obrazac koji Outlook/Hotmail kažnjava.
+        String subject = "Tvoja prognoza za putovanje - " + depDateStr + " | Escapii";
         long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), depDate);
         String html = buildHtml(depDate, retDate, depDateStr, daysUntil, forecast, today);
 

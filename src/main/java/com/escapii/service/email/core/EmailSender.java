@@ -27,6 +27,15 @@ public class EmailSender {
     private String fromName;
 
     /**
+     * Adresa na koju stižu odgovori kupaca. From ostaje noreply@ (verifikovan kod
+     * provajdera), ali „Odgovori" u klijentu mora da vodi na sanduče koje tim čita:
+     * odgovor koji odbije je minus kod Outlook-a, a odgovor koji stigne je najjači
+     * signal reputacije. Prazno ili isto kao From = bez Reply-To zaglavlja.
+     */
+    @Value("${app.mail-reply-to:${app.contact-email:}}")
+    private String replyToEmail;
+
+    /**
      * Postavlja pošiljaoca sa prikaznim imenom. Ako kodiranje imena pukne,
      * pada nazad na golu adresu - bolje poslati mejl bez lepog imena nego ne poslati ga.
      */
@@ -36,6 +45,18 @@ public class EmailSender {
         } catch (UnsupportedEncodingException e) {
             log.warn("[EmailSender] Ime pošiljaoca '{}' nije moguće kodirati, šaljem bez njega", fromName);
             helper.setFrom(fromEmail);
+        }
+    }
+
+    /** Reply-To sa istim prikaznim imenom; bez imena ako kodiranje pukne. */
+    private void setReplyTo(MimeMessageHelper helper) throws MessagingException {
+        if (replyToEmail == null || replyToEmail.isBlank() || replyToEmail.equalsIgnoreCase(fromEmail)) {
+            return;
+        }
+        try {
+            helper.setReplyTo(replyToEmail, fromName);
+        } catch (UnsupportedEncodingException e) {
+            helper.setReplyTo(replyToEmail);
         }
     }
 
@@ -86,6 +107,7 @@ public class EmailSender {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             setFrom(helper);
+            setReplyTo(helper);
             helper.setTo(to);
             helper.setSubject(subject);
             setBody(helper, html);
@@ -122,6 +144,7 @@ public class EmailSender {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             setFrom(helper);
+            setReplyTo(helper);
             helper.setTo(to);
             helper.setSubject(subject);
             setBody(helper, html);
