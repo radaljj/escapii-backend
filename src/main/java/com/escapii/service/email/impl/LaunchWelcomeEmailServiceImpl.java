@@ -30,7 +30,7 @@ public class LaunchWelcomeEmailServiceImpl implements LaunchWelcomeEmailService 
         String html = loadTemplate("uskoro-stize.html")
             .replace("{{SENDER_EMAIL}}", contactEmail);
 
-        boolean ok = emailSender.send(email, "Escapii uskoro stiže!", html);
+        boolean ok = emailSender.send(email, "Escapii uskoro stiže! 🚀", html);
         if (!ok) {
             log.warn("[LaunchWelcome] Email nije poslat na {}", LogUtils.maskEmail(email));
         }
