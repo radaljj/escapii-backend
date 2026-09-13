@@ -30,6 +30,7 @@ public class DailyTaskScheduler {
     private final CustomDateInquiryRepository  inquiryRepository;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     private final com.escapii.passport.PassportRetentionService passportRetentionService;
+    private final com.escapii.service.AppErrorService appErrorService;
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -75,6 +76,12 @@ public class DailyTaskScheduler {
         } catch (Exception e) {
             log.error("[Scheduler] Korak '{}' je pao - ostali koraci se nastavljaju: {}",
                     ime, e.toString(), e);
+            // Samo log nije dovoljan: server radi i health je zelen, pa pad niko ne vidi.
+            try {
+                appErrorService.record("Jutarnji krug: korak " + ime, 0, e);
+            } catch (Exception zabelezi) {
+                log.warn("[Scheduler] AppError nije zabeležen za korak '{}': {}", ime, zabelezi.toString());
+            }
         }
     }
 

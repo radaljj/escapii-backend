@@ -47,7 +47,8 @@ class ManualResendSentFlagTest {
     void setUp() {
         svc = new BookingSchedulingServiceImpl(
                 bookingRepository, giftVoucherRepository, revealEmailService, forecastEmailService,
-                weatherService, confirmationDocumentAutoSender, new com.escapii.service.impl.VoucherLedger());
+                weatherService, confirmationDocumentAutoSender, new com.escapii.service.impl.VoucherLedger(),
+                org.mockito.Mockito.mock(com.escapii.service.AppErrorService.class));
     }
 
     private Booking booking() {

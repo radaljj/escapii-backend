@@ -5,6 +5,7 @@ import com.escapii.model.BookingStatus;
 import com.escapii.model.VoucherStatus;
 import com.escapii.repository.BookingRepository;
 import com.escapii.repository.GiftVoucherRepository;
+import com.escapii.service.AppErrorService;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.ForecastEmailService;
 import com.escapii.service.email.RevealEmailService;
@@ -40,6 +41,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private final WeatherService       weatherService;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     private final VoucherLedger        voucherLedger;
+    private final AppErrorService      appErrorService;
 
     @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
@@ -295,6 +297,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 if (forecast.isEmpty()) {
                     log.warn("[Forecast] Nije moguće preuzeti prognozu za '{}' weatherQuery='{}' ({})",
                             booking.getAssignedDestination(), weatherQuery, booking.getBookingRef());
+                    prijaviNedostupnuPrognozu(booking, weatherQuery);
                     continue;
                 }
 
@@ -325,6 +328,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                         forecast.get().size());
             } catch (Exception e) {
                 log.error("[Forecast] Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
+                prijaviPad(GRESKA_PROGNOZA, booking, "Prognoza nije poslata", e);
             }
         }
 
@@ -397,6 +401,7 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 }
             } catch (Exception e) {
                 log.error("[Reveal] Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
+                prijaviPad(GRESKA_REVEAL, booking, "Reveal nije poslat", e);
             }
         }
 
@@ -404,6 +409,68 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             log.info("[Reveal] Ukupno poslato: {}/{}", sent.size(), readyList.size());
         }
         return sent;
+    }
+
+    // ── Prijava padova jutarnjeg kruga ────────────────────────────────────────
+
+    /** Mesto greške u tabu Greške - po jedan red za svaku vrstu pada, ponavljanja se broje. */
+    static final String GRESKA_PROGNOZA            = "Jutarnji krug: prognoza";
+    static final String GRESKA_PROGNOZA_NEDOSTUPNA = "Jutarnji krug: prognoza nedostupna";
+    static final String GRESKA_REVEAL              = "Jutarnji krug: reveal";
+
+    /**
+     * Nedostupna prognoza je obična pojava (weather API ume da zakaže, sutra se pokušava
+     * ponovo), pa postaje greška tek kad ugrozi reveal: polazak za ovoliko dana ili manje.
+     */
+    static final int PROGNOZA_HITNO_DANA = 3;
+
+    private static final java.time.format.DateTimeFormatter POLAZAK_FMT =
+            java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+
+    /**
+     * Omotač za padove jutarnjeg kruga. Pad je ranije ostajao samo u logu: server radi,
+     * health je zelen, a kupac ne dobije reveal. Poruka nosi šifru rezervacije i datum
+     * polaska da se iz mejla odmah vidi koga treba ručno obraditi; uzrok ostaje u
+     * stack trace-u.
+     */
+    static final class JutarnjiKrugGreska extends RuntimeException {
+        JutarnjiKrugGreska(String poruka, Throwable uzrok) {
+            super(poruka, uzrok);
+        }
+    }
+
+    private void prijaviPad(String gde, Booking booking, String sta, Exception uzrok) {
+        zabelezi(gde, new JutarnjiKrugGreska(
+                sta + " za " + booking.getBookingRef() + opisPolaska(booking) + " - " + uzrok, uzrok));
+    }
+
+    private void prijaviNedostupnuPrognozu(Booking booking, String weatherQuery) {
+        LocalDate polazak = polazak(booking);
+        if (polazak == null || polazak.isAfter(LocalDate.now().plusDays(PROGNOZA_HITNO_DANA))) {
+            return;
+        }
+        zabelezi(GRESKA_PROGNOZA_NEDOSTUPNA, new JutarnjiKrugGreska(
+                "Prognoza nije dostupna za '" + weatherQuery + "' (" + booking.getBookingRef() + opisPolaska(booking)
+                + ") - reveal čeka dok prognoza ne ode. Unesi precizniji 'Grad za prognozu' ili pošalji ručno iz panela.",
+                null));
+    }
+
+    private static LocalDate polazak(Booking booking) {
+        return booking.getSelectedDate() != null ? booking.getSelectedDate().getDepartureDate() : null;
+    }
+
+    private static String opisPolaska(Booking booking) {
+        LocalDate polazak = polazak(booking);
+        return polazak != null ? ", polazak " + polazak.format(POLAZAK_FMT) : "";
+    }
+
+    /** Beleženje greške nikad ne sme da prekine petlju - ostale rezervacije idu dalje. */
+    private void zabelezi(String gde, Exception greska) {
+        try {
+            appErrorService.record(gde, 0, greska);
+        } catch (Exception ex) {
+            log.warn("[Scheduler] AppError nije zabeležen ({}): {}", gde, ex.toString());
+        }
     }
 
     private void validateIsAssignedDestination(String assignedDestination) {

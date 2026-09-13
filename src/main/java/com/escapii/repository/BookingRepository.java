@@ -339,4 +339,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "WHERE p.passportNumber IS NOT NULL " +
            "AND (d.returnDate < :cutoff OR (b.status = 'CANCELLED' AND d.departureDate < :today))")
     List<Booking> findWithPassportsToPurge(@Param("cutoff") LocalDate cutoff, @Param("today") LocalDate today);
+
+    /**
+     * Potvrđene rezervacije bez poslatog reveala čiji je polazak između {@code today} i
+     * {@code cutoff}. Koristi {@code JobHealthService} za /api/health/jobs - bez obzira na
+     * razlog (nema destinacije, nema prognoze, slanje palo), svaka takva je kupac koji
+     * čeka reveal koji je već trebalo da stigne.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.revealSentAt IS NULL " +
+           "AND b.selectedDate.departureDate >= :today " +
+           "AND b.selectedDate.departureDate <= :cutoff")
+    List<Booking> findRevealOverdue(@Param("today") LocalDate today, @Param("cutoff") LocalDate cutoff);
 }
