@@ -329,4 +329,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
               AND b.status = com.escapii.model.BookingStatus.CONFIRMED
            """)
     long jeLiJosZaPrognozu(@Param("id") Long id);
+
+    /**
+     * Rezervacije koje još imaju upisan broj pasoša, a rok mu je istekao: povratak pre
+     * {@code cutoff} (bilo koji status), ili otkazana rezervacija čiji je polazak prošao.
+     * Koristi {@code com.escapii.passport.PassportRetentionService}.
+     */
+    @Query("SELECT DISTINCT b FROM Booking b JOIN b.selectedDate d JOIN b.passengers p " +
+           "WHERE p.passportNumber IS NOT NULL " +
+           "AND (d.returnDate < :cutoff OR (b.status = 'CANCELLED' AND d.departureDate < :today))")
+    List<Booking> findWithPassportsToPurge(@Param("cutoff") LocalDate cutoff, @Param("today") LocalDate today);
 }

@@ -44,6 +44,7 @@ public class AdminController {
     private final AdminService       adminService;
     private final DailyTaskScheduler dailyTaskScheduler;
     private final com.escapii.service.GiftTripVoucherService giftTripVoucherService;
+    private final com.escapii.passport.PassportRetentionService passportRetentionService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -442,6 +443,16 @@ public class AdminController {
     @PostMapping("/bookings/{id}/gift-voucher/resend")
     public ResponseEntity<AdminBookingResponse> resendGiftTripVoucher(@PathVariable Long id) {
         return ResponseEntity.ok(giftTripVoucherService.resend(id));
+    }
+
+    /**
+     * POST /api/admin/passports/purge — odmah briše brojeve pasoša kojima je istekao rok
+     * (inače to radi dnevni planer). Vraća koliko je brojeva obrisano.
+     */
+    @PostMapping("/passports/purge")
+    public ResponseEntity<java.util.Map<String, Integer>> purgePassports() {
+        int obrisano = passportRetentionService.purgeExpired(java.time.LocalDate.now());
+        return ResponseEntity.ok(java.util.Map.of("deleted", obrisano));
     }
 
     // ══ AGENCIJE ═════════════════════════════════════════════════════════════

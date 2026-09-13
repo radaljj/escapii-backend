@@ -41,6 +41,7 @@ class AdminControllerHttpTest {
     @MockitoBean   private AdminService adminService;
     @MockitoBean   private DailyTaskScheduler dailyTaskScheduler;
     @MockitoBean   private com.escapii.service.GiftTripVoucherService giftTripVoucherService;
+    @MockitoBean   private com.escapii.passport.PassportRetentionService passportRetentionService;
 
     @Test
     void promenaStatusaProsledjujeServisu() throws Exception {
@@ -170,5 +171,14 @@ class AdminControllerHttpTest {
         mockMvc.perform(post("/api/admin/bookings/7/gift-voucher/resend"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Rezervacija nije poklon - nema vaučera za putovanje."));
+    }
+
+    @Test
+    void purgePasosa_vracaBrojObrisanih() throws Exception {
+        when(passportRetentionService.purgeExpired(org.mockito.ArgumentMatchers.any(java.time.LocalDate.class))).thenReturn(3);
+
+        mockMvc.perform(post("/api/admin/passports/purge"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deleted").value(3));
     }
 }

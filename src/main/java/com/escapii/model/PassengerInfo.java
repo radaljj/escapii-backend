@@ -1,6 +1,8 @@
 package com.escapii.model;
 
+import com.escapii.passport.PassportNumberConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,7 +43,13 @@ public class PassengerInfo {
     @Column(name = "passport_number", length = 50)
     private String passportCountry;
 
-    /** Serijski broj pasoša putnika (velika slova + cifre, 5–20 karaktera). */
-    @Column(name = "passport_serial_number", length = 50)
+    /**
+     * Serijski broj pasoša putnika (velika slova + cifre, 5–20 karaktera).
+     * U bazi šifrovan (AES-GCM, vidi {@link com.escapii.passport.PassportCrypto}), ovde
+     * otvoren. Kolona je proširena na 255 jer je šifrat duži od broja; briše se po isteku
+     * roka ({@link com.escapii.passport.PassportRetentionService}).
+     */
+    @Convert(converter = PassportNumberConverter.class)
+    @Column(name = "passport_serial_number", length = 255)
     private String passportNumber;
 }

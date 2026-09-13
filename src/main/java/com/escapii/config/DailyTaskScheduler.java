@@ -29,6 +29,7 @@ public class DailyTaskScheduler {
     private final AvailableDateRepository      availableDateRepository;
     private final CustomDateInquiryRepository  inquiryRepository;
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
+    private final com.escapii.passport.PassportRetentionService passportRetentionService;
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -60,6 +61,8 @@ public class DailyTaskScheduler {
         korak("digest",          this::sendDigest);
         korak("cleanup termina", this::cleanupExpiredDates);
         korak("cleanup upita",   this::cleanupClosedInquiries);
+        // Brojevi pasoša imaju rok: 30 dana posle povratka, otkazane čim prođe polazak.
+        korak("brisanje pasosa", () -> passportRetentionService.purgeExpired(java.time.LocalDate.now()));
     }
 
     /**
