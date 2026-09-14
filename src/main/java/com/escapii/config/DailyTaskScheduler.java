@@ -7,6 +7,7 @@ import com.escapii.repository.CustomDateInquiryRepository;
 import com.escapii.service.BookingSchedulingService;
 import com.escapii.service.email.DigestEmailService;
 import com.escapii.service.impl.ConfirmationDocumentAutoSender;
+import com.escapii.service.impl.ExpiredDateCleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +32,7 @@ public class DailyTaskScheduler {
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     private final com.escapii.passport.PassportRetentionService passportRetentionService;
     private final com.escapii.service.AppErrorService appErrorService;
+    private final ExpiredDateCleanup expiredDateCleanup;
 
     @Scheduled(cron = "0 0 10 * * *", zone = "Europe/Belgrade")
     public void runDailyTasks() {
@@ -89,18 +91,25 @@ public class DailyTaskScheduler {
 
     /**
      * Briše termine čiji je datum polaska prošao ILI je danas:
-     * - bez rezervacija → briše se iz baze
+     * - bez rezervacija → briše se iz baze, zajedno sa vezama ka destinacijama (ExpiredDateCleanup)
      * - sa rezervacijama → deaktivira se (čuva istoriju)
      * Cutoff je "sutra" (ne "danas") jer BookingServiceImpl odbija rezervaciju
      * za termin koji je danas (isAfter(today) mora biti true) - termin sa
      * departureDate=danas se zato tretira kao već istekao za potrebe cleanup-a.
+     *
+     * <p>Deaktivacija ide PRVA: dira druge redove i ne sme da zavisi od brisanja. Dok je
+     * brisanje padalo na FK iz term_destination, a išlo je prvo, preskakala se i ona.
      */
     public void cleanupExpiredDates() {
         LocalDate cutoff = LocalDate.now().plusDays(1);
-        int deleted     = availableDateRepository.deleteExpiredWithNoBookings(cutoff);
         int deactivated = availableDateRepository.deactivateExpiredWithBookings(cutoff);
-        if (deleted > 0 || deactivated > 0) {
-            log.info("[Cleanup] Termini: obrisano={}, deaktivirano={}", deleted, deactivated);
+        if (deactivated > 0) {
+            log.info("[Cleanup] Termini: deaktivirano={}", deactivated);
+        }
+        ExpiredDateCleanup.Rezultat obrisano = expiredDateCleanup.obrisiIstekleBezRezervacija(cutoff);
+        if (obrisano.termina() > 0) {
+            log.info("[Cleanup] Termini: obrisano={} (veza ka destinacijama: {}, iz stare tabele veza: {})",
+                    obrisano.termina(), obrisano.veza(), obrisano.starihVeza());
         }
     }
 

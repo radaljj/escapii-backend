@@ -2,6 +2,7 @@ package com.escapii.repository;
 
 import com.escapii.model.TermDestination;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,4 +33,18 @@ public interface TermDestinationRepository extends JpaRepository<TermDestination
 
     /** Brisanje svih TermDestination zapisa za datu destinaciju (FK cleanup pri brisanju dest.). */
     void deleteByDestinationId(Long destinationId);
+
+    /**
+     * Veze ka destinacijama za prošle termine bez rezervacija - isti uslov kao
+     * {@link AvailableDateRepository#deleteExpiredWithNoBookings}. Zove se samo iz
+     * {@code ExpiredDateCleanup}, u istoj transakciji i PRE brisanja termina.
+     *
+     * <p>Namerno bez @Transactional: poziv van te transakcije pukne odmah, umesto da
+     * obriše veze terminima koji onda ostanu bez destinacija.
+     */
+    @Modifying
+    @Query("DELETE FROM TermDestination td WHERE td.date.id IN (" +
+           "SELECT d.id FROM AvailableDate d WHERE d.departureDate < :cutoff " +
+           "AND NOT EXISTS (SELECT b FROM Booking b WHERE b.selectedDate.id = d.id))")
+    int deleteForExpiredDatesWithNoBookings(@Param("cutoff") java.time.LocalDate cutoff);
 }

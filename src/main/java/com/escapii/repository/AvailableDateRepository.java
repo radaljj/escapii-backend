@@ -47,8 +47,13 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
 
     /**
      * Briše prošle termine (departureDate < cutoff) koji NEMAJU nijednu rezervaciju.
-     * Sigurno - ne narušava FK constraints. Pozivalac šalje "sutra" kao cutoff da
-     * termin sa departureDate=danas takođe bude tretiran kao istekao.
+     * Pozivalac šalje "sutra" kao cutoff da termin sa departureDate=danas takođe bude
+     * tretiran kao istekao.
+     *
+     * <p>NE zovi direktno. Masovni DELETE zaobilazi JPA kaskadu, pa veze ka destinacijama
+     * (term_destination i stara available_date_destinations) ostaju i drže FK - brisanje
+     * pukne. Ide isključivo kroz {@code ExpiredDateCleanup}, koji ih u istoj transakciji
+     * prvo obriše.
      */
     @Transactional
     @Modifying
