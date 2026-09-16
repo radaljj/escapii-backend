@@ -86,18 +86,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countBySelectedDateId(Long selectedDateId);
 
     /**
-     * Duplikat check - isti email + isti termin kreiran u poslednjih 24h.
-     * Koristi se za anti-spam zaštitu pri kreiranju bookinga.
+     * Duplikat check pri kreiranju rezervacije: isti mejl + isti termin, a postojeći upit još
+     * ČEKA obradu (PENDING). Potvrđena ili završena rezervacija ne blokira - novi zahtev sa istog
+     * mejla je nov upit (npr. za još putnika) koji admin vidi i odlučuje (Marko 2026-09-17).
+     * Bez vremenskog prozora: dok upit čeka, isti upit je duplikat bez obzira kad je poslat.
      */
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
            "WHERE LOWER(b.email) = LOWER(:email) " +
            "AND b.selectedDate.id = :dateId " +
-           "AND b.createdAt > :since " +
-           "AND b.status != 'CANCELLED'")
-    boolean existsDuplicateBooking(
+           "AND b.status = com.escapii.model.BookingStatus.PENDING")
+    boolean existsPendingDuplicate(
             @Param("email")  String email,
-            @Param("dateId") Long dateId,
-            @Param("since")  LocalDateTime since);
+            @Param("dateId") Long dateId);
 
     /**
      * CONFIRMED bookingovi kojima:

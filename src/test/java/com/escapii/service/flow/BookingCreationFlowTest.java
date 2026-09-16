@@ -111,7 +111,7 @@ class BookingCreationFlowTest {
     @Test
     void uspesnaRezervacijaObavestavaTimIKupca() {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
-        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
@@ -152,7 +152,7 @@ class BookingCreationFlowTest {
     @Test
     void saglasnostSeBeleziNaRezervaciji() {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
-        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
@@ -194,7 +194,7 @@ class BookingCreationFlowTest {
         AvailableDate iniDate = activeDate();
         iniDate.setDepartureAirport("INI");
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
-        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(destinationRepository.findById(anyLong())).thenReturn(Optional.of(new Destination()));
 
         BookingRequest r = validRequest();
@@ -212,7 +212,7 @@ class BookingCreationFlowTest {
         AvailableDate iniDate = activeDate();
         iniDate.setDepartureAirport("INI");
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
-        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
@@ -228,5 +228,19 @@ class BookingCreationFlowTest {
         verify(eventPublisher).publishEvent(argThat((Object e) ->
                 e instanceof BookingEmailEvent &&
                 ((BookingEmailEvent) e).getType() == BookingEmailEvent.Type.CUSTOMER_CONFIRMATION));
+    }
+
+    @Test
+    void upitNaCekanjuZaIstiTerminIMejl_odbijaSa409_aPotvrdjenaNeBlokira() {
+        // Postojeci upit jos ceka obradu -> duplikat, 409 sa porukom o cekanju, nista se ne cuva.
+        when(bookingRepository.existsPendingDuplicate("marko@example.com", 10L)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(validRequest()));
+
+        assertEquals(409, ex.getStatusCode().value());
+        assertTrue(ex.getReason() != null && ex.getReason().contains("upit na čekanju"), ex.getReason());
+        verify(bookingRepository, never()).save(any(Booking.class));
+        // Potvrdjena/zavrsena rezervacija za isti termin nije duplikat: upit se gleda samo po PENDING statusu,
+        // sto garantuje sam JPQL upit (b.status = PENDING) - servis ne salje vremenski prozor.
     }
 }

@@ -158,7 +158,7 @@ class GiftFlowEndToEndTest {
 
         // baza
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(termin()));
-        when(bookingRepository.existsDuplicateBooking(anyString(), anyLong(), any())).thenReturn(false);
+        when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(cena());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {

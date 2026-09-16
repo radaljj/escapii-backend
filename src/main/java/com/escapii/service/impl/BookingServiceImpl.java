@@ -89,14 +89,12 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // 0d. Duplikat - isti email + isti termin u poslednjih 24h
-        if (bookingRepository.existsDuplicateBooking(
-                request.getEmail(),
-                request.getSelectedDateId(),
-                java.time.LocalDateTime.now().minusHours(24))) {
-            log.warn("[AntiBot] Duplikat booking - email='{}' dateId={}", LogUtils.maskEmail(request.getEmail()), request.getSelectedDateId());
+        // 0d. Duplikat - isti email + isti termin dok prethodni upit još čeka obradu (PENDING).
+        //     Potvrđena/završena rezervacija ne blokira novi upit.
+        if (bookingRepository.existsPendingDuplicate(request.getEmail(), request.getSelectedDateId())) {
+            log.warn("[AntiBot] Duplikat upita na čekanju - email='{}' dateId={}", LogUtils.maskEmail(request.getEmail()), request.getSelectedDateId());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Već imate aktivnu rezervaciju za ovaj termin sa ovom email adresom.");
+                    "Već imate upit na čekanju za ovaj termin sa ovom email adresom. Javićemo vam se uskoro.");
         }
 
         AvailableDate date  = findActiveDateOrThrow(request.getSelectedDateId());
