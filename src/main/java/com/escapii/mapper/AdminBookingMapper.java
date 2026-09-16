@@ -36,6 +36,7 @@ public abstract class AdminBookingMapper {
     @Mapping(target = "excludedDestinationIds",  expression = "java(buildExclusionIdList(entity))")
     @Mapping(target = "termDestinations",        ignore = true)
     @Mapping(target = "passengers",              expression = "java(buildPassengers(entity))")
+    @Mapping(target = "agencyInvoiceNumber",     expression = "java(entity.invoiceNumberForDisplay())")
     public abstract AdminBookingResponse toResponse(Booking entity);
 
     public List<AdminBookingResponse> toResponseList(List<Booking> entities) {

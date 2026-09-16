@@ -62,7 +62,6 @@ class DeleteCancelledBookingVoucherTest {
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     @Mock private AgencySettlementCalculator agencySettlementCalculator;
     @Mock private BookingFinancialItemRepository bookingFinancialItemRepository;
-    @Mock private AgencyInvoiceSequenceRepository agencyInvoiceSequenceRepository;
 
     private AdminServiceImpl svc;
 
@@ -73,8 +72,7 @@ class DeleteCancelledBookingVoucherTest {
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
-                agencySettlementCalculator, bookingFinancialItemRepository,
-                agencyInvoiceSequenceRepository);
+                agencySettlementCalculator, bookingFinancialItemRepository);
     }
 
     private static final String KOD = "ESC-AAAA-BBBB-CCCC";

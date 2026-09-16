@@ -42,6 +42,7 @@ class AdminControllerHttpTest {
     @MockitoBean   private DailyTaskScheduler dailyTaskScheduler;
     @MockitoBean   private com.escapii.service.GiftTripVoucherService giftTripVoucherService;
     @MockitoBean   private com.escapii.passport.PassportRetentionService passportRetentionService;
+    @MockitoBean   private com.escapii.service.AgencyInvoiceService agencyInvoiceService;
 
     @Test
     void promenaStatusaProsledjujeServisu() throws Exception {
@@ -180,5 +181,57 @@ class AdminControllerHttpTest {
         mockMvc.perform(post("/api/admin/passports/purge"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.deleted").value(3));
+    }
+
+    @Test
+    void pregledFaktureAgencije_prosledjujeServisu() throws Exception {
+        when(agencyInvoiceService.preview(3L)).thenReturn(new com.escapii.dto.AgencyInvoicePreview(
+                3L, "Sani Tours", "sandra@sani.rs", new java.math.BigDecimal("300.00"), 3,
+                java.util.List.of(), java.util.List.of(), 1,
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 15),
+                "Marketinške usluge za period 01.09.2026. – 15.09.2026.", true, null));
+
+        mockMvc.perform(get("/api/admin/agencies/3/invoices/preview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.amount").value(300.00))
+                .andExpect(jsonPath("$.bookingCount").value(3))
+                .andExpect(jsonPath("$.canInvoice").value(true));
+    }
+
+    @Test
+    void pravljenjeFaktureAgencije_vraca201_iPoslovnaGreskaStizeKao422() throws Exception {
+        com.escapii.model.AgencyInvoice inv = new com.escapii.model.AgencyInvoice();
+        inv.setId(9L); inv.setInvoiceNumber("ESC-AG-2026-0001"); inv.setAgencyId(3L); inv.setAgencyName("Sani Tours");
+        inv.setDescription("Marketinške usluge"); inv.setAmount(new java.math.BigDecimal("300.00")); inv.setBookingCount(3);
+        inv.setStatus(com.escapii.model.AgencyInvoiceStatus.SENT);
+        when(agencyInvoiceService.create(3L, "Marketinške usluge"))
+                .thenReturn(com.escapii.dto.AgencyInvoiceResponse.from(inv, java.util.List.of("ESC-a", "ESC-b", "ESC-c")));
+
+        mockMvc.perform(post("/api/admin/agencies/3/invoices")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"Marketinške usluge\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.invoiceNumber").value("ESC-AG-2026-0001"))
+                .andExpect(jsonPath("$.bookingRefs.length()").value(3));
+
+        when(agencyInvoiceService.create(4L, "x"))
+                .thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Nema završenih putovanja koja čekaju fakturu."));
+        mockMvc.perform(post("/api/admin/agencies/4/invoices")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"x\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Nema završenih putovanja koja čekaju fakturu."));
+    }
+
+    @Test
+    void pdfFakture_vracaPdfSaImenomFajla() throws Exception {
+        when(agencyInvoiceService.pdf(9L)).thenReturn(
+                new com.escapii.service.AgencyInvoiceService.Pdf("escapii-faktura-ESC-AG-2026-0001.pdf", "%PDF-1.4".getBytes()));
+
+        mockMvc.perform(get("/api/admin/agency-invoices/9/pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"escapii-faktura-ESC-AG-2026-0001.pdf\""))
+                .andExpect(content().contentType(org.springframework.http.MediaType.APPLICATION_PDF));
     }
 }

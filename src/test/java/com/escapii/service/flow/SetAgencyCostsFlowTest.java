@@ -10,7 +10,6 @@ import com.escapii.model.BookingFinancialItem;
 import com.escapii.model.BookingStatus;
 import com.escapii.model.ItemType;
 import com.escapii.model.SettlementStatus;
-import com.escapii.repository.AgencyInvoiceSequenceRepository;
 import com.escapii.repository.AgencyRepository;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingFinancialItemRepository;
@@ -74,7 +73,6 @@ class SetAgencyCostsFlowTest {
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     @Mock private BookingFinancialItemRepository bookingFinancialItemRepository;
-    @Mock private AgencyInvoiceSequenceRepository agencyInvoiceSequenceRepository;
 
     private AdminServiceImpl svc;
 
@@ -86,8 +84,7 @@ class SetAgencyCostsFlowTest {
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
-                new AgencySettlementCalculatorImpl(), bookingFinancialItemRepository,
-                agencyInvoiceSequenceRepository);
+                new AgencySettlementCalculatorImpl(), bookingFinancialItemRepository);
         lenient().when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 

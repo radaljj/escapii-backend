@@ -142,7 +142,7 @@ public class AgencySettlementCalculatorImpl implements AgencySettlementCalculato
                 .agencyName(booking.getAgencyNameSnapshot())
                 .currency("EUR")
                 .settlementStatus(booking.getSettlementStatus())
-                .agencyInvoiceNumber(booking.getAgencyInvoiceNumber())
+                .agencyInvoiceNumber(booking.invoiceNumberForDisplay())
                 .agencyInvoicedAt(booking.getAgencyInvoicedAt())
                 .agencyPaidAt(booking.getAgencyPaidAt())
                 .lineItems(lineItems)

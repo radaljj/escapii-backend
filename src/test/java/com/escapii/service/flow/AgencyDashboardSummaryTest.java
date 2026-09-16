@@ -6,7 +6,6 @@ import com.escapii.mapper.AdminBookingMapper;
 import com.escapii.mapper.DestinationMapper;
 import com.escapii.model.Booking;
 import com.escapii.model.SettlementStatus;
-import com.escapii.repository.AgencyInvoiceSequenceRepository;
 import com.escapii.repository.AgencyRepository;
 import com.escapii.repository.AvailableDateRepository;
 import com.escapii.repository.BookingFinancialItemRepository;
@@ -68,7 +67,6 @@ class AgencyDashboardSummaryTest {
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     @Mock private AgencySettlementCalculator agencySettlementCalculator;
     @Mock private BookingFinancialItemRepository bookingFinancialItemRepository;
-    @Mock private AgencyInvoiceSequenceRepository agencyInvoiceSequenceRepository;
 
     private AdminServiceImpl svc;
 
@@ -79,8 +77,7 @@ class AgencyDashboardSummaryTest {
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
-                agencySettlementCalculator, bookingFinancialItemRepository,
-                agencyInvoiceSequenceRepository);
+                agencySettlementCalculator, bookingFinancialItemRepository);
     }
 
     private Booking bookingWith(SettlementStatus st) {
@@ -91,10 +88,10 @@ class AgencyDashboardSummaryTest {
     }
 
     private AgencySettlementResponse response(BigDecimal net) {
-        // Dashboard summary koristi netSettlement (stvarni transfer izmedju
-        // strana, tj. escapiiEarnings - vaucer). Testovi popunjavaju taj field.
+        // Dashboard summary sabira escapiiEarnings: od 2026-09 sve uplate (i vaučeri)
+        // idu agenciji, pa se vaučer ne odbija. Testovi popunjavaju taj field.
         return AgencySettlementResponse.builder()
-                .netSettlement(net)
+                .escapiiEarnings(net)
                 .build();
     }
 
@@ -132,11 +129,9 @@ class AgencyDashboardSummaryTest {
     }
 
     @Test
-    void summary_koristi_netSettlement_ne_escapiiEarnings_kad_ima_vaucera() {
-        // Regresija: dashboard je ranije sabirao escapiiEarnings, sto je
-        // prikazivalo iznos koji agencija nikad ne transferise. Sa vaucerom
-        // od 20€ i zaradom 69,50€, agencija duguje samo 49,50€ - i to je ono
-        // sto mora videti pod "Fakturisano/Naplaceno".
+    void summary_koristi_escapiiEarnings_vaucer_se_ne_odbija() {
+        // Vaučer plaća agencija (od 2026-09), pa novac od vaučera nije kod Escapii-ja:
+        // agenciji se fakturiše cela zarada 69,50€, ne 49,50€ umanjeno za vaučer.
         Booking inv = bookingWith(SettlementStatus.INVOICED);
         AgencySettlementResponse s = AgencySettlementResponse.builder()
                 .escapiiEarnings(new BigDecimal("69.50"))
@@ -149,9 +144,9 @@ class AgencyDashboardSummaryTest {
         when(agencySettlementCalculator.calculate(inv)).thenReturn(s);
 
         AgencyDashboardSummary summary = svc.agencyDashboardSummary(null, null, null);
-        assertEquals(new BigDecimal("49.50"), summary.getInvoicedEscapiiTotal(),
-                "dashboard mora prikazati netSettlement, ne escapiiEarnings");
-        assertEquals(new BigDecimal("49.50"), summary.getProjectedEscapiiTotal());
+        assertEquals(new BigDecimal("69.50"), summary.getInvoicedEscapiiTotal(),
+                "dashboard mora prikazati escapiiEarnings - vaučer se ne odbija");
+        assertEquals(new BigDecimal("69.50"), summary.getProjectedEscapiiTotal());
     }
 
     @Test

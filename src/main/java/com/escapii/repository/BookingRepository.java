@@ -351,4 +351,24 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.selectedDate.departureDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff")
     List<Booking> findRevealOverdue(@Param("today") LocalDate today, @Param("cutoff") LocalDate cutoff);
+
+    // ── Zbirne fakture agencijama ────────────────────────────────────────────
+
+    /**
+     * Završena putovanja agencije koja još nisu ušla ni u jednu zbirnu fakturu.
+     * Stari INVOICED/PAID po rezervaciji (iz vremena pre zbirnih faktura) se ne diraju.
+     * Redosled po datumu povratka - to je i redosled na pregledu fakture.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.agencyIdSnapshot = :agencyId " +
+           "AND b.status = com.escapii.model.BookingStatus.COMPLETED " +
+           "AND b.agencyInvoice IS NULL " +
+           "AND b.settlementStatus IN (com.escapii.model.SettlementStatus.NEEDS_COSTS, " +
+           "                           com.escapii.model.SettlementStatus.READY_FOR_INVOICE) " +
+           "ORDER BY b.selectedDate.returnDate ASC, b.id ASC")
+    List<Booking> findCompletedNotInvoiced(@Param("agencyId") Long agencyId);
+
+    /** Koliko rezervacija agencije je u datom statusu, a još nije fakturisano (npr. CONFIRMED = putovanja u toku). */
+    long countByAgencyIdSnapshotAndStatusAndAgencyInvoiceIsNull(Long agencyId, BookingStatus status);
+
+    List<Booking> findByAgencyInvoiceIdOrderByIdAsc(Long agencyInvoiceId);
 }

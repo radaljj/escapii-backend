@@ -110,6 +110,63 @@ public class InvoicePdfService {
         builder.useFont(() -> classpath("fonts/Inter-Bold.ttf"),    "InvoiceSans", 700, FontStyle.NORMAL, true);
     }
 
+    /**
+     * Zbirna faktura agenciji - isti dizajn i fontovi kao profaktura, drugi šablon
+     * (agency-invoice.html): jedna stavka, bez QR koda, podaci firme samo ako su uneti.
+     */
+    public byte[] generateAgency(AgencyInvoiceData d) {
+        try {
+            boolean acquired = PDF_SEMAPHORE.tryAcquire(45, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new RuntimeException("PDF generisanje nije moglo da počne - server prezauzet");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("PDF generisanje prekinuto dok je čekalo na semafor", e);
+        }
+        try {
+            Context ctx = new Context(new Locale("sr"));
+            ctx.setVariable("logoDataUri",     loadImageDataUri("static/images/logo-black.png", "image/png"));
+            ctx.setVariable("invoiceNumber",   d.invoiceNumber());
+            ctx.setVariable("issuedAt",        d.issuedAt().format(DATE_FMT));
+            ctx.setVariable("dueDate",         d.dueDate().format(DATE_FMT));
+            ctx.setVariable("periodFrom",      d.periodFrom().format(DATE_FMT));
+            ctx.setVariable("periodTo",        d.periodTo().format(DATE_FMT));
+            ctx.setVariable("transactionDate", d.periodTo().format(DATE_FMT));
+            ctx.setVariable("agencyName",      d.agencyName());
+            ctx.setVariable("agencyContact",   d.agencyContact());
+            ctx.setVariable("agencyEmail",     d.agencyEmail());
+            ctx.setVariable("description",     d.description());
+            ctx.setVariable("amount",          d.amountFormatted());
+            ctx.setVariable("companyName",     d.companyName());
+            ctx.setVariable("companyAddress",  d.companyAddress());
+            ctx.setVariable("companyPib",      d.companyPib());
+            ctx.setVariable("companyMb",       d.companyMb());
+            ctx.setVariable("companyAccount",  d.companyAccount());
+            ctx.setVariable("companyBank",     d.companyBank());
+            ctx.setVariable("companyEmail",    d.companyEmail());
+            ctx.setVariable("companyWebsite",  d.companyWebsite());
+            ctx.setVariable("hasPib",          d.hasPib());
+            ctx.setVariable("hasMb",           d.hasMb());
+            ctx.setVariable("hasAccount",      d.hasAccount());
+            ctx.setVariable("hasBank",         d.hasBank());
+            String html = templateEngine.process("agency-invoice", ctx);
+            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                PdfRendererBuilder builder = new PdfRendererBuilder();
+                builder.useFastMode();
+                registerFonts(builder);
+                builder.withHtmlContent(html, "classpath:/templates/");
+                builder.toStream(os);
+                builder.run();
+                return os.toByteArray();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Neuspelo generisanje PDF fakture agenciji: " + e.getMessage(), e);
+        } finally {
+            PDF_SEMAPHORE.release();
+        }
+    }
+
     private static String loadImageDataUri(String path, String mimeType) {
         try (InputStream is = new ClassPathResource(path).getInputStream()) {
             byte[] bytes = is.readAllBytes();

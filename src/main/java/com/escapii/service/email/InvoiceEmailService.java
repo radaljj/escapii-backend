@@ -7,4 +7,7 @@ public interface InvoiceEmailService {
     /** @return true ako je mejl stvarno otišao (vidi ConfirmationDocumentEmailService). */
     boolean sendInvoiceToClient(Booking booking, byte[] pdfBytes, String invoiceNumber);
     boolean sendVoucherInvoiceToClient(GiftVoucher voucher, byte[] pdfBytes, String invoiceNumber);
+
+    /** Zbirna faktura agenciji na {@code invoice.agencyEmail}. @return true ako je mejl stvarno otišao. */
+    boolean sendAgencyInvoice(com.escapii.model.AgencyInvoice invoice, byte[] pdfBytes);
 }

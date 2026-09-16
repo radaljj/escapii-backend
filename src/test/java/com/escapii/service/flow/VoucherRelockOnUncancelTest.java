@@ -58,7 +58,6 @@ class VoucherRelockOnUncancelTest {
     @Mock private ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     @Mock private com.escapii.service.AgencySettlementCalculator agencySettlementCalculator;
     @Mock private com.escapii.repository.BookingFinancialItemRepository bookingFinancialItemRepository;
-    @Mock private com.escapii.repository.AgencyInvoiceSequenceRepository agencyInvoiceSequenceRepository;
 
     private AdminServiceImpl svc;
 
@@ -69,8 +68,7 @@ class VoucherRelockOnUncancelTest {
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,
                 availableDateService, inquiryService, airportLookupService, partnerSlugFiller, new com.escapii.service.impl.VoucherLedger(), invoiceService,
                 confirmationDocumentEmailService, confirmationDocumentAutoSender,
-                agencySettlementCalculator, bookingFinancialItemRepository,
-                agencyInvoiceSequenceRepository);
+                agencySettlementCalculator, bookingFinancialItemRepository);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
         // lenient - jedan test namerno nikad ne poziva save() na vaučeru (nema promene stanja)
         lenient().when(giftVoucherRepository.save(any(GiftVoucher.class))).thenAnswer(inv -> inv.getArgument(0));

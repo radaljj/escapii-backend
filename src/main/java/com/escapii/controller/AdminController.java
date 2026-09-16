@@ -45,6 +45,7 @@ public class AdminController {
     private final DailyTaskScheduler dailyTaskScheduler;
     private final com.escapii.service.GiftTripVoucherService giftTripVoucherService;
     private final com.escapii.passport.PassportRetentionService passportRetentionService;
+    private final com.escapii.service.AgencyInvoiceService agencyInvoiceService;
 
     // ══ DESTINACIJE ══════════════════════════════════════════════════════════
 
@@ -489,6 +490,71 @@ public class AdminController {
         return ResponseEntity.ok(adminService.toggleAgencyActive(id));
     }
 
+    // ══ Zbirne fakture agencijama ════════════════════════════════════════════
+
+    /** GET /api/admin/agencies/{id}/invoices/preview — šta bi ušlo u fakturu sada (iznos, rezervacije, šta ne ulazi i zašto). */
+    @GetMapping("/agencies/{id}/invoices/preview")
+    public ResponseEntity<com.escapii.dto.AgencyInvoicePreview> agencyInvoicePreview(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.preview(id));
+    }
+
+    /** POST /api/admin/agencies/{id}/invoices — pravi PDF, šalje ga agenciji, zaključava obuhvaćene rezervacije. */
+    @PostMapping("/agencies/{id}/invoices")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceResponse> createAgencyInvoice(
+            @PathVariable Long id,
+            @Valid @RequestBody com.escapii.dto.AgencyInvoiceRequest body) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(agencyInvoiceService.create(id, body.description()));
+    }
+
+    /** GET /api/admin/agencies/{id}/invoices — istorija faktura jedne agencije, najnovije prve. */
+    @GetMapping("/agencies/{id}/invoices")
+    public ResponseEntity<List<com.escapii.dto.AgencyInvoiceResponse>> agencyInvoices(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.listForAgency(id));
+    }
+
+    /** GET /api/admin/agency-invoices — sve fakture svih agencija, najnovije prve. */
+    @GetMapping("/agency-invoices")
+    public ResponseEntity<List<com.escapii.dto.AgencyInvoiceResponse>> allAgencyInvoices() {
+        return ResponseEntity.ok(agencyInvoiceService.listAll());
+    }
+
+    /** POST /api/admin/agency-invoices/{id}/paid — agencija je uplatila. */
+    @PostMapping("/agency-invoices/{id}/paid")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceResponse> agencyInvoicePaid(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.markPaid(id));
+    }
+
+    /** POST /api/admin/agency-invoices/{id}/unpaid — rollback uplate. */
+    @PostMapping("/agency-invoices/{id}/unpaid")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceResponse> agencyInvoiceUnpaid(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.unmarkPaid(id));
+    }
+
+    /** POST /api/admin/agency-invoices/{id}/void — storno; body {"reason": "..."}. */
+    @PostMapping("/agency-invoices/{id}/void")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceResponse> agencyInvoiceVoid(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        return ResponseEntity.ok(agencyInvoiceService.voidInvoice(id, body != null ? body.get("reason") : null));
+    }
+
+    /** POST /api/admin/agency-invoices/{id}/resend — ponovo šalje sačuvani PDF. */
+    @PostMapping("/agency-invoices/{id}/resend")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceResponse> agencyInvoiceResend(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.resend(id));
+    }
+
+    /** GET /api/admin/agency-invoices/{id}/pdf — sačuvani PDF fakture. */
+    @GetMapping("/agency-invoices/{id}/pdf")
+    public ResponseEntity<byte[]> agencyInvoicePdf(@PathVariable Long id) {
+        com.escapii.service.AgencyInvoiceService.Pdf pdf = agencyInvoiceService.pdf(id);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + pdf.fileName() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf.bytes());
+    }
+
     /** PUT /api/admin/dates/{id}/agency — dodeli agenciju terminu (agencyId=null briše vezu). */
     @PutMapping("/dates/{id}/agency")
     public ResponseEntity<Void> assignAgencyToDate(
@@ -499,7 +565,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    // ══ Obracun sa agencijom (per-booking faktura) ══════════════════════════
+    // ══ Obracun sa agencijom (troskovi po rezervaciji, pregled) ═════════════
 
     /**
      * GET /api/admin/bookings/{id}/agency-settlement-preview
@@ -524,41 +590,6 @@ public class AdminController {
         return ResponseEntity.ok(adminService.setAgencyCosts(id, body));
     }
 
-    /**
-     * POST /api/admin/bookings/{id}/agency-invoice
-     * Finalizuje Escapii → agencija fakturu za jednu rezervaciju: generise
-     * agencyInvoiceNumber (ESC-AG-YYYY-NNNN), prelaz na INVOICED, zakljucava
-     * troskove protiv izmene. Zahteva readyForInvoice=true.
-     */
-    @PostMapping("/bookings/{id}/agency-invoice")
-    public ResponseEntity<AgencySettlementResponse> finalizeAgencyInvoice(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.finalizeAgencyInvoice(id));
-    }
-
-    /**
-     * POST /api/admin/bookings/{id}/agency-invoice/void
-     * Storno fakture: INVOICED→VOIDED. Broj fakture ostaje na bookingu kao audit trag.
-     * Body: {"reason": "opis razloga"}
-     */
-    @PostMapping("/bookings/{id}/agency-invoice/void")
-    public ResponseEntity<AgencySettlementResponse> voidAgencyInvoice(
-            @PathVariable Long id,
-            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body) {
-        String reason = body != null ? body.get("reason") : null;
-        return ResponseEntity.ok(adminService.voidAgencyInvoice(id, reason));
-    }
-
-    /**
-     * PATCH /api/admin/bookings/{id}/settlement-status?value=PAID
-     * Rucni prelaz izmedju settlement stanja (INVOICED→PAID, PAID→INVOICED
-     * kao rollback, INVOICED→READY_FOR_INVOICE kao storno).
-     */
-    @PatchMapping("/bookings/{id}/settlement-status")
-    public ResponseEntity<AgencySettlementResponse> updateSettlementStatus(
-            @PathVariable Long id,
-            @RequestParam("value") com.escapii.model.SettlementStatus value) {
-        return ResponseEntity.ok(adminService.updateSettlementStatus(id, value));
-    }
 
     /**
      * GET /api/admin/agencies/settlements/dashboard

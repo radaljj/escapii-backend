@@ -157,6 +157,23 @@ public class Booking {
     @Column(name = "agency_void_reason", length = 255)
     private String agencyVoidReason;
 
+    /**
+     * Zbirna faktura agenciji u koju je ušla ova rezervacija (od 2026-09: fakturiše se po
+     * agenciji, ne po rezervaciji). Null dok putovanje nije završeno i fakturisano, ili
+     * posle storna te fakture. Kolonu {@code agency_invoice_id} pravi SchemaBootstrap.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_invoice_id")
+    private AgencyInvoice agencyInvoice;
+
+    /**
+     * Broj fakture za prikaz: zbirna faktura ako postoji, inače stari broj po rezervaciji
+     * (iz vremena pre zbirnih faktura). Nije getter - MapStruct ga ne mapira sam.
+     */
+    public String invoiceNumberForDisplay() {
+        return agencyInvoice != null ? agencyInvoice.getInvoiceNumber() : agencyInvoiceNumber;
+    }
+
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingFinancialItem> financialItems = new ArrayList<>();
 
