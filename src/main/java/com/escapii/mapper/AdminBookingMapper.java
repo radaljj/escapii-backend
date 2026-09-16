@@ -37,6 +37,7 @@ public abstract class AdminBookingMapper {
     @Mapping(target = "termDestinations",        ignore = true)
     @Mapping(target = "passengers",              expression = "java(buildPassengers(entity))")
     @Mapping(target = "agencyInvoiceNumber",     expression = "java(entity.invoiceNumberForDisplay())")
+    @Mapping(source = "agencyNameSnapshot",       target = "agencyName")
     public abstract AdminBookingResponse toResponse(Booking entity);
 
     public List<AdminBookingResponse> toResponseList(List<Booking> entities) {

@@ -1065,18 +1065,39 @@ public class AdminServiceImpl implements AdminService {
         return toAgencyResponse(agencyRepository.save(a));
     }
 
+    /**
+     * Dodeli agenciju terminu. Rezervacije na terminu koje još nisu u zbirnoj fakturi PRATE promenu:
+     * snimak agencije (agencyIdSnapshot/agencyNameSnapshot) se prepiše, jer je termin izvor istine dok
+     * se ne fakturiše. Fakturisane ostaju kod agencije kojoj su fakturisane. Skidanje agencije (null)
+     * ne dira rezervacije. (2026-09-17: Marko prebacio termin na drugu agenciju, a rezervacije su
+     * ostale kod stare pa ih zbirna faktura nije videla.)
+     */
+    @Override
     @Transactional
-    public void assignAgencyToDate(Long dateId, Long agencyId) {
+    public int assignAgencyToDate(Long dateId, Long agencyId) {
         AvailableDate date = findDateOrThrow(dateId);
         if (agencyId == null) {
             date.setAgency(null);
-        } else {
-            Agency agency = agencyRepository.findById(agencyId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Agencija nije pronađena: " + agencyId));
-            date.setAgency(agency);
+            availableDateRepository.save(date);
+            return 0;
         }
+        Agency agency = agencyRepository.findById(agencyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Agencija nije pronađena: " + agencyId));
+        date.setAgency(agency);
         availableDateRepository.save(date);
+
+        int prebaceno = 0;
+        for (Booking b : bookingRepository.findOnDateNotInvoiced(dateId)) {
+            if (agency.getId().equals(b.getAgencyIdSnapshot())) continue;
+            log.info("[ADMIN] {}: agencija '{}' → '{}' (promena agencije na terminu {})",
+                    b.getBookingRef(), b.getAgencyNameSnapshot(), agency.getName(), dateId);
+            b.setAgencyIdSnapshot(agency.getId());
+            b.setAgencyNameSnapshot(agency.getName());
+            bookingRepository.save(b);
+            prebaceno++;
+        }
+        return prebaceno;
     }
 
     private AgencyResponse toAgencyResponse(Agency a) {

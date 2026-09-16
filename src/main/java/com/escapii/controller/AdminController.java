@@ -555,14 +555,17 @@ public class AdminController {
                 .body(pdf.bytes());
     }
 
-    /** PUT /api/admin/dates/{id}/agency — dodeli agenciju terminu (agencyId=null briše vezu). */
+    /**
+     * PUT /api/admin/dates/{id}/agency — dodeli agenciju terminu (agencyId=null briše vezu).
+     * Odgovor: {"movedBookings": N} - koliko je nefakturisanih rezervacija sa termina prešlo na novu agenciju.
+     */
     @PutMapping("/dates/{id}/agency")
-    public ResponseEntity<Void> assignAgencyToDate(
+    public ResponseEntity<Map<String, Object>> assignAgencyToDate(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Long> body) {
         Long agencyId = body != null ? body.get("agencyId") : null;
-        adminService.assignAgencyToDate(id, agencyId);
-        return ResponseEntity.noContent().build();
+        int moved = adminService.assignAgencyToDate(id, agencyId);
+        return ResponseEntity.ok(Map.of("movedBookings", moved));
     }
 
     // ══ Obracun sa agencijom (troskovi po rezervaciji, pregled) ═════════════

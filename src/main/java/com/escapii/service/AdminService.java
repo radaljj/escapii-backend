@@ -88,7 +88,11 @@ public interface AdminService {
     AgencyResponse createAgency(AgencyRequest req);
     AgencyResponse updateAgency(Long id, AgencyRequest req);
     AgencyResponse toggleAgencyActive(Long id);
-    void assignAgencyToDate(Long dateId, Long agencyId);
+    /**
+     * Dodeli agenciju terminu. Potvrđene/završene rezervacije sa termina koje još nisu u zbirnoj
+     * fakturi prelaze na novu agenciju (snimak se prepiše). @return koliko ih je prebačeno.
+     */
+    int assignAgencyToDate(Long dateId, Long agencyId);
 
     // ── Obracun sa agencijom (per-booking faktura) ──
     /** Preview obracuna Escapii ↔ agencija za jednu rezervaciju (ide kroz kalkulator). */

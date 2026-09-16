@@ -379,6 +379,29 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "ORDER BY b.id ASC")
     List<Booking> findLegacySettledWithoutInvoice();
 
+    /**
+     * Potvrđene/završene rezervacije na terminu koje još nisu ni u jednoj zbirnoj fakturi - one
+     * PRATE promenu agencije na terminu (AdminService.assignAgencyToDate).
+     */
+    @Query("SELECT b FROM Booking b " +
+           "WHERE b.selectedDate.id = :dateId " +
+           "  AND b.agencyInvoice IS NULL " +
+           "  AND b.status IN (com.escapii.model.BookingStatus.CONFIRMED, com.escapii.model.BookingStatus.COMPLETED) " +
+           "ORDER BY b.id ASC")
+    List<Booking> findOnDateNotInvoiced(@Param("dateId") Long dateId);
+
+    /**
+     * Potvrđene/završene rezervacije bez zbirne fakture čiji snimak agencije NIJE agencija koja
+     * trenutno stoji na terminu. BookingAgencySync ih pri startu usklađuje: termin je izvor istine
+     * dok rezervacija nije fakturisana.
+     */
+    @Query("SELECT b FROM Booking b JOIN b.selectedDate d JOIN d.agency a " +
+           "WHERE b.agencyInvoice IS NULL " +
+           "  AND b.status IN (com.escapii.model.BookingStatus.CONFIRMED, com.escapii.model.BookingStatus.COMPLETED) " +
+           "  AND (b.agencyIdSnapshot IS NULL OR b.agencyIdSnapshot <> a.id) " +
+           "ORDER BY b.id ASC")
+    List<Booking> findAgencyOutOfSync();
+
     /** Koliko rezervacija agencije je u datom statusu, a još nije fakturisano (npr. CONFIRMED = putovanja u toku). */
     long countByAgencyIdSnapshotAndStatusAndAgencyInvoiceIsNull(Long agencyId, BookingStatus status);
 

@@ -111,4 +111,7 @@ public class AdminBookingResponse {
     private LocalDateTime agencyPaidAt;
     private LocalDateTime agencyVoidedAt;
     private String        agencyVoidReason;
+
+    /** Agencija kojoj rezervacija pripada (snimak sa termina; prati termin dok nije fakturisana). */
+    private String        agencyName;
 }
