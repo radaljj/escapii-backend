@@ -355,17 +355,29 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // ── Zbirne fakture agencijama ────────────────────────────────────────────
 
     /**
-     * Završena putovanja agencije koja još nisu ušla ni u jednu zbirnu fakturu.
-     * Stari INVOICED/PAID po rezervaciji (iz vremena pre zbirnih faktura) se ne diraju.
-     * Redosled po datumu povratka - to je i redosled na pregledu fakture.
+     * Završena putovanja agencije koja još nisu ni u jednoj zbirnoj fakturi - kandidati za sledeću
+     * fakturu. Namerno BEZ filtera po settlementStatus: da li je obračun spreman odlučuje kalkulator,
+     * a rezervacija je „fakturisana" samo ako pokazuje na zbirnu fakturu. (Filter po statusu je
+     * jednom tiho izostavio rezervaciju koja je kroz stari tok po rezervaciji imala INVOICED/VOIDED.)
      */
-    @Query("SELECT b FROM Booking b WHERE b.agencyIdSnapshot = :agencyId " +
-           "AND b.status = com.escapii.model.BookingStatus.COMPLETED " +
-           "AND b.agencyInvoice IS NULL " +
-           "AND b.settlementStatus IN (com.escapii.model.SettlementStatus.NEEDS_COSTS, " +
-           "                           com.escapii.model.SettlementStatus.READY_FOR_INVOICE) " +
+    @Query("SELECT b FROM Booking b " +
+           "WHERE b.agencyIdSnapshot = :agencyId " +
+           "  AND b.status = com.escapii.model.BookingStatus.COMPLETED " +
+           "  AND b.agencyInvoice IS NULL " +
            "ORDER BY b.selectedDate.returnDate ASC, b.id ASC")
     List<Booking> findCompletedNotInvoiced(@Param("agencyId") Long agencyId);
+
+    /**
+     * Ostaci starog toka fakturisanja po rezervaciji (pre 2026-09-17): status INVOICED/PAID/VOIDED
+     * bez veze ka zbirnoj fakturi. LegacySettlementReset ih pri startu vraća u aktivan tok.
+     */
+    @Query("SELECT b FROM Booking b " +
+           "WHERE b.agencyInvoice IS NULL " +
+           "  AND b.settlementStatus IN (com.escapii.model.SettlementStatus.INVOICED, " +
+           "                             com.escapii.model.SettlementStatus.PAID, " +
+           "                             com.escapii.model.SettlementStatus.VOIDED) " +
+           "ORDER BY b.id ASC")
+    List<Booking> findLegacySettledWithoutInvoice();
 
     /** Koliko rezervacija agencije je u datom statusu, a još nije fakturisano (npr. CONFIRMED = putovanja u toku). */
     long countByAgencyIdSnapshotAndStatusAndAgencyInvoiceIsNull(Long agencyId, BookingStatus status);

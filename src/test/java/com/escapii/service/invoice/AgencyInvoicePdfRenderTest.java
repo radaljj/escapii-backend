@@ -61,13 +61,19 @@ class AgencyInvoicePdfRenderTest {
         assertTrue(t.contains("1.234,50"), t);
         assertTrue(t.contains("sani tours"), t);
         assertTrue(t.contains("sandra@sani.rs"), t);
-        assertTrue(t.contains("datum prometa: 15.09.2026."), t);
-        assertTrue(t.contains("rok plaćanja: 24.09.2026."), t);
+        // Etikete su uppercase sa letter-spacing pa ih PDFTextStripper vadi kao "d a t u m" -
+        // proveravaju se bez razmaka; vrednosti su u zasebnim celijama pa se proveravaju odvojeno.
+        String z = t.replace(" ", "");
+        assertTrue(z.contains("datumprometa") && t.contains("15.09.2026."), t);
+        assertTrue(z.contains("rokplaćanja") && t.contains("24.09.2026."), t);
+        assertTrue(z.contains("datumizdavanja") && t.contains("16.09.2026."), t);
+        assertTrue(z.contains("ukupnozauplatu"), t);
+        assertTrue(z.contains("brojfakture"), t);
         assertTrue(t.contains("podaci za uplatu biće naknadno dostavljeni"), t);
         assertFalse(t.contains("000000000"), "PIB nule ne smeju na dokument");
         assertFalse(t.contains("placeholder"), t);
-        assertFalse(t.contains("pib"), t);
-        assertFalse(t.contains("broj računa"), t);
+        assertFalse(z.contains("pib"), t);
+        assertFalse(z.contains("brojračuna"), t);
     }
 
     @Test
@@ -76,8 +82,10 @@ class AgencyInvoicePdfRenderTest {
         sacuvaj(pdf, "sa-firmom");
         String t = normalizovano(tekst(pdf));
 
-        assertTrue(t.contains("pib: 112233445"), t);
-        assertTrue(t.contains("mb: 21234567"), t);
+        String z = t.replace(" ", "");
+        assertTrue(z.contains("pib") && t.contains("112233445"), t);
+        assertTrue(z.contains("mb") && t.contains("21234567"), t);
+        assertTrue(z.contains("brojračuna") && z.contains("pozivnabroj"), t);
         assertTrue(t.contains("160-0000001234567-89"), t);
         assertTrue(t.contains("banca intesa"), t);
         assertTrue(t.contains("97 esc-ag-2026-0007"), t);

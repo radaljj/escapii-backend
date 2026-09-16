@@ -108,11 +108,21 @@ public class InvoicePdfService {
     private void registerFonts(PdfRendererBuilder builder) {
         builder.useFont(() -> classpath("fonts/Inter-Regular.ttf"), "InvoiceSans", 400, FontStyle.NORMAL, true);
         builder.useFont(() -> classpath("fonts/Inter-Bold.ttf"),    "InvoiceSans", 700, FontStyle.NORMAL, true);
+        // Brend trio kao na vaučeru (VoucherPdfService): serif za naslove i iznos, Manrope za
+        // tekst i oznake, mono za brojeve. Koristi ih agency-invoice.html.
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Regular.ttf"),    "InvoiceSerif", 400, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Italic.ttf"),     "InvoiceSerif", 400, FontStyle.ITALIC, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-Bold.ttf"),       "InvoiceSerif", 700, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/CormorantGaramond-BoldItalic.ttf"), "InvoiceSerif", 700, FontStyle.ITALIC, true);
+        builder.useFont(() -> classpath("fonts/Manrope-Regular.ttf"),   "InvoiceBrand", 400, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/Manrope-SemiBold.ttf"),  "InvoiceBrand", 600, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/Manrope-ExtraBold.ttf"), "InvoiceBrand", 800, FontStyle.NORMAL, true);
+        builder.useFont(() -> classpath("fonts/JetBrainsMono-Bold.ttf"), "InvoiceMono", 700, FontStyle.NORMAL, true);
     }
 
     /**
-     * Zbirna faktura agenciji - isti dizajn i fontovi kao profaktura, drugi šablon
-     * (agency-invoice.html): jedna stavka, bez QR koda, podaci firme samo ako su uneti.
+     * Zbirna faktura agenciji - šablon agency-invoice.html (brend fontovi kao na vaučeru):
+     * jedna stavka, bez QR koda, podaci firme samo ako su uneti.
      */
     public byte[] generateAgency(AgencyInvoiceData d) {
         try {
@@ -126,7 +136,8 @@ public class InvoicePdfService {
         }
         try {
             Context ctx = new Context(new Locale("sr"));
-            ctx.setVariable("logoDataUri",     loadImageDataUri("static/images/logo-black.png", "image/png"));
+            ctx.setVariable("logoDataUri",      loadImageDataUri("static/images/logo-black.png", "image/png"));
+            ctx.setVariable("logoWhiteDataUri", loadImageDataUri("static/images/logo-white.png", "image/png"));
             ctx.setVariable("invoiceNumber",   d.invoiceNumber());
             ctx.setVariable("issuedAt",        d.issuedAt().format(DATE_FMT));
             ctx.setVariable("dueDate",         d.dueDate().format(DATE_FMT));

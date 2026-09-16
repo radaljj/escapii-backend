@@ -11,6 +11,10 @@ import java.util.List;
  * @param included     završena putovanja koja ulaze, sa Escapii zaradom po svakom
  * @param needsCosts   završena putovanja koja NE ulaze (nisu uneti troškovi) - ulaze u sledeću
  * @param inProgress   potvrđena putovanja koja još traju - ulaze posle povratka
+ * @param periodFrom   najraniji polazak obuhvaćenih rezervacija (period fakture od)
+ * @param periodTo     najkasniji povratak obuhvaćenih rezervacija (period fakture do)
+ * @param periodFrom   najraniji polazak obuhvaćenih rezervacija (period fakture od)
+ * @param periodTo     najkasniji povratak obuhvaćenih rezervacija (period fakture do)
  * @param canInvoice   false = dugme se ne nudi; {@code blocker} kaže zašto
  */
 public record AgencyInvoicePreview(

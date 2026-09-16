@@ -40,8 +40,10 @@ import java.util.Objects;
  * Zbirne fakture agencijama.
  *
  * <p><b>Šta ulazi:</b> rezervacije agencije sa statusom COMPLETED (putovanje završeno),
- * koje nisu ni u jednoj fakturi, i kojima kalkulator kaže da je obračun spreman (uneti
- * troškovi, stavke se slažu). Završene bez troškova se preskaču i prijave u pregledu -
+ * koje nisu ni u jednoj zbirnoj fakturi (bez obzira na settlementStatus - ostatke starog toka
+ * po rezervaciji LegacySettlementReset vraća u red pri startu), i kojima kalkulator kaže da je
+ * obračun spreman (uneti troškovi, stavke se slažu). Period fakture = najraniji polazak →
+ * najkasniji povratak obuhvaćenih rezervacija. Završene bez troškova se preskaču i prijave u pregledu -
  * ulaze u sledeću fakturu kad se troškovi unesu. Potvrđene kojima put još traje se ne
  * fakturišu (Markova odluka: samo završena, pa otkaz posle fakture ne postoji).
  *
@@ -124,10 +126,14 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
 
         int inProgress = (int) bookingRepository.countByAgencyIdSnapshotAndStatusAndAgencyInvoiceIsNull(
                 a.getId(), BookingStatus.CONFIRMED);
-        LocalDate from = lines.stream().map(AgencyInvoicePreview.Line::returnDate).filter(Objects::nonNull)
+        // Period fakture: od najranijeg polaska do najkasnijeg povratka među obuhvaćenim
+        // rezervacijama. (Samo po povratku bi dve rezervacije sa istog termina dale „14.10. – 14.10.".)
+        LocalDate from = lines.stream().map(AgencyInvoicePreview.Line::departureDate).filter(Objects::nonNull)
                 .min(LocalDate::compareTo).orElse(null);
         LocalDate to = lines.stream().map(AgencyInvoicePreview.Line::returnDate).filter(Objects::nonNull)
                 .max(LocalDate::compareTo).orElse(null);
+        if (from == null) from = to;
+        if (to == null) to = from;
         return new Obracun(a, included, lines, skipped, inProgress, amount, from, to);
     }
 

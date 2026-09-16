@@ -123,9 +123,10 @@ class AgencyInvoiceServiceTest {
         assertEquals("ESC-cccc3333", p.needsCosts().get(0).bookingRef());
         assertTrue(p.needsCosts().get(0).reason().contains("troskovi"));
         assertEquals(4, p.inProgress());
-        assertEquals(LocalDate.of(2026, 9, 5), p.periodFrom());
+        // period = najraniji POLAZAK (a: 02.09.) -> najkasniji POVRATAK (b: 12.09.)
+        assertEquals(LocalDate.of(2026, 9, 2), p.periodFrom());
         assertEquals(LocalDate.of(2026, 9, 12), p.periodTo());
-        assertEquals("Marketinške usluge za period 05.09.2026. – 12.09.2026.", p.suggestedDescription());
+        assertEquals("Marketinške usluge za period 02.09.2026. – 12.09.2026.", p.suggestedDescription());
         assertTrue(p.canInvoice());
         assertNull(p.blocker());
         assertEquals("sandra@sani.rs", p.agencyEmail());

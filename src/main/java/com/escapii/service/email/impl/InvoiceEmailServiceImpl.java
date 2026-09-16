@@ -147,21 +147,19 @@ public class InvoiceEmailServiceImpl implements InvoiceEmailService {
         String iznos  = String.format(new java.util.Locale("sr", "RS"), "%,.2f", inv.getAmount()) + " EUR";
         String period = inv.getPeriodFrom() != null && inv.getPeriodTo() != null
                 ? DATUM.format(inv.getPeriodFrom()) + " – " + DATUM.format(inv.getPeriodTo()) : "";
-        String rok    = inv.getDueDate() != null ? DATUM.format(inv.getDueDate()) : "";
+        // Rok plaćanja se u mejlu NE pominje (Markova odluka 2026-09-17) - ostaje samo na PDF-u.
 
         String body =
             "<p style=\"font-size:15px;line-height:1.7;color:#3d2e1a;margin:0 0 18px;\">Poštovani,</p>" +
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:0 0 18px;\">" +
             "u prilogu je faktura broj <strong>" + EmailHtmlBuilder.esc(broj) + "</strong>" +
             (period.isEmpty() ? "" : " za period " + EmailHtmlBuilder.esc(period)) + "." +
-            (rok.isEmpty() ? "" : " Rok plaćanja je <strong>" + EmailHtmlBuilder.esc(rok) + "</strong>.") +
             "</p>" +
             EmailHtmlBuilder.detailsCard("Detalji fakture",
                 EmailHtmlBuilder.dRow("Broj fakture", "<strong>" + EmailHtmlBuilder.esc(broj) + "</strong>") +
                 EmailHtmlBuilder.dRow("Stavka", EmailHtmlBuilder.esc(inv.getDescription())) +
                 (period.isEmpty() ? "" : EmailHtmlBuilder.dRow("Period", EmailHtmlBuilder.esc(period))) +
-                EmailHtmlBuilder.dRow("Iznos", "<strong style=\"color:#a85e44;\">" + EmailHtmlBuilder.esc(iznos) + "</strong>") +
-                (rok.isEmpty() ? "" : EmailHtmlBuilder.dRow("Rok plaćanja", EmailHtmlBuilder.esc(rok))),
+                EmailHtmlBuilder.dRow("Iznos", "<strong style=\"color:#a85e44;\">" + EmailHtmlBuilder.esc(iznos) + "</strong>"),
                 "#a85e44") +
             "<p style=\"font-size:14px;line-height:1.8;color:#3d2e1a;margin:18px 0 0;\">" +
             "Za sva pitanja u vezi sa fakturom pišite nam na " +

@@ -3,232 +3,328 @@
 <head>
   <meta charset="UTF-8"/>
   <style>
+    /*
+      Zbirna faktura agenciji - "strukturisane kartice" (jezik poklon vaucera):
+      krem list, bele zaobljene kartice, Manrope etikete, JetBrains Mono vrednosti,
+      Cormorant samo za veliki iznos i potpisnu liniju u podnozju. A4 uspravno 794x1123 px.
+      Fontovi: InvoiceSerif (Cormorant 400/700 + italic), InvoiceBrand (Manrope 400/600/800),
+      InvoiceMono (JetBrains Mono 700). Ovo je XML: bez znaka manje-od u komentaru.
+      Sve kartice koriste border-collapse: separate - u collapse rezimu openhtmltopdf crta
+      ivicu tabele kao pravougaonik, a zaobljenu pozadinu unutra, pa uglovi izgledaju odsecno.
+      Podnozje (hvala + linija) je apsolutno prikovano za dno lista; napomena tece iza uplate.
+    */
     @page { size: 794px 1123px; margin: 0; }
     html, body { margin: 0; padding: 0; }
-    body { width: 794px; font-family: 'InvoiceSans', Arial, sans-serif; font-size: 12px; color: #1a1410; background: #ffffff; }
+    body { width: 794px; height: 1123px; position: relative; background-color: #faf6ee;
+           font-family: 'InvoiceBrand', sans-serif; font-size: 11.5px; color: #3d2e1a; }
     table { border-collapse: collapse; }
-    .accent-bar { width: 794px; height: 6px; background-color: #a85e44; font-size: 0; line-height: 0; }
-    .header-tbl { width: 794px; background-color: #faf6ee; border-bottom: 1px solid #e8ddc8; }
-    .header-tbl td { padding: 28px 36px 24px; vertical-align: top; }
-    .company-details { font-size: 10px; color: #3d2e1a; line-height: 1.7; margin-top: 8px; }
-    .company-details strong { color: #1a1410; font-weight: 700; }
-    .invoice-meta { text-align: right; }
-    .invoice-type { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #a85e44; font-weight: 700;
-                    border: 1px solid #e0c3b2; background-color: #fbf1ea; padding: 5px 12px; border-radius: 100px; display: inline-block; }
-    .invoice-num  { font-size: 18px; font-weight: 700; color: #1a1410; letter-spacing: -0.5px; margin-top: 10px; }
-    .meta-row     { font-size: 10px; color: #3d2e1a; margin-top: 4px; line-height: 1.6; }
-    .meta-row strong { color: #1a1410; }
-    .section { padding: 20px 36px; }
-    .section-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #5a4236; font-weight: 700; margin-bottom: 10px; }
-    .client-box { background-color: #faf6ee; border: 1px solid #e8ddc8; border-radius: 8px; padding: 14px 18px; }
-    .client-name { font-size: 14px; font-weight: 700; color: #1a1410; }
-    .client-detail { font-size: 11px; color: #3d2e1a; margin-top: 3px; line-height: 1.6; }
-    .divider { width: 722px; height: 1px; background-color: #e8ddc8; margin: 0 36px; font-size: 0; line-height: 0; }
-    .items-tbl { width: 722px; margin: 0 36px; }
-    .items-hdr td { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #5a4236; font-weight: 700;
-                    padding: 8px 0 8px; border-bottom: 1px solid #e8ddc8; }
-    .items-hdr td.r { text-align: right; }
-    .items-hdr td.c { text-align: center; }
-    .item-row td { padding: 12px 0; border-bottom: 1px solid #f0e8d8; vertical-align: top; }
-    .item-name  { font-size: 12px; font-weight: 700; color: #1a1410; line-height: 1.5; }
-    .item-meta  { font-size: 10px; color: #5a4236; margin-top: 3px; line-height: 1.5; }
-    .item-qty   { font-size: 12px; color: #3d2e1a; text-align: center; }
-    .item-price { font-size: 12px; font-weight: 700; color: #1a1410; text-align: right; white-space: nowrap; }
-    .total-wrap { width: 722px; margin: 14px 36px 0; }
-    .total-box { background-color: #faf6ee; border-top: 1px solid #e8ddc8; border-right: 1px solid #e8ddc8;
-                 border-bottom: 2px solid #a85e44; border-left: 3px solid #a85e44; border-radius: 0 6px 6px 0; padding: 14px 20px; }
-    .total-box td { vertical-align: middle; }
-    .total-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #5a4236; }
-    .total-note  { font-size: 9px; color: #5a4236; margin-top: 3px; }
-    .total-amount { font-size: 26px; font-weight: 700; color: #a85e44; text-align: right; letter-spacing: -0.5px; white-space: nowrap; }
-    .payment-tbl { width: 722px; margin: 0 36px; }
-    .pay-row td { font-size: 11px; padding: 5px 0; border-bottom: 1px solid #f0e8d8; }
-    .pay-row td.k { color: #5a4236; width: 130px; }
-    .pay-row td.v { color: #1a1410; font-weight: 700; font-family: 'Courier New', monospace; font-size: 11px; }
-    .pay-row.last td { border-bottom: none; }
-    .note-box { background-color: #faf6ee; border-left: 3px solid #e8ddc8; border-radius: 0 6px 6px 0; padding: 12px 16px;
-                font-size: 10px; color: #3d2e1a; line-height: 1.7; }
-    .note-box strong { color: #1a1410; }
-    .footer-tbl { width: 794px; border-top: 1px solid #e8ddc8; background-color: #faf6ee; }
-    .footer-tbl td { padding: 14px 36px; font-size: 9px; color: #3d2e1a; letter-spacing: 0.3px; }
-    .footer-tbl td.r { text-align: right; }
-    .footer-tbl strong { color: #1a1410; }
+    td { vertical-align: top; }
+
+    .bar { width: 794px; height: 7px; background-color: #a85e44; }
+    .bar td { padding: 0; height: 7px; font-size: 0; line-height: 0; }
+
+    .wrap { padding: 0 44px; }
+
+    /* zaglavlje: samo logo i tagline */
+    .hdr { width: 706px; margin-top: 36px; }
+    .hdr td { padding: 0; }
+    .tagline { font-size: 10px; color: #a89888; font-weight: 600; letter-spacing: 0.3px; padding-top: 12px; }
+    .tagline b { color: #a85e44; font-weight: 800; }
+
+    /* etikete i vrednosti (isti jezik kao vaucer) */
+    .k { font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #a89888; font-weight: 800; white-space: nowrap; }
+    .v { font-family: 'InvoiceMono', monospace; font-size: 13.5px; font-weight: 700; color: #1a1410; padding-top: 6px; }
+    .v.terra { color: #a85e44; }
+    .v.num { font-size: 14.5px; letter-spacing: 0.2px; }
+
+    /* kartica - zajednicki okvir (separate, da ivica prati radijus) */
+    .card { width: 706px; table-layout: fixed; border-collapse: separate; border-spacing: 0;
+            background-color: #ffffff; border: 1px solid #ebe1cf; border-radius: 12px; }
+
+    /* meta kartica: broj / datumi - 4 jednake kolone, bez eksplicitnih sirina */
+    .meta td { padding: 17px 16px 18px; border-right: 1px solid #ebe1cf; }
+    .meta td.last { border-right: none; }
+
+    .sep { width: 706px; border-top: 1px dashed #d8cab2; height: 0; font-size: 0; line-height: 0; margin-top: 24px; }
+
+    .sec { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #5a4236; font-weight: 800; padding: 22px 0 12px; }
+    .sec.first { padding-top: 28px; }
+
+    /* dve kartice iste visine: kupac / izdavalac (celije su kartice) */
+    .two { width: 706px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+    .two td { padding: 0; }
+    .two td.sec { padding: 22px 0 12px; }
+    .two td.gap { width: 18px; }
+    .two td.box { background-color: #ffffff; border: 1px solid #ebe1cf; border-radius: 12px; padding: 19px 24px 20px; }
+    .name { font-size: 15.5px; font-weight: 800; color: #1a1410; line-height: 1.3; padding-top: 7px; word-wrap: break-word; }
+    .line { font-size: 11px; color: #5a4236; line-height: 1.6; padding-top: 5px; word-wrap: break-word; }
+    .line b { color: #1a1410; font-weight: 800; }
+    .mono { font-family: 'InvoiceMono', monospace; font-weight: 700; color: #1a1410; }
+
+    /* stavke */
+    .items td { padding: 17px 24px 18px; }
+    .items tr.h td { padding: 14px 24px 12px; border-bottom: 1px solid #ebe1cf; }
+    .items tr.h td.c { text-align: center; }
+    .items tr.h td.r { text-align: right; }
+    .items .desc { font-size: 12.5px; font-weight: 800; color: #1a1410; line-height: 1.5; word-wrap: break-word; }
+    .items .per { font-size: 10.5px; color: #5a4236; padding-top: 6px; font-weight: 600; }
+    .items .per span { font-family: 'InvoiceMono', monospace; font-weight: 700; color: #1a1410; }
+    .items .qty { text-align: center; font-family: 'InvoiceMono', monospace; font-weight: 700; font-size: 12.5px; color: #1a1410; padding-top: 17px; }
+    .items .amt { text-align: right; font-family: 'InvoiceMono', monospace; font-weight: 700; font-size: 12.5px; color: #1a1410; white-space: nowrap; padding-top: 17px; }
+
+    /* ukupno - kljucna kartica */
+    .total { margin-top: 14px; border-left: 3px solid #a85e44; }
+    .total td { padding: 19px 26px 20px; vertical-align: middle; }
+    .total .sub { font-size: 10px; color: #a89888; font-weight: 600; padding-top: 6px; }
+    .total .big { text-align: right; font-family: 'InvoiceSerif', serif; font-size: 44px; font-weight: 700; color: #1a1410; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+    .total .big em { color: #a85e44; font-style: italic; font-size: 31px; letter-spacing: 0; }
+
+    /* podaci za uplatu - mreza; sirine kolona iz prvog reda (fixed): 204+40 / 190+40 / ostatak (~230),
+       da napomena uz iznos (~196px) i "Faktura ESC-AG-2026-0007" (~180px) ne prelamaju */
+    .pay td { padding: 17px 20px 18px; border-right: 1px solid #ebe1cf; border-bottom: 1px solid #ebe1cf; word-wrap: break-word; }
+    .pay td.last { border-right: none; }
+    .pay tr.b td { border-bottom: none; }
+    .pay .v { font-size: 12.5px; }
+    .pay .note { font-size: 9.5px; color: #a89888; font-weight: 600; padding-top: 4px; line-height: 1.4; }
+
+    /* podaci jos nisu dostavljeni */
+    .pending { background-color: #fbf1ea; border-color: #e0c3b2; }
+    .pending td { padding: 21px 26px 22px; }
+    .pending .k { color: #c8775a; }
+    .pending .lead { font-size: 13.5px; font-weight: 800; color: #1a1410; line-height: 1.4; padding-top: 7px; }
+    .pending .text { font-size: 11px; line-height: 1.6; color: #5a4236; padding-top: 5px; }
+
+    /* napomena - tece odmah iza uplate */
+    .memo { width: 706px; margin-top: 24px; }
+    .memo td { padding: 0; font-size: 11px; line-height: 1.65; color: #5a4236; }
+    .memo b { color: #1a1410; font-weight: 800; }
+
+    /* podnozje, prikovano za dno: potpisna linija + hairline + info */
+    .foot { position: absolute; left: 44px; bottom: 32px; width: 706px; }
+    .thanks { font-family: 'InvoiceSerif', serif; font-style: italic; font-weight: 400; font-size: 20px; color: #a85e44; line-height: 1.2; padding-bottom: 14px; }
+    .footline { width: 706px; border-top: 1px dashed #d8cab2; }
+    .footline td { padding-top: 13px; font-size: 9.5px; color: #a89888; font-weight: 600; }
+    .footline td.r { text-align: right; }
+    .footline b { color: #1a1410; font-weight: 800; }
+
+    /* sa mrezom za uplatu (acct) je strana visa za jedan red kartice: ritam sekcija za nijansu uzi */
+    body.acct .sec, body.acct .two td.sec { padding: 20px 0 11px; }
+    body.acct .sec.first { padding-top: 26px; }
+    body.acct .sep { margin-top: 21px; }
+
+    /* kompaktni rezim za dugacke opise (guard za 1 stranu) */
+    body.compact .hdr { margin-top: 32px; }
+    body.compact .sec, body.compact .two td.sec { padding: 20px 0 10px; }
+    body.compact .sec.first { padding-top: 24px; }
+    body.compact .sep { margin-top: 22px; }
+    body.compact .meta td { padding: 15px 16px 16px; }
+    body.compact .two td.box { padding: 17px 22px 18px; }
+    body.compact .items td { padding: 16px 24px 17px; }
+    body.compact .items tr.h td { padding: 13px 24px 11px; }
+    body.compact .items .desc { font-size: 12px; line-height: 1.45; }
+    body.compact .total { margin-top: 12px; }
+    body.compact .total td { padding: 17px 26px 18px; }
+    body.compact .pay td { padding: 16px 20px 17px; }
+    body.compact .pending td { padding: 19px 26px 20px; }
+    body.compact .memo { margin-top: 20px; }
+    body.compact .thanks { padding-bottom: 12px; }
+
+    /* najgori slucaj: dugacak opis + puna mreza za uplatu (acct) - jos malo stegnuto */
+    body.compact.acct .hdr { margin-top: 30px; }
+    body.compact.acct .sec, body.compact.acct .two td.sec { padding: 17px 0 9px; }
+    body.compact.acct .sec.first { padding-top: 22px; }
+    body.compact.acct .sep { margin-top: 18px; }
+    body.compact.acct .meta td { padding: 14px 16px 15px; }
+    body.compact.acct .two td.box { padding: 16px 22px 17px; }
+    body.compact.acct .items td { padding: 15px 24px 16px; }
+    body.compact.acct .items tr.h td { padding: 12px 24px 10px; }
+    body.compact.acct .items .desc { font-size: 11.5px; line-height: 1.4; }
+    body.compact.acct .total { margin-top: 10px; }
+    body.compact.acct .total td { padding: 16px 26px 17px; }
+    body.compact.acct .pay td { padding: 15px 20px 16px; }
+    body.compact.acct .memo { margin-top: 18px; }
+    body.compact.acct .thanks { padding-bottom: 10px; }
   </style>
 </head>
-<body>
+<body th:classappend="${#strings.length(description) > 180 ? 'compact ' : ''} + ${hasAccount ? 'acct' : ''}">
 
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td class="accent-bar"></td></tr>
-</table>
+<table class="bar"><tr><td></td></tr></table>
 
-<table class="header-tbl" width="794" cellpadding="0" cellspacing="0">
-  <tr>
-    <td width="380">
-      <img th:attr="src=${logoDataUri}" alt="escapii" style="height:30px;width:auto;display:block;margin-bottom:10px;"/>
-      <div class="company-details">
-        <strong th:text="${companyName}">Escapii d.o.o.</strong><br/>
-        <span th:text="${companyAddress}">Beograd, Srbija</span><br/>
-        <span th:if="${hasPib}">PIB: <span th:text="${companyPib}">000000000</span></span>
-        <span th:if="${hasPib and hasMb}">&#160;·&#160;</span>
-        <span th:if="${hasMb}">MB: <span th:text="${companyMb}">00000000</span></span>
-        <br th:if="${hasPib or hasMb}"/>
-        <span th:text="${companyEmail}">info@escapii.rs</span> &#160;·&#160;
-        <span th:text="${companyWebsite}">escapii.rs</span>
-      </div>
-    </td>
-    <td class="invoice-meta">
-      <div class="invoice-type">faktura</div>
-      <div class="invoice-num" th:text="${invoiceNumber}">ESC-AG-2026-0001</div>
-      <div class="meta-row">Datum izdavanja: <strong th:text="${issuedAt}">16.09.2026.</strong></div>
-      <div class="meta-row">Datum prometa: <strong th:text="${transactionDate}">15.09.2026.</strong></div>
-      <div class="meta-row">Rok plaćanja: <strong th:text="${dueDate}">24.09.2026.</strong></div>
-    </td>
-  </tr>
-</table>
+<div class="wrap">
 
-<div class="divider"></div>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr>
-    <td class="section">
-      <div class="section-title">Kupac</div>
-      <div class="client-box">
-        <div class="client-name" th:text="${agencyName}">Sani Tours</div>
-        <div class="client-detail">
-          <span th:if="${agencyContact != null and !#strings.isEmpty(agencyContact)}"><span th:text="${agencyContact}">Sandra</span>&#160;·&#160;</span>
-          <span th:text="${agencyEmail}">sandra@sani.rs</span>
-        </div>
-      </div>
-    </td>
-  </tr>
-</table>
-
-<div class="divider"></div>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td style="padding: 18px 36px 0;">
-    <div class="section-title">Stavke</div>
-  </td></tr>
-</table>
-
-<table class="items-tbl" cellpadding="0" cellspacing="0">
-  <tr class="items-hdr">
-    <td>Opis usluge</td>
-    <td class="c" width="70">Količina</td>
-    <td class="r" width="110">Iznos</td>
-  </tr>
-  <tr class="item-row">
-    <td>
-      <div class="item-name" th:text="${description}">Marketinške usluge za period 01.09.2026. – 15.09.2026.</div>
-      <div class="item-meta">
-        Period: <span th:text="${periodFrom}">01.09.2026.</span>
-        &#160;–&#160;
-        <span th:text="${periodTo}">15.09.2026.</span>
-      </div>
-    </td>
-    <td class="item-qty">1</td>
-    <td class="item-price"><span th:text="${amount}">300,00</span> €</td>
-  </tr>
-</table>
-
-<div class="total-wrap">
-  <table class="total-box" width="100%" cellpadding="0" cellspacing="0">
+  <!-- zaglavlje: samo logo i tagline, desna strana ostaje prazna -->
+  <table class="hdr">
     <tr>
       <td>
-        <div class="total-label">Ukupno za uplatu</div>
-        <div class="total-note">PDV nije obračunat · nije fiskalni račun</div>
+        <img th:attr="src=${logoDataUri}" alt="escapii" style="height:36px;width:auto;display:block;"/>
+        <div class="tagline">putovanja iznena&#273;enja &#183; <b>escapii.rs</b></div>
       </td>
-      <td class="total-amount"><span th:text="${amount}">300,00</span> €</td>
+    </tr>
+  </table>
+
+  <!-- vrsta dokumenta (etiketa sekcije) + meta kartica: broj je glavni identifikator -->
+  <div class="sec first">Faktura</div>
+  <table class="card meta">
+    <tr>
+      <td>
+        <div class="k">Broj fakture</div>
+        <div class="v terra num" th:text="${invoiceNumber}">ESC-AG-2026-0007</div>
+      </td>
+      <td>
+        <div class="k">Datum izdavanja</div>
+        <div class="v" th:text="${issuedAt}">17.09.2026.</div>
+      </td>
+      <td>
+        <div class="k">Datum prometa</div>
+        <div class="v" th:text="${transactionDate}">15.09.2026.</div>
+      </td>
+      <td class="last">
+        <div class="k">Rok pla&#263;anja</div>
+        <div class="v" th:text="${dueDate}">25.09.2026.</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <!-- kupac / izdavalac -->
+  <table class="two">
+    <tr>
+      <td class="sec">Kupac</td>
+      <td class="gap"></td>
+      <td class="sec">Izdavalac</td>
+    </tr>
+    <tr>
+      <td class="box">
+        <div class="k">Naziv agencije</div>
+        <div class="name" th:text="${agencyName}">Sani Tours</div>
+        <div class="line" th:if="${agencyContact != null and !#strings.isEmpty(agencyContact)}">
+          Kontakt: <b th:text="${agencyContact}">Sandra</b>
+        </div>
+        <div class="line"><span th:text="${agencyEmail}">sandra@sani.rs</span></div>
+      </td>
+      <td class="gap"></td>
+      <td class="box">
+        <div class="k">Pru&#382;alac usluge</div>
+        <div class="name" th:text="${companyName}">Escapii d.o.o.</div>
+        <div class="line">
+          <span th:text="${companyAddress}">Beograd, Srbija</span>
+          <span th:if="${hasPib or hasMb}"><br/></span>
+          <span th:if="${hasPib}">PIB: <span class="mono" th:text="${companyPib}">000000000</span></span>
+          <span th:if="${hasPib and hasMb}">&#160;&#183;&#160;</span>
+          <span th:if="${hasMb}">MB: <span class="mono" th:text="${companyMb}">00000000</span></span>
+          <br/>
+          <span th:text="${companyEmail}">info@escapii.rs</span>&#160;&#183;&#160;<span th:text="${companyWebsite}">escapii.rs</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <!-- stavke -->
+  <div class="sec">Stavke</div>
+  <table class="card items">
+    <tr class="h">
+      <td class="k">Opis usluge</td>
+      <td class="k c" style="width:64px;">Koli&#269;ina</td>
+      <td class="k r" style="width:116px;">Iznos</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="desc" th:text="${description}">Marketin&#353;ke usluge za period 01.09.2026. &#8211; 15.09.2026.</div>
+        <div class="per">Period: <span th:text="${periodFrom}">01.09.2026.</span> &#8211; <span th:text="${periodTo}">15.09.2026.</span></div>
+      </td>
+      <td class="qty" style="width:64px;">1</td>
+      <td class="amt" style="width:116px;"><span th:text="${amount}">1.234,50</span> &#8364;</td>
+    </tr>
+  </table>
+
+  <table class="card total">
+    <tr>
+      <td>
+        <div class="k">Ukupno za uplatu</div>
+        <div class="sub">PDV nije obra&#269;unat &#183; nije fiskalni ra&#269;un</div>
+      </td>
+      <td class="big"><span th:text="${amount}">1.234,50</span> <em>&#8364;</em></td>
+    </tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <!-- podaci za uplatu -->
+  <div class="sec">Podaci za uplatu</div>
+
+  <table class="card pay" th:if="${hasAccount}">
+    <tr>
+      <td style="width:204px;">
+        <div class="k">Primalac</div>
+        <div class="v" th:text="${companyName}">Escapii d.o.o.</div>
+      </td>
+      <td th:if="${hasBank}" style="width:190px;">
+        <div class="k">Banka</div>
+        <div class="v" th:text="${companyBank}">Banca Intesa</div>
+      </td>
+      <td class="last" th:colspan="${hasBank ? 1 : 2}">
+        <div class="k">Broj ra&#269;una</div>
+        <div class="v" th:text="${companyAccount}">160-0000001234567-89</div>
+      </td>
+    </tr>
+    <tr class="b">
+      <td>
+        <div class="k">Iznos</div>
+        <div class="v"><span th:text="${amount}">1.234,50</span> EUR</div>
+        <div class="note">u RSD po srednjem kursu NBS na dan uplate</div>
+      </td>
+      <td>
+        <div class="k">Svrha</div>
+        <div class="v">Faktura <span th:text="${invoiceNumber}">ESC-AG-2026-0007</span></div>
+      </td>
+      <td class="last">
+        <div class="k">Poziv na broj</div>
+        <div class="v">97 <span th:text="${invoiceNumber}">ESC-AG-2026-0007</span></div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="card pending" th:unless="${hasAccount}">
+    <tr>
+      <td>
+        <div class="k">Status</div>
+        <div class="lead">Podaci za uplatu bi&#263;e naknadno dostavljeni.</div>
+        <div class="text">Do tada se faktura vodi kao poslata, a rok pla&#263;anja te&#269;e od dana dostave podataka za uplatu.</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- napomena: tece odmah iza uplate, nije prikovana -->
+  <table class="memo">
+    <tr>
+      <td>
+        <b>Napomena:</b> Iznos se mo&#382;e uplatiti u EUR ili u RSD po srednjem kursu Narodne banke Srbije
+        na dan uplate. Za sva pitanja u vezi sa fakturom pi&#353;ite na
+        <b th:text="${companyEmail}">info@escapii.rs</b>.
+      </td>
+    </tr>
+  </table>
+
+</div>
+
+<!-- podnozje, prikovano za dno: potpisna linija iznad hairline-a -->
+<div class="foot">
+  <div class="thanks">Hvala na saradnji.</div>
+  <table class="footline">
+    <tr>
+      <td>
+        <b>escapii</b> &#183; <span th:text="${companyName}">Escapii d.o.o.</span>
+        <span th:if="${hasPib}">&#183; PIB <span th:text="${companyPib}">000000000</span></span>
+      </td>
+      <td class="r">
+        Dokument br. <span class="mono" th:text="${invoiceNumber}">ESC-AG-2026-0007</span>
+      </td>
     </tr>
   </table>
 </div>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td style="height: 22px; font-size: 0;"></td></tr>
-</table>
-
-<div class="divider"></div>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td style="padding: 18px 36px 0;">
-    <div class="section-title">Podaci za uplatu</div>
-  </td></tr>
-</table>
-
-<table class="payment-tbl" cellpadding="0" cellspacing="0" th:if="${hasAccount}">
-  <tr>
-    <td style="vertical-align: top;">
-      <table style="width:100%;" cellpadding="0" cellspacing="0">
-        <tr class="pay-row">
-          <td class="k">Primalac</td>
-          <td class="v" th:text="${companyName}">Escapii d.o.o.</td>
-        </tr>
-        <tr class="pay-row" th:if="${hasBank}">
-          <td class="k">Banka</td>
-          <td class="v" th:text="${companyBank}">Banka</td>
-        </tr>
-        <tr class="pay-row">
-          <td class="k">Broj računa</td>
-          <td class="v" th:text="${companyAccount}">000-0000000000000-00</td>
-        </tr>
-        <tr class="pay-row">
-          <td class="k">Iznos</td>
-          <td class="v"><span th:text="${amount}">300,00</span> EUR
-            <span style="display:block;font-family:Arial,sans-serif;font-size:9px;font-weight:400;color:#5a4236;">u RSD po srednjem kursu NBS na dan uplate</span>
-          </td>
-        </tr>
-        <tr class="pay-row">
-          <td class="k">Svrha</td>
-          <td class="v">Faktura <span th:text="${invoiceNumber}">ESC-AG-2026-0001</span></td>
-        </tr>
-        <tr class="pay-row last">
-          <td class="k">Poziv na broj</td>
-          <td class="v">97 <span th:text="${invoiceNumber}">ESC-AG-2026-0001</span></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-<table width="794" cellpadding="0" cellspacing="0" th:unless="${hasAccount}">
-  <tr><td style="padding: 0 36px;">
-    <div class="note-box">
-      <strong>Podaci za uplatu biće naknadno dostavljeni.</strong> Do tada se faktura vodi kao
-      poslata, a rok plaćanja teče od dana dostave podataka za uplatu.
-    </div>
-  </td></tr>
-</table>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td style="height: 18px; font-size: 0;"></td></tr>
-</table>
-
-<table width="794" cellpadding="0" cellspacing="0">
-  <tr><td style="padding: 0 36px;">
-    <div class="note-box">
-      <strong>Napomena:</strong> Iznos se može uplatiti u EUR ili u RSD po
-      <strong>srednjem kursu Narodne banke Srbije na dan uplate</strong>.
-      Za sva pitanja u vezi sa fakturom pišite na
-      <span th:text="${companyEmail}">info@escapii.rs</span>.
-    </div>
-  </td></tr>
-</table>
-
-<table width="794" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
-  <tr><td style="height: 1px; background-color: #e8ddc8; font-size: 0;"></td></tr>
-</table>
-<table class="footer-tbl" width="794" cellpadding="0" cellspacing="0">
-  <tr>
-    <td>
-      <strong>escapii</strong> ·
-      <span th:text="${companyName}">Escapii d.o.o.</span>
-      <span th:if="${hasPib}">· PIB <span th:text="${companyPib}">000000000</span></span>
-    </td>
-    <td class="r">
-      Dokument br. <span th:text="${invoiceNumber}">ESC-AG-2026-0001</span>
-    </td>
-  </tr>
-</table>
 
 </body>
 </html>
