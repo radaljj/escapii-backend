@@ -83,4 +83,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mv /opt/escapii/backend/backend-0.0.1-SNAPSHOT.jar /opt/escapii/backend/app.jar
+            # Gasenje sme da potraje: Spring ceka tekuci jutarnji krug (do ~2 min) da upise
+            # "poslato" pre nego sto zatvori bazu. Podrazumevani TimeoutStopSec=90s bi ga ubio
+            # pre toga, pa bi sledeci krug poslao isti mejl ponovo.
+            mkdir -p /etc/systemd/system/escapii-backend.service.d
+            echo '[Service]' > /etc/systemd/system/escapii-backend.service.d/timeout.conf
+            echo 'TimeoutStopSec=240' >> /etc/systemd/system/escapii-backend.service.d/timeout.conf
+            systemctl daemon-reload
             systemctl restart escapii-backend
+            systemctl show escapii-backend -p TimeoutStopUSec -p ActiveState
