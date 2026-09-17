@@ -86,6 +86,17 @@ class DailyTaskSchedulerCycleTest {
     }
 
     @Test
+    void redPostojiOdStarta_aPadUpisaNeObaraStart() {
+        // health gleda red u scheduler_runs, pa red mora postojati i pre prvog kruga (do 30 min posle deploya)
+        scheduler.osigurajRedPriStartu();
+        verify(jdbc).update(startsWith("INSERT INTO scheduler_runs"), any(Object[].class));
+        verify(jdbc, never()).update(startsWith("UPDATE scheduler_runs"), any(Object[].class));
+
+        when(jdbc.update(anyString(), any(Object[].class))).thenThrow(new RuntimeException("nema tabele"));
+        assertDoesNotThrow(scheduler::osigurajRedPriStartu);
+    }
+
+    @Test
     void prognozaPaReveal_uSvakomKrugu() {
         when(jdbc.update(startsWith("UPDATE scheduler_runs"), any(), any(), any(), any())).thenReturn(0);
 

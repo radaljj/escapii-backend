@@ -131,16 +131,7 @@ public class DailyTaskScheduler {
      */
     boolean preuzmiDnevniKrug(LocalDate danas, LocalTime sada) {
         try {
-            // Prvi red ikad (prvi start ove verzije): ako je već prošlo 10:30, današnji dnevni
-            // koraci su najverovatnije već odrađeni (stara verzija ih je puštala u 10:00) - ne
-            // ponavljati ih na dan deploya. Kad red postoji, ON CONFLICT ništa ne menja.
-            if (sada.isBefore(ROK_PRVOG_SEMENA)) {
-                jdbc.update("INSERT INTO scheduler_runs (job, last_run_date) VALUES (?, NULL) ON CONFLICT (job) DO NOTHING",
-                        DNEVNI_POSAO);
-            } else {
-                jdbc.update("INSERT INTO scheduler_runs (job, last_run_date) VALUES (?, ?) ON CONFLICT (job) DO NOTHING",
-                        DNEVNI_POSAO, java.sql.Date.valueOf(danas));
-            }
+            osigurajRed(danas, sada);
             // Kad je prošli krug bio - digest gleda slanja od tada (ne „24h", jer bi sat pomeranja
             // između dva dana udvostručio ili izgubio jedan polusatni krug).
             List<java.sql.Timestamp> prethodni = jdbc.query(
@@ -159,6 +150,36 @@ public class DailyTaskScheduler {
             log.error("[Scheduler] Prijava dnevnog kruga nije uspela ({}) - dnevni koraci čekaju sledeći krug", e.toString());
             zabelezi(GRESKA_PRIJAVA, e);
             return false;
+        }
+    }
+
+    /**
+     * Red dnevnog kruga postoji od starta aplikacije, ne tek od prvog kruga: /api/health/jobs
+     * gleda taj red, pa bi između deploya i prvog kruga (do 30 min) lažno javljao DNEVNI_KRUG_KASNI.
+     * Ide posle ApplicationReadyEvent, dakle posle SchemaBootstrap-a koji pravi tabelu. Pad se
+     * samo loguje - prvi krug ponovo pokušava (preuzmiDnevniKrug).
+     */
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    public void osigurajRedPriStartu() {
+        try {
+            osigurajRed(LocalDate.now(ZONA), LocalTime.now(ZONA));
+        } catch (Exception e) {
+            log.warn("[Scheduler] Red dnevnog kruga nije upisan pri startu ({}) - pokušaće prvi krug", e.toString());
+        }
+    }
+
+    /**
+     * INSERT ... ON CONFLICT DO NOTHING. Prvi red ikad (prvi start ove verzije): ako je već
+     * prošlo 10:30, današnji dnevni koraci su najverovatnije već odrađeni (stara verzija ih je
+     * puštala u 10:00) - ne ponavljati ih na dan deploya. Kad red postoji, ništa se ne menja.
+     */
+    private void osigurajRed(LocalDate danas, LocalTime sada) {
+        if (sada.isBefore(ROK_PRVOG_SEMENA)) {
+            jdbc.update("INSERT INTO scheduler_runs (job, last_run_date) VALUES (?, NULL) ON CONFLICT (job) DO NOTHING",
+                    DNEVNI_POSAO);
+        } else {
+            jdbc.update("INSERT INTO scheduler_runs (job, last_run_date) VALUES (?, ?) ON CONFLICT (job) DO NOTHING",
+                    DNEVNI_POSAO, java.sql.Date.valueOf(danas));
         }
     }
 
