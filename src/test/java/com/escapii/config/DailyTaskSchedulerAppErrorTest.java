@@ -33,7 +33,7 @@ class DailyTaskSchedulerAppErrorTest {
                 scheduling, mock(BookingRepository.class), mock(DigestEmailService.class),
                 mock(AvailableDateRepository.class), mock(CustomDateInquiryRepository.class),
                 mock(ConfirmationDocumentAutoSender.class), mock(PassportRetentionService.class), greske,
-                cleanupBezIsteklih());
+                cleanupBezIsteklih(), mock(org.springframework.jdbc.core.JdbcTemplate.class));
         IllegalStateException pad = new IllegalStateException("baza nedostupna");
         doThrow(pad).when(scheduling).sendPendingForecasts();
 
@@ -51,7 +51,7 @@ class DailyTaskSchedulerAppErrorTest {
                 mock(BookingSchedulingService.class), mock(BookingRepository.class), mock(DigestEmailService.class),
                 mock(AvailableDateRepository.class), mock(CustomDateInquiryRepository.class),
                 mock(ConfirmationDocumentAutoSender.class), mock(PassportRetentionService.class), greske,
-                cleanupBezIsteklih());
+                cleanupBezIsteklih(), mock(org.springframework.jdbc.core.JdbcTemplate.class));
 
         scheduler.runDailyTasks();
 
@@ -74,7 +74,8 @@ class DailyTaskSchedulerAppErrorTest {
         when(cleanup.obrisiIstekleBezRezervacija(any())).thenThrow(fk);
         DailyTaskScheduler scheduler = new DailyTaskScheduler(
                 mock(BookingSchedulingService.class), mock(BookingRepository.class), mock(DigestEmailService.class),
-                datumi, upiti, mock(ConfirmationDocumentAutoSender.class), pasosi, greske, cleanup);
+                datumi, upiti, mock(ConfirmationDocumentAutoSender.class), pasosi, greske, cleanup,
+                mock(org.springframework.jdbc.core.JdbcTemplate.class));
 
         scheduler.runDailyTasks();
 

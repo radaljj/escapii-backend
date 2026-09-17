@@ -43,3 +43,22 @@ ALTER TABLE IF EXISTS custom_date_inquiries DROP CONSTRAINT IF EXISTS custom_dat
 ALTER TABLE IF EXISTS gift_trip_inquiries DROP CONSTRAINT IF EXISTS gift_trip_inquiries_status_check;
 ALTER TABLE IF EXISTS booking_financial_items DROP CONSTRAINT IF EXISTS booking_financial_items_item_type_check;
 ALTER TABLE IF EXISTS booking_financial_items DROP CONSTRAINT IF EXISTS booking_financial_items_allocation_type_check;
+
+-- Jutarnji krug (2026-09-17): slanja idu na svakih 30 min od 10 do 22h (idempotentno),
+-- a dnevni koraci (digest, zavrsavanje, ciscenje) se prijave ovde da idu tacno jednom dnevno
+-- i to na prvom krugu posle 10h koji je server docekao
+CREATE TABLE IF NOT EXISTS scheduler_runs (
+    job           VARCHAR(40) PRIMARY KEY,
+    last_run_date DATE,
+    last_run_at   TIMESTAMP
+);
+ALTER TABLE IF EXISTS scheduler_runs ADD COLUMN IF NOT EXISTS last_run_at TIMESTAMP;
+
+-- Koordinate destinacija za prognozu: jednom geokodirano, jutarnji krug ne zavisi od geokodera
+CREATE TABLE IF NOT EXISTS geo_cache (
+    city_query  VARCHAR(200)     PRIMARY KEY,
+    lat         DOUBLE PRECISION NOT NULL,
+    lon         DOUBLE PRECISION NOT NULL,
+    source      VARCHAR(20),
+    resolved_at TIMESTAMP        NOT NULL
+);

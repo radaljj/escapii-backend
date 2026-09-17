@@ -739,6 +739,14 @@ public class AdminServiceImpl implements AdminService {
 
         booking.setAssignedDestination(trimmed);
 
+        // Koordinate za prognozu se traže odmah, u pozadini (GeoWarmUpListener), da jutarnji
+        // krug zatekne keš i ne zavisi od geokodera. Kad je unet „Grad za prognozu", on je upit.
+        if (trimmed != null && !trimmed.isEmpty()) {
+            String upitZaPrognozu = (booking.getWeatherCity() != null && !booking.getWeatherCity().isBlank())
+                    ? booking.getWeatherCity().strip() : trimmed;
+            predgrejKoordinate(upitZaPrognozu);
+        }
+
         // Generiši token tek kad je destinacija unesena i još nema tokena
         if (trimmed != null && !trimmed.isEmpty() && booking.getRevealToken() == null) {
             booking.setRevealToken(TokenUtils.generate());
@@ -805,6 +813,18 @@ public class AdminServiceImpl implements AdminService {
         return adminBookingMapper.toResponse(saved);
     }
 
+    /**
+     * Predgrevanje koordinata je pozadinsko (@Async listener) i sme da otkaže (pun red, geokoder
+     * ne radi) - upis destinacije zbog toga ne sme da padne.
+     */
+    private void predgrejKoordinate(String upit) {
+        try {
+            eventPublisher.publishEvent(new com.escapii.service.weather.DestinationAssignedEvent(upit));
+        } catch (Exception e) {
+            log.warn("[ADMIN] Predgrevanje koordinata za '{}' nije zakazano: {}", upit, e.toString());
+        }
+    }
+
     @Override
     @Transactional
     public AdminBookingResponse setWeatherCity(Long id, String weatherCity) {
@@ -815,6 +835,9 @@ public class AdminServiceImpl implements AdminService {
         booking.setWeatherCity(trimmed);
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Weather city za {} → '{}'", saved.getBookingRef(), trimmed);
+        if (trimmed != null) {
+            predgrejKoordinate(trimmed);
+        }
         return adminBookingMapper.toResponse(saved);
     }
 

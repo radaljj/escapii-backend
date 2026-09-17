@@ -45,7 +45,8 @@ public class DigestEmailServiceImpl implements DigestEmailService {
                                 List<Booking> upcoming,
                                 List<Booking> revealBoxPending,
                                 List<Booking> revealedAndViewed,
-                                List<Booking> notViewedUrgent) {
+                                List<Booking> notViewedUrgent,
+                                List<Booking> missingDestination) {
 
         String todayStr = today.format(EmailHtmlBuilder.DATE_FMT);
 
@@ -55,7 +56,7 @@ public class DigestEmailServiceImpl implements DigestEmailService {
 
         boolean hasActions = !revealsSent.isEmpty() || !forecastDue.isEmpty()
                           || !revealBoxPending.isEmpty() || !revealedAndViewed.isEmpty()
-                          || !notViewedUrgent.isEmpty();
+                          || !notViewedUrgent.isEmpty() || !missingDestination.isEmpty();
 
         String noActionBlock = hasActions ? "" : """
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
@@ -78,13 +79,54 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             .replace("{{STAT_URGENT}}",          String.valueOf(notViewedUrgent.size()))
             .replace("{{STAT_URGENT_COLOR}}",    notViewedUrgent.isEmpty()  ? "#a89888" : "#9b3a2a")
             .replace("{{BLOCK_NOACTION}}",       noActionBlock)
-            .replace("{{BLOCK_URGENT}}",         notViewedUrgent.isEmpty() ? "" : urgentAlert(notViewedUrgent, today))
+            .replace("{{BLOCK_URGENT}}",         (missingDestination.isEmpty() ? "" : missingDestinationAlert(missingDestination, today))
+                                                 + (notViewedUrgent.isEmpty() ? "" : urgentAlert(notViewedUrgent, today)))
             .replace("{{BLOCK_TIMELINE}}",       upcoming.isEmpty() ? ""
                     : timeline(today, upcoming, boxIds, viewedIds, urgentIds));
 
         sender.send(opsEmail, "📋 Escapii - " + todayStr, html);
         log.info("[Digest] Poslan. Reveal: {}, Prognoza: {}, Preview: {}",
                 revealsSent.size(), forecastDue.size(), upcoming.size());
+    }
+
+    // ── Bez destinacije (polazak ≤ 7 dana) ────────────────────────────────────
+
+    /** Bez destinacije jutarnji krug nema šta da pošalje - ovo je podsetnik da je unese. */
+    private String missingDestinationAlert(List<Booking> bookings, LocalDate today) {
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking b   = bookings.get(i);
+            LocalDate dep = b.getSelectedDate() != null ? b.getSelectedDate().getDepartureDate() : today;
+            long days   = ChronoUnit.DAYS.between(today, dep);
+            String when = days == 0 ? "DANAS!" : days == 1 ? "SUTRA!" : "za " + days + " dana";
+            String border = i < bookings.size() - 1 ? "border-bottom:1px solid #f0d9b5;" : "";
+            rows.append("""
+                <tr><td style="padding:10px 14px;%s">
+                  <table width="100%%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size:13px;font-weight:700;color:#8a4b12;">%s</td>
+                      <td style="font-size:12px;font-weight:700;color:#8a4b12;text-align:right;white-space:nowrap;">%s</td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="font-size:12px;color:#b3713a;padding-top:3px;">%s &middot; %s</td>
+                    </tr>
+                  </table>
+                </td></tr>""".formatted(
+                    border,
+                    esc(b.getFirstName() + " " + b.getLastName()),
+                    when,
+                    esc(b.getBookingRef()),
+                    esc(b.getDepartureAirport())));
+        }
+        return """
+            <table width="100%%" cellpadding="0" cellspacing="0" \
+            style="border:1px solid #f0d9b5;border-radius:8px;overflow:hidden;margin-bottom:18px;background:#fff9f0;">
+              <tr><td style="padding:11px 16px;font-size:13px;font-weight:700;\
+            background:#fff2df;color:#8a4b12;border-bottom:1px solid #f0d9b5;">
+                &#9888;&#65039; Bez destinacije, polazak &le; 7 dana (%d) - bez nje ne ide ni prognoza ni reveal
+              </td></tr>
+              %s
+            </table>""".formatted(bookings.size(), rows);
     }
 
     // ── Urgent alert ──────────────────────────────────────────────────────────

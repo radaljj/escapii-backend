@@ -13,5 +13,6 @@ public interface DigestEmailService {
                          List<Booking> upcoming,
                          List<Booking> revealBoxPending,
                          List<Booking> revealedAndViewed,
-                         List<Booking> notViewedUrgent);
+                         List<Booking> notViewedUrgent,
+                         List<Booking> missingDestination);
 }

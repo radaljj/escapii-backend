@@ -42,6 +42,17 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
     private final VoucherLedger        voucherLedger;
     private final AppErrorService      appErrorService;
+    private final org.springframework.transaction.PlatformTransactionManager txManager;
+
+    /**
+     * Kratka transakcija po rezervaciji u krugu: brava na redu (findByIdForUpdate) dok se mejl
+     * šalje i „poslato" upisuje. Ručno slanje iz panela drži istu bravu, pa se ne mogu preklopiti -
+     * ko god uđe drugi, zatekne „već poslato". Petlja i dalje NIJE @Transactional (detached
+     * entiteti, ciljani upisi), transakcija je samo oko slanja jedne rezervacije.
+     */
+    private org.springframework.transaction.support.TransactionTemplate tx() {
+        return new org.springframework.transaction.support.TransactionTemplate(txManager);
+    }
 
     @Value("${app.cors-allowed-origin:https://escapii.rs}")
     private String corsAllowedOrigin;
@@ -301,31 +312,35 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     continue;
                 }
 
-                // Ista provera kao kod reveala: stanje iz baze, ne iz snimka od početka
-                // petlje. Sprečava dupli mejl kad admin ručno pošalje prognozu dok
-                // petlja jos traje.
-                if (bookingRepository.jeLiJosZaPrognozu(booking.getId()) == 0) {
-                    log.info("[Forecast] {} preskočen - stanje se promenilo otkad je lista učitana",
-                            booking.getBookingRef());
-                    continue;
-                }
-
-                forecastEmailService.sendForecastEmail(booking, forecast.get());
-
-                // Ciljani upis umesto save(). Ova petlja nema @Transactional, pa je
-                // booking DETACHED - lista je učitana pre nekoliko minuta. save() bi za
-                // detached entitet bio merge, a merge prepisuje SVE kolone vrednostima
-                // iz starog snapshot-a: PDF koji je admin uploadovao u međuvremenu,
-                // otkazivanje, interne beleške. Booking nema @Version pa to ništa ne bi
-                // ni primetilo. Videti BookingRepository.markForecastSent.
-                LocalDateTime sada = LocalDateTime.now();
-                bookingRepository.markForecastSent(booking.getId(), sada);
-                booking.setForecastSentAt(sada);   // samo da jutarnji digest prikaže tačno
+                // Slanje i upis „poslato" pod bravom na redu rezervacije (vremenski API je već
+                // pozvan, van brave). Ručno slanje iz panela (findByIdForUpdate) čeka da brava
+                // padne i onda vidi forecastSentAt - dupli mejl nije moguć ni kad admin klikne
+                // dok krug šalje.
+                List<DailyForecast> prognoza = forecast.get();
+                Boolean poslato = tx().execute(status -> {
+                    bookingRepository.findByIdForUpdate(booking.getId());
+                    // Stanje iz baze, ne iz snimka od početka petlje: admin je mogao ručno
+                    // poslati, skloniti destinaciju ili otkazati otkad je lista učitana.
+                    if (bookingRepository.jeLiJosZaPrognozu(booking.getId()) == 0) {
+                        log.info("[Forecast] {} preskočen - stanje se promenilo otkad je lista učitana",
+                                booking.getBookingRef());
+                        return false;
+                    }
+                    forecastEmailService.sendForecastEmail(booking, prognoza);
+                    // Ciljani upis umesto save(): booking je DETACHED (lista je učitana ranije),
+                    // save() bi bio merge i prepisao bi sve kolone starim snimkom (PDF, beleške,
+                    // otkaz). Videti BookingRepository.markForecastSent.
+                    LocalDateTime sada = LocalDateTime.now();
+                    bookingRepository.markForecastSent(booking.getId(), sada);
+                    booking.setForecastSentAt(sada);   // samo da jutarnji digest prikaže tačno
+                    return true;
+                });
+                if (!Boolean.TRUE.equals(poslato)) continue;
                 sent.add(booking);
                 log.info("[Forecast] {} → dest='{}' dana={}",
                         booking.getBookingRef(),
                         booking.getAssignedDestination(),
-                        forecast.get().size());
+                        prognoza.size());
             } catch (Exception e) {
                 log.error("[Forecast] Greška za {}: {}", booking.getBookingRef(), e.getMessage(), e);
                 prijaviPad(GRESKA_PROGNOZA, booking, "Prognoza nije poslata", e);
@@ -357,35 +372,38 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     continue;
                 }
 
-                // Odluka o slanju se donosi na stanju iz BAZE, ne na snimku od početka
-                // petlje. Lista je učitana pre nekoliko minuta i za to vreme je admin
-                // mogao ručno poslati reveal, skloniti destinaciju ili otkazati
-                // rezervaciju - bez ove provere bi kupac dobio drugi reveal mejl.
-                // Ciljani upisi to ne rešavaju: oni štite upis, ne odluku.
-                if (bookingRepository.jeLiJosZaReveal(booking.getId()) == 0) {
-                    log.info("[Reveal] {} preskočen - stanje se promenilo otkad je lista učitana",
-                            booking.getBookingRef());
-                    continue;
-                }
-
-                if (booking.getRevealToken() == null) {
-                    // Token mora biti u bazi pre nego što korisnik klikne link. Upisuje
-                    // se ciljano (i samo ako ga još nema) umesto saveAndFlush, koji bi
-                    // kao merge detached entiteta pregazio ostale kolone.
-                    String noviToken = TokenUtils.generate();
-                    bookingRepository.saveRevealTokenIfAbsent(booking.getId(), noviToken);
-                    // Ako je token u međuvremenu upisao neko drugi (ručno slanje iz
-                    // panela), mejl mora nositi TAJ token, ne naš - inače bi link u
-                    // mejlu bio mrtav.
-                    booking.setRevealToken(
-                            bookingRepository.findRevealTokenById(booking.getId()).orElse(noviToken));
-                }
-                revealEmailService.sendRevealEmail(booking);
-
-                // Ciljani upis - isti razlog kao kod prognoze iznad.
-                LocalDateTime sada = LocalDateTime.now();
-                bookingRepository.markRevealSent(booking.getId(), sada);
-                booking.setRevealSentAt(sada);
+                // Slanje i upis pod bravom na redu rezervacije - isto kao kod prognoze: ručno
+                // slanje iz panela (findByIdForUpdate) i krug se ne mogu preklopiti.
+                Boolean poslato = tx().execute(status -> {
+                    bookingRepository.findByIdForUpdate(booking.getId());
+                    // Odluka o slanju se donosi na stanju iz BAZE, ne na snimku od početka
+                    // petlje: admin je mogao ručno poslati reveal, skloniti destinaciju ili
+                    // otkazati rezervaciju - bez ove provere bi kupac dobio drugi reveal mejl.
+                    if (bookingRepository.jeLiJosZaReveal(booking.getId()) == 0) {
+                        log.info("[Reveal] {} preskočen - stanje se promenilo otkad je lista učitana",
+                                booking.getBookingRef());
+                        return false;
+                    }
+                    if (booking.getRevealToken() == null) {
+                        // Token mora biti u bazi pre nego što korisnik klikne link. Upisuje
+                        // se ciljano (i samo ako ga još nema) umesto saveAndFlush, koji bi
+                        // kao merge detached entiteta pregazio ostale kolone.
+                        String noviToken = TokenUtils.generate();
+                        bookingRepository.saveRevealTokenIfAbsent(booking.getId(), noviToken);
+                        // Ako je token u međuvremenu upisao neko drugi (ručno slanje iz
+                        // panela), mejl mora nositi TAJ token, ne naš - inače bi link u
+                        // mejlu bio mrtav.
+                        booking.setRevealToken(
+                                bookingRepository.findRevealTokenById(booking.getId()).orElse(noviToken));
+                    }
+                    revealEmailService.sendRevealEmail(booking);
+                    // Ciljani upis - isti razlog kao kod prognoze iznad.
+                    LocalDateTime sada = LocalDateTime.now();
+                    bookingRepository.markRevealSent(booking.getId(), sada);
+                    booking.setRevealSentAt(sada);
+                    return true;
+                });
+                if (!Boolean.TRUE.equals(poslato)) continue;
                 sent.add(booking);
                 log.info("[Reveal] {} → {}", booking.getBookingRef(), booking.getAssignedDestination());
 

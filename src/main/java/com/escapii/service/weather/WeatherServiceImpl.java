@@ -38,6 +38,9 @@ public class WeatherServiceImpl implements WeatherService {
     private static final String MET_NORWAY_URL =
             "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.4f&lon=%.4f";
 
+    private static final String OPEN_METEO_GEO_URL =
+            "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
+
     private static final String USER_AGENT = "Escapii/1.0 (info@escapii.rs)";
     private static final int    TIMEOUT_SEC = 10;
 
@@ -55,13 +58,26 @@ public class WeatherServiceImpl implements WeatherService {
             .connectTimeout(Duration.ofSeconds(TIMEOUT_SEC))
             .build();
 
+    /** Koordinate jednom geokodirane pa zapamćene - jutarnji krug ne zavisi od geokodera. */
+    private final GeoCache geoCache;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public WeatherServiceImpl(GeoCache geoCache) {
+        this.geoCache = geoCache;
+    }
+
+    /** Za testove: samo memorijski keš, bez baze. */
+    public WeatherServiceImpl() {
+        this(new GeoCache((org.springframework.jdbc.core.JdbcTemplate) null));
+    }
+
     // ── Javni API ─────────────────────────────────────────────────────────────
 
     @Override
     public Optional<List<DailyForecast>> getForecast(String cityName) {
         double[] coords;
         try {
-            coords = geocode(cityName);
+            coords = resolveCoords(cityName);
         } catch (Exception e) {
             log.error("[Weather] Geocoding pao za '{}': {}", cityName, e.getMessage());
             return Optional.empty();
@@ -93,6 +109,50 @@ public class WeatherServiceImpl implements WeatherService {
                     cityName, e.getMessage(), e);
             return Optional.empty();
         }
+    }
+
+    @Override
+    public void warmUp(String cityName) {
+        try {
+            double[] c = resolveCoords(cityName);
+            if (c == null) log.warn("[Weather] Predgrevanje: nema koordinata za '{}'", cityName);
+        } catch (Exception e) {
+            log.warn("[Weather] Predgrevanje za '{}' nije uspelo: {}", cityName, e.getMessage());
+        }
+    }
+
+    /**
+     * Koordinate: keš (memorija pa baza) → Nominatim → Open-Meteo geokoder (rezerva). Rezultat
+     * se pamti, pa geokoder radi jednom po destinaciji - najčešće još kad je admin unese.
+     */
+    private double[] resolveCoords(String cityName) throws Exception {
+        Optional<double[]> kes = geoCache.get(cityName);
+        if (kes.isPresent()) return kes.get();
+
+        double[] coords = null;
+        try {
+            coords = geocode(cityName);
+        } catch (Exception e) {
+            log.warn("[Weather] Nominatim pao za '{}': {} → prelazim na rezervni geokoder (Open-Meteo)",
+                    cityName, e.getMessage());
+        }
+        if (coords != null) {
+            geoCache.put(cityName, coords[0], coords[1], "nominatim");
+            return coords;
+        }
+        // Rezerva: Open-Meteo geokoder. Za srpske nazive (Beč, Rim...) ume da promaši, pa se
+        // pogodak pamti samo u memoriji - do restarta - a ne trajno; sutra Nominatim ide prvi.
+        try {
+            coords = geocodeOpenMeteo(cityName);
+        } catch (Exception e) {
+            log.warn("[Weather] I rezervni geokoder pao za '{}': {}", cityName, e.getMessage());
+        }
+        if (coords != null) {
+            log.warn("[Weather] '{}' geokodiran REZERVNIM izvorom (Open-Meteo) na {},{} - proveri u panelu da je grad tačan",
+                    cityName, coords[0], coords[1]);
+            geoCache.put(cityName, coords[0], coords[1], "open-meteo", false);
+        }
+        return coords;
     }
 
     // ── HTTP sa ponavljanjem ──────────────────────────────────────────────────
@@ -180,6 +240,28 @@ public class WeatherServiceImpl implements WeatherService {
 
         JsonNode first = results.get(0);
         return new double[]{ first.get("lat").asDouble(), first.get("lon").asDouble() };
+    }
+
+    // ── Rezervni geokoder (Open-Meteo) ────────────────────────────────────────
+
+    /** Vraća [lat, lon] ili null. Nezavisan od Nominatima - druga firma, druga infrastruktura. */
+    private double[] geocodeOpenMeteo(String cityName) throws Exception {
+        String encoded = URLEncoder.encode(cityName, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(OPEN_METEO_GEO_URL.formatted(encoded)))
+                .header("Accept", "application/json")
+                .timeout(Duration.ofSeconds(TIMEOUT_SEC))
+                .GET()
+                .build();
+        HttpResponse<String> response = sendWithRetry(request, "Open-Meteo geokoder");
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Open-Meteo geokoder HTTP " + response.statusCode());
+        }
+        JsonNode results = MAPPER.readTree(response.body()).path("results");
+        if (!results.isArray() || results.isEmpty()) return null;
+        JsonNode first = results.get(0);
+        if (!first.hasNonNull("latitude") || !first.hasNonNull("longitude")) return null;
+        return new double[]{ first.get("latitude").asDouble(), first.get("longitude").asDouble() };
     }
 
     // ── Vremenska prognoza (Open-Meteo) ───────────────────────────────────────

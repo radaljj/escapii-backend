@@ -31,7 +31,7 @@ class HealthJobsHttpTest {
     @Test
     void sveUReduVraca200() throws Exception {
         when(jobHealthService.proveri(any())).thenReturn(
-                new JobHealthService.Stanje(0, 0, 0, 0, null, LocalDate.of(2026, 9, 16)));
+                new JobHealthService.Stanje(0, 0, 0, 0, 0, null, LocalDate.of(2026, 9, 16), false));
 
         mockMvc.perform(get("/api/health/jobs"))
                 .andExpect(status().isOk())
@@ -43,7 +43,7 @@ class HealthJobsHttpTest {
     @Test
     void revealKasniVraca503SaRazlozima() throws Exception {
         when(jobHealthService.proveri(any())).thenReturn(
-                new JobHealthService.Stanje(3, 1, 1, 1, LocalDate.of(2026, 9, 15), LocalDate.of(2026, 9, 16)));
+                new JobHealthService.Stanje(3, 0, 1, 1, 1, LocalDate.of(2026, 9, 15), LocalDate.of(2026, 9, 16), false));
 
         mockMvc.perform(get("/api/health/jobs"))
                 .andExpect(status().isServiceUnavailable())
@@ -53,6 +53,17 @@ class HealthJobsHttpTest {
                 .andExpect(jsonPath("$.cekaPrognozu").value(1))
                 .andExpect(jsonPath("$.slanjeNijeUspelo").value(1))
                 .andExpect(jsonPath("$.najranijiPolazak").value("2026-09-15"));
+    }
+
+    @Test
+    void dnevniKrugKasniVraca503() throws Exception {
+        when(jobHealthService.proveri(any())).thenReturn(
+                new JobHealthService.Stanje(0, 0, 0, 0, 0, null, LocalDate.of(2026, 9, 16), true));
+
+        mockMvc.perform(get("/api/health/jobs"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value("DNEVNI_KRUG_KASNI"))
+                .andExpect(jsonPath("$.dnevniKrugKasni").value(true));
     }
 
     @Test

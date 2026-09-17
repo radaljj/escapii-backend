@@ -120,11 +120,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      *       until = today+7  → primarni okidač na T-7, ostalo je nadoknada
      *
      * Prognoza sme da stigne i na dan polaska, ali nikad posle reveala -
-     * taj redosled drži DailyTaskScheduler, koji je šalje prvu.
+     * taj redosled drži DailyTaskScheduler, koji je šalje prvu. Ako je reveal već otišao
+     * (ručno iz panela, bez prognoze), prognoza se više ne šalje: pisana je kao najava reveala.
      */
     @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
            "AND b.assignedDestination IS NOT NULL " +
            "AND b.forecastSentAt IS NULL " +
+           "AND b.revealSentAt IS NULL " +
            "AND b.selectedDate.departureDate >= :from " +
            "AND b.selectedDate.departureDate <= :until " +
            "ORDER BY b.selectedDate.departureDate ASC")
@@ -309,7 +311,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * petlja to ne vidi i posalje drugi put. Ciljani upisi to ne resavaju - oni stite
      * upis, ne odluku.
      *
-     * <p>Zove se neposredno pre slanja, pa je prozor sveden na milisekunde.
+     * <p>Zove se pod bravom na redu (findByIdForUpdate), pa se ručno slanje iz panela i krug
+     * ne preklapaju - ko uđe drugi, zatekne „već poslato".
      */
     @Query("""
            SELECT COUNT(b) FROM Booking b
@@ -325,6 +328,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            SELECT COUNT(b) FROM Booking b
             WHERE b.id = :id
               AND b.forecastSentAt IS NULL
+              AND b.revealSentAt IS NULL
               AND b.assignedDestination IS NOT NULL
               AND b.status = com.escapii.model.BookingStatus.CONFIRMED
            """)
@@ -351,6 +355,32 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.selectedDate.departureDate >= :today " +
            "AND b.selectedDate.departureDate <= :cutoff")
     List<Booking> findRevealOverdue(@Param("today") LocalDate today, @Param("cutoff") LocalDate cutoff);
+
+    /**
+     * Potvrđene rezervacije bez poslate prognoze sa polaskom od {@code today} do {@code cutoff}.
+     * Za {@code JobHealthService}: prognoza ide na T-7, pa je polazak za 5 dana ili manje bez nje
+     * znak da nešto ne radi (geokoder, vremenski servis, mejl). Bez destinacije se ne računa - za
+     * to postoji upozorenje „nema destinacije" (a na T-2 postaje reveal koji kasni). Ne računa se
+     * ni kad je reveal već otišao (ručno): prognoza posle reveala ne ide.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND b.forecastSentAt IS NULL " +
+           "AND b.revealSentAt IS NULL " +
+           "AND b.assignedDestination IS NOT NULL AND TRIM(b.assignedDestination) <> '' " +
+           "AND b.selectedDate.departureDate >= :today " +
+           "AND b.selectedDate.departureDate <= :cutoff")
+    List<Booking> findForecastOverdue(@Param("today") LocalDate today, @Param("cutoff") LocalDate cutoff);
+
+    /**
+     * Potvrđene rezervacije BEZ unete destinacije sa polaskom u prozoru - jutarnji krug i digest
+     * upozoravaju tim, jer bez destinacije ne ide ni prognoza ni reveal.
+     */
+    @Query("SELECT b FROM Booking b WHERE b.status = 'CONFIRMED' " +
+           "AND (b.assignedDestination IS NULL OR TRIM(b.assignedDestination) = '') " +
+           "AND b.selectedDate.departureDate >= :today " +
+           "AND b.selectedDate.departureDate <= :until " +
+           "ORDER BY b.selectedDate.departureDate ASC")
+    List<Booking> findConfirmedWithoutDestination(@Param("today") LocalDate today, @Param("until") LocalDate until);
 
     // ── Zbirne fakture agencijama ────────────────────────────────────────────
 

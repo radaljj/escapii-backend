@@ -43,7 +43,8 @@ class JutarnjiKrugAppErrorTest {
         vreme = mock(WeatherService.class);
         greske = mock(AppErrorService.class);
         svc = new BookingSchedulingServiceImpl(repo, mock(GiftVoucherRepository.class), reveal, prognoza,
-                vreme, mock(ConfirmationDocumentAutoSender.class), new VoucherLedger(), greske);
+                vreme, mock(ConfirmationDocumentAutoSender.class), new VoucherLedger(), greske,
+                mock(org.springframework.transaction.PlatformTransactionManager.class));
     }
 
     private static Booking booking(int danaDoPolaska) {

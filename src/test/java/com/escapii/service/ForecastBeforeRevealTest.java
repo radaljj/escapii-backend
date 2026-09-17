@@ -30,8 +30,8 @@ class ForecastBeforeRevealTest {
         String w = src("src/main/java/com/escapii/service/weather/WeatherServiceImpl.java");
         assertTrue(w.contains("sendWithRetry"),
                 "HTTP pozivi moraju ići kroz sendWithRetry - jedan 503 ne sme da obori prognozu");
-        assertEquals(3, countOccurrences(w, "sendWithRetry(request"),
-                "sva tri poziva (Nominatim + Open-Meteo + MET Norway) moraju koristiti ponavljanje");
+        assertEquals(4, countOccurrences(w, "sendWithRetry(request"),
+                "sva četiri poziva (Nominatim + Open-Meteo geokoder + Open-Meteo + MET Norway) moraju koristiti ponavljanje");
         // 4xx se NE ponavlja - trajna greška, ponavljanje bi samo trošilo vreme
         assertTrue(w.contains(">= 500"),
                 "ponavljati se sme samo na 5xx, ne na 4xx");
