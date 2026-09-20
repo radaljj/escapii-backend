@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - GET  /api/airports:              max 60 zahteva po IP na minut
  * - /api/admin/**:                   max 20 zahteva po IP na minut (brute-force zaštita ključa)
  * - GET  /api/reveal:                max 10 zahteva po IP na 15 minuta
- * - POST /api/reveal/confirm:        max 10 zahteva po IP na 15 minuta
+ * - POST /api/reveal/confirm:        max 30 zahteva po IP na 15 minuta (svoj brojač, ne deli ga sa GET)
  * - POST /api/inquiries/custom-date: max 3 zahteva po IP na sat
  * - GET  /api/dates/private:          max 20 zahteva po IP na sat
  * - POST /api/gifts/vouchers:         max 3 zahteva po IP na sat
@@ -77,6 +77,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final int  REVEAL_MAX         = 10;
     private static final long REVEAL_WINDOW      = 15 * 60 * 1000L;   // 15 minuta
+    /** Javljanje „ogrebano": stranica ga ponavlja dok ne prođe, a više putnika deli isti IP. */
+    private static final int  REVEAL_CONFIRM_MAX = 30;
 
     private static final int  INQUIRY_MAX          = 3;
     private static final long INQUIRY_WINDOW      = 60 * 60 * 1000L;   // 1 sat
@@ -105,6 +107,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> destinationsLog = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> airportsLog     = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> revealLog       = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> revealConfirmLog = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> inquiryLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> privateDateLog    = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> giftVoucherLog    = new ConcurrentHashMap<>();
@@ -194,7 +197,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
-        if (uri.startsWith("/api/reveal")) {
+        // Javljanje „ogrebano" ima svoj brojač. Dok ga je delilo sa otvaranjem strane, par
+        // osvežavanja sa dva telefona na istom Wi-Fi-ju je trošilo limit i javljanje je tiho
+        // propadalo - a od njega zavisi da li kupcu ode dokument sa kartama. Poziv je
+        // idempotentan i bez važećeg tokena ne radi ništa, pa širi limit nije rizik.
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/reveal/confirm")) {
+            if (isRateLimited(revealConfirmLog, ip, REVEAL_CONFIRM_MAX, REVEAL_WINDOW)) {
+                log.warn("[RateLimit] Reveal confirm limit prekoračen za IP: {}", ip);
+                reject(response, "Previše zahteva. Pokušajte ponovo za 15 minuta.");
+                return;
+            }
+        } else if (uri.startsWith("/api/reveal")) {
             if (isRateLimited(revealLog, ip, REVEAL_MAX, REVEAL_WINDOW)) {
                 log.warn("[RateLimit] Reveal limit prekoračen za IP: {}", ip);
                 reject(response, "Previše zahteva. Pokušajte ponovo za 15 minuta.");
@@ -284,7 +297,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, airportsLog, revealLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, airportsLog, revealLog, revealConfirmLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();

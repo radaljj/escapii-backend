@@ -61,6 +61,7 @@ class ConfirmationDocumentFlowTest {
     @Mock private ConfirmationDocumentEmailService confirmationDocumentEmailService;
     @Mock private com.escapii.service.AgencySettlementCalculator agencySettlementCalculator;
     @Mock private com.escapii.repository.BookingFinancialItemRepository bookingFinancialItemRepository;
+    @Mock private com.escapii.service.AppErrorService appErrorService;
 
     private AdminServiceImpl svc;
     private ConfirmationDocumentAutoSender autoSender;
@@ -70,7 +71,7 @@ class ConfirmationDocumentFlowTest {
         // Realan autoSender preko mockovanih zavisnosti - da testiramo pravu logiku
         // koja spaja pravilo (canReceive) i slanje na jednom mestu.
         autoSender = new ConfirmationDocumentAutoSender(
-                bookingRepository, revealEventRepository, confirmationDocumentEmailService);
+                bookingRepository, revealEventRepository, confirmationDocumentEmailService, appErrorService);
         svc = new AdminServiceImpl(agencyRepository, availableDateRepository, destinationRepository, termDestinationRepository,
                 bookingRepository, giftVoucherRepository, revealEventRepository, inquiryRepository,
                 adminBookingMapper, destinationMapper, eventPublisher, waitlistService,

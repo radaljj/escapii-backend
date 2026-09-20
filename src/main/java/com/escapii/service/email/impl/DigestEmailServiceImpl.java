@@ -244,16 +244,21 @@ public class DigestEmailServiceImpl implements DigestEmailService {
             Long id           = b.getId();
             boolean isUrgent  = urgentIds.contains(id);
             boolean needsConf = viewedIds.contains(id);
+            // Na listi su sve rezervacije kojima dokument nije otišao. Kad PDF već postoji, problem
+            // nije upload nego slanje koje pada (krug ga ponavlja) - "Uploaduj" bi tim poslao
+            // da ponovo kači isti fajl umesto da pogleda zašto mejl ne izlazi.
+            boolean docStuck  = needsConf && b.getConfirmationDocument() != null;
             boolean needsBox  = boxIds.contains(id);
             boolean revealOk  = b.getRevealSentAt() != null;
             boolean forecastOk = b.getForecastSentAt() != null;
 
-            String rowBg  = isUrgent ? "#fff8f8" : (needsConf || needsBox) ? "#fffdf7" : "#ffffff";
+            String rowBg  = (isUrgent || docStuck) ? "#fff8f8" : (needsConf || needsBox) ? "#fffdf7" : "#ffffff";
             String border = i < bookings.size() - 1 ? "border-bottom:1px solid #f0e8dc;" : "";
 
             StringBuilder badges = new StringBuilder();
             if (isUrgent)   badges.append(badge("&#128680; Nije otvorio!", "#fff0f0", "#9b3a2a"));
-            if (needsConf)  badges.append(badge("&#128206; Uploaduj dokument", "#eef6f0", "#1d6042"));
+            if (docStuck)       badges.append(badge("&#9888; Dokument nije poslat", "#fff0f0", "#9b3a2a"));
+            else if (needsConf) badges.append(badge("&#128206; Uploaduj dokument", "#eef6f0", "#1d6042"));
             if (needsBox)   badges.append(badge("&#128230; Pošalji kutiju", "#fff5eb", "#a85e44"));
             if (revealOk)   badges.append(badge("&#9993; Reveal poslan", "#eef3ff", "#2b5fd9"));
             if (forecastOk) badges.append(badge("&#127780; Prognoza poslata", "#f3f0ff", "#5b3ea8"));

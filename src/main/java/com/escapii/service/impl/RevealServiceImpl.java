@@ -29,6 +29,7 @@ public class RevealServiceImpl implements RevealService {
     private final RevealEventRepository  revealEventRepository;
     private final ConfirmationDocumentEmailService confirmationDocumentEmailService;
     private final TravelAddonsService    travelAddonsService;
+    private final ConfirmationDocumentAutoSender confirmationDocumentAutoSender;
 
     @Override
     public Map<String, Object> getRevealInfo(String token) {
@@ -148,11 +149,30 @@ public class RevealServiceImpl implements RevealService {
         return addons;
     }
 
+    /**
+     * Isti uslovi pod kojima {@link #getRevealInfo} uopšte prikazuje destinaciju: uneta je,
+     * reveal je zvanično poslat i polazak nije prošao. Ko menja jedno, menja i drugo.
+     */
+    private static boolean jeOtkljucan(Booking booking) {
+        if (booking.getAssignedDestination() == null || booking.getAssignedDestination().isBlank()) return false;
+        if (booking.getRevealSentAt() == null) return false;
+        LocalDate polazak = booking.getSelectedDate() != null ? booking.getSelectedDate().getDepartureDate() : null;
+        return polazak == null || !LocalDate.now().isAfter(polazak);
+    }
+
     @Override
     @Transactional
     public void confirmRevealed(String token) {
         bookingRepository.findByRevealToken(token).ifPresent(booking -> {
             if (booking.getStatus() != com.escapii.model.BookingStatus.CONFIRMED) return;
+            // Iste provere kao GET /api/reveal: javljanje važi samo za reveal koji je zvanično
+            // otključan. Token postoji čim admin unese destinaciju, pa bi bez ovoga onaj ko ima
+            // token mogao da okine mejl sa dokumentom (koji nosi destinaciju) pre samog reveala.
+            // Odgovor je i tada 200 - ne otkrivamo spolja u kom je stanju rezervacija.
+            if (!jeOtkljucan(booking)) {
+                log.warn("[Reveal] Javljanje 'ogrebano' odbijeno za {} - reveal nije otključan", booking.getBookingRef());
+                return;
+            }
             if (revealEventRepository.findByBookingRef(booking.getBookingRef()).isEmpty()) {
                 revealEventRepository.save(new RevealEvent(booking.getBookingRef()));
                 log.info("[Reveal] Korisnik ogrebaо scratch karticu za rezervaciju {}", booking.getBookingRef());
@@ -170,6 +190,8 @@ public class RevealServiceImpl implements RevealService {
                     } else {
                         log.error("[ConfirmationDocument] Slanje nije uspelo za {} - ostaje neposlat",
                                 booking.getBookingRef());
+                        // Krug ponavlja slanje na 30 min, ali tim mora da sazna da je palo.
+                        confirmationDocumentAutoSender.prijaviPadSlanja(booking);
                     }
                 }
             }

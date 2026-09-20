@@ -153,7 +153,8 @@ class GiftFlowEndToEndTest {
                                                                         set(revealMail,   "frontendUrl",  "https://escapii.rs");
         docMail      = new ConfirmationDocumentEmailServiceImpl(sender, vok); set(docMail,    "contactEmail", "info@escapii.rs");
 
-        reveal = new RevealServiceImpl(bookingRepository, revealEventRepository, docMail, travelAddonsService);
+        reveal = new RevealServiceImpl(bookingRepository, revealEventRepository, docMail, travelAddonsService,
+                org.mockito.Mockito.mock(com.escapii.service.impl.ConfirmationDocumentAutoSender.class));
         when(travelAddonsService.linksFor(anyString())).thenReturn(Map.of());
 
         // baza
