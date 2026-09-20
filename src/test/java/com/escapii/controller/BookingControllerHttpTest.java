@@ -202,7 +202,7 @@ class BookingControllerHttpTest {
 
     @Test
     void pricePreviewProsledjujeServisu() throws Exception {
-        when(bookingService.previewPrice(10L, 2, AccommodationType.STANDARD, 0, 0, false, false, false))
+        when(bookingService.previewPrice(10L, 2, AccommodationType.STANDARD, 0, 0, null, false, false, false))
                 .thenReturn(PricePreviewResponse.builder().totalEurAll(1000).build());
 
         mockMvc.perform(get("/api/booking/price-preview")

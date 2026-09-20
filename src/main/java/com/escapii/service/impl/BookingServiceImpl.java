@@ -49,6 +49,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper            bookingMapper;
     private final FinancialItemSnapshotService financialItemSnapshotService;
     private final VoucherLedger                voucherLedger;
+    private final com.escapii.promo.ExclusionPromo exclusionPromo;
 
     @Override
     @Transactional
@@ -182,14 +183,27 @@ public class BookingServiceImpl implements BookingService {
                         : "Isključivanje destinacija nije dostupno za letove iz grada " + airport.citySr());
         }
 
+        // Promo kod se proverava OVDE, ne veruje se sajtu. Kod koji je u međuvremenu istekao ili je
+        // ugašen odbija rezervaciju: kupac je pristao na cenu sa pogodnošću, pa mora da vidi novu
+        // pre nego što se obaveže (sajt po ovoj poruci skida promo i osvežava cenu).
+        boolean promoUnet = request.getPromoCode() != null;
+        boolean promo = promoUnet && exclusionPromo.vazi(request.getPromoCode());
+        if (promoUnet && !promo) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, com.escapii.promo.ExclusionPromo.PORUKA_NE_VAZI);
+        }
+
         PricePreviewResponse price = priceCalculator.calculate(
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether(),
-                request.isHasRevealBox(), request.getDepartureAirport()
+                request.isHasRevealBox(), request.getDepartureAirport(), promo
         );
 
         Booking booking = buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price);
+        if (promo) {
+            booking.setPromoCode(request.getPromoCode());
+            booking.setPromoSavedEur(price.getExclusionPromoSavedEur());
+        }
 
         // 5. Primeni vaučer popust (ako postoji validan aktivni vaučer)
         GiftVoucher appliedVoucher = null;
@@ -254,7 +268,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public PricePreviewResponse previewPrice(
             Long selectedDateId, int n, AccommodationType accommodationType, int exclusionCount,
-            int cabinSuitcaseCount, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether
+            int cabinSuitcaseCount, String promoCode, boolean hasInsurance, boolean hasBreakfast, boolean hasSeatsTogether
     ) {
         AvailableDate date = availableDateRepository.findById(selectedDateId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -262,8 +276,13 @@ public class BookingServiceImpl implements BookingService {
 
         // accommodationType can be null for preview (default = STANDARD)
         AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
-        return priceCalculator.calculate(date, n, accomType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, date.getDepartureAirport());
+        // Promo kod koji ne važi se u pregledu samo ignoriše (puna cena, exclusionPromoApplied=false) -
+        // sajt iz toga vidi da kod više ne radi. Odbijanje ide tek pri samoj rezervaciji.
+        boolean promo = exclusionPromo.vazi(promoCode);
+        PricePreviewResponse price = priceCalculator.calculate(date, n, accomType, exclusionCount,
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, date.getDepartureAirport(), promo);
+        price.setExclusionPromoActive(exclusionPromo.aktivan());
+        return price;
     }
 
     @Override

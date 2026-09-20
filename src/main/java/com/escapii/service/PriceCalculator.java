@@ -23,7 +23,7 @@ public interface PriceCalculator {
      * @param departureAirport  IATA kod aerodroma - utiče na pravila isključivanja
      *                          (INI: 0 dozvoljenih; ostali: max 4, 1. gratis, 10€/os za ostale)
      */
-    PricePreviewResponse calculate(
+    default PricePreviewResponse calculate(
             AvailableDate date,
             int n,
             AccommodationType accommodationType,
@@ -34,5 +34,30 @@ public interface PriceCalculator {
             boolean hasSeatsTogether,
             boolean hasRevealBox,
             String departureAirport
+    ) {
+        return calculate(date, n, accommodationType, exclusionCount, cabinSuitcaseCount,
+                hasInsurance, hasBreakfast, hasSeatsTogether, hasRevealBox, departureAirport, false);
+    }
+
+    /**
+     * Isti obračun, uz promo „besplatno isključivanje destinacija".
+     *
+     * @param exclusionsFree true kad je stigao važeći promo kod (proverava pozivalac, vidi
+     *                       ExclusionPromo): naplativa isključivanja koštaju 0, a u odgovoru
+     *                       stoji koliko bi inače koštala ({@code exclusionPromoSavedEur}).
+     *                       Pravila aerodroma (koliko je isključivanja dozvoljeno) ostaju ista.
+     */
+    PricePreviewResponse calculate(
+            AvailableDate date,
+            int n,
+            AccommodationType accommodationType,
+            int exclusionCount,
+            int cabinSuitcaseCount,
+            boolean hasInsurance,
+            boolean hasBreakfast,
+            boolean hasSeatsTogether,
+            boolean hasRevealBox,
+            String departureAirport,
+            boolean exclusionsFree
     );
 }

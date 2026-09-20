@@ -156,6 +156,13 @@ public class BookingRequest {
     @Size(max = 20)
     private String voucherCode;
 
+    /**
+     * Opcioni promo kod (isto polje na formi kao vaučer). Važenje proverava backend pri obračunu -
+     * vidi ExclusionPromo; kod koji više ne važi odbija rezervaciju da kupac vidi osveženu cenu.
+     */
+    @Size(max = 40, message = "Promo kod nije važeći")
+    private String promoCode;
+
     // ── Saglasnosti (GDPR dokaz) ──────────────────────────────────────
     // Checkbox-evi na frontu se mogu zaobići direktnim API pozivom, pa se
     // prihvatanje validira i ovde, a vreme/verzija/jezik čuvaju uz rezervaciju.
@@ -238,6 +245,10 @@ public class BookingRequest {
         if (email             != null) email             = email.trim().toLowerCase();
         if (phone             != null) phone             = phone.trim();
         if (notes             != null) notes             = notes.trim();
+        if (promoCode != null) {
+            promoCode = promoCode.trim().toUpperCase();
+            if (promoCode.isEmpty()) promoCode = null;
+        }
         if (deliveryAddress   != null) deliveryAddress   = deliveryAddress.trim();
         if (deliveryCity      != null) deliveryCity      = deliveryCity.trim();
         if (deliveryPhone     != null) deliveryPhone     = deliveryPhone.trim();

@@ -60,7 +60,8 @@ class BookingCreationFlowTest {
     void setUp() {
         svc = new BookingServiceImpl(bookingRepository, availableDateRepository, destinationRepository,
                 giftVoucherRepository, priceCalculator, eventPublisher, bookingMapper,
-                new FinancialItemSnapshotService(), new com.escapii.service.impl.VoucherLedger());
+                new FinancialItemSnapshotService(), new com.escapii.service.impl.VoucherLedger(),
+                org.mockito.Mockito.mock(com.escapii.promo.ExclusionPromo.class));
     }
 
     private BookingRequest validRequest() {
@@ -113,7 +114,7 @@ class BookingCreationFlowTest {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
-                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyBoolean())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             b.setId(1L); // simulira dodelu ID-a pri INSERT-u
@@ -154,7 +155,7 @@ class BookingCreationFlowTest {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
-                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyBoolean())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             b.setId(1L);
@@ -214,7 +215,7 @@ class BookingCreationFlowTest {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
-                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString())).thenReturn(price());
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyBoolean())).thenReturn(price());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             b.setId(1L);

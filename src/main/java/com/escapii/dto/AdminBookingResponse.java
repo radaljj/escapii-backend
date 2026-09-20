@@ -47,6 +47,9 @@ public class AdminBookingResponse {
     private Integer exclusionCount;
     private java.util.List<String> excludedDestinations;
     private Integer exclusionCostEur;
+    /** Promo kod sa rezervacije i koliko je uštedeo (€); null kad promo nije korišćen. */
+    private String promoCode;
+    private Integer promoSavedEur;
 
     // Putnici - puni detalji
     private java.util.List<PassengerDetail> passengers;

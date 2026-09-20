@@ -62,3 +62,13 @@ CREATE TABLE IF NOT EXISTS geo_cache (
     source      VARCHAR(20),
     resolved_at TIMESTAMP        NOT NULL
 );
+
+-- Promo "besplatno iskljucivanje destinacija" (2026-09-20): podesavanja koja admin menja iz panela
+-- bez deploya (kod, datum isteka, prekidac) - vidi ExclusionPromo
+CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key   VARCHAR(80)  PRIMARY KEY,
+    setting_value VARCHAR(500),
+    updated_at    TIMESTAMP
+);
+ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(40);
+ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS promo_saved_eur INTEGER;

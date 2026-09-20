@@ -371,6 +371,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.selectedDate.departureDate <= :cutoff")
     List<Booking> findForecastOverdue(@Param("today") LocalDate today, @Param("cutoff") LocalDate cutoff);
 
+    /** Koliko neotkazanih rezervacija je iskoristilo promo kod - za karticu „Promo" u panelu. */
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.promoCode = :kod AND b.status <> 'CANCELLED'")
+    long countPromoUses(@Param("kod") String kod);
+
+    /** Koliko su te rezervacije ukupno uštedele (€). */
+    @Query("SELECT COALESCE(SUM(b.promoSavedEur), 0) FROM Booking b WHERE b.promoCode = :kod AND b.status <> 'CANCELLED'")
+    long sumPromoSaved(@Param("kod") String kod);
+
     /**
      * Potvrđene rezervacije BEZ unete destinacije sa polaskom u prozoru - jutarnji krug i digest
      * upozoravaju tim, jer bez destinacije ne ide ni prognoza ni reveal.

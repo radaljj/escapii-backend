@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - GET  /api/dates/private:          max 20 zahteva po IP na sat
  * - POST /api/gifts/vouchers:         max 3 zahteva po IP na sat
  * - POST /api/gifts/vouchers/validate: max 5 zahteva po IP na 15 minuta
+ * - POST /api/promo/validate:          max 10 zahteva po IP na 15 minuta (pogađanje promo koda)
  * - POST /api/launch-notify:         max 5 zahteva po IP na sat
  *
  * IP ekstrakcija: uzima POSLEDNJI unos iz X-Forwarded-For - taj dodaje naš trusted proxy
@@ -90,6 +91,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final long GIFT_VOUCHER_WINDOW   = 60 * 60 * 1000L; // 1 sat
 
     private static final int  GIFT_VALIDATE_MAX     = 5;
+    private static final int  PROMO_VALIDATE_MAX    = 10;
     private static final long GIFT_VALIDATE_WINDOW  = 15 * 60 * 1000L; // 15 minuta
 
     private static final int  GIFT_TRIP_MAX         = 3;
@@ -108,6 +110,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final Map<String, Queue<Long>> airportsLog     = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> revealLog       = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> revealConfirmLog = new ConcurrentHashMap<>();
+    private final Map<String, Queue<Long>> promoValidateLog = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> inquiryLog        = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> privateDateLog    = new ConcurrentHashMap<>();
     private final Map<String, Queue<Long>> giftVoucherLog    = new ConcurrentHashMap<>();
@@ -231,6 +234,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
+        if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/promo/validate")) {
+            if (isRateLimited(promoValidateLog, ip, PROMO_VALIDATE_MAX, GIFT_VALIDATE_WINDOW)) {
+                log.warn("[RateLimit] Promo validate limit prekoračen za IP: {}", ip);
+                reject(response, "Previše pokušaja. Pokušajte ponovo za 15 minuta.");
+                return;
+            }
+        }
+
         if (("POST".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/vouchers/validate"))
                 || ("GET".equalsIgnoreCase(request.getMethod()) && uri.equals("/api/gifts/vouchers/reveal"))) {
             if (isRateLimited(giftValidateLog, ip, GIFT_VALIDATE_MAX, GIFT_VALIDATE_WINDOW)) {
@@ -297,7 +308,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Scheduled(fixedRate = 3_600_000) // svakih sat vremena
     public void evictStaleEntries() {
         long cutoff = System.currentTimeMillis() - MAX_WINDOW;
-        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, airportsLog, revealLog, revealConfirmLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
+        for (Map<String, Queue<Long>> logMap : new Map[]{bookingLog, previewLog, statusLog, adminLog, waitlistLog, datesLog, destinationsLog, airportsLog, revealLog, revealConfirmLog, promoValidateLog, inquiryLog, privateDateLog, giftVoucherLog, giftValidateLog, giftTripLog, launchNotifyLog}) {
             Iterator<Map.Entry<String, Queue<Long>>> it = logMap.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, Queue<Long>> entry = it.next();

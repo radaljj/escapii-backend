@@ -76,6 +76,14 @@ public class Booking {
     @Column(name = "exclusion_cost_eur", nullable = false)
     private Integer exclusionCostEur = 0;
 
+    /** Promo kod primenjen pri rezervaciji (npr. besplatno isključivanje); null kad ga nije bilo. */
+    @Column(name = "promo_code", length = 40)
+    private String promoCode;
+
+    /** Koliko je promo kod uštedeo kupcu (€) - iznos koji bi isključivanja inače koštala. */
+    @Column(name = "promo_saved_eur")
+    private Integer promoSavedEur;
+
     // ── Smeštaj ───────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)

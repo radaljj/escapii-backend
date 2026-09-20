@@ -41,4 +41,11 @@ public class PricePreviewResponse {
     private Integer exclusionCount;
     private Integer numberOfTravelers;
     private Integer numberOfNights;
+    // ── Promo „besplatno isključivanje" (ExclusionPromo) ──────────────
+    /** True kad je uz obračun stigao važeći promo kod: naplativa isključivanja tada koštaju 0. */
+    private Boolean exclusionPromoApplied;
+    /** Koliko bi isključivanja koštala bez promo koda (0 kad promo nije primenjen ili nema naplativih). */
+    private Integer exclusionPromoSavedEur;
+    /** Da li promo trenutno traje - sajt tada na koraku isključivanja podseća na kod. Sam kod se NIKAD ne vraća. */
+    private Boolean exclusionPromoActive;
 }

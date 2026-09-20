@@ -58,13 +58,15 @@ public class BookingController {
             @RequestParam(defaultValue = "0")                 int     exclusionCount,
             @Min(0) @Max(30)
             @RequestParam(defaultValue = "0")                 int     cabinSuitcaseCount,
+            @jakarta.validation.constraints.Size(max = 40)
+            @RequestParam(required = false)                   String  promoCode,
             @RequestParam(defaultValue = "false")             boolean hasInsurance,
             @RequestParam(defaultValue = "false")             boolean hasBreakfast,
             @RequestParam(defaultValue = "false")             boolean hasSeatsTogether
     ) {
         return ResponseEntity.ok(bookingService.previewPrice(
                 selectedDateId, numberOfTravelers, accommodationType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether
+                cabinSuitcaseCount, promoCode, hasInsurance, hasBreakfast, hasSeatsTogether
         ));
     }
 }

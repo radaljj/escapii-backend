@@ -911,6 +911,11 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (booking.getExclusionCostEur() > 0) {
             int paid = booking.getExclusionCount() - 1;
             rows.append(priceRow(exclusionLabel(paid), "-", null, booking.getExclusionCostEur(), true));
+        } else if (booking.getPromoCode() != null && booking.getPromoSavedEur() != null && booking.getPromoSavedEur() > 0) {
+            // Promo je pokrio isključivanja: red ostaje u cenovniku sa 0 €, da kupac vidi da je
+            // pogodnost stvarno primenjena (i koliko je vredela).
+            rows.append(priceRow("Isključivanje destinacija - besplatno uz promo kod " + booking.getPromoCode()
+                    + " (ušteda " + booking.getPromoSavedEur() + " €)", "-", null, 0, true));
         }
         if (n == 1)
             rows.append(priceRow("Doplata za solo putnika", "-", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));

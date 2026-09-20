@@ -41,7 +41,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
                                           int exclusionCount, int cabinSuitcaseCount,
                                           boolean hasInsurance, boolean hasBreakfast,
                                           boolean hasSeatsTogether, boolean hasRevealBox,
-                                          String departureAirport) {
+                                          String departureAirport, boolean exclusionsFree) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
         int breakfast = hasBreakfast ? BREAKFAST_PP * date.getNumberOfNights() : 0;
@@ -50,7 +50,10 @@ public class PriceCalculatorImpl implements PriceCalculator {
 
         // Pravila isključivanja (koliko ih je dozvoljeno i da li je prvo gratis)
         // dolaze iz DepartureAirport - nema više if-a po kodu aerodroma.
-        int exclusionCostFlat = calcExclusionCost(exclusionCount, n, departureAirport);
+        // Promo „besplatno isključivanje": pun iznos se i dalje izračuna (da kupac vidi koliko je
+        // uštedeo), ali se ne naplaćuje.
+        int exclusionFull = calcExclusionCost(exclusionCount, n, departureAirport);
+        int exclusionCostFlat = exclusionsFree ? 0 : exclusionFull;
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
         int revealBoxTotal = hasRevealBox ? REVEAL_BOX_FLAT : 0;
@@ -72,6 +75,8 @@ public class PriceCalculatorImpl implements PriceCalculator {
             .revealBoxTotal(revealBoxTotal)
             .totalEurAll(totalEurAll)
             .exclusionCount(exclusionCount)
+            .exclusionPromoApplied(exclusionsFree)
+            .exclusionPromoSavedEur(exclusionsFree ? exclusionFull : 0)
             .numberOfTravelers(n)
             .numberOfNights(date.getNumberOfNights())
             .build();

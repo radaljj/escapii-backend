@@ -21,6 +21,7 @@ public interface BookingService {
             AccommodationType accommodationType,
             int exclusionCount,
             int cabinSuitcaseCount,
+            String promoCode,
             boolean hasInsurance,
             boolean hasBreakfast,
             boolean hasSeatsTogether
