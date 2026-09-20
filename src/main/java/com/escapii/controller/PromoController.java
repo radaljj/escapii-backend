@@ -34,23 +34,25 @@ public class PromoController {
             String code) {}
 
     /**
-     * @param kind       vrsta pogodnosti; za sada samo EXCLUSIONS_FREE (isključivanje destinacija besplatno)
-     * @param validUntil poslednji dan važenja, za tekst na sajtu
+     * @param kind           vrsta pogodnosti; za sada samo EXCLUSIONS_FREE (besplatna isključivanja destinacija)
+     * @param validUntil     poslednji dan važenja, za tekst na sajtu
+     * @param freeExclusions koliko isključivanja ukupno ne košta ništa uz kod (3 = prva tri)
      */
-    public record PromoValidateResponse(boolean valid, String kind, LocalDate validUntil, String message) {
-        static PromoValidateResponse ok(LocalDate validUntil) {
-            return new PromoValidateResponse(true, "EXCLUSIONS_FREE", validUntil, null);
+    public record PromoValidateResponse(boolean valid, String kind, LocalDate validUntil, Integer freeExclusions, String message) {
+        static PromoValidateResponse ok(LocalDate validUntil, int freeExclusions) {
+            return new PromoValidateResponse(true, "EXCLUSIONS_FREE", validUntil, freeExclusions, null);
         }
         static PromoValidateResponse invalid() {
-            return new PromoValidateResponse(false, null, null, "Promo kod nije važeći.");
+            return new PromoValidateResponse(false, null, null, null, "Promo kod nije važeći.");
         }
     }
 
     @PostMapping("/validate")
     public ResponseEntity<PromoValidateResponse> validate(@Valid @RequestBody PromoValidateRequest request) {
-        if (!exclusionPromo.vazi(request.code())) {
+        int besplatnih = exclusionPromo.besplatnihZa(request.code());
+        if (besplatnih <= 0) {
             return ResponseEntity.ok(PromoValidateResponse.invalid());
         }
-        return ResponseEntity.ok(PromoValidateResponse.ok(exclusionPromo.podesavanja().vaziDo()));
+        return ResponseEntity.ok(PromoValidateResponse.ok(exclusionPromo.podesavanja().vaziDo(), besplatnih));
     }
 }

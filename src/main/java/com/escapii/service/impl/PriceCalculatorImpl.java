@@ -41,7 +41,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
                                           int exclusionCount, int cabinSuitcaseCount,
                                           boolean hasInsurance, boolean hasBreakfast,
                                           boolean hasSeatsTogether, boolean hasRevealBox,
-                                          String departureAirport, boolean exclusionsFree) {
+                                          String departureAirport, int promoFreeExclusions) {
         int basePrice = date.getBasePrice();
         int accommodationExtra = resolveAccommodationExtra(accommodationType);
         int breakfast = hasBreakfast ? BREAKFAST_PP * date.getNumberOfNights() : 0;
@@ -50,10 +50,11 @@ public class PriceCalculatorImpl implements PriceCalculator {
 
         // Pravila isključivanja (koliko ih je dozvoljeno i da li je prvo gratis)
         // dolaze iz DepartureAirport - nema više if-a po kodu aerodroma.
-        // Promo „besplatno isključivanje": pun iznos se i dalje izračuna (da kupac vidi koliko je
-        // uštedeo), ali se ne naplaćuje.
-        int exclusionFull = calcExclusionCost(exclusionCount, n, departureAirport);
-        int exclusionCostFlat = exclusionsFree ? 0 : exclusionFull;
+        // Promo „besplatna isključivanja": pun iznos se i dalje izračuna, da kupac vidi koliko je
+        // uštedeo; naplaćuje se samo ono preko broja koji promo pokriva (SKIP3: tek četvrto).
+        boolean promo = promoFreeExclusions > 0;
+        int exclusionFull = calcExclusionCost(exclusionCount, n, departureAirport, 0);
+        int exclusionCostFlat = promo ? calcExclusionCost(exclusionCount, n, departureAirport, promoFreeExclusions) : exclusionFull;
         int cabinSuitcaseTotal = cabinSuitcaseCount * CABIN_SUITCASE;
         int soloSurcharge = (n == 1) ? SOLO_SURCHARGE : 0;
         int revealBoxTotal = hasRevealBox ? REVEAL_BOX_FLAT : 0;
@@ -75,8 +76,9 @@ public class PriceCalculatorImpl implements PriceCalculator {
             .revealBoxTotal(revealBoxTotal)
             .totalEurAll(totalEurAll)
             .exclusionCount(exclusionCount)
-            .exclusionPromoApplied(exclusionsFree)
-            .exclusionPromoSavedEur(exclusionsFree ? exclusionFull : 0)
+            .exclusionPromoApplied(promo)
+            .exclusionPromoSavedEur(exclusionFull - exclusionCostFlat)
+            .exclusionPromoFreeCount(promo ? promoFreeExclusions : 0)
             .numberOfTravelers(n)
             .numberOfNights(date.getNumberOfNights())
             .build();
@@ -92,17 +94,20 @@ public class PriceCalculatorImpl implements PriceCalculator {
      * stigne dovde - da preview cene nikad ne prikaže više nego što je moguće
      * rezervisati.
      */
-    private int calcExclusionCost(int exclusionCount, int n, String departureAirport) {
+    private int calcExclusionCost(int exclusionCount, int n, String departureAirport, int promoFree) {
         DepartureAirport airport = DepartureAirport.from(departureAirport).orElse(null);
         // Nepoznat/nepostavljen aerodrom (npr. price-preview bez izbora) - najstroža
-        // varijanta koja ne izmišlja popust: naplati svako isključivanje.
+        // varijanta koja ne izmišlja popust: naplati svako isključivanje (osim onih koje pokriva promo).
         if (airport == null) {
-            return Math.max(0, exclusionCount) * EXCLUSION_PP * n;
+            return Math.max(0, exclusionCount - promoFree) * EXCLUSION_PP * n;
         }
         if (airport.maxExclusions() == 0 || exclusionCount <= 0) return 0;
 
         int effective = Math.min(exclusionCount, airport.maxExclusions());
-        int billable  = airport.firstExclusionFree() ? effective - 1 : effective;
+        // Besplatnih je onoliko koliko daje pravilo aerodroma (prvo gratis) ili promo kod - šta je
+        // više. Promo se NE sabira sa „prvo gratis": SKIP3 znači tri besplatna ukupno, ne četiri.
+        int free      = Math.max(airport.firstExclusionFree() ? 1 : 0, promoFree);
+        int billable  = effective - free;
         return Math.max(0, billable) * EXCLUSION_PP * n;
     }
 

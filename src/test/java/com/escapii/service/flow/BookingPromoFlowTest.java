@@ -81,14 +81,14 @@ class BookingPromoFlowTest {
                 .basePricePerPerson(500).accommodationExtraPerPerson(0).breakfastPerPerson(0).seatsTogether(0)
                 .insurancePerPerson(0).eurPerPerson(500).soloSurcharge(0).cabinSuitcaseCount(0).cabinSuitcaseTotal(0)
                 .revealBoxTotal(0).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
-                .exclusionCostFlat(promo ? 0 : 60).totalEurAll(promo ? 1000 : 1060)
-                .exclusionPromoApplied(promo).exclusionPromoSavedEur(promo ? 60 : 0)
+                .exclusionCostFlat(promo ? 20 : 60).totalEurAll(promo ? 1020 : 1060)     // SKIP3: naplaćuje se samo četvrto
+                .exclusionPromoApplied(promo).exclusionPromoSavedEur(promo ? 40 : 0).exclusionPromoFreeCount(promo ? 3 : 0)
                 .build();
     }
 
     private void kalkulatorVraca(boolean promo) {
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
-                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), eq(promo))).thenReturn(cena(promo));
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), eq(promo ? 3 : 0))).thenReturn(cena(promo));
     }
 
     private Booking sacuvana() {
@@ -99,16 +99,16 @@ class BookingPromoFlowTest {
 
     @Test
     void vazeciKod_iskljucivanjaBesplatna_iPromoZapisanNaRezervaciji() {
-        when(promo.vazi("SKIP3")).thenReturn(true);
+        when(promo.besplatnihZa("SKIP3")).thenReturn(3);
         kalkulatorVraca(true);
 
         svc.createBooking(zahtev(" skip3 "));   // sajt šalje kako je kupac ukucao
 
         Booking b = sacuvana();
         assertEquals("SKIP3", b.getPromoCode());
-        assertEquals(60, b.getPromoSavedEur());
-        assertEquals(0, b.getExclusionCostEur());
-        assertEquals(1000, b.getTotalPriceAll());
+        assertEquals(40, b.getPromoSavedEur());
+        assertEquals(20, b.getExclusionCostEur(), "četvrto isključivanje se i uz SKIP3 naplaćuje");
+        assertEquals(1020, b.getTotalPriceAll());
     }
 
     @Test
@@ -121,7 +121,7 @@ class BookingPromoFlowTest {
         assertNull(b.getPromoCode());
         assertNull(b.getPromoSavedEur());
         assertEquals(1060, b.getTotalPriceAll());
-        verify(promo, never()).vazi(any());
+        verify(promo, never()).besplatnihZa(any());
     }
 
     @Test
@@ -133,7 +133,7 @@ class BookingPromoFlowTest {
 
     @Test
     void kodKojiViseNeVazi_odbijaRezervaciju_daKupacVidiNovuCenu() {
-        when(promo.vazi("SKIP3")).thenReturn(false);
+        when(promo.besplatnihZa("SKIP3")).thenReturn(0);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(zahtev("SKIP3")));
 
@@ -145,8 +145,9 @@ class BookingPromoFlowTest {
 
     @Test
     void pregledCene_nevazeciKodSeSamoIgnorise_aSajtSaznaDaLiPromoTraje() {
-        when(promo.vazi("STARI")).thenReturn(false);
+        when(promo.besplatnihZa("STARI")).thenReturn(0);
         when(promo.aktivan()).thenReturn(true);
+        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", LocalDate.now().plusDays(10), true, 3));
         kalkulatorVraca(false);
 
         PricePreviewResponse p = svc.previewPrice(10L, 2, AccommodationType.STANDARD, 4, 0, "STARI", false, false, false);
@@ -154,18 +155,21 @@ class BookingPromoFlowTest {
         assertFalse(p.getExclusionPromoApplied());
         assertEquals(60, p.getExclusionCostFlat());
         assertTrue(p.getExclusionPromoActive(), "korak sa isključivanjem tada podseća na kod");
+        assertEquals(3, p.getExclusionPromoFreeCount(), "podsetnik mora da zna koliko ih je besplatno i pre unosa koda");
     }
 
     @Test
     void pregledCene_saVazecimKodom() {
-        when(promo.vazi("SKIP3")).thenReturn(true);
+        when(promo.besplatnihZa("SKIP3")).thenReturn(3);
         when(promo.aktivan()).thenReturn(true);
+        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", LocalDate.now().plusDays(10), true, 3));
         kalkulatorVraca(true);
 
         PricePreviewResponse p = svc.previewPrice(10L, 2, AccommodationType.STANDARD, 4, 0, "SKIP3", false, false, false);
 
         assertTrue(p.getExclusionPromoApplied());
-        assertEquals(0, p.getExclusionCostFlat());
-        assertEquals(60, p.getExclusionPromoSavedEur());
+        assertEquals(20, p.getExclusionCostFlat());
+        assertEquals(40, p.getExclusionPromoSavedEur());
+        assertEquals(3, p.getExclusionPromoFreeCount());
     }
 }

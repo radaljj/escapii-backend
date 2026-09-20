@@ -17,13 +17,14 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
- * Promo „besplatno isključivanje destinacija": jedan zajednički kod koji kupac ukuca u polje za
- * vaučer, a obračun cene ga primeni tako što naplativa isključivanja koštaju 0 €.
+ * Promo „besplatna isključivanja destinacija": jedan zajednički kod koji kupac ukuca u polje za
+ * vaučer, a obračun cene ga primeni tako što prvih N isključivanja ne košta ništa. Kod SKIP3 =
+ * prva tri su besplatna (prvo je besplatno i bez koda), četvrto se naplaćuje kao i do sada.
  *
- * <p>Kod, datum isteka i prekidač se menjaju iz admin panela (tabela {@code app_settings}), bez
- * deploya: promo traje mesec-dva, a ako kod procuri mora da može da se ugasi odmah. Dok niko ništa
- * nije sačuvao važe podrazumevane vrednosti iz application.properties - kod postoji, ali je promo
- * UGAŠEN.
+ * <p>Kod, datum isteka, broj besplatnih isključivanja i prekidač se menjaju iz admin panela
+ * (tabela {@code app_settings}), bez deploya: promo traje mesec-dva, a ako kod procuri mora da
+ * može da se ugasi odmah. Dok niko ništa nije sačuvao važe podrazumevane vrednosti iz
+ * application.properties - kod postoji, ali je promo UGAŠEN.
  *
  * <p>Cenu i dalje računa samo backend: sajt pošalje kod uz pregled cene i uz rezervaciju, a ovde se
  * oba puta proveri da li kod još važi. Sam kod se nikad ne vraća javnim odgovorima.
@@ -32,9 +33,14 @@ import java.util.regex.Pattern;
 @Component
 public class ExclusionPromo {
 
-    static final String K_KOD      = "promo.exclusions.code";
-    static final String K_VAZI_DO  = "promo.exclusions.validUntil";
-    static final String K_UKLJUCEN = "promo.exclusions.enabled";
+    static final String K_KOD        = "promo.exclusions.code";
+    static final String K_VAZI_DO    = "promo.exclusions.validUntil";
+    static final String K_UKLJUCEN   = "promo.exclusions.enabled";
+    static final String K_BESPLATNIH = "promo.exclusions.freeCount";
+
+    /** Prvo isključivanje je besplatno i bez koda, pa promo ima smisla tek od 2; aerodromi dozvoljavaju najviše 4. */
+    public static final int MIN_BESPLATNIH = 2;
+    public static final int MAX_BESPLATNIH = 4;
 
     private static final ZoneId ZONA = ZoneId.of("Europe/Belgrade");
     private static final long KES_MS = 30_000;
@@ -46,8 +52,11 @@ public class ExclusionPromo {
     public static final String PORUKA_NE_VAZI =
             "Promo kod više ne važi. Cena je osvežena bez njega - proveri je i pošalji ponovo.";
 
-    /** @param vaziDo poslednji dan kad kod važi (uključivo); null = datum nije određen, pa promo ne radi */
-    public record Podesavanja(String kod, LocalDate vaziDo, boolean ukljucen) {
+    /**
+     * @param vaziDo     poslednji dan kad kod važi (uključivo); null = datum nije određen, pa promo ne radi
+     * @param besplatnih koliko isključivanja UKUPNO ne košta ništa uz kod (3 = prvo, drugo i treće)
+     */
+    public record Podesavanja(String kod, LocalDate vaziDo, boolean ukljucen, int besplatnih) {
         public boolean aktivan(LocalDate danas) {
             return ukljucen && kod != null && !kod.isBlank() && vaziDo != null && !danas.isAfter(vaziDo);
         }
@@ -55,24 +64,32 @@ public class ExclusionPromo {
 
     private final JdbcTemplate jdbc;
     private final String podrazumevaniKod;
+    private final int podrazumevanoBesplatnih;
     private final Supplier<LocalDate> danas;
 
     private volatile Podesavanja kes;
     private volatile long kesOd;
 
     @Autowired
-    public ExclusionPromo(JdbcTemplate jdbc, @Value("${app.promo.exclusions.code:SKIP3}") String podrazumevaniKod) {
-        this(jdbc, podrazumevaniKod, () -> LocalDate.now(ZONA));
+    public ExclusionPromo(JdbcTemplate jdbc,
+                          @Value("${app.promo.exclusions.code:SKIP3}") String podrazumevaniKod,
+                          @Value("${app.promo.exclusions.free-count:3}") int podrazumevanoBesplatnih) {
+        this(jdbc, podrazumevaniKod, podrazumevanoBesplatnih, () -> LocalDate.now(ZONA));
     }
 
-    ExclusionPromo(JdbcTemplate jdbc, String podrazumevaniKod, Supplier<LocalDate> danas) {
+    ExclusionPromo(JdbcTemplate jdbc, String podrazumevaniKod, int podrazumevanoBesplatnih, Supplier<LocalDate> danas) {
         this.jdbc = jdbc;
         this.podrazumevaniKod = normalizuj(podrazumevaniKod);
+        this.podrazumevanoBesplatnih = uOpsegu(podrazumevanoBesplatnih) ? podrazumevanoBesplatnih : 3;
         this.danas = danas;
     }
 
     private static String normalizuj(String kod) {
         return kod == null ? "" : kod.strip().toUpperCase(Locale.ROOT);
+    }
+
+    private static boolean uOpsegu(int besplatnih) {
+        return besplatnih >= MIN_BESPLATNIH && besplatnih <= MAX_BESPLATNIH;
     }
 
     /** Trenutna podešavanja (keš 30 s). Ako baza ne odgovori: poslednje poznato, a bez toga ugašeno. */
@@ -86,20 +103,30 @@ public class ExclusionPromo {
             String kod = v.containsKey(K_KOD) ? normalizuj(v.get(K_KOD)) : podrazumevaniKod;
             LocalDate vaziDo = parsirajDatum(v.get(K_VAZI_DO));
             boolean ukljucen = "true".equalsIgnoreCase(v.get(K_UKLJUCEN));
-            p = new Podesavanja(kod, vaziDo, ukljucen);
+            p = new Podesavanja(kod, vaziDo, ukljucen, parsirajBesplatnih(v.get(K_BESPLATNIH)));
             kes = p;
             kesOd = System.currentTimeMillis();
             return p;
         } catch (Exception e) {
             log.warn("[Promo] Podešavanja se ne mogu pročitati ({}) - {}", e.toString(),
                     p != null ? "koristim poslednja poznata" : "promo se tretira kao ugašen");
-            return p != null ? p : new Podesavanja(podrazumevaniKod, null, false);
+            return p != null ? p : new Podesavanja(podrazumevaniKod, null, false, podrazumevanoBesplatnih);
         }
     }
 
     private static LocalDate parsirajDatum(String s) {
         if (s == null || s.isBlank()) return null;
         try { return LocalDate.parse(s.strip()); } catch (Exception e) { return null; }
+    }
+
+    private int parsirajBesplatnih(String s) {
+        if (s == null || s.isBlank()) return podrazumevanoBesplatnih;
+        try {
+            int n = Integer.parseInt(s.strip());
+            return uOpsegu(n) ? n : podrazumevanoBesplatnih;
+        } catch (NumberFormatException e) {
+            return podrazumevanoBesplatnih;
+        }
     }
 
     /** Da li promo trenutno traje (uključen, ima kod i datum isteka nije prošao). */
@@ -109,9 +136,17 @@ public class ExclusionPromo {
 
     /** Da li je uneti kod važeći promo kod. Poređenje ne razlikuje velika i mala slova ni razmake okolo. */
     public boolean vazi(String uneto) {
-        if (uneto == null || uneto.isBlank()) return false;
+        return besplatnihZa(uneto) > 0;
+    }
+
+    /**
+     * Koliko isključivanja je besplatno uz uneti kod; 0 kad kod ne važi. Ovo ide pravo u obračun
+     * cene, pa su „da li važi" i „koliko daje" uvek iz istog čitanja podešavanja.
+     */
+    public int besplatnihZa(String uneto) {
+        if (uneto == null || uneto.isBlank()) return 0;
         Podesavanja p = podesavanja();
-        return p.aktivan(danas.get()) && p.kod().equals(normalizuj(uneto));
+        return p.aktivan(danas.get()) && p.kod().equals(normalizuj(uneto)) ? p.besplatnih() : 0;
     }
 
     public LocalDate danas() {
@@ -119,7 +154,7 @@ public class ExclusionPromo {
     }
 
     /** Čuva podešavanja iz panela. Baca IllegalArgumentException sa porukom za admina kad unos nije dobar. */
-    public Podesavanja sacuvaj(String kod, LocalDate vaziDo, boolean ukljucen) {
+    public Podesavanja sacuvaj(String kod, LocalDate vaziDo, boolean ukljucen, int besplatnih) {
         String k = normalizuj(kod);
         if (!OBLIK_KODA.matcher(k).matches()) {
             throw new IllegalArgumentException("Kod sme da ima 3-40 znakova: slova, cifre, crticu i donju crtu.");
@@ -127,14 +162,18 @@ public class ExclusionPromo {
         if (k.startsWith("ESC-")) {
             throw new IllegalArgumentException("Kod ne sme da počinje sa ESC- (tako počinju poklon vaučeri).");
         }
+        if (!uOpsegu(besplatnih)) {
+            throw new IllegalArgumentException("Broj besplatnih isključivanja mora biti 2, 3 ili 4 (prvo je besplatno i bez koda).");
+        }
         if (ukljucen && vaziDo == null) {
             throw new IllegalArgumentException("Da bi promo bio uključen, mora da ima datum do kog važi.");
         }
         upisi(K_KOD, k);
         upisi(K_VAZI_DO, vaziDo != null ? vaziDo.toString() : "");
         upisi(K_UKLJUCEN, String.valueOf(ukljucen));
+        upisi(K_BESPLATNIH, String.valueOf(besplatnih));
         kes = null;
-        log.info("[Promo] Sačuvano: kod={}, važi do={}, uključen={}", k, vaziDo, ukljucen);
+        log.info("[Promo] Sačuvano: kod={}, važi do={}, uključen={}, besplatnih={}", k, vaziDo, ukljucen, besplatnih);
         return podesavanja();
     }
 

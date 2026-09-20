@@ -908,14 +908,25 @@ public class BookingEmailServiceImpl implements BookingEmailService {
             rows.append(priceRow("Putno osiguranje", PriceCalculatorImpl.INSURANCE_PP + " € / os", n, PriceCalculatorImpl.INSURANCE_PP * n, false));
         if (booking.getCabinSuitcaseCount() > 0)
             rows.append(priceRow("Kabinski kofer (50 € × 2 smera)", "100 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 100, false));
+        // Koliko isključivanja je stvarno naplaćeno čita se iz iznosa (10 €/os po isključivanju), ne iz
+        // „broj - 1": uz promo kod je besplatno više od prvog, pa bi etiketa lagala (SKIP3 sa četiri
+        // isključivanja naplaćuje jedno, ne tri).
+        int promoUsteda = booking.getPromoCode() != null && booking.getPromoSavedEur() != null
+                ? booking.getPromoSavedEur() : 0;
+        int poIskljucivanju = 10 * Math.max(n, 1);
         if (booking.getExclusionCostEur() > 0) {
-            int paid = booking.getExclusionCount() - 1;
+            int paid = promoUsteda > 0
+                    ? Math.max(1, booking.getExclusionCostEur() / poIskljucivanju)
+                    : booking.getExclusionCount() - 1;
             rows.append(priceRow(exclusionLabel(paid), "-", null, booking.getExclusionCostEur(), true));
-        } else if (booking.getPromoCode() != null && booking.getPromoSavedEur() != null && booking.getPromoSavedEur() > 0) {
-            // Promo je pokrio isključivanja: red ostaje u cenovniku sa 0 €, da kupac vidi da je
-            // pogodnost stvarno primenjena (i koliko je vredela).
-            rows.append(priceRow("Isključivanje destinacija - besplatno uz promo kod " + booking.getPromoCode()
-                    + " (ušteda " + booking.getPromoSavedEur() + " €)", "-", null, 0, true));
+        }
+        if (promoUsteda > 0) {
+            // Promo red ostaje u cenovniku sa 0 €, da kupac vidi da je pogodnost stvarno primenjena
+            // (i koliko je vredela).
+            int besplatnoUzPromo = Math.max(1, promoUsteda / poIskljucivanju);
+            rows.append(priceRow("Promo kod " + booking.getPromoCode() + " - "
+                    + (besplatnoUzPromo == 1 ? "1 isključivanje besplatno" : besplatnoUzPromo + " isključivanja besplatno")
+                    + " (ušteda " + promoUsteda + " €)", "-", null, 0, true));
         }
         if (n == 1)
             rows.append(priceRow("Doplata za solo putnika", "-", null, PriceCalculatorImpl.SOLO_SURCHARGE, true));

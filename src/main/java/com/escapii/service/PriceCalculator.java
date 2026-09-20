@@ -36,16 +36,18 @@ public interface PriceCalculator {
             String departureAirport
     ) {
         return calculate(date, n, accommodationType, exclusionCount, cabinSuitcaseCount,
-                hasInsurance, hasBreakfast, hasSeatsTogether, hasRevealBox, departureAirport, false);
+                hasInsurance, hasBreakfast, hasSeatsTogether, hasRevealBox, departureAirport, 0);
     }
 
     /**
-     * Isti obračun, uz promo „besplatno isključivanje destinacija".
+     * Isti obračun, uz promo „besplatna isključivanja destinacija".
      *
-     * @param exclusionsFree true kad je stigao važeći promo kod (proverava pozivalac, vidi
-     *                       ExclusionPromo): naplativa isključivanja koštaju 0, a u odgovoru
-     *                       stoji koliko bi inače koštala ({@code exclusionPromoSavedEur}).
-     *                       Pravila aerodroma (koliko je isključivanja dozvoljeno) ostaju ista.
+     * @param promoFreeExclusions koliko isključivanja UKUPNO ne košta ništa uz važeći promo kod
+     *                       (proverava pozivalac, vidi ExclusionPromo); 0 = bez promo koda. Kod
+     *                       SKIP3 daje 3: prvo (besplatno i inače), drugo i treće su 0 €, a četvrto
+     *                       se naplaćuje. U odgovoru stoji koliko je kupac uštedeo
+     *                       ({@code exclusionPromoSavedEur}). Pravila aerodroma (koliko je
+     *                       isključivanja dozvoljeno) ostaju ista.
      */
     PricePreviewResponse calculate(
             AvailableDate date,
@@ -58,6 +60,6 @@ public interface PriceCalculator {
             boolean hasSeatsTogether,
             boolean hasRevealBox,
             String departureAirport,
-            boolean exclusionsFree
+            int promoFreeExclusions
     );
 }

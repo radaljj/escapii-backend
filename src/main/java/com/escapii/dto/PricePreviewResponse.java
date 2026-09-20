@@ -48,4 +48,9 @@ public class PricePreviewResponse {
     private Integer exclusionPromoSavedEur;
     /** Da li promo trenutno traje - sajt tada na koraku isključivanja podseća na kod. Sam kod se NIKAD ne vraća. */
     private Boolean exclusionPromoActive;
+    /**
+     * Koliko isključivanja ukupno ne košta ništa uz promo (3 = prva tri). Popunjeno kad je kod
+     * primenjen ILI kad promo samo traje (za tekst podsetnika); 0 kad promo ne traje.
+     */
+    private Integer exclusionPromoFreeCount;
 }

@@ -187,7 +187,8 @@ public class BookingServiceImpl implements BookingService {
         // ugašen odbija rezervaciju: kupac je pristao na cenu sa pogodnošću, pa mora da vidi novu
         // pre nego što se obaveže (sajt po ovoj poruci skida promo i osvežava cenu).
         boolean promoUnet = request.getPromoCode() != null;
-        boolean promo = promoUnet && exclusionPromo.vazi(request.getPromoCode());
+        int promoBesplatnih = promoUnet ? exclusionPromo.besplatnihZa(request.getPromoCode()) : 0;
+        boolean promo = promoBesplatnih > 0;
         if (promoUnet && !promo) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, com.escapii.promo.ExclusionPromo.PORUKA_NE_VAZI);
         }
@@ -196,7 +197,7 @@ public class BookingServiceImpl implements BookingService {
                 date, request.getNumberOfTravelers(), request.getAccommodationType(),
                 exclusionCount, request.getCabinSuitcaseCount(),
                 request.isHasInsurance(), request.isHasBreakfast(), request.isHasSeatsTogether(),
-                request.isHasRevealBox(), request.getDepartureAirport(), promo
+                request.isHasRevealBox(), request.getDepartureAirport(), promoBesplatnih
         );
 
         Booking booking = buildBooking(request, date, excl1, excl2, excl3, excl4, exclusionCount, price);
@@ -278,10 +279,13 @@ public class BookingServiceImpl implements BookingService {
         AccommodationType accomType = accommodationType != null ? accommodationType : AccommodationType.STANDARD;
         // Promo kod koji ne važi se u pregledu samo ignoriše (puna cena, exclusionPromoApplied=false) -
         // sajt iz toga vidi da kod više ne radi. Odbijanje ide tek pri samoj rezervaciji.
-        boolean promo = exclusionPromo.vazi(promoCode);
+        int promoBesplatnih = exclusionPromo.besplatnihZa(promoCode);
         PricePreviewResponse price = priceCalculator.calculate(date, n, accomType, exclusionCount,
-                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, date.getDepartureAirport(), promo);
-        price.setExclusionPromoActive(exclusionPromo.aktivan());
+                cabinSuitcaseCount, hasInsurance, hasBreakfast, hasSeatsTogether, false, date.getDepartureAirport(), promoBesplatnih);
+        boolean traje = exclusionPromo.aktivan();
+        price.setExclusionPromoActive(traje);
+        // Za tekst podsetnika na koraku isključivanja („prva 3 su besplatna") i kad kod još nije unet.
+        price.setExclusionPromoFreeCount(traje ? exclusionPromo.podesavanja().besplatnih() : 0);
         return price;
     }
 

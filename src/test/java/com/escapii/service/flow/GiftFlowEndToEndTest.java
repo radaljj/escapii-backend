@@ -162,7 +162,7 @@ class GiftFlowEndToEndTest {
         when(availableDateRepository.findById(10L)).thenReturn(Optional.of(termin()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
-                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyBoolean())).thenReturn(cena());
+                anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyInt())).thenReturn(cena());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             if (b.getId() == null) b.setId(1L);

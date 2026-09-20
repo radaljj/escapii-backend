@@ -17,6 +17,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,20 +43,21 @@ class PromoControllerHttpTest {
 
     @Test
     void vazeciKod_vracaVrstuIDatum_aNeKod() throws Exception {
-        when(exclusionPromo.vazi("skip3")).thenReturn(true);
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true));
+        when(exclusionPromo.besplatnihZa("skip3")).thenReturn(3);
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
 
         mockMvc.perform(post("/api/promo/validate").contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"skip3\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
                 .andExpect(jsonPath("$.kind").value("EXCLUSIONS_FREE"))
                 .andExpect(jsonPath("$.validUntil").value("2026-11-30"))
+                .andExpect(jsonPath("$.freeExclusions").value(3))
                 .andExpect(content().string(not(containsString("SKIP3"))));
     }
 
     @Test
     void nevazeciKod_uniformnaPoruka() throws Exception {
-        when(exclusionPromo.vazi("PROBA")).thenReturn(false);
+        when(exclusionPromo.besplatnihZa("PROBA")).thenReturn(0);
 
         mockMvc.perform(post("/api/promo/validate").contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"PROBA\"}"))
                 .andExpect(status().isOk())
@@ -71,14 +73,14 @@ class PromoControllerHttpTest {
         mockMvc.perform(post("/api/promo/validate").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"" + "X".repeat(41) + "\"}"))
                 .andExpect(status().isBadRequest());
-        verify(exclusionPromo, never()).vazi(any());
+        verify(exclusionPromo, never()).besplatnihZa(any());
     }
 
     // ── admin ────────────────────────────────────────────────────────────────
 
     @Test
     void panelCitaPodesavanjaIStatistiku() throws Exception {
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true));
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(LocalDate.of(2026, 10, 1));
         when(bookingRepository.countPromoUses("SKIP3")).thenReturn(7L);
         when(bookingRepository.sumPromoSaved("SKIP3")).thenReturn(340L);
@@ -89,13 +91,14 @@ class PromoControllerHttpTest {
                 .andExpect(jsonPath("$.validUntil").value("2026-11-30"))
                 .andExpect(jsonPath("$.enabled").value(true))
                 .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.freeCount").value(3))
                 .andExpect(jsonPath("$.usedCount").value(7))
                 .andExpect(jsonPath("$.savedTotalEur").value(340));
     }
 
     @Test
     void ukljucenAliIstekao_panelKazeDaNijeAktivan() throws Exception {
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true));
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(DO.plusDays(1));
 
         mockMvc.perform(get("/api/admin/promo"))
@@ -105,18 +108,18 @@ class PromoControllerHttpTest {
 
     @Test
     void cuvanjeIzPanela() throws Exception {
-        when(exclusionPromo.sacuvaj("SKIP3", DO, true)).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true));
+        when(exclusionPromo.sacuvaj("SKIP3", DO, true, 3)).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(LocalDate.of(2026, 10, 1));
 
         mockMvc.perform(put("/api/admin/promo").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"SKIP3\",\"validUntil\":\"2026-11-30\",\"enabled\":true}"))
+                        .content("{\"code\":\"SKIP3\",\"validUntil\":\"2026-11-30\",\"enabled\":true,\"freeCount\":3}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
     }
 
     @Test
     void losUnosIzPanela_400_saPorukomZaAdmina() throws Exception {
-        when(exclusionPromo.sacuvaj(any(), any(), anyBoolean()))
+        when(exclusionPromo.sacuvaj(any(), any(), anyBoolean(), anyInt()))
                 .thenThrow(new IllegalArgumentException("Da bi promo bio uključen, mora da ima datum do kog važi."));
 
         mockMvc.perform(put("/api/admin/promo").contentType(MediaType.APPLICATION_JSON)
