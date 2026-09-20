@@ -32,6 +32,9 @@ import static org.mockito.Mockito.*;
  * Uz promo kod u cenovniku mejla stoji red sa kodom, brojem poklonjenih isključivanja i uštedom -
  * kupac vidi da je pogodnost stvarno primenjena. Ono što se i uz kod naplaćuje (SKIP3: četvrto
  * isključivanje) ima svoj red sa TAČNIM brojem. Bez promo koda mejl izgleda kao i do sada.
+ *
+ * <p>Tu je i doplata za solo putnika: u obračunu sa agencijom više nije zasebna stavka (ulazi u
+ * osnovni paket), ali kupcu u cenovniku mora i dalje pisati zašto je rezervacija 60 € veća.
  */
 class BookingEmailPromoRowTest {
 
@@ -145,6 +148,31 @@ class BookingEmailPromoRowTest {
 
         assertTrue(html.contains("Isključivanja (3× 10€/os)"));
         assertFalse(html.contains("Promo kod"));
+    }
+
+    @Test
+    void soloPutnik_doplataSeIDaljeVidiUCenovniku() {
+        Booking b = rezervacija();
+        b.setNumberOfTravelers(1);
+        b.getPassengers().remove(1);
+        b.setExclusionCount(0);
+        b.setExclusionCostEur(0);
+        b.setTotalPriceAll(560);
+
+        String html = mejlKupcu(b);
+
+        assertTrue(html.contains("Doplata za solo putnika"), "kupac vidi zbog čega je cena veća");
+        assertTrue(html.contains("60"), "iznos doplate stoji u cenovniku");
+    }
+
+    @Test
+    void dvaPutnika_nemaRedaOSoloDoplati() {
+        Booking b = rezervacija();
+        b.setExclusionCount(0);
+        b.setExclusionCostEur(0);
+        b.setTotalPriceAll(1000);
+
+        assertFalse(mejlKupcu(b).contains("solo putnika"));
     }
 
     @Test

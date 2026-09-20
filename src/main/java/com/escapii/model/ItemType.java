@@ -19,8 +19,10 @@ public enum ItemType {
     /** Trenutno onemogucen dodatak (feature flag na frontendu). Ostaje u enumu
      *  radi istorijskih rezervacija i eventualnog ponovnog ukljucivanja. */
     INSURANCE             (AllocationType.MARGIN_50_50),
-    /** Doplata za jednog putnika (nema soba za dva) - naplacuje Escapii, agencija
-     *  ne snosi nikakav trosak jer je vec ukljucen u cenu osnovnog paketa. */
+    /** Doplata za jednog putnika (nema soba za dva). Nove rezervacije je vise NE dobijaju
+     *  kao zasebnu stavku - 60 € ulazi u BASE_PACKAGE, jer je to cena jednokrevetne sobe
+     *  koju agencija naplacuje, pa se deli 50/50 kao i ostatak paketa. Ostaje u enumu radi
+     *  starih rezervacija; SoloSurchargeMerge pri startu prepakuje one jos nefakturisane. */
     SOLO_SURCHARGE        (AllocationType.ESCAPII_100),
     DESTINATION_EXCLUSIONS(AllocationType.ESCAPII_100),
     /** Fizicka kutija je Escapii proizvod. Interni trosak (stampa, dostava) je

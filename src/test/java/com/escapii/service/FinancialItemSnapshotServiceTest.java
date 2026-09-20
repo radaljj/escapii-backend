@@ -167,7 +167,7 @@ class FinancialItemSnapshotServiceTest {
     }
 
     @Test
-    void snapshot_soloDoplata_kao_zasebna_stavka() {
+    void snapshot_soloDoplata_ulaziUOsnovniPaket_nijeZasebnaStavka() {
         PricePreviewResponse p = PricePreviewResponse.builder()
                 .basePricePerPerson(300).accommodationExtraPerPerson(0)
                 .breakfastPerPerson(0).seatsTogether(0).insurancePerPerson(0)
@@ -179,10 +179,18 @@ class FinancialItemSnapshotServiceTest {
         Booking b = emptyBooking();
         svc.snapshot(b, p);
 
-        BookingFinancialItem solo = b.getFinancialItems().stream()
-                .filter(i -> i.getItemType() == ItemType.SOLO_SURCHARGE)
-                .findFirst().orElseThrow();
-        assertEquals(AllocationType.ESCAPII_100, solo.getAllocationType());
-        assertEquals(new BigDecimal("60.00"), solo.getCustomerTotal());
+        assertTrue(b.getFinancialItems().stream().noneMatch(i -> i.getItemType() == ItemType.SOLO_SURCHARGE),
+                "doplata za solo putnika vise nije zasebna stavka");
+        assertEquals(1, b.getFinancialItems().size(), "sve je u osnovnom paketu");
+
+        BookingFinancialItem base = b.getFinancialItems().get(0);
+        assertEquals(ItemType.BASE_PACKAGE, base.getItemType());
+        assertEquals(AllocationType.MARGIN_50_50, base.getAllocationType(),
+                "60 € mora da ulazi u stavku koja se deli 50/50 - to je cena jednokrevetne sobe");
+        assertEquals(new BigDecimal("360.00"), base.getCustomerTotal(), "300 + 60");
+        assertEquals(new BigDecimal("360.00"), base.getUnitCustomerPrice(), "jedan putnik - jedinicna = ukupna");
+        assertEquals(1, base.getQuantity());
+        assertTrue(base.getDescription().contains("solo"),
+                "opis kaze zasto je paket 60 € skuplji: " + base.getDescription());
     }
 }

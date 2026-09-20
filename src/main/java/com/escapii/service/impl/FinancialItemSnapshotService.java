@@ -16,8 +16,8 @@ import java.math.BigDecimal;
  * novac, ne kao popust na stavke).
  *
  * <p>Ne popunjava {@code agencyCost} - to ostaje null dok admin ne unese
- * troskove kroz panel. Escapii-only stavke (isključivanja, reveal box, solo
- * doplata) ne trebaju agencyCost i ostaju ok bez unosa.
+ * troskove kroz panel. Escapii-only stavke (isključivanja, reveal box) ne
+ * trebaju agencyCost i ostaju ok bez unosa.
  *
  * <p>Invariant: zbir svih {@code customerTotal} mora biti jednak
  * {@code totalPriceAll + voucherDiscount} (bruto vrednost rezervacije).
@@ -35,10 +35,20 @@ public class FinancialItemSnapshotService {
         int n = nz(price.getNumberOfTravelers());
 
         // 1. BASE_PACKAGE - uvek postoji. quantity = broj putnika.
+        //    Doplata za solo putnika ulazi OVDE, ne kao zasebna stavka: tih 60 € je razlika
+        //    za jednokrevetnu sobu koju agencija stvarno naplati, pa mora da stoji tamo gde se
+        //    unosi trosak agencije i gde se marza deli 50/50. Kao zasebna Escapii stavka
+        //    pravila bi laznu negativnu marzu na paketu (kupac 300, hotel za jednog 340).
+        //    Kupcu se u pregledu cene i dalje prikazuje kao poseban red - cena je ista.
         int base = nz(price.getBasePricePerPerson());
+        int solo = nz(price.getSoloSurcharge());        // > 0 samo kad putuje jedan putnik
+        long baseTotal = (long) base * n + solo;
+        long baseUnit  = (n == 1) ? baseTotal : base;   // solo postoji samo za n = 1
         addItem(booking, ItemType.BASE_PACKAGE,
-                "Osnovni paket (let + hotel)",
-                n, BigDecimal.valueOf(base), BigDecimal.valueOf((long) base * n));
+                solo > 0
+                        ? "Osnovni paket (let + hotel, uklj. doplatu za solo putnika " + solo + " €)"
+                        : "Osnovni paket (let + hotel)",
+                n, BigDecimal.valueOf(baseUnit), BigDecimal.valueOf(baseTotal));
 
         // 2. ACCOMMODATION_UPGRADE - samo ako je Superior/Premium izabran (extra > 0).
         //    Poslovno pravilo: upgrade je fiksan fee/osoba (npr. 100€) i predstavlja
@@ -98,15 +108,7 @@ public class FinancialItemSnapshotService {
                     n, BigDecimal.valueOf(insurancePP), BigDecimal.valueOf((long) insurancePP * n));
         }
 
-        // 7. SOLO_SURCHARGE - 100% Escapii, iako po broju putnika = 1.
-        int solo = nz(price.getSoloSurcharge());
-        if (solo > 0) {
-            addItem(booking, ItemType.SOLO_SURCHARGE,
-                    "Doplata za solo putnika",
-                    1, BigDecimal.valueOf(solo), BigDecimal.valueOf(solo));
-        }
-
-        // 8. DESTINATION_EXCLUSIONS - 100% Escapii. Jedinicna cena je 10€/os/isk,
+        // 7. DESTINATION_EXCLUSIONS - 100% Escapii. Jedinicna cena je 10€/os/isk,
         //    quantity = broj NAPLATIVIH isk. × putnika (prvo isk. je besplatno pa
         //    ne ulazi u quantity, inace jedinicna cena izgleda pogresno).
         int exclFlat = nz(price.getExclusionCostFlat());
@@ -129,7 +131,7 @@ public class FinancialItemSnapshotService {
                     BigDecimal.valueOf(exclFlat));
         }
 
-        // 9. REVEAL_BOX - 100% Escapii, flat 35€.
+        // 8. REVEAL_BOX - 100% Escapii, flat 35€.
         int reveal = nz(price.getRevealBoxTotal());
         if (reveal > 0) {
             addItem(booking, ItemType.REVEAL_BOX,

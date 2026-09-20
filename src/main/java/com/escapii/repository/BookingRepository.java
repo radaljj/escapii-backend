@@ -440,6 +440,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "ORDER BY b.id ASC")
     List<Booking> findAgencyOutOfSync();
 
+    /**
+     * Rezervacije koje doplatu za solo putnika još nose kao zasebnu stavku, a nisu u zbirnoj
+     * fakturi. SoloSurchargeMerge ih pri startu prepakuje u BASE_PACKAGE (fakturisane se ne diraju).
+     */
+    @Query("SELECT DISTINCT b FROM Booking b JOIN b.financialItems fi " +
+           "WHERE fi.itemType = com.escapii.model.ItemType.SOLO_SURCHARGE " +
+           "  AND b.agencyInvoice IS NULL " +
+           "ORDER BY b.id ASC")
+    List<Booking> findWithSoloSurchargeItem();
+
     /** Koliko rezervacija agencije je u datom statusu, a još nije fakturisano (npr. CONFIRMED = putovanja u toku). */
     long countByAgencyIdSnapshotAndStatusAndAgencyInvoiceIsNull(Long agencyId, BookingStatus status);
 
