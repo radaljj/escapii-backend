@@ -296,7 +296,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             s.append(" Noću pada na oko ").append(stepeni(noc)).append(", pa ponesi i nešto toplije za veče.");
         }
         if (sneg) {
-            s.append(" Ima i snega u najavi - obuća koja ne propušta i tople čarape.");
+            s.append(" Ima i snega u najavi - tople čarape i obuća koja ne kliza.");   // zimski pojas već kaže "ne propušta"
         } else if (kisa == 1) {
             s.append(" Jedan dan je najavljena kiša, pa ubaci i kišobran.");
         } else if (kisa >= 2) {
