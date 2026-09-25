@@ -37,5 +37,6 @@ class PlainTextTest {
         assertEquals("", EmailSender.toPlainText(""));
         assertEquals("Zdravo", EmailSender.toPlainText("Zdravo"));
         assertEquals("A & B", EmailSender.toPlainText("A &amp; B"));
+        assertEquals("Počinje 02.10.2026. Kraj", EmailSender.toPlainText("Počinje <strong>02.10.2026</strong>. Kraj"), "bez razmaka pre tačke iza zatvorenog taga");
     }
 }

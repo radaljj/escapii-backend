@@ -82,12 +82,14 @@ public class RevealEmailServiceImpl implements RevealEmailService {
             ref,
             body,
             EmailHtmlBuilder.customerFooter(contactEmail),
-            false
+            false,
+            "Tvoje putovanje počinje " + departure + ". Otkrij svoju destinaciju."
         );
 
+        // Bez emodžija i uzvičnika u naslovu - obrazac koji Outlook/Hotmail guraju u junk.
         boolean sent = sender.send(
             booking.travellerEmail(),
-            "✉ Tvoja destinacija je spremna - otkrij je! | Escapii",
+            "Tvoja destinacija je spremna - otkrij je | Escapii",
             html
         );
 

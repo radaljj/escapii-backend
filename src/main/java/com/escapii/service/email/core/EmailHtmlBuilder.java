@@ -97,7 +97,10 @@ public final class EmailHtmlBuilder {
             + "margin-top:14px;\">&#10022; %s</div>").formatted(refCode);
 
         // replace() je literalan (nije regex) - siguran za sadržaj sa $ ili backslash
+        // <title> = naslov bez HTML-a; prazan title je jedna od sitnica koje spam filteri broje
+        String title = esc(headingText.replaceAll("<[^>]+>", ""));
         return loadTemplate(mysteryStrip ? "shell-mystery.html" : "shell.html")
+                .replace("{{TITLE}}",      title)
                 .replace("{{PREHEADER}}",  preheader)
                 .replace("{{ACCENT}}",     accent)
                 .replace("{{BADGE}}",      badgeBlock)

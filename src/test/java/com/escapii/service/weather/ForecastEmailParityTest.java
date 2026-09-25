@@ -86,7 +86,8 @@ class ForecastEmailParityTest {
         // ── 2. Ista struktura - isti ključni markeri u oba ──
         for (String marker : List.of(
                 "Tvoja vremenska",            // naslov
-                "Trenutno vreme",             // hero
+                "Na dan polaska",             // hero = dan polaska (put je za 5 dana, unutar prognoze)
+                "spakuje",                    // savet za pakovanje
                 "POLAZAK",                    // datum polaska
                 "Preporuka")) {               // napomena
             assertTrue(openHtml.contains(marker), "Open-Meteo mejl nema: " + marker);

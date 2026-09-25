@@ -34,15 +34,30 @@ public record DailyForecast(
             case 2                      -> "Delimično oblačno";
             case 3                      -> "Oblačno";
             case 45, 48                 -> "Magla";
-            case 51, 53, 55             -> "Blaga Kiša";
+            case 51, 53, 55             -> "Slaba kiša";
             case 61, 63, 65             -> "Kiša";
             case 71, 73, 75             -> "Sneg";
-            case 77                     -> "Snežne pahulje";
+            case 77                     -> "Sitan sneg";
             case 80, 81, 82             -> "Pljuskovi";
             case 85, 86                 -> "Snežni pljuskovi";
             case 95                     -> "Grmljavina";
             case 96, 99                 -> "Grmljavina s gradom";
             default                     -> "Promenljivo";
+        };
+    }
+
+    /** Dan sa kišom: bar 1 mm padavina ili kod za kišu, pljusak ili grmljavinu. */
+    public boolean rainy() {
+        return precipitation >= 1.0 || switch (weatherCode) {
+            case 51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99 -> true;
+            default -> false;
+        };
+    }
+
+    public boolean snowy() {
+        return switch (weatherCode) {
+            case 71, 73, 75, 77, 85, 86 -> true;
+            default -> false;
         };
     }
 }

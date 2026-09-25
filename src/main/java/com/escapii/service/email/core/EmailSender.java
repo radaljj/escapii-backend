@@ -94,6 +94,7 @@ public class EmailSender {
         // sredi razmake: najviše jedan prazan red, bez vodećih razmaka u redu
         s = s.replaceAll("[ \\t\\x0B\\f\\r]+", " ");
         s = s.replaceAll(" ?\n ?", "\n");
+        s = s.replaceAll(" +([.,!?;:])", "$1");   // "02.10.2026 ." - razmak koji ostane iza zatvorenog taga
         s = s.replaceAll("\n{3,}", "\n\n");
         return s.trim();
     }
