@@ -4,6 +4,8 @@ import com.escapii.util.LogUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -86,10 +88,14 @@ public class EmailSender {
         s = s.replaceAll("(?i)</(p|div|tr|h[1-6]|li|table)>", "\n");
         // preostali tagovi
         s = s.replaceAll("(?s)<[^>]+>", " ");
-        // entiteti - prvo imenovani, pa numerički, &amp; na kraju da se ne udvostruči
-        s = s.replace("&nbsp;", " ").replace("&middot;", "·")
+        // entiteti - prvo imenovani, pa numerički, &amp; na kraju da se ne udvostruči.
+        // Numerički se DEKODIRAJU, ne brišu: đ i š u šablonima stoje kao &#273; i &#353;
+        // („Datum ro&#273;enja"), pa je brisanje davalo „Datum roenja" u tekstualnoj verziji.
+        s = s.replace("&nbsp;", " ").replace("&middot;", "·").replace("&rarr;", "→")
+             .replace("&ndash;", "–").replace("&mdash;", "—").replace("&hellip;", "…")
+             .replace("&euro;", "€").replace("&le;", "≤").replace("&ge;", "≥").replace("&apos;", "'")
              .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"");
-        s = s.replaceAll("&#(\\d+);", "");
+        s = dekodirajNumerickeEntitete(s);
         s = s.replace("&amp;", "&");
         // sredi razmake: najviše jedan prazan red, bez vodećih razmaka u redu
         s = s.replaceAll("[ \\t\\x0B\\f\\r]+", " ");
@@ -97,6 +103,25 @@ public class EmailSender {
         s = s.replaceAll(" +([.,!?;:])", "$1");   // "02.10.2026 ." - razmak koji ostane iza zatvorenog taga
         s = s.replaceAll("\n{3,}", "\n\n");
         return s.trim();
+    }
+
+    /** {@code &#273;} i {@code &#x111;} u oba slučaja daju đ. */
+    private static final Pattern NUMERICKI_ENTITET = Pattern.compile("&#([xX][0-9a-fA-F]{1,6}|[0-9]{1,7});");
+
+    /** Numerički HTML entitet → znak; kôd van Unicode opsega ostaje kakav je napisan. */
+    static String dekodirajNumerickeEntitete(String s) {
+        if (s.indexOf("&#") < 0) return s;
+        Matcher m = NUMERICKI_ENTITET.matcher(s);
+        StringBuilder sb = new StringBuilder(s.length());
+        while (m.find()) {
+            String telo = m.group(1);
+            boolean hex = telo.charAt(0) == 'x' || telo.charAt(0) == 'X';
+            int kod = Integer.parseInt(hex ? telo.substring(1) : telo, hex ? 16 : 10);
+            String zamena = Character.isValidCodePoint(kod) ? new String(Character.toChars(kod)) : m.group();
+            m.appendReplacement(sb, Matcher.quoteReplacement(zamena));
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     /**

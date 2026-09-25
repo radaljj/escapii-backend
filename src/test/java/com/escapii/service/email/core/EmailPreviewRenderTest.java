@@ -178,6 +178,11 @@ class EmailPreviewRenderTest {
             String tekst = EmailSender.toPlainText(u.html);
             assertTrue(tekst.length() > 300, ime + ": tekstualna verzija prekratka (" + tekst.length() + ")");
             assertFalse(tekst.contains("{") || tekst.contains("<"), ime + ": tekstualna verzija nosi HTML/CSS");
+            assertFalse(tekst.contains("&#"), ime + ": tekstualna verzija nosi nedekodiran entitet");
+            if (ime.equals("upit-primljen") || ime.equals("rezervacija-potvrdjena")) {
+                assertTrue(tekst.contains("Datum rođenja") && tekst.contains("Zemlja pasoša"),
+                        ime + ": đ/š iz odeljka putnika izgubljeni u tekstualnoj verziji");
+            }
         }
     }
 

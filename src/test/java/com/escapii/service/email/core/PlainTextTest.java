@@ -32,6 +32,18 @@ class PlainTextTest {
         assertFalse(text.contains("\n\n\n"), "previše praznih redova");
     }
 
+    /** đ i š u šablonima stoje kao numerički entiteti - moraju u tekst kao slova, ne da nestanu. */
+    @Test
+    void numerickiEntitetiSeDekodirajuANeBrisu() {
+        assertEquals("Datum rođenja · Zemlja pasoša · Br. pasoša",
+                EmailSender.toPlainText("Datum ro&#273;enja &middot; Zemlja paso&#353;a &middot; Br. paso&#353;a"));
+        assertEquals("đ → Đ", EmailSender.toPlainText("&#x111; &rarr; &#272;"));
+        assertEquals("Tom's", EmailSender.toPlainText("Tom&#39;s"));
+        assertEquals("🎁", EmailSender.toPlainText("&#127873;"), "kod van BMP (surrogate par)");
+        assertEquals("&#9999999999;", EmailSender.toPlainText("&#9999999999;"), "predugačak kod ostaje kakav je");
+        assertEquals("A & B", EmailSender.toPlainText("A &#38; B"));
+    }
+
     @Test
     void praznoIliCistTekstNePucaju() {
         assertEquals("", EmailSender.toPlainText(""));

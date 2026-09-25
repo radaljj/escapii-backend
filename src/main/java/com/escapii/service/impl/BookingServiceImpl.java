@@ -90,15 +90,20 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
+        // Termin se čita pod bravom (findByIdForUpdate): sve što sledi za isti termin - provera
+        // duplikata, slobodna mesta, upis - ide jedno po jedno. Dva istovremena zahteva (dupli klik
+        // ili dupli tap na „Pošalji upit") inače oba prođu proveru duplikata pre nego što ijedan
+        // upiše, i kupac dobije dve rezervacije i četiri mejla.
+        AvailableDate date  = findActiveDateOrThrow(request.getSelectedDateId());
+
         // 0d. Duplikat - isti email + isti termin dok prethodni upit još čeka obradu (PENDING).
-        //     Potvrđena/završena rezervacija ne blokira novi upit.
+        //     Potvrđena/završena rezervacija ne blokira novi upit. Provera je namerno POSLE brave
+        //     na terminu: drugi zahtev sačeka da prvi upiše i onda ga vidi.
         if (bookingRepository.existsPendingDuplicate(request.getEmail(), request.getSelectedDateId())) {
             log.warn("[AntiBot] Duplikat upita na čekanju - email='{}' dateId={}", LogUtils.maskEmail(request.getEmail()), request.getSelectedDateId());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Već imate upit na čekanju za ovaj termin sa ovom email adresom. Javićemo vam se uskoro.");
         }
-
-        AvailableDate date  = findActiveDateOrThrow(request.getSelectedDateId());
 
         // 0a. Privatni termin — token mora biti ispravan i link ne sme biti istekao
         if (Boolean.TRUE.equals(date.getIsPrivate())) {
@@ -316,8 +321,9 @@ public class BookingServiceImpl implements BookingService {
 
     // ─── private helpers ──────────────────────────────────────────────────────
 
+    /** Termin pod bravom do kraja transakcije - videti AvailableDateRepository.findByIdForUpdate. */
     private AvailableDate findActiveDateOrThrow(Long id) {
-        AvailableDate date = availableDateRepository.findById(id)
+        AvailableDate date = availableDateRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Izabrani termin ne postoji: " + id));
 

@@ -1,7 +1,9 @@
 package com.escapii.repository;
 
 import com.escapii.model.AvailableDate;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,6 +39,17 @@ public interface AvailableDateRepository extends JpaRepository<AvailableDate, Lo
      */
     @Query("SELECT b.selectedDate FROM Booking b WHERE b.id = :bookingId")
     Optional<AvailableDate> findByBookingId(@Param("bookingId") Long bookingId);
+
+    /**
+     * Termin pod bravom (SELECT ... FOR UPDATE) dok traje upis rezervacije. Dva istovremena
+     * zahteva za isti termin (dupli klik ili dupli tap na „Pošalji upit") se ovde poređaju:
+     * drugi čeka da prvi upiše, pa tek onda proverava duplikat i vidi ga. Bez brave oba prođu
+     * proveru pre nego što ijedan upiše - i nastanu dve rezervacije sa četiri mejla.
+     * Videti BookingServiceImpl.createBooking.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM AvailableDate d WHERE d.id = :id")
+    Optional<AvailableDate> findByIdForUpdate(@Param("id") Long id);
 
     /**
      * Pronalazi privatni termin po tokenu.

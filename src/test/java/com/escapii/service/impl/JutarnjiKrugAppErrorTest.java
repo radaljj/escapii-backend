@@ -85,7 +85,9 @@ class JutarnjiKrugAppErrorTest {
     void padSlanjaPrognozeIdeUAppError() {
         Booking b = booking(6);
         when(repo.findReadyForForecast(any(), any())).thenReturn(List.of(b));
-        when(vreme.getForecast("Prag")).thenReturn(Optional.of(List.of()));
+        // Prognoza mora da pokriva dan polaska - inače se slanje preskače pre SMTP-a (i to je namerno).
+        when(vreme.getForecast("Prag")).thenReturn(Optional.of(List.of(
+                new com.escapii.service.weather.DailyForecast(LocalDate.now().plusDays(6), 0, 20, 10, 0.0))));
         when(repo.jeLiJosZaPrognozu(7L)).thenReturn(1L);
         doThrow(new RuntimeException("SMTP pao")).when(prognoza).sendForecastEmail(eq(b), any());
 

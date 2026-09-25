@@ -222,6 +222,10 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                     "Nije moguće preuzeti prognozu za '" + weatherQuery + "'. " +
                     "Pokušaj uneti precizniji naziv u polje 'Grad za prognozu'.");
         }
+        // Prognoza ide najviše PROGNOZA_DANA_UNAPRED dana unapred. Poslata ranije, mejl bi imao samo
+        // „Trenutno vreme" i dane puta bez podataka, a upisano „poslato" bi ugasilo automatsku
+        // prognozu na T-7 (traži forecastSentAt = null). Zato se odbija, bez upisa.
+        proveriDaPrognozaPokrivaPolazak(booking, forecast.get());
 
         // Šalji PRE upisa forecastSentAt - isti obrazac kao automatski sendForecasts()
         // i InvoiceServiceImpl.sendInvoice(). sendForecastEmail baca bare RuntimeException
@@ -317,6 +321,14 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
                 // padne i onda vidi forecastSentAt - dupli mejl nije moguć ni kad admin klikne
                 // dok krug šalje.
                 List<DailyForecast> prognoza = forecast.get();
+                if (!pokrivaPolazak(prognoza, booking)) {
+                    // Na T-7 ne bi trebalo da se desi (domet je 16 dana) - jedino kad servis vrati
+                    // kraći niz. Ne upisuje se „poslato": sutra se pokušava ponovo.
+                    log.warn("[Forecast] Prognoza za '{}' ne doseže dan polaska ({}{}) - preskačem, ide sutra",
+                            weatherQuery, booking.getBookingRef(), opisPolaska(booking));
+                    prijaviNedostupnuPrognozu(booking, weatherQuery);
+                    continue;
+                }
                 Boolean poslato = tx().execute(status -> {
                     bookingRepository.findByIdForUpdate(booking.getId());
                     // Stanje iz baze, ne iz snimka od početka petlje: admin je mogao ručno
@@ -442,6 +454,9 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
      */
     static final int PROGNOZA_HITNO_DANA = 3;
 
+    /** Domet vremenskog servisa (Open-Meteo, forecast_days=16): danas + 15 dana. */
+    static final int PROGNOZA_DANA_UNAPRED = 16;
+
     private static final java.time.format.DateTimeFormatter POLAZAK_FMT =
             java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy.");
 
@@ -475,6 +490,32 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
 
     private static LocalDate polazak(Booking booking) {
         return booking.getSelectedDate() != null ? booking.getSelectedDate().getDepartureDate() : null;
+    }
+
+    /**
+     * Da li prognoza sadrži dan polaska. Bez tog dana nema šta da se pošalje: krupna kartica i
+     * savet za pakovanje se grade iz dana puta (ForecastEmailServiceImpl), a servis daje najviše
+     * {@link #PROGNOZA_DANA_UNAPRED} dana unapred.
+     */
+    static boolean pokrivaPolazak(List<DailyForecast> prognoza, Booking booking) {
+        LocalDate polazak = polazak(booking);
+        return polazak != null && prognoza.stream().anyMatch(d -> polazak.equals(d.date()));
+    }
+
+    /** Ručno slanje iz panela: 409 sa objašnjenjem kad je polazak van dometa prognoze. */
+    private static void proveriDaPrognozaPokrivaPolazak(Booking booking, List<DailyForecast> prognoza) {
+        if (pokrivaPolazak(prognoza, booking)) return;
+        LocalDate polazak = polazak(booking);
+        String kad = "";
+        if (polazak != null) {
+            long zaDana = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), polazak);
+            kad = " (" + polazak.format(POLAZAK_FMT) + ", za " + zaDana + " dana)";
+        }
+        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Prognoza još ne pokriva dan polaska" + kad + " - servis je daje najviše "
+                + PROGNOZA_DANA_UNAPRED + " dana unapred. Automatski se šalje 7 dana pre polaska"
+                + (polazak != null ? ", ručno je moguće od " + polazak.minusDays(PROGNOZA_DANA_UNAPRED - 1).format(POLAZAK_FMT) : "")
+                + ". Ništa nije poslato ni evidentirano.");
     }
 
     private static String opisPolaska(Booking booking) {

@@ -159,7 +159,7 @@ class GiftFlowEndToEndTest {
         when(travelAddonsService.linksFor(anyString())).thenReturn(Map.of());
 
         // baza
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(termin()));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(termin()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyInt())).thenReturn(cena());

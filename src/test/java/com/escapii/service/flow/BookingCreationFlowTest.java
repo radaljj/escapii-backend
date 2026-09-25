@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -111,7 +112,7 @@ class BookingCreationFlowTest {
 
     @Test
     void uspesnaRezervacijaObavestavaTimIKupca() {
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(activeDate()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyInt())).thenReturn(price());
@@ -152,7 +153,7 @@ class BookingCreationFlowTest {
      */
     @Test
     void saglasnostSeBeleziNaRezervaciji() {
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(activeDate()));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(activeDate()));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyInt())).thenReturn(price());
@@ -178,7 +179,7 @@ class BookingCreationFlowTest {
     void neaktivanTerminOdbijaSePreSlanjaMejlova() {
         AvailableDate inactive = activeDate();
         inactive.setActive(false);
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(inactive));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(inactive));
 
         assertThrows(Exception.class, () -> svc.createBooking(validRequest()));
 
@@ -194,7 +195,7 @@ class BookingCreationFlowTest {
     void iniSaBiloKojomIskljucenomDestinacijomSeOdbija() {
         AvailableDate iniDate = activeDate();
         iniDate.setDepartureAirport("INI");
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(iniDate));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(destinationRepository.findById(anyLong())).thenReturn(Optional.of(new Destination()));
 
@@ -212,7 +213,7 @@ class BookingCreationFlowTest {
     void iniBezIskljucenaDestinacijaProlazi() {
         AvailableDate iniDate = activeDate();
         iniDate.setDepartureAirport("INI");
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(iniDate));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(iniDate));
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(priceCalculator.calculate(any(), anyInt(), any(), anyInt(), anyInt(),
                 anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), anyString(), anyInt())).thenReturn(price());
@@ -234,6 +235,7 @@ class BookingCreationFlowTest {
     @Test
     void upitNaCekanjuZaIstiTerminIMejl_odbijaSa409_aPotvrdjenaNeBlokira() {
         // Postojeci upit jos ceka obradu -> duplikat, 409 sa porukom o cekanju, nista se ne cuva.
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(activeDate()));
         when(bookingRepository.existsPendingDuplicate("marko@example.com", 10L)).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(validRequest()));
@@ -243,5 +245,27 @@ class BookingCreationFlowTest {
         verify(bookingRepository, never()).save(any(Booking.class));
         // Potvrdjena/zavrsena rezervacija za isti termin nije duplikat: upit se gleda samo po PENDING statusu,
         // sto garantuje sam JPQL upit (b.status = PENDING) - servis ne salje vremenski prozor.
+    }
+
+    /**
+     * Dupli klik na „Pošalji upit": dva zahteva istovremeno. Provera duplikata bez brave je trka -
+     * oba prođu pre nego što ijedan upiše, pa nastanu dve rezervacije. Zato se termin čita pod
+     * bravom (findByIdForUpdate) PRE provere duplikata: drugi zahtev sačeka prvi upis i onda ga
+     * vidi → 409. Običan findById (bez brave) se u ovom toku ne sme koristiti.
+     */
+    @Test
+    void duplikatSeProveravaTekPodBravomTermina() {
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(activeDate()));
+        when(bookingRepository.existsPendingDuplicate("marko@example.com", 10L)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(validRequest()));
+        assertEquals(409, ex.getStatusCode().value());
+
+        InOrder redom = inOrder(availableDateRepository, bookingRepository);
+        redom.verify(availableDateRepository).findByIdForUpdate(10L);
+        redom.verify(bookingRepository).existsPendingDuplicate("marko@example.com", 10L);
+        verify(availableDateRepository, never()).findById(anyLong());
+        verify(bookingRepository, never()).save(any(Booking.class));
+        verifyNoInteractions(eventPublisher);
     }
 }

@@ -737,6 +737,9 @@ public class AdminServiceImpl implements AdminService {
                     "Reveal je već poslat — koristite force=true da promenite destinaciju");
         }
 
+        if (trimmed != null && !trimmed.isEmpty()) {
+            proveriDaNijeIskljucena(booking, trimmed);
+        }
         booking.setAssignedDestination(trimmed);
 
         // Koordinate za prognozu se traže odmah, u pozadini (GeoWarmUpListener), da jutarnji
@@ -761,6 +764,38 @@ public class AdminServiceImpl implements AdminService {
         Booking saved = bookingRepository.save(booking);
         log.info("[ADMIN] Destinacija za rezervaciju {} → '{}'", saved.getBookingRef(), trimmed);
         return adminBookingMapper.toResponse(saved);
+    }
+
+    /**
+     * Kupac je platio da NE ide u isključenu destinaciju, pa dodela takve destinacije ne sme da
+     * prođe ni greškom. Panel nudi padajuću listu koja ih označava, ali polje prima i slobodan
+     * tekst (rezervacija bez termina, drugačije napisano ime), zato provera stoji i ovde: ime se
+     * poredi bez velikih slova, dijakritika i razmaka, i sa srpskim i sa engleskim imenom svake
+     * isključene destinacije. Nema „force" izuzetka - ne postoji opravdan slučaj.
+     */
+    private static void proveriDaNijeIskljucena(Booking booking, String destinacija) {
+        String trazeno = kljucImena(destinacija);
+        if (trazeno.isEmpty()) return;
+        Destination[] iskljucene = {
+                booking.getExcludedDestination1(), booking.getExcludedDestination2(),
+                booking.getExcludedDestination3(), booking.getExcludedDestination4()
+        };
+        for (Destination d : iskljucene) {
+            if (d == null) continue;
+            if (trazeno.equals(kljucImena(d.getName())) || trazeno.equals(kljucImena(d.getNameEn()))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Kupac je isključio destinaciju „" + d.getName() + "\" - ne može da mu se dodeli. Izaberi drugu.");
+            }
+        }
+    }
+
+    /** Ključ za poređenje imena: „ Sveti  Đorđe " → "svetidorde" (bez dijakritika, razmaka i velikih slova). */
+    static String kljucImena(String ime) {
+        if (ime == null) return "";
+        String s = java.text.Normalizer.normalize(ime, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")              // č→c, š→s, ž→z, é→e
+                .replace('đ', 'd').replace('Đ', 'D');    // đ se u NFD ne rastavlja
+        return s.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     @Override

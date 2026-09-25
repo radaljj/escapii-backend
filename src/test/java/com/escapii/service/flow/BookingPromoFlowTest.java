@@ -53,7 +53,8 @@ class BookingPromoFlowTest {
         d.setId(10L); d.setActive(true); d.setDepartureAirport("BEG");
         d.setDepartureDate(LocalDate.now().plusDays(30)); d.setReturnDate(LocalDate.now().plusDays(33));
         d.setNumberOfNights(3); d.setAvailableSlots(5); d.setBasePrice(500);
-        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(d));
+        when(availableDateRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(d)); // rezervacija (pod bravom)
+        when(availableDateRepository.findById(10L)).thenReturn(Optional.of(d));          // pregled cene
         when(bookingRepository.existsPendingDuplicate(anyString(), anyLong())).thenReturn(false);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
