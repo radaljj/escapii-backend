@@ -137,7 +137,7 @@ class GiftTripVoucherServiceTest {
     @Test
     void revealPotvrdjenogPoklona_terminPutniciBezCene() {
         Booking b = poklon(BookingStatus.CONFIRMED);
-        when(bookingRepository.findByBookingRefIgnoreCase("esc-a3f8b2c1")).thenReturn(Optional.of(b));
+        when(bookingRepository.findByBookingRefIgnoreCase("ESC-A3F8B2C1")).thenReturn(Optional.of(b));
 
         GiftVoucherRevealResponse r = svc.reveal("  esc-a3f8b2c1 ");
 
@@ -157,6 +157,17 @@ class GiftTripVoucherServiceTest {
         assertEquals("Beograd", r.trip().airportCity());
         assertEquals(List.of("Ana Anić", "Marko Marković"), r.trip().passengers());
         assertEquals("Ana Anić", r.trip().recipientName());
+    }
+
+    /** Kopiranje koda sa PDF vaučera daje razmak između svakog slova - to je prijavljeni slučaj. */
+    @Test
+    void revealKodaKopiranogIzPdfa_razmaciIzmedjuSlova() {
+        when(bookingRepository.findByBookingRefIgnoreCase("ESC-A3F8B2C1")).thenReturn(Optional.of(poklon(BookingStatus.CONFIRMED)));
+
+        assertTrue(svc.reveal("E S C - A 3 F 8 B 2 C 1").valid(), "kod sa razmacima mora da nađe rezervaciju");
+        assertTrue(svc.reveal("esc a3f8b2c1").valid(), "ručno ukucan, bez crtice");
+        verify(bookingRepository, times(2)).findByBookingRefIgnoreCase("ESC-A3F8B2C1");
+        verify(bookingRepository, never()).findByBookingRefIgnoreCase(contains(" "));
     }
 
     @Test

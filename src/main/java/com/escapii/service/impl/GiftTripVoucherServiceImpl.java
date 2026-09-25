@@ -10,6 +10,7 @@ import com.escapii.service.GiftTripVoucherService;
 import com.escapii.service.email.BookingEmailService;
 import com.escapii.service.voucher.TripVoucherData;
 import com.escapii.service.voucher.VoucherPdfService;
+import com.escapii.util.GiftCodeUtils;
 import com.escapii.util.LogUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class GiftTripVoucherServiceImpl implements GiftTripVoucherService {
     @Transactional(readOnly = true)
     public GiftVoucherRevealResponse reveal(String code) {
         if (code == null || code.isBlank()) return GiftVoucherRevealResponse.invalid();
-        String ref = code.trim();
+        String ref = GiftCodeUtils.normalize(code);   // kopiran iz PDF-a ume da nosi razmak između slova
 
         return bookingRepository.findByBookingRefIgnoreCase(ref)
                 .map(b -> {

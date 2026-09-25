@@ -13,6 +13,7 @@ import com.escapii.service.GiftVoucherService;
 import com.escapii.service.email.GiftVoucherEmailService;
 import com.escapii.service.voucher.VoucherData;
 import com.escapii.service.voucher.VoucherPdfService;
+import com.escapii.util.GiftCodeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -98,7 +99,7 @@ public class GiftVoucherServiceImpl implements GiftVoucherService {
     @Transactional
     public GiftVoucherRevealResponse reveal(String code) {
         if (code == null || code.isBlank()) return GiftVoucherRevealResponse.invalid();
-        String normalizedCode = code.trim().toUpperCase();
+        String normalizedCode = GiftCodeUtils.normalize(code);   // razmaci iz PDF-a, mala slova, druga crta
 
         return voucherRepository.findByCode(normalizedCode)
                 .map(v -> {
