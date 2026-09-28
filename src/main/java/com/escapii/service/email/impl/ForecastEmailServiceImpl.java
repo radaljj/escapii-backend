@@ -135,7 +135,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 <div style="font-size:12px;color:#1a1410;line-height:1.6;">
                   Kada dobiješ mejl sa otkrićem destinacije,
                   <strong>preporučujemo da ponovo proveriš prognozu</strong> direktno za tu destinaciju -
-                  prognoza za toliko dana unapred može biti okvirna.
+                  %s
                 </div>
               </td></tr>
             </table>
@@ -152,7 +152,10 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
                 hero.maxTemp(), hero.minTemp(),
                 dayCards,
                 packingCard,
-                travelDaysCard
+                travelDaysCard,
+                // dan-dva pre polaska „za toliko dana unapred" ne stoji
+                daysUntil > 2 ? "prognoza za toliko dana unapred može biti okvirna."
+                              : "prognoza se do polaska još može promeniti."
         );
 
         return EmailHtmlBuilder.wrapBase(
@@ -256,7 +259,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             </table>""".formatted(hint);
     }
 
-    /** Pojas po dnevnom maksimumu - od njega zavisi šta se pakuje. */
+    /** Pojas po dnevnom maksimumu - od njega zavisi šta se pakuje. Redosled: od najtoplijeg ka najhladnijem. */
     enum Pojas {
         VRELO, TOPLO, PRIJATNO, SVEZE, HLADNO, ZIMA;
 
@@ -279,13 +282,15 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
 
     /**
      * Savet o garderobi iz temperatura i padavina za DANE PUTA, ne za danas. Kad su dani slični,
-     * pojas bira prosek dnevnih maksimuma; kad se mnogo razlikuju, navode se najtopliji i
-     * najhladniji dan. Hladna noć, sneg i kiša dodaju po rečenicu.
+     * pojas bira prosek dnevnih maksimuma; kad se mnogo razlikuju (8 i više stepeni, ili dva
+     * pojasa razlike), navode se najtopliji i najhladniji dan i šta se pakuje za koji. Hladna
+     * noć, sneg i kiša dodaju po rečenicu.
      *
      * <p>Pravila koja čuva ForecastPackingLogicTest na stotinama hiljada kombinacija: savet važi
-     * za SVAKI dan puta (hladan dan uvek donosi jaknu, topao laganu garderobu), sneg se pominje
-     * samo uz stvarno hladan dan, i dve spojene rečenice ne kažu ni isto ni suprotno.
-     * Prazno kad prognoza ne pokriva nijedan dan puta.
+     * za SVAKI dan puta (dan do 24 stepena donosi bar duks, do 12 jaknu, do 5 toplu jaknu, a dan
+     * od 25 laganu garderobu), sneg se pominje samo uz hladan dan, padavine na mrazu nisu kiša,
+     * i dve spojene rečenice ne kažu ni isto ni suprotno. Prazno kad prognoza ne pokriva nijedan
+     * dan puta.
      */
     static String packingHint(List<DailyForecast> forecast, LocalDate depDate, LocalDate retDate) {
         List<DailyForecast> dani = forecast.stream()
@@ -299,46 +304,47 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         int noc         = dani.stream().mapToInt(DailyForecast::minTemp).min().orElse(prosek);
         Pojas topli  = Pojas.za(najtopliji);
         Pojas hladni = Pojas.za(najhladniji);
+        boolean velikRaspon = najtopliji - najhladniji >= RASPON_ZA_DVA_SAVETA;
+        boolean dvaPojasaRazlike = hladni.ordinal() - topli.ordinal() >= 2;
 
         StringBuilder s = new StringBuilder();
-        if (najtopliji - najhladniji >= RASPON_ZA_DVA_SAVETA && topli != hladni) {
+        if (topli != hladni && (velikRaspon || dvaPojasaRazlike)) {
             s.append(savetZaRaspon(najtopliji, najhladniji, topli, hladni)).append(nocUzRaspon(hladni, noc));
         } else {
-            s.append(savetZaPojas(Pojas.za(prosek), prosek, noc));
+            s.append(savetZaPojas(Pojas.za(prosek), prosek, najtopliji, najhladniji, noc));
         }
 
-        // Sneg samo uz stvarno hladan dan; dan sa kodom snega se ne broji i kao kišni.
         if (dani.stream().anyMatch(DailyForecast::snegZaPakovanje)) {
             s.append(" Ima i snega u najavi - obuj nešto što ne klizi i spakuj tople čarape.");
         }
-        long kisa = dani.stream().filter(d -> d.rainy() && !d.snowy()).count();
+        // Dan sa snegom za pakovanje se ne broji i ovde. Kod snega uz dan koji nije dovoljno hladan
+        // ulazi samo ako ima bar 1 mm, i tada rečenica kaže „padavine", ne „kiša".
+        List<DailyForecast> mokri = dani.stream()
+                .filter(d -> !d.snegZaPakovanje() && (d.snowy() ? d.imaPadavina() : d.rainy()))
+                .toList();
         boolean ceoPutPokriven = dani.size() == ChronoUnit.DAYS.between(depDate, retDate) + 1;
-        if (kisa >= 1 && !ceoPutPokriven) {
-            // Prognoza pokriva samo deo puta: ni „svakog dana" ni „2 od 3 dana" - za ostale dane se još ne zna.
-            s.append(" U prognozi je i kiša, pa ubaci i kišobran.");
-        } else if (kisa == 1) {
-            s.append(" Jedan dan je najavljena kiša, pa ubaci i kišobran.");
-        } else if (kisa >= 2) {
-            s.append(kisa == dani.size() ? " Kiša se očekuje svakog dana"
-                                         : " Kiša se očekuje " + kisa + " od " + dani.size() + " dana")
-             .append(", pa ponesi kišobran ili kabanicu.");
-        }
+        s.append(recenicaOPadavinama(mokri.size(), dani.size(), ceoPutPokriven,
+                mokri.stream().noneMatch(DailyForecast::snowy)));
         return s.toString();
     }
 
     /** Dani su slični: jedna rečenica po pojasu, a hladna noć je menja ili joj dodaje nastavak. */
-    private static String savetZaPojas(Pojas pojas, int prosek, int noc) {
-        String oko = "oko " + stepeni(prosek);
+    private static String savetZaPojas(Pojas pojas, int prosek, int najtopliji, int najhladniji, int noc) {
+        // Isti pojas, a dani daleko jedan od drugog (40 i 32, 5 i -11): prosek ne liči ni na jedan.
+        String oko = najtopliji - najhladniji >= RASPON_ZA_DVA_SAVETA
+                ? "od " + najhladniji + " do " + stepeni(najtopliji)
+                : "oko " + stepeni(prosek);
         String nocu = "Noću pada na oko " + stepeni(noc);
         return switch (pojas) {
             case VRELO -> "Preko dana je vrelo, " + oko
                     + " - lagana garderoba, naočare za sunce i krema su obavezne, a flašica vode uvek pri ruci."
                     + (noc <= 10 ? " " + nocu + ", pa ponesi i nešto toplije za veče." : "");
             // Uz hladnu noć rečenica pojasa je kraća: ne sme da kaže „sasvim dovoljna" pa odmah
-            // „ponesi nešto toplije", niti dvaput „za veče".
-            case TOPLO -> "Toplo je, " + oko + " preko dana - " + (noc <= 10
-                    ? "za dan je dovoljna lagana letnja garderoba. " + nocu + ", pa za veče ponesi duks ili tanku jaknu."
-                    : "lagana letnja garderoba je sasvim dovoljna, uz jednu majicu dugih rukava za veče.");
+            // „ponesi nešto toplije", niti dvaput „za veče". Dan ispod 25 traži bar duks.
+            case TOPLO -> "Toplo je, " + oko + " preko dana - " + (
+                    noc <= 10         ? "za dan je dovoljna lagana letnja garderoba. " + nocu + ", pa za veče ponesi duks ili tanku jaknu."
+                  : najhladniji < 25  ? "lagana letnja garderoba, a za svežiji dan i veče dobro dođe duks ili tanka jakna."
+                  :                     "lagana letnja garderoba je sasvim dovoljna, uz jednu majicu dugih rukava za veče.");
             case PRIJATNO -> "Prijatno je, " + oko + " preko dana - " + (noc <= 10
                     ? "majice i lagane pantalone. " + nocu + ", pa ti za jutro i veče treba jakna."
                     : "majice i lagane pantalone, a za jutro i veče dobro dođe tanka jakna ili duks.");
@@ -348,7 +354,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             case HLADNO -> "Hladno je, " + oko + " preko dana - topla jakna, šal i zatvorena obuća."
                     + (noc < 0 ? " Noću je ispod nule, pa ponesi i kapu i rukavice." : "");
             case ZIMA -> "Zimski uslovi, " + oko + " preko dana"
-                    + (noc < 0 && prosek > 0 ? ", a noću ispod nule" : "")   // dok je i dan u minusu, suvišno je
+                    + (noc < 0 && najhladniji > 0 ? ", a noću ispod nule" : "")   // kad je i neki dan u minusu, suvišno je
                     + " - topla jakna, kapa, rukavice i obuća koja ne propušta.";
         };
     }
@@ -370,7 +376,7 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
             default       -> "duks ili tanju jaknu za toplije dane";        // SVEZE; hladniji od toga ne može biti „topli" kraj
         };
         String zaHladne = switch (hladni) {
-            case PRIJATNO -> "majice i lagane pantalone za prijatnije";
+            case PRIJATNO -> "majice i lagane pantalone za prijatnije";     // jakna za jutro i veče stiže u nocUzRaspon
             case SVEZE    -> "jaknu ili duks za svežije";
             case HLADNO   -> "toplu jaknu i zatvorenu obuću za hladne";
             default       -> "toplu jaknu, kapu i rukavice za najhladnije";  // ZIMA
@@ -378,15 +384,42 @@ public class ForecastEmailServiceImpl implements ForecastEmailService {
         return uvod + "Ponesi " + zaTople + ", a " + zaHladne + ".";
     }
 
-    /** Rečenica o noći uz savet za raspon - bira se po najhladnijem danu, on već nosi savet za hladno. */
+    /**
+     * Nastavak saveta za raspon, po najhladnijem danu. Kad je on „prijatan" (19-24), jakna za jutro
+     * i veče ide uvek - bez nje bi jedan topao dan više izbacio jaknu iz saveta za ostale dane.
+     */
     private static String nocUzRaspon(Pojas hladni, int noc) {
+        String nocu = " Noću pada na oko " + stepeni(noc);
         return switch (hladni) {
             // bez „ponesi": savet za raspon već počinje tom rečju
-            case TOPLO, PRIJATNO -> noc <= 10 ? " Noću pada na oko " + stepeni(noc) + ", pa za veče dobro dođe i nešto toplije." : "";
-            case SVEZE           -> noc <= 3  ? " Noću pada na oko " + stepeni(noc) + ", pa za veče dobro dođe i nešto toplije." : "";
-            case HLADNO          -> noc < 0   ? " Noću je ispod nule, pa ne zaboravi kapu i rukavice." : "";
-            default              -> "";
+            case TOPLO    -> noc <= 10 ? nocu + ", pa za veče dobro dođe i nešto toplije." : "";
+            case PRIJATNO -> noc <= 10 ? nocu + ", pa ti za jutro i veče treba jakna."
+                                       : " Za jutro i veče dobro dođe tanka jakna ili duks.";
+            case SVEZE    -> noc <= 3  ? nocu + ", pa za veče dobro dođe i nešto toplije." : "";
+            case HLADNO   -> noc < 0   ? " Noću je ispod nule, pa ne zaboravi kapu i rukavice." : "";
+            default       -> "";
         };
+    }
+
+    /**
+     * Rečenica o kiši. „Padavine" umesto „kiša" kad je među danima i dan sa kodom snega koji nije
+     * dovoljno hladan za savet o snegu. Kad prognoza pokriva samo deo puta, bez „svakog dana" i
+     * bez brojanja - za ostale dane se još ne zna.
+     */
+    private static String recenicaOPadavinama(int dana, int pokrivenoDana, boolean ceoPutPokriven, boolean samoKisa) {
+        if (dana == 0) return "";
+        if (!ceoPutPokriven) {
+            return samoKisa ? " U prognozi je i kiša, pa ubaci i kišobran."
+                            : " U prognozi su i padavine, pa ubaci i kišobran.";
+        }
+        if (dana == 1) {
+            return samoKisa ? " Jedan dan je najavljena kiša, pa ubaci i kišobran."
+                            : " Jedan dan su najavljene padavine, pa ubaci i kišobran.";
+        }
+        String koliko = dana < pokrivenoDana ? dana + " od " + pokrivenoDana + " dana"
+                      : pokrivenoDana == 2   ? "oba dana"
+                      :                        "svakog dana";
+        return (samoKisa ? " Kiša se očekuje " : " Padavine se očekuju ") + koliko + ", pa ponesi kišobran ili kabanicu.";
     }
 
     /**

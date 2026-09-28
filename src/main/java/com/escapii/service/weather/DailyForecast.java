@@ -71,11 +71,12 @@ public record DailyForecast(
     }
 
     /**
-     * Sneg zbog kog se drugačije pakuje: kod za sneg I stvarno hladan dan (najviše 10 stepeni
-     * preko dana, noću do 3). Kod za sneg uz topao dan je greška u podacima - savet ga tada
-     * ne pominje, da kupcu ne stigne „vrelo je, ima i snega".
+     * Sneg zbog kog se drugačije pakuje: kod za sneg uz hladan dan (najviše 12 stepeni), ili bilo
+     * kakve padavine na mrazu (dan do 1 stepen) - one nisu kiša ni kad servis ne pošalje kod snega.
+     * Granica od 12 je iz stvarnih prognoza: planinska mesta imaju sneg i uz 8-12 preko dana.
+     * Kod za sneg uz topliji dan se ne računa, da kupcu ne stigne „prijatno je, ima i snega".
      */
     public boolean snegZaPakovanje() {
-        return snowy() && maxTemp <= 10 && minTemp <= 3;
+        return (snowy() && maxTemp <= 12) || (maxTemp <= 1 && rainy());
     }
 }

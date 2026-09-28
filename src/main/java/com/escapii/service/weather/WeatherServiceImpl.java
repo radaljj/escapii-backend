@@ -283,21 +283,30 @@ public class WeatherServiceImpl implements WeatherService {
             throw new RuntimeException("Open-Meteo HTTP " + response.statusCode());
         }
 
-        JsonNode daily  = MAPPER.readTree(response.body()).get("daily");
-        JsonNode times  = daily.get("time");
-        JsonNode codes  = daily.get("weathercode");
-        JsonNode maxT   = daily.get("temperature_2m_max");
-        JsonNode minT   = daily.get("temperature_2m_min");
-        JsonNode precip = daily.get("precipitation_sum");
+        return parseOpenMeteo(MAPPER.readTree(response.body()).path("daily"));
+    }
+
+    /**
+     * Dnevni nizovi iz odgovora → prognoza. Dan kome fali kod vremena ili temperatura se
+     * IZOSTAVLJA: prazna vrednost bi se inače pročitala kao nula, pa bi usred leta nastao dan
+     * „Vedro, 0°/0°" i savet da se ponesu kapa i rukavice. Prazne padavine su 0 mm.
+     */
+    static List<DailyForecast> parseOpenMeteo(JsonNode daily) {
+        JsonNode times  = daily.path("time");
+        JsonNode codes  = daily.path("weathercode");
+        JsonNode maxT   = daily.path("temperature_2m_max");
+        JsonNode minT   = daily.path("temperature_2m_min");
+        JsonNode precip = daily.path("precipitation_sum");
 
         List<DailyForecast> result = new ArrayList<>(times.size());
         for (int i = 0; i < times.size(); i++) {
+            if (!codes.path(i).isNumber() || !maxT.path(i).isNumber() || !minT.path(i).isNumber()) continue;
             result.add(new DailyForecast(
                     LocalDate.parse(times.get(i).asText()),
                     codes.get(i).asInt(),
                     (int) Math.round(maxT.get(i).asDouble()),
                     (int) Math.round(minT.get(i).asDouble()),
-                    precip.get(i).asDouble()
+                    precip.path(i).asDouble(0.0)
             ));
         }
         return result;

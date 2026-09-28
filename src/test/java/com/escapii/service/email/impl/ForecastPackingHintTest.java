@@ -147,8 +147,41 @@ class ForecastPackingHintTest {
     void toploPaPrijatno_saHladnomNoci() {
         assertEquals("Dani se dosta razlikuju: najtopliji ima oko 29, a najhladniji oko 21 stepen preko dana. "
                 + "Ponesi laganu letnju garderobu za tople dane, a majice i lagane pantalone za prijatnije. "
-                + "Noću pada na oko 9 stepeni, pa za veče dobro dođe i nešto toplije.",
+                + "Noću pada na oko 9 stepeni, pa ti za jutro i veče treba jakna.",
                 savet(dan(0, 0, 29, 10, 0), dan(1, 1, 21, 9, 0)));
+    }
+
+    /**
+     * Nalaz nezavisnog pregleda: ova dva poslednja dana sama daju „Prijatno je ... tanka jakna ili
+     * duks", a sa jednim toplim danom više jakna je nestajala iz saveta.
+     */
+    @Test
+    void topaoDanNeIzbacujeJaknuZaOstaleDane() {
+        assertEquals("Dani se dosta razlikuju: najtopliji ima oko 28, a najhladniji oko 19 stepeni preko dana. "
+                + "Ponesi laganu letnju garderobu za tople dane, a majice i lagane pantalone za prijatnije. "
+                + "Za jutro i veče dobro dođe tanka jakna ili duks. "
+                + "Jedan dan je najavljena kiša, pa ubaci i kišobran.",
+                savet(dan(0, 0, 28, 16, 0), dan(1, 3, 20, 12, 0), dan(2, 61, 19, 11, 4.0)));
+    }
+
+    /** Toplo po proseku, ali jedan dan ima 24: „sasvim dovoljna" letnja garderoba za njega nije dovoljna. */
+    @Test
+    void toploSaJednimSvezijimDanom() {
+        assertEquals("Toplo je, oko 26 stepeni preko dana - lagana letnja garderoba, "
+                + "a za svežiji dan i veče dobro dođe duks ili tanka jakna.",
+                savet(dan(0, 0, 27, 15, 0), dan(1, 1, 26, 14, 0), dan(2, 2, 24, 13, 0), dan(3, 0, 27, 15, 0)));
+    }
+
+    /** Dva pojasa razlike traže dva saveta i kad je razlika manja od 8 stepeni (dugo putovanje, prosek 19). */
+    @Test
+    void dvaPojasaRazlike_iKadJeRazlikaSedamStepeni() {
+        DailyForecast[] dani = new DailyForecast[14];
+        for (int i = 0; i < 13; i++) dani[i] = dan(i, 0, 19, 11, 0);
+        dani[13] = dan(13, 63, 12, 11, 10.0);
+        assertEquals("Dani se dosta razlikuju: najtopliji ima oko 19, a najhladniji oko 12 stepeni preko dana. "
+                + "Ponesi majice i lagane pantalone za toplije dane, a toplu jaknu i zatvorenu obuću za hladne. "
+                + "Jedan dan je najavljena kiša, pa ubaci i kišobran.",
+                savet(dani));
     }
 
     @Test
@@ -176,8 +209,12 @@ class ForecastPackingHintTest {
     /** Isti pojas i kad je raspon veliki: svi dani traže isto, pa ostaje jedna rečenica. */
     @Test
     void velikiRasponUIstomPojasu_ostajeJednaRecenica() {
-        assertTrue(savet(dan(0, 0, 40, 25, 0), dan(1, 0, 32, 22, 0)).startsWith("Preko dana je vrelo, oko 36 stepeni"));
-        assertTrue(savet(dan(0, 3, 5, -1, 0), dan(1, 3, -3, -9, 0)).startsWith("Zimski uslovi, oko 1 stepen preko dana"));
+        assertEquals("Preko dana je vrelo, od 32 do 40 stepeni - lagana garderoba, naočare za sunce i krema su obavezne, "
+                + "a flašica vode uvek pri ruci.",
+                savet(dan(0, 0, 40, 25, 0), dan(1, 0, 32, 22, 0)));
+        // prosek od 1 stepen ne liči ni na jedan dan; „a noću ispod nule" otpada jer je i jedan dan u minusu
+        assertEquals("Zimski uslovi, od -3 do 5 stepeni preko dana - topla jakna, kapa, rukavice i obuća koja ne propušta.",
+                savet(dan(0, 3, 5, -1, 0), dan(1, 3, -3, -9, 0)));
     }
 
     // ── sneg i kiša ───────────────────────────────────────────────────────────
@@ -190,9 +227,35 @@ class ForecastPackingHintTest {
         assertFalse(s.contains("čarape"), s);
         assertTrue(s.startsWith("Preko dana je vrelo"), s);
 
-        assertFalse(savet(dan(0, 71, 12, 1, 3), dan(1, 3, 12, 2, 0)).contains("sneg"), "12 stepeni preko dana nije dan za sneg");
-        assertFalse(savet(dan(0, 71, 9, 5, 3), dan(1, 3, 9, 5, 0)).contains("sneg"), "noć od 5 stepeni nije noć za sneg");
-        assertTrue(savet(dan(0, 71, 9, 3, 3), dan(1, 3, 9, 4, 0)).contains("Ima i snega u najavi"), "9 preko dana i 3 noću jeste");
+        assertFalse(savet(dan(0, 71, 13, 1, 0.5), dan(1, 3, 13, 2, 0)).contains("sneg"), "13 stepeni preko dana nije dan za savet o snegu");
+        assertTrue(savet(dan(0, 71, 12, 4, 3), dan(1, 3, 12, 5, 0)).contains("Ima i snega u najavi"), "12 preko dana jeste");
+    }
+
+    /** Stvarna prognoza za Cermat (28.09.2026): sneg uz 8 do 12 stepeni preko dana i noći od 4 do 5. */
+    @Test
+    void planinskaPrognozaSaSnegom() {
+        assertEquals("Hladno je, oko 10 stepeni preko dana - topla jakna, šal i zatvorena obuća. "
+                + "Ima i snega u najavi - obuj nešto što ne klizi i spakuj tople čarape.",
+                savet(dan(0, 85, 10, 4, 2.1), dan(1, 3, 11, 4, 0), dan(2, 71, 12, 4, 0.9), dan(3, 73, 8, 5, 5.1)));
+    }
+
+    /** Kod snega uz dan koji nije dovoljno hladan: padavine se ne prećutkuju, ali se ne zovu ni sneg ni kiša. */
+    @Test
+    void kodSnegaUzSvezDan_padavine() {
+        assertEquals("Sveže je, oko 14 stepeni preko dana - jakna ti treba, a najsigurnije je da se oblačiš u slojevima. "
+                + "Jedan dan su najavljene padavine, pa ubaci i kišobran.",
+                savet(dan(0, 85, 13, 4, 6.0), dan(1, 3, 14, 5, 0), dan(2, 2, 14, 6, 0)));
+    }
+
+    /** Padavine na mrazu su sneg i kad servis ne pošalje kod snega - kišobran na -1 nema smisla. */
+    @Test
+    void padavineNaMrazuSuSneg() {
+        assertEquals("Zimski uslovi, oko 0 stepeni preko dana - topla jakna, kapa, rukavice i obuća koja ne propušta. "
+                + "Ima i snega u najavi - obuj nešto što ne klizi i spakuj tople čarape.",
+                savet(dan(0, 3, -1, -6, 2.0), dan(1, 3, 0, -5, 0), dan(2, 2, 1, -4, 0)));
+        String kisaNaMrazu = savet(dan(0, 61, 0, -5, 3.0), dan(1, 3, 2, -3, 0));
+        assertTrue(kisaNaMrazu.contains("Ima i snega u najavi"), kisaNaMrazu);
+        assertFalse(kisaNaMrazu.contains("kiš"), kisaNaMrazu);
     }
 
     /** Ranije je sneg sakrivao kišu: kišobran se nije pominjao ni kad su ostali dani kišni. */
@@ -210,6 +273,13 @@ class ForecastPackingHintTest {
         String s = savet(dan(0, 71, 2, -3, 5), dan(1, 3, 3, -2, 0), dan(2, 3, 4, -1, 0));
         assertTrue(s.contains("Ima i snega u najavi"), s);
         assertFalse(s.contains("kišobran"), s);
+    }
+
+    @Test
+    void kisaObaDana() {
+        assertEquals("Prijatno je, oko 22 stepena preko dana - majice i lagane pantalone, a za jutro i veče dobro dođe "
+                + "tanka jakna ili duks. Kiša se očekuje oba dana, pa ponesi kišobran ili kabanicu.",
+                savet(dan(0, 61, 21, 12, 4), dan(1, 63, 22, 13, 6)));
     }
 
     @Test

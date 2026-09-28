@@ -54,11 +54,13 @@ class DailyForecastTest {
     @Test
     void snegZaPakovanjeTraziHladanDan() {
         assertTrue(dan(71, 2, -3, 3).snegZaPakovanje());
-        assertTrue(dan(85, 10, 3, 1).snegZaPakovanje(), "granica: 10 preko dana, 3 noću");
-        assertFalse(dan(71, 11, 3, 3).snegZaPakovanje(), "11 preko dana je pretoplo");
-        assertFalse(dan(71, 10, 4, 3).snegZaPakovanje(), "noć od 4 stepena je pretopla");
+        assertTrue(dan(85, 12, 4, 1).snegZaPakovanje(), "granica: 12 preko dana, kao u planinskim prognozama");
+        assertFalse(dan(71, 13, 3, 3).snegZaPakovanje(), "13 preko dana je pretoplo za savet o snegu");
         assertFalse(dan(71, 30, 20, 3).snegZaPakovanje(), "sneg na 30 stepeni ne postoji");
-        assertFalse(dan(61, 2, -3, 3).snegZaPakovanje(), "kiša nije sneg");
+        assertFalse(dan(61, 2, -3, 3).snegZaPakovanje(), "kiša na 2 stepena je kiša");
+        assertTrue(dan(61, 1, -3, 3).snegZaPakovanje(), "padavine na mrazu su sneg i kad je kod kiše");
+        assertTrue(dan(3, -1, -6, 2.0).snegZaPakovanje(), "padavine na mrazu su sneg i bez koda padavina");
+        assertFalse(dan(3, -1, -6, 0.0).snegZaPakovanje(), "mraz bez padavina nije sneg");
         assertTrue(dan(71, 30, 20, 3).snowy(), "opis dana i dalje prati kod koji je servis poslao");
     }
 }

@@ -78,6 +78,20 @@ class ForecastEmailTextTest {
         assertFalse(h.contains("email sa otkrićem"));
     }
 
+    /** „Za toliko dana unapred" stoji kad mejl ide nedelju dana ranije, ne kad ide dan pre polaska. */
+    @Test
+    void preporukaPratiKolikoJeDoPolaska() throws Exception {
+        String redovno = mejl(7, 3, prognoza(16));
+        assertTrue(redovno.contains("prognoza za toliko dana unapred može biti okvirna."));
+
+        for (int dana : new int[]{0, 1, 2}) {
+            String kasno = mejl(dana, 3, prognoza(16));
+            assertTrue(kasno.contains("prognoza se do polaska još može promeniti."), "za " + dana + " dana");
+            assertFalse(kasno.contains("za toliko dana unapred"), "za " + dana + " dana");
+        }
+        assertTrue(mejl(3, 3, prognoza(16)).contains("za toliko dana unapred"));
+    }
+
     /** Traka dana i lista ispod pišu datum isto: „05.10.", sa tačkom. */
     @Test
     void datumUTraciIUListiJeIstogOblika() throws Exception {
