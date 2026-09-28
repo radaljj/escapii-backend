@@ -11,6 +11,7 @@ import com.escapii.service.email.ForecastEmailService;
 import com.escapii.service.email.RevealEmailService;
 import com.escapii.service.weather.DailyForecast;
 import com.escapii.service.weather.WeatherService;
+import com.escapii.util.Padez;
 import com.escapii.util.TokenUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -211,6 +212,14 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Prognoza je već poslata " + booking.getForecastSentAt() + ".");
+        }
+        // Isto pravilo kao u automatskom krugu (findReadyForForecast traži revealSentAt IS NULL):
+        // prognoza je pisana kao najava otkrića i krije destinaciju. Kupcu koji destinaciju već
+        // zna rečenica „kada dobiješ mejl sa otkrićem" ne sme da stigne.
+        if (booking.getRevealSentAt() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Otkriće destinacije je već poslato - prognoza je njegova najava, pa se posle njega ne šalje.");
         }
         validateIsAssignedDestination(booking.getAssignedDestination());
 
@@ -460,6 +469,10 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private static final java.time.format.DateTimeFormatter POLAZAK_FMT =
             java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy.");
 
+    /** Datum usred rečenice: bez završne tačke, da iza njega ne stoje dve („od 04.10.2026.."). */
+    private static final java.time.format.DateTimeFormatter DATUM_U_RECENICI =
+            java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
     /**
      * Omotač za padove jutarnjeg kruga. Pad je ranije ostajao samo u logu: server radi,
      * health je zelen, a kupac ne dobije reveal. Poruka nosi šifru rezervacije i datum
@@ -506,15 +519,23 @@ public class BookingSchedulingServiceImpl implements BookingSchedulingService {
     private static void proveriDaPrognozaPokrivaPolazak(Booking booking, List<DailyForecast> prognoza) {
         if (pokrivaPolazak(prognoza, booking)) return;
         LocalDate polazak = polazak(booking);
+        LocalDate danas = LocalDate.now();
+        if (polazak != null && polazak.isBefore(danas)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Polazak je bio " + polazak.format(DATUM_U_RECENICI)
+                    + " - prognoza se šalje samo pre polaska. Ništa nije poslato ni evidentirano.");
+        }
         String kad = "";
+        String odKad = "";
         if (polazak != null) {
-            long zaDana = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), polazak);
-            kad = " (" + polazak.format(POLAZAK_FMT) + ", za " + zaDana + " dana)";
+            long zaDana = java.time.temporal.ChronoUnit.DAYS.between(danas, polazak);
+            kad = " (" + polazak.format(DATUM_U_RECENICI) + ", za " + zaDana + " " + Padez.dan(zaDana) + ")";
+            odKad = ", ručno je moguće od "
+                    + polazak.minusDays(PROGNOZA_DANA_UNAPRED - 1).format(DATUM_U_RECENICI);
         }
         throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "Prognoza još ne pokriva dan polaska" + kad + " - servis je daje najviše "
-                + PROGNOZA_DANA_UNAPRED + " dana unapred. Automatski se šalje 7 dana pre polaska"
-                + (polazak != null ? ", ručno je moguće od " + polazak.minusDays(PROGNOZA_DANA_UNAPRED - 1).format(POLAZAK_FMT) : "")
+                + PROGNOZA_DANA_UNAPRED + " dana unapred. Automatski se šalje 7 dana pre polaska" + odKad
                 + ". Ništa nije poslato ni evidentirano.");
     }
 

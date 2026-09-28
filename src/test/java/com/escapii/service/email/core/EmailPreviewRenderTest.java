@@ -179,6 +179,12 @@ class EmailPreviewRenderTest {
             assertTrue(tekst.length() > 300, ime + ": tekstualna verzija prekratka (" + tekst.length() + ")");
             assertFalse(tekst.contains("{") || tekst.contains("<"), ime + ": tekstualna verzija nosi HTML/CSS");
             assertFalse(tekst.contains("&#"), ime + ": tekstualna verzija nosi nedekodiran entitet");
+            if (ime.startsWith("prognoza")) {
+                assertTrue(tekst.matches("(?s).*💧 \\d+ mm.*"), ime + ": padavine u tekstu moraju biti „💧 4 mm“");
+                assertFalse(tekst.matches("(?s).*\\dmm.*"), ime + ": broj slepljen sa jedinicom");
+                assertFalse(tekst.contains("ne kliza") || tekst.contains("su obavezni") || tekst.contains("email sa otkrićem"),
+                        ime + ": vraćen stari tekst");
+            }
             if (ime.equals("upit-primljen") || ime.equals("rezervacija-potvrdjena")) {
                 assertTrue(tekst.contains("Datum rođenja") && tekst.contains("Zemlja pasoša"),
                         ime + ": đ/š iz odeljka putnika izgubljeni u tekstualnoj verziji");

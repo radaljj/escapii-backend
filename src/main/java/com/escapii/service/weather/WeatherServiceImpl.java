@@ -311,6 +311,7 @@ public class WeatherServiceImpl implements WeatherService {
         double min = Double.POSITIVE_INFINITY;
         double precip = 0;
         String symbol = null;
+        int tacaka = 0;
     }
 
     /**
@@ -336,20 +337,33 @@ public class WeatherServiceImpl implements WeatherService {
         }
 
         JsonNode series = MAPPER.readTree(response.body()).path("properties").path("timeseries");
+        return parseMetNorway(series);
+    }
 
+    /**
+     * Tačke iz MET odgovora → dnevna prognoza. MET daje satni blok (next_1_hours) samo za prvih
+     * oko dva i po dana; dalje su tačke na šest sati i nose samo next_6_hours. Dok se čitao
+     * isključivo satni blok, svaki dan posle toga je izlazio kao „Oblačno" bez padavina, šta god
+     * da je stvarna prognoza - a to su baš dani puta kad mejl ide sedam dana unapred.
+     */
+    static List<DailyForecast> parseMetNorway(JsonNode series) {
         // LinkedHashMap čuva hronološki redosled dana
         Map<LocalDate, DayAgg> byDay = new LinkedHashMap<>();
         for (JsonNode point : series) {
             OffsetDateTime t = OffsetDateTime.parse(point.path("time").asText());
-            JsonNode instant = point.path("data").path("instant").path("details");
+            JsonNode data = point.path("data");
+            JsonNode instant = data.path("instant").path("details");
             if (!instant.has("air_temperature")) continue;
 
             double temp = instant.path("air_temperature").asDouble();
-            JsonNode next1 = point.path("data").path("next_1_hours");
-            double p = next1.path("details").path("precipitation_amount").asDouble(0.0);
-            String symbol = next1.path("summary").path("symbol_code").asText("");
+            // Jedan blok po tački: satni gde postoji, inače šestočasovni. Nikad oba - satne tačke
+            // nose i next_6_hours, pa bi se iste padavine sabrale dvaput.
+            JsonNode blok = data.has("next_1_hours") ? data.path("next_1_hours") : data.path("next_6_hours");
+            double p = blok.path("details").path("precipitation_amount").asDouble(0.0);
+            String symbol = blok.path("summary").path("symbol_code").asText("");
 
             DayAgg agg = byDay.computeIfAbsent(t.toLocalDate(), d -> new DayAgg());
+            agg.tacaka++;
             agg.max = Math.max(agg.max, temp);
             agg.min = Math.min(agg.min, temp);
             agg.precip += p;
@@ -363,7 +377,9 @@ public class WeatherServiceImpl implements WeatherService {
         List<DailyForecast> result = new ArrayList<>(byDay.size());
         for (Map.Entry<LocalDate, DayAgg> e : byDay.entrySet()) {
             DayAgg a = e.getValue();
-            if (a.max == Double.NEGATIVE_INFINITY) continue; // dan bez ijedne tačke
+            // Dan sa jednom jedinom tačkom (poslednji u nizu nosi samo ponoć) nema ni raspon
+            // temperature ni oznaku - bolje da mejl kaže „još nije dostupna" nego izmišljen dan.
+            if (a.tacaka < 2) continue;
             result.add(new DailyForecast(
                     e.getKey(),
                     symbolToWmoCode(a.symbol),

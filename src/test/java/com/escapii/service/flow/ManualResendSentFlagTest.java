@@ -97,6 +97,64 @@ class ManualResendSentFlagTest {
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
+    /** Poruka adminu: padež uz broj dana i jedna tačka iza datuma (bilo je „za 21 dana" i „2026.."). */
+    @Test
+    void porukaZaPrognozuVanDometa_padezIInterpunkcija() {
+        Booking b = booking(LocalDate.now().plusDays(21));
+        when(bookingRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(b));
+        when(weatherService.getForecast(anyString())).thenReturn(Optional.of(sesnaestDana()));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> svc.sendForecastForBooking(42L));
+
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        String polazak = LocalDate.now().plusDays(21).format(fmt);
+        String odKad   = LocalDate.now().plusDays(6).format(fmt);
+        assertEquals("Prognoza još ne pokriva dan polaska (" + polazak + ", za 21 dan) - servis je daje najviše "
+                + "16 dana unapred. Automatski se šalje 7 dana pre polaska, ručno je moguće od " + odKad
+                + ". Ništa nije poslato ni evidentirano.", ex.getReason());
+        assertFalse(ex.getReason().contains(".."), ex.getReason());
+    }
+
+    /** Polazak koji je prošao: ne „za -2 dana" i „još ne pokriva", nego jasno da je kasno. */
+    @Test
+    void rucnaPrognozaPoslePolaskaSeOdbijaJasnomPorukom() {
+        Booking b = booking(LocalDate.now().minusDays(2));
+        when(bookingRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(b));
+        when(weatherService.getForecast(anyString())).thenReturn(Optional.of(sesnaestDana()));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> svc.sendForecastForBooking(42L));
+
+        assertEquals(409, ex.getStatusCode().value());
+        assertTrue(ex.getReason().startsWith("Polazak je bio "), ex.getReason());
+        assertFalse(ex.getReason().contains("-2"), ex.getReason());
+        assertNull(b.getForecastSentAt());
+        verify(forecastEmailService, never()).sendForecastEmail(any(), any());
+    }
+
+    /**
+     * Prognoza je najava otkrića i krije destinaciju. Kad je otkriće već poslato, ručno slanje
+     * se odbija kao i u automatskom krugu - kupac koji destinaciju već zna ne dobija mejl koji
+     * kaže „kada dobiješ mejl sa otkrićem".
+     */
+    @Test
+    void rucnaPrognozaPosleOtkricaSeOdbija() {
+        Booking b = booking();
+        b.setRevealSentAt(java.time.LocalDateTime.now().minusHours(3));
+        when(bookingRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(b));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> svc.sendForecastForBooking(42L));
+
+        assertEquals(409, ex.getStatusCode().value());
+        assertTrue(ex.getReason().contains("Otkriće destinacije je već poslato"), ex.getReason());
+        assertNull(b.getForecastSentAt());
+        verifyNoInteractions(weatherService);
+        verify(forecastEmailService, never()).sendForecastEmail(any(), any());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
     /** Polazak za 15 dana je poslednji dan koji servis pokriva - ručno slanje prolazi. */
     @Test
     void rucnaPrognozaNaIviciDometaProlazi() {
