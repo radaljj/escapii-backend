@@ -26,6 +26,8 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -39,10 +41,11 @@ import java.util.regex.Pattern;
  * nije proveren ne upisujemo: bolje prazno polje (kartica izostane) nego link koji
  * vodi na 404.
  *
- * <p><b>Zašto su dva partnera brza a jedan spor.</b> Airalo objavljuje spisak država
- * (~1 MB) a Bounce spisak gradova (~0,6 MB) - to se skine za tren i radi se odmah pri
- * čuvanju destinacije. GetYourGuide nema mali spisak: njihov sitemap gradova je ~96 MB
- * u četiri dela, pa se GYG slug popunjava naknadno, u pozadini, da admin ne čeka.
+ * <p><b>Zašto su dva partnera brza a jedan spor.</b> Holafly objavljuje sitemap svojih
+ * eSIM stranica (~50 KB) a Bounce spisak gradova (~0,6 MB) - to se skine za tren i radi
+ * se odmah pri čuvanju destinacije. GetYourGuide nema mali spisak: njihov sitemap
+ * gradova je ~96 MB u četiri dela, pa se GYG slug popunjava naknadno, u pozadini, da
+ * admin ne čeka.
  * Njihov API bi ovo rešio jednim pozivom ({@code /1/locations?q=Prague}), ali traži
  * pristupni token koji se dobija tek na 100.000+ poseta mesečno.
  *
@@ -65,15 +68,28 @@ public class PartnerSlugFiller {
 
     private static final Pattern LOC       = Pattern.compile("<loc>([^<]+)</loc>");
     private static final Pattern GYG_GRAD  = Pattern.compile("getyourguide\\.com/([a-z0-9-]+-l\\d+)/?<");
-    private static final Pattern AIRALO_DRZAVA = Pattern.compile("airalo\\.com/([a-z0-9-]+-esim)/?<");
+    /** Holafly: jedna stranica po državi (uz poneku regiju i grad), npr. .../esim-italy/ */
+    private static final Pattern HOLAFLY_DRZAVA = Pattern.compile("esim\\.holafly\\.com/(esim-[a-z0-9-]+)/?<");
+
+    /**
+     * Države koje Holafly piše drugačije nego airports.dat. Ključ je naš kebab-case
+     * engleskog imena, vrednost njihov deo sluga (bez {@code esim-}). Provereno u
+     * njihovom sitemapu 2026-10-01; država koje nema ni tamo ni ovde (Kuba, Liban,
+     * Zelenortska Ostrva) prosto nema karticu.
+     */
+    private static final Map<String, String> HOLAFLY_IMENA = Map.of(
+            "united-states",        "usa",
+            "united-arab-emirates", "arab-emirates",
+            "macedonia",            "north-macedonia"
+    );
     private static final Pattern BOUNCE_GRAD   = Pattern.compile("href=\"/luggage-storage/([^\"/]+)\"");
 
     private final DestinationRepository destinationRepository;
     /** Englesko ime grada/države iz IATA koda - iz njega se izvode slugovi. */
     private final AirportLookupService airportLookupService;
 
-    @Value("${app.affiliate.airalo-sitemap:https://www.airalo.com/sitemap-v2-countries.xml}")
-    private String airaloSitemap;
+    @Value("${app.affiliate.holafly-sitemap:https://esim.holafly.com/product-sitemap.xml}")
+    private String holaflySitemap;
     @Value("${app.affiliate.bounce-cities:https://bounce.com/cities}")
     private String bounceCities;
     @Value("${app.affiliate.gyg-sitemap-index:https://www.getyourguide.com/sitemap.xml}")
@@ -84,7 +100,7 @@ public class PartnerSlugFiller {
             .connectTimeout(Duration.ofSeconds(15))
             .build();
 
-    private Set<String> airaloKes;  private Instant airaloUzet;
+    private Set<String> holaflyKes; private Instant holaflyUzet;
     private Set<String> bounceKes;  private Instant bounceUzet;
     /** GYG prolaz je skup; ne sme da se pokrene dvaput uporedo. */
     private final AtomicBoolean gygUTeku = new AtomicBoolean(false);
@@ -92,17 +108,30 @@ public class PartnerSlugFiller {
     // ── Javni ulaz ───────────────────────────────────────────────────────────
 
     /**
-     * Popunjava ono što se dobija brzo (Airalo, Bounce). Zove se pri čuvanju
+     * Popunjava ono što se dobija brzo (Holafly, Bounce). Zove se pri čuvanju
      * destinacije. Ne baca izuzetak - nedostupan partnerski spisak ne sme da
      * obori čuvanje destinacije, polje prosto ostane prazno za sledeći put.
+     *
+     * @return da li se nešto promenilo (startni prolaz upisuje samo tada)
      */
-    public void popuniBrzeSlugove(Destination d) {
+    public boolean popuniBrzeSlugove(Destination d) {
+        String holafly = d.getHolaflySlug();
+        String bounce = d.getBounceSlug();
+        Boolean pokriven = d.getBounceCovered();
         try {
-            popuniAiralo(d);
+            popuniHolafly(d);
             popuniBounce(d);
         } catch (Exception e) {
             log.warn("[Slugovi] Brzo popunjavanje nije uspelo za '{}': {}", d.getName(), e.toString());
         }
+        return !Objects.equals(holafly, d.getHolaflySlug())
+                || !Objects.equals(bounce, d.getBounceSlug())
+                || !Objects.equals(pokriven, d.getBounceCovered());
+    }
+
+    /** Brz slug koji fali vredi pokušati ponovo (nov partner, spisak ranije nedostupan). */
+    private static boolean faliBrzSlug(Destination d) {
+        return prazno(d.getHolaflySlug()) || prazno(d.getBounceSlug());
     }
 
     /**
@@ -160,19 +189,18 @@ public class PartnerSlugFiller {
 
     // ── Pojedinačni partneri ─────────────────────────────────────────────────
 
-    private void popuniAiralo(Destination d) {
-        if (!prazno(d.getAiraloSlug())) return;
-        String kandidat = kljuc(d.getCountryEn());
-        if (kandidat.isEmpty()) return;
-        kandidat = kandidat + "-esim";
+    private void popuniHolafly(Destination d) {
+        if (!prazno(d.getHolaflySlug())) return;
+        String kandidat = holaflySlugZa(d.getCountryEn());
+        if (kandidat == null) return;
 
-        Set<String> spisak = airaloSpisak();
+        Set<String> spisak = holaflySpisak();
         if (spisak.isEmpty()) return;              // spisak nedostupan - ne nagađaj
         if (spisak.contains(kandidat)) {
-            d.setAiraloSlug(kandidat);
-            log.info("[Slugovi] {} -> airalo_slug={}", d.getName(), kandidat);
+            d.setHolaflySlug(kandidat);
+            log.info("[Slugovi] {} -> holafly_slug={}", d.getName(), kandidat);
         } else {
-            log.info("[Slugovi] {} - '{}' nije na Airalo spisku, ostaje prazno",
+            log.info("[Slugovi] {} - '{}' nije na Holafly spisku, ostaje prazno",
                     d.getName(), kandidat);
         }
     }
@@ -206,13 +234,13 @@ public class PartnerSlugFiller {
     // ── Spiskovi partnera (keširani) ─────────────────────────────────────────
 
     /** protected radi testa - test podmece spisak umesto mreznog poziva. */
-    protected synchronized Set<String> airaloSpisak() {
-        if (airaloKes == null || sveze(airaloUzet)) {
+    protected synchronized Set<String> holaflySpisak() {
+        if (holaflyKes == null || sveze(holaflyUzet)) {
             Set<String> s = new HashSet<>();
-            skeniraj(airaloSitemap, AIRALO_DRZAVA, s::add);
-            if (!s.isEmpty()) { airaloKes = s; airaloUzet = Instant.now(); }
+            skeniraj(holaflySitemap, HOLAFLY_DRZAVA, s::add);
+            if (!s.isEmpty()) { holaflyKes = s; holaflyUzet = Instant.now(); }
         }
-        return airaloKes == null ? Set.of() : airaloKes;
+        return holaflyKes == null ? Set.of() : holaflyKes;
     }
 
     protected synchronized Set<String> bounceSpisak() {
@@ -309,8 +337,8 @@ public class PartnerSlugFiller {
             if (!menjano) return;
             popuniBrzeSlugove(d);
             destinationRepository.save(d);
-            log.info("[Slugovi] {} osvežena u pozadini (gyg={}, bounce={}, airalo={})",
-                    d.getName(), d.getGygSlug(), d.getBounceSlug(), d.getAiraloSlug());
+            log.info("[Slugovi] {} osvežena u pozadini (gyg={}, bounce={}, holafly={})",
+                    d.getName(), d.getGygSlug(), d.getBounceSlug(), d.getHolaflySlug());
             if (prazno(d.getGygSlug())) popuniGygSlugoveUPozadini();
         } catch (Exception e) {
             log.warn("[Slugovi] Osvežavanje destinacije id={} nije uspelo: {}", id, e.toString());
@@ -319,9 +347,10 @@ public class PartnerSlugFiller {
 
     /**
      * Pri svakom startu, u pozadini: sve destinacije dobiju ime iz koda (i iz
-     * novih ispravki), zastareli slugovi se obrišu i popune ponovo. Zbog ovoga
-     * deploy sa novom ispravkom (npr. MXP -> Milan) popravi bazu sam, bez klika
-     * u panelu. Jeftino: spiskovi partnera su keširani; GYG ide samo ako nekome fali.
+     * novih ispravki), zastareli slugovi se obrišu i popune ponovo, a brz slug koji
+     * fali se pokuša ponovo. Zbog ovoga deploy sa novom ispravkom (npr. MXP -> Milan)
+     * ili sa novim partnerom popravi bazu sam, bez klika u panelu. Jeftino: spiskovi
+     * partnera su keširani; GYG ide samo ako nekome fali.
      */
     @Async("taskExecutor")
     @EventListener(ApplicationReadyEvent.class)
@@ -333,8 +362,13 @@ public class PartnerSlugFiller {
             int osvezeno = 0;
             for (Destination d : sve) {
                 boolean menjano = osveziImenaIzKoda(d) | ocistiZastarele(d);
+                // Prazan brz slug se pokušava i kad se ništa nije menjalo: nov partner
+                // (Holafly od 2026-10 - postojeće destinacije nemaju njegov slug) ili
+                // spisak koji je pri čuvanju bio nedostupan. Upis samo ako je nešto popunjeno.
+                if (menjano || faliBrzSlug(d)) {
+                    menjano = popuniBrzeSlugove(d) || menjano;
+                }
                 if (!menjano) continue;
-                popuniBrzeSlugove(d);
                 destinationRepository.save(d);
                 osvezeno++;
             }
@@ -369,11 +403,18 @@ public class PartnerSlugFiller {
         return slug.trim().toLowerCase(Locale.ROOT).equals(kljuc(nameEn));
     }
 
-    /** Airalo slug je kebab-case engleskog imena DRŽAVE + "-esim". */
-    public static boolean airaloVaziZa(String slug, String countryEn) {
+    /** Holafly slug je "esim-" + kebab-case engleskog imena DRŽAVE (uz tabelu izuzetaka). */
+    public static boolean holaflyVaziZa(String slug, String countryEn) {
         if (prazno(slug)) return false;
         if (prazno(countryEn)) return true;
-        return slug.trim().toLowerCase(Locale.ROOT).equals(kljuc(countryEn) + "-esim");
+        return slug.trim().toLowerCase(Locale.ROOT).equals(holaflySlugZa(countryEn));
+    }
+
+    /** Očekivani Holafly slug za državu ({@code esim-italy}), ili null kad imena nema. */
+    public static String holaflySlugZa(String countryEn) {
+        String k = kljuc(countryEn);
+        if (k.isEmpty()) return null;
+        return "esim-" + HOLAFLY_IMENA.getOrDefault(k, k);
     }
 
     /**
@@ -394,9 +435,9 @@ public class PartnerSlugFiller {
             d.setBounceCovered(false);
             menjano = true;
         }
-        if (!prazno(d.getAiraloSlug()) && !airaloVaziZa(d.getAiraloSlug(), d.getCountryEn())) {
-            log.info("[Slugovi] {} - airalo_slug '{}' ne odgovara državi '{}', brišem", d.getName(), d.getAiraloSlug(), d.getCountryEn());
-            d.setAiraloSlug(null);
+        if (!prazno(d.getHolaflySlug()) && !holaflyVaziZa(d.getHolaflySlug(), d.getCountryEn())) {
+            log.info("[Slugovi] {} - holafly_slug '{}' ne odgovara državi '{}', brišem", d.getName(), d.getHolaflySlug(), d.getCountryEn());
+            d.setHolaflySlug(null);
             menjano = true;
         }
         return menjano;

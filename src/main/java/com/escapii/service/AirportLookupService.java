@@ -54,7 +54,7 @@ public class AirportLookupService {
      * Ispravke za aerodrome gde je airports.dat (OpenFlights) star ili netačan.
      *
      * <p>Ovo nije kozmetika: engleski naziv grada i države je ono iz čega se izvode
-     * partnerski slugovi ({@code vienna}, {@code czech-republic-esim}), pa pogrešan
+     * partnerski slugovi ({@code vienna}, {@code esim-czech-republic}), pa pogrešan
      * naziv znači da za tu destinaciju nema linka. Ispravlja se ovde a ne popuštanjem
      * poređenja, jer bi labavije poklapanje pravilo tihe promašaje (Rim/Rimini).
      *
@@ -72,7 +72,7 @@ public class AirportLookupService {
             // Zapisan kao "Gothenborg" - prosto pogrešno napisano.
             "GOT", new AirportInfo("Gothenburg", "Sweden"),
             // Kod partnera Malta nije grad nego država; grad je Valeta. Država ostaje
-            // Malta, pa Airalo i dalje dobija ispravno malta-esim.
+            // Malta, pa Holafly i dalje dobija ispravno esim-malta.
             "MLA", new AirportInfo("Valletta", "Malta"),
             // Malpensa je zapisana kao "Milano" (italijanski); LIN je "Milan". Partneri
             // (GetYourGuide milan-l70, Bounce milan) koriste engleski - bez ovoga Milano

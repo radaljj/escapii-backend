@@ -32,15 +32,16 @@ class PartnerSlugFillerTest {
     private final java.util.concurrent.atomic.AtomicInteger gygProlaza = new java.util.concurrent.atomic.AtomicInteger();
 
     /** Podmeće spiskove umesto mrežnog poziva; lookup bez airports.dat (samo tabela ispravki). */
-    private PartnerSlugFiller filler(Set<String> airalo, Set<String> bounce) {
+    private PartnerSlugFiller filler(Set<String> holafly, Set<String> bounce) {
         return new PartnerSlugFiller(destinationRepository, new com.escapii.service.AirportLookupService()) {
-            @Override protected Set<String> airaloSpisak() { return airalo; }
+            @Override protected Set<String> holaflySpisak() { return holafly; }
             @Override protected Set<String> bounceSpisak() { return bounce; }
             @Override public void popuniGygSlugoveUPozadini() { gygProlaza.incrementAndGet(); }
         };
     }
 
-    private static final Set<String> AIRALO = Set.of("czech-republic-esim", "italy-esim", "germany-esim");
+    private static final Set<String> HOLAFLY = Set.of("esim-czech-republic", "esim-italy", "esim-germany",
+            "esim-usa", "esim-arab-emirates", "esim-north-macedonia");
     private static final Set<String> BOUNCE = Set.of("prague", "florence", "berlin");
 
     private Destination dest(String ime, String gradEn, String drzavaEn) {
@@ -55,11 +56,30 @@ class PartnerSlugFillerTest {
     void popunjavaObaSlugaIzEngleskihNaziva() {
         Destination d = dest("Prag", "Prague", "Czech Republic");
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(d);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(d);
 
-        assertEquals("czech-republic-esim", d.getAiraloSlug(), "razmak postaje crtica");
+        assertEquals("esim-czech-republic", d.getHolaflySlug(), "razmak postaje crtica, prefiks esim-");
         assertEquals("prague", d.getBounceSlug());
         assertTrue(d.getBounceCovered());
+    }
+
+    /** Holafly nekoliko država piše drugačije nego airports.dat - tabela izuzetaka, proverena u sitemapu. */
+    @Test
+    void drzaveKojeHolaflyPiseDrugacije() {
+        assertEquals("esim-usa",             PartnerSlugFiller.holaflySlugZa("United States"));
+        assertEquals("esim-arab-emirates",   PartnerSlugFiller.holaflySlugZa("United Arab Emirates"));
+        assertEquals("esim-north-macedonia", PartnerSlugFiller.holaflySlugZa("Macedonia"));
+        assertEquals("esim-north-macedonia", PartnerSlugFiller.holaflySlugZa("North Macedonia"));
+        assertEquals("esim-czech-republic",  PartnerSlugFiller.holaflySlugZa("Czech Republic"));
+        assertNull(PartnerSlugFiller.holaflySlugZa(null));
+        assertNull(PartnerSlugFiller.holaflySlugZa("  "));
+
+        Destination njujork = dest("Njujork", "New York", "United States");
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(njujork);
+        assertEquals("esim-usa", njujork.getHolaflySlug());
+
+        assertTrue(PartnerSlugFiller.holaflyVaziZa("esim-usa", "United States"));
+        assertFalse(PartnerSlugFiller.holaflyVaziZa("esim-united-states", "United States"), "takve stranice kod njih nema");
     }
 
     /** Grad kog nema na Bounce spisku - kartica za prtljag mora izostati. */
@@ -67,33 +87,33 @@ class PartnerSlugFillerTest {
     void gradVanBounceSpiskaNijePokriven() {
         Destination d = dest("Memingen", "Memmingen", "Germany");
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(d);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(d);
 
         assertNull(d.getBounceSlug(), "slug se ne upisuje ako grad nije na spisku");
         assertFalse(d.getBounceCovered());
-        assertEquals("germany-esim", d.getAiraloSlug(), "eSIM i dalje radi, vezan je za drzavu");
+        assertEquals("esim-germany", d.getHolaflySlug(), "eSIM i dalje radi, vezan je za drzavu");
     }
 
-    /** Drzava koje nema kod Airala - ne nagadjamo, ostaje prazno. */
+    /** Drzava koje nema kod Holafly-ja - ne nagadjamo, ostaje prazno. */
     @Test
-    void drzavaVanAiraloSpiskaOstajePrazna() {
-        Destination d = dest("Podgorica", "Podgorica", "Montenegro");
+    void drzavaVanHolaflySpiskaOstajePrazna() {
+        Destination d = dest("Havana", "Havana", "Cuba");
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(d);
+        assertFalse(filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(d), "nista se nije promenilo");
 
-        assertNull(d.getAiraloSlug(), "bolje prazno nego slug koji vodi na 404");
+        assertNull(d.getHolaflySlug(), "bolje prazno nego slug koji vodi na 404");
     }
 
     /** Ono sto je admin uneo rukom ne sme da se pregazi automatikom. */
     @Test
     void rucnoUnetaVrednostSeNePregazi() {
         Destination d = dest("Prag", "Prague", "Czech Republic");
-        d.setAiraloSlug("moj-rucni-slug");
+        d.setHolaflySlug("moj-rucni-slug");
         d.setBounceSlug("moj-rucni-grad");
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(d);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(d);
 
-        assertEquals("moj-rucni-slug", d.getAiraloSlug());
+        assertEquals("moj-rucni-slug", d.getHolaflySlug());
         assertEquals("moj-rucni-grad", d.getBounceSlug());
     }
 
@@ -107,7 +127,7 @@ class PartnerSlugFillerTest {
         biviNepokriven.setBounceSlug("berlin");
         biviNepokriven.setBounceCovered(false);
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(biviNepokriven);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(biviNepokriven);
 
         assertTrue(biviNepokriven.getBounceCovered(), "Bounce ih sada ima - kartica se pali");
 
@@ -115,7 +135,7 @@ class PartnerSlugFillerTest {
         viseNijeNaSpisku.setBounceSlug("somecity");
         viseNijeNaSpisku.setBounceCovered(true);
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(viseNijeNaSpisku);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(viseNijeNaSpisku);
 
         assertFalse(viseNijeNaSpisku.getBounceCovered(), "vise ih nema - kartica se gasi");
     }
@@ -127,13 +147,13 @@ class PartnerSlugFillerTest {
     @Test
     void nedostupanSpisakNeDiraPostojeceVrednosti() {
         Destination d = dest("Prag", "Prague", "Czech Republic");
-        d.setAiraloSlug("czech-republic-esim");
+        d.setHolaflySlug("esim-czech-republic");
         d.setBounceSlug("prague");
         d.setBounceCovered(true);
 
         filler(Set.of(), Set.of()).popuniBrzeSlugove(d);
 
-        assertEquals("czech-republic-esim", d.getAiraloSlug());
+        assertEquals("esim-czech-republic", d.getHolaflySlug());
         assertEquals("prague", d.getBounceSlug());
         assertTrue(d.getBounceCovered());
     }
@@ -142,9 +162,9 @@ class PartnerSlugFillerTest {
     void bezEngleskihNazivaNemaSta() {
         Destination d = dest("Neka Destinacija", null, null);
 
-        filler(AIRALO, BOUNCE).popuniBrzeSlugove(d);
+        filler(HOLAFLY, BOUNCE).popuniBrzeSlugove(d);
 
-        assertNull(d.getAiraloSlug());
+        assertNull(d.getHolaflySlug());
         assertNull(d.getBounceSlug());
     }
 
@@ -152,7 +172,7 @@ class PartnerSlugFillerTest {
     /**
      * Milano je imao BGY (Bergamo) pa su slugovi "bergamo". Admin menja kod na MXP,
      * englesko ime postaje "Milan": stari slugovi se brišu i popunjavaju iz novog
-     * imena. Airalo ostaje - država je ista. Dosledni slugovi se ne diraju.
+     * imena. Holafly ostaje - država je ista. Dosledni slugovi se ne diraju.
      */
     @Test
     void zastareliSlugoviSeBrisuKadSePromeniGrad() {
@@ -160,14 +180,14 @@ class PartnerSlugFillerTest {
         d.setGygSlug("bergamo-l123");
         d.setBounceSlug("bergamo");
         d.setBounceCovered(true);
-        d.setAiraloSlug("italy-esim");
+        d.setHolaflySlug("esim-italy");
 
-        PartnerSlugFiller f = filler(AIRALO, Set.of("milan", "bergamo"));
+        PartnerSlugFiller f = filler(HOLAFLY, Set.of("milan", "bergamo"));
         assertTrue(f.ocistiZastarele(d), "nesto je bilo zastarelo");
         assertNull(d.getGygSlug(),    "gyg iz starog grada obrisan - GYG prolaz ga popunjava u pozadini");
         assertNull(d.getBounceSlug(), "bounce iz starog grada obrisan");
         assertFalse(d.getBounceCovered());
-        assertEquals("italy-esim", d.getAiraloSlug(), "drzava ista - ostaje");
+        assertEquals("esim-italy", d.getHolaflySlug(), "drzava ista - ostaje");
 
         f.popuniBrzeSlugove(d);
         assertEquals("milan", d.getBounceSlug(), "popunjen iz NOVOG imena");
@@ -178,8 +198,9 @@ class PartnerSlugFillerTest {
         assertFalse(PartnerSlugFiller.gygVaziZa("bergamo-l123", "Milan"));
         assertTrue(PartnerSlugFiller.gygVaziZa("bergamo-l123", null), "bez imena nema osnova za sud");
         assertFalse(PartnerSlugFiller.gygVaziZa(null, "Milan"));
-        assertTrue(PartnerSlugFiller.airaloVaziZa("czech-republic-esim", "Czech Republic"));
-        assertFalse(PartnerSlugFiller.airaloVaziZa("italy-esim", "Czech Republic"));
+        assertTrue(PartnerSlugFiller.holaflyVaziZa("esim-czech-republic", "Czech Republic"));
+        assertFalse(PartnerSlugFiller.holaflyVaziZa("esim-italy", "Czech Republic"));
+        assertFalse(PartnerSlugFiller.holaflyVaziZa("czech-republic-esim", "Czech Republic"), "Airalo oblik nije Holafly oblik");
     }
 
     /**
@@ -196,23 +217,23 @@ class PartnerSlugFillerTest {
         milano.setGygSlug("bergamo-l123");
         milano.setBounceSlug("bergamo");
         milano.setBounceCovered(true);
-        milano.setAiraloSlug("italy-esim");
+        milano.setHolaflySlug("esim-italy");
         Destination firenca = dest("Firenca", "Florence", "Italy");
         firenca.setAirportCode("FLR");
         firenca.setGygSlug("florence-l32");
         firenca.setBounceSlug("florence");
         firenca.setBounceCovered(true);
-        firenca.setAiraloSlug("italy-esim");
+        firenca.setHolaflySlug("esim-italy");
         when(destinationRepository.findAll()).thenReturn(List.of(milano, firenca));
 
-        PartnerSlugFiller f = filler(AIRALO, Set.of("milan", "florence", "bergamo"));
+        PartnerSlugFiller f = filler(HOLAFLY, Set.of("milan", "florence", "bergamo"));
         f.osveziSveNaStartu();
 
         assertEquals("Milan", milano.getNameEn(), "ime iz ispravke za MXP");
         assertNull(milano.getGygSlug(), "bergamo obrisan, GYG ce popuniti u pozadini");
         assertEquals("milan", milano.getBounceSlug(), "bounce popunjen iz novog imena");
         assertTrue(milano.getBounceCovered());
-        assertEquals("italy-esim", milano.getAiraloSlug());
+        assertEquals("esim-italy", milano.getHolaflySlug());
         verify(destinationRepository).save(milano);
         verify(destinationRepository, never()).save(firenca);   // dosledna - ne dira se
         assertEquals(1, gygProlaza.get(), "GYG prolaz pokrenut jer Milanu fali slug");
@@ -221,6 +242,41 @@ class PartnerSlugFillerTest {
         f.osveziSveNaStartu();
         assertEquals("Milan", milano.getNameEn());
         assertEquals(2, gygProlaza.get());
+    }
+
+    /**
+     * Holafly je zamenio Airalo (2026-10): postojeće destinacije imaju sve ostale slugove,
+     * a njegov ne. Startni prolaz ga popunjava bez klika u panelu. Destinacija čije
+     * države nema na spisku se ne upisuje (nema šta), a dosledna se ne dira.
+     */
+    @Test
+    void startniProlazPopunjavaSlugNovogPartnera() {
+        Destination firenca = dest("Firenca", "Florence", "Italy");
+        firenca.setAirportCode("FLR");
+        firenca.setGygSlug("florence-l32");
+        firenca.setBounceSlug("florence");
+        firenca.setBounceCovered(true);
+        Destination havana = dest("Havana", "Havana", "Cuba");
+        havana.setAirportCode("HAV");
+        havana.setGygSlug("havana-l1");
+        havana.setBounceSlug("havana");
+        havana.setBounceCovered(true);
+        Destination prag = dest("Prag", "Prague", "Czech Republic");
+        prag.setAirportCode("PRG");
+        prag.setGygSlug("prague-l10");
+        prag.setBounceSlug("prague");
+        prag.setBounceCovered(true);
+        prag.setHolaflySlug("esim-czech-republic");
+        when(destinationRepository.findAll()).thenReturn(List.of(firenca, havana, prag));
+
+        filler(HOLAFLY, Set.of("florence", "havana", "prague")).osveziSveNaStartu();
+
+        assertEquals("esim-italy", firenca.getHolaflySlug(), "popunjen iz drzave, bez izmene u panelu");
+        verify(destinationRepository).save(firenca);
+        assertNull(havana.getHolaflySlug(), "Kube nema kod Holafly-ja - ostaje prazno");
+        verify(destinationRepository, never()).save(havana);
+        verify(destinationRepository, never()).save(prag);
+        assertEquals(0, gygProlaza.get(), "GYG slugovi postoje - prolaz se ne pokrece");
     }
 
     /** Reveal koji naiđe na zastareo slug osvežava tu destinaciju u pozadini. */
@@ -232,7 +288,7 @@ class PartnerSlugFillerTest {
         milano.setGygSlug("bergamo-l123");
         when(destinationRepository.findById(35L)).thenReturn(java.util.Optional.of(milano));
 
-        PartnerSlugFiller f = filler(AIRALO, Set.of("milan"));
+        PartnerSlugFiller f = filler(HOLAFLY, Set.of("milan"));
         f.osveziDestinacijuUPozadini(35L);
 
         assertEquals("Milan", milano.getNameEn());

@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class TravelAddonsLinksTest {
 
     private static final String GYG    = "https://www.getyourguide.com/sr-rs/{slug}/?partner_id=TEST";
-    private static final String AIRALO = "https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2F{slug}";
+    private static final String HOLAFLY = "https://holafly.sjv.io/c/1/2/3?u=https%3A%2F%2Fesim.holafly.com%2F{slug}%2F";
     private static final String BOUNCE = "https://bounce.com/luggage-storage/{slug}";
 
     @Mock DestinationRepository destinationRepository;
@@ -41,12 +41,12 @@ class TravelAddonsLinksTest {
     @BeforeEach
     void setUp() {
         service = new TravelAddonsService(destinationRepository, partnerSlugFiller);
-        postaviSablone(GYG, AIRALO, BOUNCE);
+        postaviSablone(GYG, HOLAFLY, BOUNCE);
     }
 
-    private void postaviSablone(String gyg, String airalo, String bounce) {
+    private void postaviSablone(String gyg, String holafly, String bounce) {
         ReflectionTestUtils.setField(service, "gygTemplate", gyg);
-        ReflectionTestUtils.setField(service, "airaloTemplate", airalo);
+        ReflectionTestUtils.setField(service, "holaflyTemplate", holafly);
         ReflectionTestUtils.setField(service, "bounceTemplate", bounce);
     }
 
@@ -56,7 +56,7 @@ class TravelAddonsLinksTest {
         d.setName("Firenca");
         d.setNameEn("Florence");
         d.setGygSlug("florence-l32");
-        d.setAiraloSlug("italy-esim");
+        d.setHolaflySlug("esim-italy");
         d.setBounceSlug("florence");
         d.setBounceCovered(true);
         return d;
@@ -70,7 +70,7 @@ class TravelAddonsLinksTest {
 
         assertEquals(3, links.size(), "sve tri kartice treba da imaju link");
         assertEquals("https://www.getyourguide.com/sr-rs/florence-l32/?partner_id=TEST", links.get("tours"));
-        assertEquals("https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2Fitaly-esim", links.get("esim"));
+        assertEquals("https://holafly.sjv.io/c/1/2/3?u=https%3A%2F%2Fesim.holafly.com%2Fesim-italy%2F", links.get("esim"));
         assertEquals("https://bounce.com/luggage-storage/florence", links.get("luggage"));
         verifyNoInteractions(partnerSlugFiller);
     }
@@ -79,7 +79,7 @@ class TravelAddonsLinksTest {
      * Admin je Milanu promenio IATA kod sa BGY (Bergamo) na MXP: englesko ime je sad
      * "Milan", ali slugovi izvedeni iz starog koda kažu "bergamo". Takav link je gori
      * od nikakvog - vodi u drugi grad - pa se kartica preskače dok se slug ne osveži.
-     * Airalo ostaje: država je ista.
+     * Holafly ostaje: država je ista.
      */
     @Test
     void slugIzStarogIataKodaSeNeKoristi() {
@@ -91,14 +91,14 @@ class TravelAddonsLinksTest {
         milano.setGygSlug("bergamo-l123");
         milano.setBounceSlug("bergamo");
         milano.setBounceCovered(true);
-        milano.setAiraloSlug("italy-esim");
+        milano.setHolaflySlug("esim-italy");
         when(destinationRepository.findByAnyNameIgnoreCase(anyString())).thenReturn(List.of(milano));
 
         Map<String, String> links = service.linksFor("Milano");
 
         assertNull(links.get("tours"),   "ture za Bergamo ne smeju pod Milano");
         assertNull(links.get("luggage"), "prtljag u Bergamu ne sme pod Milano");
-        assertEquals("https://airalo.pxf.io/c/1/2/3?u=https%3A%2F%2Fwww.airalo.com%2Fitaly-esim", links.get("esim"),
+        assertEquals("https://holafly.sjv.io/c/1/2/3?u=https%3A%2F%2Fesim.holafly.com%2Fesim-italy%2F", links.get("esim"),
                 "eSIM je za državu, a ona se nije promenila");
         verify(partnerSlugFiller).osveziDestinacijuUPozadini(2L);
 
@@ -154,7 +154,7 @@ class TravelAddonsLinksTest {
     void praznSlugNeProizvodiLink() {
         Destination bezSluga = firenca();
         bezSluga.setGygSlug(null);
-        bezSluga.setAiraloSlug("  ");
+        bezSluga.setHolaflySlug("  ");
         when(destinationRepository.findByAnyNameIgnoreCase(anyString())).thenReturn(List.of(bezSluga));
 
         Map<String, String> links = service.linksFor("Firenca");
@@ -194,7 +194,7 @@ class TravelAddonsLinksTest {
     @Test
     void sablonBezRupeSePreskace() {
         when(destinationRepository.findByAnyNameIgnoreCase(anyString())).thenReturn(List.of(firenca()));
-        postaviSablone("https://www.getyourguide.com/?partner_id=TEST", AIRALO, BOUNCE);
+        postaviSablone("https://www.getyourguide.com/?partner_id=TEST", HOLAFLY, BOUNCE);
 
         Map<String, String> links = service.linksFor("Firenca");
 

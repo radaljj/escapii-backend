@@ -72,3 +72,8 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(40);
 ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS promo_saved_eur INTEGER;
+
+-- eSIM partner: Airalo zamenjen Holafly-jem (2026-10). Slug se popunjava sam pri startu
+-- (PartnerSlugFiller.osveziSveNaStartu). Stara kolona airalo_slug se ne dira - izveden
+-- podatak, ne smeta, a raniji jar bi bez nje pao ako se ikad vrati.
+ALTER TABLE IF EXISTS destinations ADD COLUMN IF NOT EXISTS holafly_slug VARCHAR(120);

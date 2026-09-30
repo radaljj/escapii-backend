@@ -142,7 +142,7 @@ public class AdminServiceImpl implements AdminService {
         d.setNameEn(airportLookupService.cityEn(iata).orElse(null));
         d.setCountryEn(airportLookupService.countryEn(iata).orElse(null));
         // Partnerski slugovi se popunjavaju sami - admin ih ne kuca i ne mora da pamti
-        // format. Airalo i Bounce imaju male spiskove pa idu odmah pri cuvanju; GYG
+        // format. Holafly i Bounce imaju male spiskove pa idu odmah pri cuvanju; GYG
         // trazi prolaz kroz ~96MB sitemapa, zato ide u pozadinu posle save-a.
         partnerSlugFiller.popuniBrzeSlugove(d);
         Destination saved = destinationRepository.save(d);

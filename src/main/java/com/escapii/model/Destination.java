@@ -78,11 +78,14 @@ public class Destination {
     private String gygSlug;
 
     /**
-     * Slug stranice eSIM paketa na Airalu, npr. {@code italy-esim}. Vezan je za
-     * DRŽAVU a ne za grad, i nije ISO kod nego engleski naziv u kebab-case.
+     * Slug stranice eSIM paketa na Holafly-ju, npr. {@code esim-italy}. Vezan je za
+     * DRŽAVU a ne za grad: prefiks {@code esim-} pa engleski naziv u kebab-case.
+     * Nekoliko država Holafly piše drugačije nego airports.dat (SAD, Emirati,
+     * Makedonija) - tabela izuzetaka je u {@code PartnerSlugFiller}.
+     * Kolona {@code airalo_slug} ranijeg partnera ostaje u bazi neiskorišćena.
      */
-    @Column(name = "airalo_slug", length = 120)
-    private String airaloSlug;
+    @Column(name = "holafly_slug", length = 120)
+    private String holaflySlug;
 
     /** Slug grada na Bounce-u, npr. {@code florence}. Engleski naziv, bez dijakritike. */
     @Column(name = "bounce_slug", length = 120)

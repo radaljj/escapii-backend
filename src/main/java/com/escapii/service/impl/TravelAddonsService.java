@@ -17,8 +17,9 @@ import java.util.Map;
  * destinacije (ture, eSIM, čuvanje prtljaga).
  *
  * <p><b>Zašto šabloni a ne sklapanje URL-a u kodu.</b> Sva tri partnera prosleđuju
- * partnerski ID drugačije: GetYourGuide kao običan query parametar, Airalo kroz
- * Impact redirekciju sa odredištem u {@code ?u=}, a Bounce svojim oblikom koji
+ * partnerski ID drugačije: GetYourGuide kao običan query parametar, Holafly kroz
+ * Impact redirekciju sa odredištem u {@code ?u=} (Impact na kraju sam doda i naš kod
+ * za popust), a Bounce svojim oblikom koji
  * uopšte nije javno dokumentovan - dobija se tek posle odobrenja. Da je sklapanje
  * zakucano u kodu, treći partner bi tražio izmenu i deploy. Ovako je svaki
  * partner jedna env varijabla sa {@code {slug}} rupom, pa se menja na serveru.
@@ -43,9 +44,9 @@ public class TravelAddonsService {
     @Value("${app.affiliate.gyg-url-template:}")
     private String gygTemplate;
 
-    /** npr. https://airalo.pxf.io/c/A/B/C?u=https%3A%2F%2Fwww.airalo.com%2F{slug} */
-    @Value("${app.affiliate.airalo-url-template:}")
-    private String airaloTemplate;
+    /** npr. https://holafly.sjv.io/c/A/B/C?u=https%3A%2F%2Fesim.holafly.com%2F{slug}%2F */
+    @Value("${app.affiliate.holafly-url-template:}")
+    private String holaflyTemplate;
 
     /** npr. https://bounce.com/luggage-storage/{slug} (+ njihov ref parametar kad ga dobijemo) */
     @Value("${app.affiliate.bounce-url-template:}")
@@ -81,10 +82,10 @@ public class TravelAddonsService {
         // promeni kod (BGY -> MXP), stari slug "bergamo" bi kupca odveo u pogrešan grad -
         // takav se preskače, a destinacija se osveži u pozadini (sledeća poseta vidi kartice).
         boolean gygVazi    = PartnerSlugFiller.gygVaziZa(dest.getGygSlug(), dest.getNameEn());
-        boolean airaloVazi = PartnerSlugFiller.airaloVaziZa(dest.getAiraloSlug(), dest.getCountryEn());
+        boolean holaflyVazi = PartnerSlugFiller.holaflyVaziZa(dest.getHolaflySlug(), dest.getCountryEn());
         boolean bounceVazi = PartnerSlugFiller.bounceVaziZa(dest.getBounceSlug(), dest.getNameEn());
         addIfPossible(links, "tours",   gygTemplate,    vazeci(dest, "gyg",    dest.getGygSlug(),    gygVazi));
-        addIfPossible(links, "esim",    airaloTemplate, vazeci(dest, "airalo", dest.getAiraloSlug(), airaloVazi));
+        addIfPossible(links, "esim",    holaflyTemplate, vazeci(dest, "holafly", dest.getHolaflySlug(), holaflyVazi));
 
         // Prtljag ima uslov više: slug ume biti tačan a grad nepokriven.
         if (Boolean.TRUE.equals(dest.getBounceCovered())) {
@@ -92,7 +93,7 @@ public class TravelAddonsService {
         }
 
         boolean zastareo = (!prazno(dest.getGygSlug()) && !gygVazi)
-                || (!prazno(dest.getAiraloSlug()) && !airaloVazi)
+                || (!prazno(dest.getHolaflySlug()) && !holaflyVazi)
                 || (!prazno(dest.getBounceSlug()) && !bounceVazi);
         if (zastareo && partnerSlugFiller != null) {
             partnerSlugFiller.osveziDestinacijuUPozadini(dest.getId());
