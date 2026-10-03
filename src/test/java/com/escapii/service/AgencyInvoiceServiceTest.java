@@ -1,5 +1,6 @@
 package com.escapii.service;
 
+import com.escapii.dto.AgencyInvoiceBreakdown;
 import com.escapii.dto.AgencyInvoicePreview;
 import com.escapii.dto.AgencyInvoiceResponse;
 import com.escapii.dto.AgencySettlementResponse;
@@ -48,7 +49,7 @@ class AgencyInvoiceServiceTest {
     void setUp() {
         svc = new AgencyInvoiceServiceImpl(agencije, rezervacije, fakture, sekvenca, kalkulator, pdf, mejl);
         ReflectionTestUtils.setField(svc, "dueDays", 8);
-        ReflectionTestUtils.setField(svc, "companyName", "Marija Radalj PR agencija za marketing Escapii Techologies Beograd");
+        ReflectionTestUtils.setField(svc, "companyName", "Marija Radalj PR agencija za marketing Escapii Technologies Beograd");
         sani = new Agency();
         sani.setId(3L);
         sani.setName("Sani Tours");
@@ -171,14 +172,14 @@ class AgencyInvoiceServiceTest {
 
         AgencyInvoiceResponse r = svc.create(3L, "  Marketinške usluge za septembar  ");
 
-        int godina = LocalDate.now().getYear();
+        int godina = LocalDate.now(java.time.ZoneId.of("Europe/Belgrade")).getYear();
         assertEquals("ESC-AG-" + godina + "-0007", r.invoiceNumber());
         assertEquals(new BigDecimal("99.50"), r.amount());
         assertEquals(2, r.bookingCount());
         assertEquals("Marketinške usluge za septembar", r.description(), "opis se trimuje");
         assertEquals(AgencyInvoiceStatus.SENT, r.status());
-        assertEquals(LocalDate.now(), r.issuedAt());
-        assertEquals(LocalDate.now().plusDays(8), r.dueDate());
+        assertEquals(LocalDate.now(java.time.ZoneId.of("Europe/Belgrade")), r.issuedAt());
+        assertEquals(LocalDate.now(java.time.ZoneId.of("Europe/Belgrade")).plusDays(8), r.dueDate());
         assertNotNull(r.sentAt());
         assertEquals(List.of("ESC-aaaa1111", "ESC-bbbb2222"), r.bookingRefs());
 
@@ -325,5 +326,193 @@ class AgencyInvoiceServiceTest {
         assertEquals("escapii-faktura-ESC-AG-2026-0007.pdf", p.fileName());
         assertArrayEquals("%PDF".getBytes(), p.bytes());
         assertEquals(404, assertThrows(ResponseStatusException.class, () -> svc.pdf(77L)).getStatusCode().value());
+    }
+
+    // ── Probni PDF ───────────────────────────────────────────────────────────
+
+    @Test
+    void probniPdf_istiObracun_brojPREGLED_bezUpisaSekvenceIMejla() {
+        Booking a = booking(1, "ESC-aaaa1111", LocalDate.of(2026, 9, 5));
+        Booking b = booking(2, "ESC-bbbb2222", LocalDate.of(2026, 9, 12));
+        when(rezervacije.findCompletedNotInvoiced(3L)).thenReturn(List.of(a, b));
+        when(kalkulator.calculate(a)).thenReturn(spremno("69.50", "20.00"));
+        when(kalkulator.calculate(b)).thenReturn(spremno("30.00", "0.00"));
+        // mock PDF-a vraća tekst sa brojem koji je dobio - tako se vidi da je broj „PREGLED" stigao u šablon
+        when(pdf.generateAgency(any(AgencyInvoiceData.class)))
+                .thenAnswer(inv -> ("%PDF " + inv.<AgencyInvoiceData>getArgument(0).invoiceNumber()).getBytes());
+
+        AgencyInvoiceService.Pdf p = svc.previewPdf(3L, null);
+
+        assertEquals("escapii-faktura-PREGLED-3.pdf", p.fileName());
+        assertTrue(new String(p.bytes()).contains("PREGLED"));
+        ArgumentCaptor<AgencyInvoiceData> data = ArgumentCaptor.forClass(AgencyInvoiceData.class);
+        verify(pdf).generateAgency(data.capture());
+        AgencyInvoiceData d = data.getValue();
+        assertEquals("PREGLED", d.invoiceNumber());
+        assertTrue(d.isPreview());
+        assertEquals("99,50", d.amountFormatted(), "isti iznos kao pregled");
+        assertEquals(LocalDate.of(2026, 9, 2), d.periodFrom());
+        assertEquals(LocalDate.of(2026, 9, 12), d.periodTo());
+        assertEquals("Marketinške usluge za period 02.09.2026. – 12.09.2026.", d.description(), "bez parametra ide predlog");
+        assertEquals(LocalDate.now(java.time.ZoneId.of("Europe/Belgrade")), d.issuedAt());
+        assertEquals(LocalDate.now(java.time.ZoneId.of("Europe/Belgrade")).plusDays(8), d.dueDate());
+        assertEquals("Sani Tours", d.agencyName());
+        // ništa se ne beleži
+        verify(fakture, never()).save(any());
+        verify(rezervacije, never()).save(any());
+        verify(sekvenca, never()).ensureYearRow(anyInt());
+        verify(sekvenca, never()).save(any());
+        verify(mejl, never()).sendAgencyInvoice(any(), any());
+        assertNull(a.getAgencyInvoice());
+        assertEquals(SettlementStatus.READY_FOR_INVOICE, a.getSettlementStatus());
+
+        // sopstveni opis stavke se trimuje i koristi umesto predloga
+        svc.previewPdf(3L, "  Marketinške usluge za septembar  ");
+        verify(pdf, times(2)).generateAgency(data.capture());
+        assertEquals("Marketinške usluge za septembar", data.getValue().description());
+    }
+
+    @Test
+    void probniPdf_kadNemaStaDaSeFakturise_409_saRazlogomBlokade() {
+        when(rezervacije.findCompletedNotInvoiced(3L)).thenReturn(List.of());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.previewPdf(3L, null));
+
+        assertEquals(409, ex.getStatusCode().value());
+        assertTrue(ex.getReason().contains("Nema završenih"), ex.getReason());
+        verify(pdf, never()).generateAgency(any());
+        assertEquals(404, assertThrows(ResponseStatusException.class, () -> svc.previewPdf(77L, null)).getStatusCode().value());
+    }
+
+    // ── Obrazloženje po rezervaciji ──────────────────────────────────────────
+
+    private static AgencySettlementResponse.LineItem stavka(ItemType tip, String kupac, String trosak, String marza,
+                                                            String escDeo, String agDeo) {
+        return AgencySettlementResponse.LineItem.builder()
+                .itemType(tip).allocationType(tip.getAllocationType()).description(tip.name()).quantity(2)
+                .customerTotal(new BigDecimal(kupac))
+                .agencyCost(trosak == null ? null : new BigDecimal(trosak))
+                .margin(marza == null ? null : new BigDecimal(marza))
+                .escapiiShare(new BigDecimal(escDeo)).agencyShare(new BigDecimal(agDeo))
+                .status(AgencySettlementResponse.LineStatus.OK)
+                .build();
+    }
+
+    /** Paket 500 € uz trošak 400 € (marža 100, po 50) + solo doplata 30 € (sve Escapii) = Escapii 80 €. */
+    private static AgencySettlementResponse saStavkama(String zarada) {
+        return AgencySettlementResponse.builder()
+                .readyForInvoice(true).validationErrors(List.of())
+                .lineItems(List.of(
+                        stavka(ItemType.BASE_PACKAGE, "500.00", "400.00", "100.00", "50.00", "50.00"),
+                        stavka(ItemType.SOLO_SURCHARGE, "30.00", null, null, "30.00", "0.00")))
+                .grossBookingValue(new BigDecimal("530.00")).customerCashAmount(new BigDecimal("510.00"))
+                .voucherAmount(new BigDecimal("20.00")).agencyCostsTotal(new BigDecimal("400.00"))
+                .sharedMarginTotal(new BigDecimal("100.00")).escapiiSharedMarginPart(new BigDecimal("50.00"))
+                .agencyMarginPart(new BigDecimal("50.00")).escapiiExclusiveRevenue(new BigDecimal("30.00"))
+                .escapiiEarnings(new BigDecimal(zarada)).voucherApplied(new BigDecimal("20.00"))
+                .build();
+    }
+
+    @Test
+    void obrazlozenjePregleda_mapiraStavke_iZbirZaradeJeIznosFakture() {
+        Booking a = booking(1, "ESC-aaaa1111", LocalDate.of(2026, 9, 5));
+        a.setAssignedDestination("Lisabon");
+        Booking b = booking(2, "ESC-bbbb2222", LocalDate.of(2026, 9, 12));
+        when(rezervacije.findCompletedNotInvoiced(3L)).thenReturn(List.of(a, b));
+        when(kalkulator.calculate(a)).thenReturn(saStavkama("80.00"));
+        when(kalkulator.calculate(b)).thenReturn(saStavkama("80.00"));
+
+        AgencyInvoiceBreakdown r = svc.previewBreakdown(3L);
+
+        assertNull(r.invoiceNumber(), "pregled - faktura još nije izdata");
+        assertEquals("Sani Tours", r.agencyName());
+        assertEquals(new BigDecimal("160.00"), r.amount());
+        assertEquals(2, r.bookingCount());
+        assertEquals(LocalDate.of(2026, 9, 2), r.periodFrom());
+        assertEquals(LocalDate.of(2026, 9, 12), r.periodTo());
+        assertEquals(r.amount(), r.bookings().stream().map(AgencyInvoiceBreakdown.BookingBreakdown::escapiiEarnings)
+                .reduce(BigDecimal.ZERO, BigDecimal::add), "zbir zarade po rezervacijama = iznos fakture");
+
+        AgencyInvoiceBreakdown.BookingBreakdown ra = r.bookings().get(0);
+        assertEquals("ESC-aaaa1111", ra.bookingRef());
+        assertEquals("Lisabon", ra.destination());
+        assertNull(r.bookings().get(1).destination());
+        assertEquals(LocalDate.of(2026, 9, 2), ra.departureDate());
+        assertEquals(LocalDate.of(2026, 9, 5), ra.returnDate());
+        assertEquals(2, ra.travelers());
+        assertEquals(new BigDecimal("530.00"), ra.grossBookingValue());
+        assertEquals(new BigDecimal("510.00"), ra.customerCashAmount());
+        assertEquals(new BigDecimal("20.00"), ra.voucherAmount());
+        assertEquals(new BigDecimal("400.00"), ra.agencyCostsTotal());
+        assertEquals(new BigDecimal("100.00"), ra.sharedMarginTotal());
+        assertEquals(new BigDecimal("50.00"), ra.escapiiSharedMarginPart());
+        assertEquals(new BigDecimal("50.00"), ra.agencyMarginPart());
+        assertEquals(new BigDecimal("30.00"), ra.escapiiExclusiveRevenue());
+        assertEquals(new BigDecimal("80.00"), ra.escapiiEarnings());
+
+        // 50/50: agenciji trošak + pola marže, Escapii pola marže
+        AgencyInvoiceBreakdown.Item paket = ra.items().get(0);
+        assertEquals(ItemType.BASE_PACKAGE, paket.itemType());
+        assertEquals(AllocationType.MARGIN_50_50, paket.allocationType());
+        assertEquals(2, paket.quantity());
+        assertEquals(new BigDecimal("500.00"), paket.customerTotal());
+        assertEquals(new BigDecimal("400.00"), paket.agencyCost());
+        assertEquals(new BigDecimal("100.00"), paket.margin());
+        assertEquals(new BigDecimal("50.00"), paket.escapiiPart());
+        assertEquals(new BigDecimal("450.00"), paket.agencyPart());
+        assertEquals(paket.customerTotal(), paket.escapiiPart().add(paket.agencyPart()), "delovi daju ceo iznos stavke");
+        // ESCAPII_100: cela stavka Escapii, bez troška i marže
+        AgencyInvoiceBreakdown.Item solo = ra.items().get(1);
+        assertEquals(AllocationType.ESCAPII_100, solo.allocationType());
+        assertEquals(new BigDecimal("30.00"), solo.customerTotal());
+        assertNull(solo.agencyCost());
+        assertNull(solo.margin());
+        assertEquals(new BigDecimal("30.00"), solo.escapiiPart());
+        assertEquals(new BigDecimal("0.00"), solo.agencyPart());
+    }
+
+    @Test
+    void obrazlozenje_50_50_bezUnetogTroska_podelaJeNull() {
+        Booking a = booking(1, "ESC-aaaa1111", LocalDate.of(2026, 9, 5));
+        when(rezervacije.findCompletedNotInvoiced(3L)).thenReturn(List.of(a));
+        // u pregled ne ulazi (nije spremna) - ali mapiranje stavke se proverava kroz izdatu fakturu
+        AgencyInvoice inv = faktura(AgencyInvoiceStatus.SENT, a);
+        when(kalkulator.calculate(a)).thenReturn(AgencySettlementResponse.builder()
+                .lineItems(List.of(stavka(ItemType.BREAKFAST, "40.00", null, null, "0.00", "0.00")))
+                .escapiiEarnings(BigDecimal.ZERO).build());
+
+        AgencyInvoiceBreakdown.Item dorucak = svc.invoiceBreakdown(inv.getId()).bookings().get(0).items().get(0);
+
+        assertEquals(new BigDecimal("40.00"), dorucak.customerTotal());
+        assertNull(dorucak.agencyCost());
+        assertNull(dorucak.margin());
+        assertNull(dorucak.escapiiPart());
+        assertNull(dorucak.agencyPart());
+    }
+
+    @Test
+    void obrazlozenjeFakture_nalaziRezervacijePoFakturi_brojIIznosSaFakture() {
+        Booking a = booking(1, "ESC-aaaa1111", LocalDate.of(2026, 9, 5));
+        Booking b = booking(2, "ESC-bbbb2222", LocalDate.of(2026, 9, 12));
+        AgencyInvoice inv = faktura(AgencyInvoiceStatus.PAID, a, b);
+        inv.setPeriodFrom(LocalDate.of(2026, 9, 2));
+        inv.setPeriodTo(LocalDate.of(2026, 9, 12));
+        when(kalkulator.calculate(a)).thenReturn(saStavkama("69.50"));
+        when(kalkulator.calculate(b)).thenReturn(saStavkama("30.00"));
+
+        AgencyInvoiceBreakdown r = svc.invoiceBreakdown(9L);
+
+        assertEquals("ESC-AG-2026-0007", r.invoiceNumber());
+        assertEquals("Sani Tours", r.agencyName());
+        assertEquals(new BigDecimal("99.50"), r.amount(), "iznos sa fakture");
+        assertEquals(2, r.bookingCount());
+        assertEquals(LocalDate.of(2026, 9, 2), r.periodFrom());
+        assertEquals(LocalDate.of(2026, 9, 12), r.periodTo());
+        assertEquals(List.of("ESC-aaaa1111", "ESC-bbbb2222"),
+                r.bookings().stream().map(AgencyInvoiceBreakdown.BookingBreakdown::bookingRef).toList());
+        assertEquals(new BigDecimal("69.50"), r.bookings().get(0).escapiiEarnings());
+        verify(rezervacije).findByAgencyInvoiceIdOrderByIdAsc(9L);
+        verify(rezervacije, never()).findCompletedNotInvoiced(anyLong());
+        assertEquals(404, assertThrows(ResponseStatusException.class, () -> svc.invoiceBreakdown(77L)).getStatusCode().value());
     }
 }

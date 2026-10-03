@@ -234,4 +234,63 @@ class AdminControllerHttpTest {
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"escapii-faktura-ESC-AG-2026-0001.pdf\""))
                 .andExpect(content().contentType(org.springframework.http.MediaType.APPLICATION_PDF));
     }
+
+    @Test
+    void probniPdfFakture_prosledjujeOpis_iBlokadaStizeKao409() throws Exception {
+        when(agencyInvoiceService.previewPdf(3L, "Marketinške usluge")).thenReturn(
+                new com.escapii.service.AgencyInvoiceService.Pdf("escapii-faktura-PREGLED-3.pdf", "%PDF-1.4".getBytes()));
+
+        mockMvc.perform(get("/api/admin/agencies/3/invoices/preview.pdf").param("description", "Marketinške usluge"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"escapii-faktura-PREGLED-3.pdf\""))
+                .andExpect(content().contentType(org.springframework.http.MediaType.APPLICATION_PDF));
+
+        // bez parametra servis dobija null (uzima predlog iz pregleda)
+        when(agencyInvoiceService.previewPdf(3L, null)).thenReturn(
+                new com.escapii.service.AgencyInvoiceService.Pdf("escapii-faktura-PREGLED-3.pdf", "%PDF-1.4".getBytes()));
+        mockMvc.perform(get("/api/admin/agencies/3/invoices/preview.pdf"))
+                .andExpect(status().isOk());
+        verify(agencyInvoiceService).previewPdf(3L, null);
+
+        when(agencyInvoiceService.previewPdf(4L, null))
+                .thenThrow(new ResponseStatusException(CONFLICT, "Nema završenih putovanja koja čekaju fakturu."));
+        mockMvc.perform(get("/api/admin/agencies/4/invoices/preview.pdf"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Nema završenih putovanja koja čekaju fakturu."));
+    }
+
+    @Test
+    void obrazlozenjeFakture_pregledIIzdata_prosledjujuServisu() throws Exception {
+        com.escapii.dto.AgencyInvoiceBreakdown.Item stavka = new com.escapii.dto.AgencyInvoiceBreakdown.Item(
+                com.escapii.model.ItemType.BASE_PACKAGE, com.escapii.model.AllocationType.MARGIN_50_50, "Paket", 2,
+                new java.math.BigDecimal("500.00"), new java.math.BigDecimal("400.00"), new java.math.BigDecimal("100.00"),
+                new java.math.BigDecimal("50.00"), new java.math.BigDecimal("450.00"));
+        com.escapii.dto.AgencyInvoiceBreakdown.BookingBreakdown rez = new com.escapii.dto.AgencyInvoiceBreakdown.BookingBreakdown(
+                1L, "ESC-aaaa1111", LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 5), 2, "Lisabon",
+                new java.math.BigDecimal("500.00"), new java.math.BigDecimal("500.00"), new java.math.BigDecimal("0.00"),
+                new java.math.BigDecimal("400.00"), new java.math.BigDecimal("100.00"), new java.math.BigDecimal("50.00"),
+                new java.math.BigDecimal("50.00"), new java.math.BigDecimal("0.00"), new java.math.BigDecimal("50.00"),
+                java.util.List.of(stavka));
+        when(agencyInvoiceService.previewBreakdown(3L)).thenReturn(new com.escapii.dto.AgencyInvoiceBreakdown(
+                null, "Sani Tours", LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 5),
+                new java.math.BigDecimal("50.00"), 1, java.util.List.of(rez)));
+        when(agencyInvoiceService.invoiceBreakdown(9L)).thenReturn(new com.escapii.dto.AgencyInvoiceBreakdown(
+                "ESC-AG-2026-0001", "Sani Tours", LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 5),
+                new java.math.BigDecimal("50.00"), 1, java.util.List.of(rez)));
+
+        mockMvc.perform(get("/api/admin/agencies/3/invoices/preview/breakdown"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.invoiceNumber").doesNotExist())
+                .andExpect(jsonPath("$.amount").value(50.00))
+                .andExpect(jsonPath("$.bookings[0].bookingRef").value("ESC-aaaa1111"))
+                .andExpect(jsonPath("$.bookings[0].destination").value("Lisabon"))
+                .andExpect(jsonPath("$.bookings[0].items[0].itemType").value("BASE_PACKAGE"))
+                .andExpect(jsonPath("$.bookings[0].items[0].agencyPart").value(450.00));
+
+        mockMvc.perform(get("/api/admin/agency-invoices/9/breakdown"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.invoiceNumber").value("ESC-AG-2026-0001"))
+                .andExpect(jsonPath("$.bookingCount").value(1))
+                .andExpect(jsonPath("$.bookings[0].escapiiEarnings").value(50.00));
+    }
 }

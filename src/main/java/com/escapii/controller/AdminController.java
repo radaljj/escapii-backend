@@ -547,7 +547,33 @@ public class AdminController {
     /** GET /api/admin/agency-invoices/{id}/pdf — sačuvani PDF fakture. */
     @GetMapping("/agency-invoices/{id}/pdf")
     public ResponseEntity<byte[]> agencyInvoicePdf(@PathVariable Long id) {
-        com.escapii.service.AgencyInvoiceService.Pdf pdf = agencyInvoiceService.pdf(id);
+        return pdfOdgovor(agencyInvoiceService.pdf(id));
+    }
+
+    /**
+     * GET /api/admin/agencies/{id}/invoices/preview.pdf?description=... — probni PDF (broj „PREGLED") sa
+     * istim obračunom kao /invoices/preview; ništa se ne upisuje i ne šalje. 409 kad nema šta da se fakturiše.
+     */
+    @GetMapping("/agencies/{id}/invoices/preview.pdf")
+    public ResponseEntity<byte[]> agencyInvoicePreviewPdf(
+            @PathVariable Long id,
+            @RequestParam(required = false) String description) {
+        return pdfOdgovor(agencyInvoiceService.previewPdf(id, description));
+    }
+
+    /** GET /api/admin/agencies/{id}/invoices/preview/breakdown — obrazloženje po rezervaciji za ono što bi ušlo sada. */
+    @GetMapping("/agencies/{id}/invoices/preview/breakdown")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceBreakdown> agencyInvoicePreviewBreakdown(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.previewBreakdown(id));
+    }
+
+    /** GET /api/admin/agency-invoices/{id}/breakdown — obrazloženje po rezervaciji za izdatu fakturu. */
+    @GetMapping("/agency-invoices/{id}/breakdown")
+    public ResponseEntity<com.escapii.dto.AgencyInvoiceBreakdown> agencyInvoiceBreakdown(@PathVariable Long id) {
+        return ResponseEntity.ok(agencyInvoiceService.invoiceBreakdown(id));
+    }
+
+    private static ResponseEntity<byte[]> pdfOdgovor(com.escapii.service.AgencyInvoiceService.Pdf pdf) {
         return ResponseEntity.ok()
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + pdf.fileName() + "\"")

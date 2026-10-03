@@ -180,6 +180,7 @@ public class InvoicePdfService {
             ctx.setVariable("companyCity",      d.companyCity());
             ctx.setVariable("companySignatory", d.companySignatory());
             ctx.setVariable("hasSignatory",     d.hasSignatory());
+            ctx.setVariable("isPreview",        d.isPreview());
             String html = templateEngine.process("agency-invoice", ctx);
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 PdfRendererBuilder builder = new PdfRendererBuilder();

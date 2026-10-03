@@ -33,7 +33,9 @@ public record AgencyInvoiceData(
         String companyEmail,
         String companyWebsite,
         String companyCity,
-        String companySignatory
+        String companySignatory,
+        /** Pregled pre izdavanja - šablon prikazuje etiketu "PREGLED" i ne tretira dokument kao izdat. */
+        boolean isPreview
 ) {
     /** Pun naziv ako je agencija unela pravne podatke, inače radno ime. */
     public String agencyDisplayName() { return blank(agencyLegalName) ? agencyName : agencyLegalName.trim(); }

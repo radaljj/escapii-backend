@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class InvoiceCandidateRenderTest {
 
-    private static final String FIRMA   = "Marija Radalj PR agencija za marketing Escapii Techologies Beograd";
+    private static final String FIRMA   = "Marija Radalj PR agencija za marketing Escapii Technologies Beograd";
     private static final String ADRESA  = "Lješka 2, sprat 4, stan 23, 11030 Beograd (Čukarica)";
 
     @Test
@@ -64,7 +64,7 @@ class InvoiceCandidateRenderTest {
                 null, null, null, null,
                 "Marketinške usluge za period 09.10.2026. – 14.10.2026.", new BigDecimal("709.50"),
                 FIRMA, ADRESA, "115994656", "68810809", "000-0000000000000-00", "placeholder banka",
-                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj");
+                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj", false);
     }
 
     /** Ciljno stanje: račun unet, agencija sa punim pravnim podacima. */
@@ -75,7 +75,7 @@ class InvoiceCandidateRenderTest {
                 "Sani Tours d.o.o. Beograd", "Bulevar kralja Aleksandra 73, 11000 Beograd", "100123456", "20123456",
                 "Marketinške usluge za period 16.10.2026. – 26.10.2026.", new BigDecimal("2846.00"),
                 FIRMA, ADRESA, "115994656", "68810809", "160-0000001234567-89", "Banca Intesa",
-                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj");
+                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj", false);
     }
 
     /** Dugačak opis - guard da sve i dalje stane na jednu stranu. */
@@ -88,7 +88,7 @@ class InvoiceCandidateRenderTest {
                 + "putnika, komunikacija sa putnicima pre polaska, slanje prognoze i otkrića destinacije, "
                 + "partnerske preporuke uz putovanje)", new BigDecimal("11234.50"),
                 FIRMA, ADRESA, "115994656", "68810809", "160-0000001234567-89", "Banca Intesa",
-                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj");
+                "info@escapii.rs", "escapii.rs", "Beograd", "Marija Radalj", false);
     }
 
     private static void sacuvaj(byte[] pdf, File dir, String ime) throws Exception {

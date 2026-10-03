@@ -1,5 +1,6 @@
 package com.escapii.service;
 
+import com.escapii.dto.AgencyInvoiceBreakdown;
 import com.escapii.dto.AgencyInvoicePreview;
 import com.escapii.dto.AgencyInvoiceResponse;
 
@@ -35,4 +36,19 @@ public interface AgencyInvoiceService {
     record Pdf(String fileName, byte[] bytes) {}
 
     Pdf pdf(Long invoiceId);
+
+    /**
+     * Probni PDF fakture: isti obračun kao {@link #preview}, broj „PREGLED", bez upisa, bez
+     * trošenja sekvence i bez mejla - da admin vidi kako bi faktura izgledala pre klika.
+     * 409 kad nema šta da se fakturiše (isti razlog kao {@code blocker} u pregledu).
+     *
+     * @param description opis stavke; null = predlog iz pregleda
+     */
+    Pdf previewPdf(Long agencyId, String description);
+
+    /** Obrazloženje po rezervaciji i stavci za ono što bi ušlo u fakturu sada. */
+    AgencyInvoiceBreakdown previewBreakdown(Long agencyId);
+
+    /** Obrazloženje po rezervaciji i stavci za već izdatu fakturu. */
+    AgencyInvoiceBreakdown invoiceBreakdown(Long invoiceId);
 }

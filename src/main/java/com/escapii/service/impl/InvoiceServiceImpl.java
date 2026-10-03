@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements InvoiceService {
 
-    @Value("${app.company.name:Marija Radalj PR agencija za marketing Escapii Techologies Beograd}")
+    @Value("${app.company.name:Marija Radalj PR agencija za marketing Escapii Technologies Beograd}")
     private String companyName;
 
     @Value("${app.company.address:Beograd, Srbija}")

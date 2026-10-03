@@ -1,9 +1,11 @@
 package com.escapii.service.impl;
 
+import com.escapii.dto.AgencyInvoiceBreakdown;
 import com.escapii.dto.AgencyInvoicePreview;
 import com.escapii.dto.AgencyInvoiceResponse;
 import com.escapii.dto.AgencySettlementResponse;
 import com.escapii.model.Agency;
+import com.escapii.model.AllocationType;
 import com.escapii.model.AgencyInvoice;
 import com.escapii.model.AgencyInvoiceSequence;
 import com.escapii.model.AgencyInvoiceStatus;
@@ -31,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +64,9 @@ import java.util.Objects;
 public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
 
     private static final DateTimeFormatter DATUM = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+    private static final ZoneId ZONA = ZoneId.of("Europe/Belgrade");
+    /** Broj na probnom PDF-u - nije izdata faktura, ne troši sekvencu. */
+    private static final String PREGLED = "PREGLED";
 
     private final AgencyRepository                agencyRepository;
     private final BookingRepository               bookingRepository;
@@ -70,7 +76,7 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
     private final InvoicePdfService               pdfService;
     private final InvoiceEmailService             emailService;
 
-    @Value("${app.company.name:Marija Radalj PR agencija za marketing Escapii Techologies Beograd}")           private String companyName;
+    @Value("${app.company.name:Marija Radalj PR agencija za marketing Escapii Technologies Beograd}")           private String companyName;
     @Value("${app.company.address:Beograd, Srbija}")       private String companyAddress;
     @Value("${app.company.pib:000000000}")                 private String companyPib;
     @Value("${app.company.mb:00000000}")                   private String companyMb;
@@ -189,7 +195,7 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, blocker);
         }
 
-        LocalDate danas = LocalDate.now();
+        LocalDate danas = LocalDate.now(ZONA);   // datum izdavanja po Beogradu, ne po zoni servera
         LocalDateTime sada = LocalDateTime.now();
         AgencyInvoice inv = new AgencyInvoice();
         inv.setInvoiceNumber(generateNumber());
@@ -230,13 +236,138 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
     }
 
     private AgencyInvoiceData pdfData(AgencyInvoice inv, Agency a) {
+        return pdfData(inv, a, false);
+    }
+
+    private AgencyInvoiceData pdfData(AgencyInvoice inv, Agency a, boolean isPreview) {
         return new AgencyInvoiceData(inv.getInvoiceNumber(), inv.getIssuedAt(), inv.getDueDate(),
                 inv.getPeriodFrom(), inv.getPeriodTo(),
                 a.getName(), a.getContactName(), inv.getAgencyEmail(),
                 a.getLegalName(), a.getAddress(), a.getPib(), a.getMb(),
                 inv.getDescription(), inv.getAmount(),
                 companyName, companyAddress, companyPib, companyMb, companyAccount, companyBank,
-                companyEmail, companyWebsite, companyCity, companySignatory);
+                companyEmail, companyWebsite, companyCity, companySignatory, isPreview);
+    }
+
+    // ── Probni PDF ───────────────────────────────────────────────────────────
+
+    /**
+     * Isti obračun kao pregled, renderovan kao PDF sa brojem „PREGLED" - ništa se ne upisuje,
+     * sekvenca se ne troši, mejl ne ide. Datum izdavanja = danas (Beograd), rok = + dueDays.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Pdf previewPdf(Long agencyId, String description) {
+        Agency a = agencyRepository.findById(agencyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agencija ne postoji: " + agencyId));
+        Obracun o = obracun(a);
+        String blocker = blocker(o);
+        if (blocker != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, blocker);
+        }
+        String opis = description == null || description.isBlank()
+                ? toPreview(o).suggestedDescription() : description.trim();
+        if (opis.length() > 500) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stavka fakture može imati najviše 500 znakova.");
+        }
+        LocalDate danas = LocalDate.now(ZONA);
+        // Privremeni objekat samo da popuni podatke za šablon - ne čuva se.
+        AgencyInvoice proba = new AgencyInvoice();
+        proba.setInvoiceNumber(PREGLED);
+        proba.setAgencyId(a.getId());
+        proba.setAgencyName(a.getName());
+        proba.setAgencyEmail(a.getContactEmail().trim());
+        proba.setDescription(opis);
+        proba.setPeriodFrom(o.periodFrom());
+        proba.setPeriodTo(o.periodTo());
+        proba.setAmount(o.amount());
+        proba.setBookingCount(o.included().size());
+        proba.setIssuedAt(danas);
+        proba.setDueDate(danas.plusDays(dueDays));
+        byte[] pdf = pdfService.generateAgency(pdfData(proba, a, true));
+        return new Pdf("escapii-faktura-" + PREGLED + "-" + a.getId() + ".pdf", pdf);
+    }
+
+    // ── Obrazloženje po rezervaciji ──────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public AgencyInvoiceBreakdown previewBreakdown(Long agencyId) {
+        Agency a = agencyRepository.findById(agencyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agencija ne postoji: " + agencyId));
+        Obracun o = obracun(a);
+        return new AgencyInvoiceBreakdown(null, a.getName(), o.periodFrom(), o.periodTo(), o.amount(),
+                o.included().size(), breakdown(o.included()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AgencyInvoiceBreakdown invoiceBreakdown(Long invoiceId) {
+        AgencyInvoice inv = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Faktura ne postoji: " + invoiceId));
+        if (inv.getStatus() == AgencyInvoiceStatus.VOIDED) {
+            // storno skida vezu sa rezervacija, pa obrazlozenje vise ne bi odgovaralo fakturi
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Faktura je stornirana - rezervacije više nisu vezane za nju, obrazloženje nije dostupno.");
+        }
+        List<Booking> bs = bookingRepository.findByAgencyInvoiceIdOrderByIdAsc(invoiceId);
+        return new AgencyInvoiceBreakdown(inv.getInvoiceNumber(), inv.getAgencyName(), inv.getPeriodFrom(), inv.getPeriodTo(),
+                inv.getAmount(), bs.size(), breakdown(bs));
+    }
+
+    private List<AgencyInvoiceBreakdown.BookingBreakdown> breakdown(List<Booking> bookings) {
+        List<AgencyInvoiceBreakdown.BookingBreakdown> out = new ArrayList<>();
+        for (Booking b : bookings) {
+            AgencySettlementResponse s = calculator.calculate(b);
+            List<AgencyInvoiceBreakdown.Item> items = s.getLineItems() == null ? List.of()
+                    : s.getLineItems().stream().map(AgencyInvoiceServiceImpl::item).toList();
+            out.add(new AgencyInvoiceBreakdown.BookingBreakdown(
+                    b.getId(), b.getBookingRef(),
+                    b.getSelectedDate() != null ? b.getSelectedDate().getDepartureDate() : null,
+                    b.getSelectedDate() != null ? b.getSelectedDate().getReturnDate() : null,
+                    b.getNumberOfTravelers(), b.getAssignedDestination(),
+                    money(s.getGrossBookingValue()), money(s.getCustomerCashAmount()), money(s.getVoucherAmount()),
+                    money(s.getAgencyCostsTotal()), money(s.getSharedMarginTotal()),
+                    money(s.getEscapiiSharedMarginPart()), money(s.getAgencyMarginPart()),
+                    money(s.getEscapiiExclusiveRevenue()), money(s.getEscapiiEarnings()),
+                    items));
+        }
+        return out;
+    }
+
+    /**
+     * Podela stavke iz kalkulatora: escapiiShare/agencyShare su delovi MARŽE, a ugovor sa panelom
+     * traži delove od onoga što je kupac platio - agenciji pripada i njen trošak. Bez unetog troška
+     * (50/50) podela ne postoji, pa su margin/escapiiPart/agencyPart null.
+     */
+    private static AgencyInvoiceBreakdown.Item item(AgencySettlementResponse.LineItem li) {
+        BigDecimal customerTotal = money(li.getCustomerTotal());
+        BigDecimal agencyCost = li.getAgencyCost() == null ? null : money(li.getAgencyCost());
+        BigDecimal margin, escapiiPart, agencyPart;
+        if (li.getAllocationType() == AllocationType.ESCAPII_100) {
+            margin = null;
+            escapiiPart = customerTotal;
+            agencyPart = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            agencyCost = null;
+        } else if (li.getAllocationType() == AllocationType.AGENCY_100) {
+            margin = null;
+            escapiiPart = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            agencyPart = customerTotal;
+        } else if (agencyCost == null) {
+            margin = null;
+            escapiiPart = null;
+            agencyPart = null;
+        } else {
+            margin = li.getMargin() != null ? money(li.getMargin()) : customerTotal.subtract(agencyCost);
+            escapiiPart = money(li.getEscapiiShare());
+            agencyPart = agencyCost.add(money(li.getAgencyShare()));
+        }
+        return new AgencyInvoiceBreakdown.Item(li.getItemType(), li.getAllocationType(), li.getDescription(),
+                li.getQuantity(), customerTotal, agencyCost, margin, escapiiPart, agencyPart);
+    }
+
+    private static BigDecimal money(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP) : v.setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -245,7 +376,7 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
      * pa se inkrement serijalizuje.
      */
     private String generateNumber() {
-        int year = LocalDate.now().getYear();
+        int year = LocalDate.now(ZONA).getYear();
         sequenceRepository.ensureYearRow(year);
         AgencyInvoiceSequence seq = sequenceRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalStateException("Sekvenca fakture za godinu " + year + " nije inicijalizovana"));
