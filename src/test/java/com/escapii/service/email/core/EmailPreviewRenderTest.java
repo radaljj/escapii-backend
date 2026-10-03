@@ -9,8 +9,10 @@ import com.escapii.model.PassengerInfo;
 import com.escapii.service.AppErrorService;
 import com.escapii.service.DestinationService;
 import com.escapii.service.email.impl.BookingEmailServiceImpl;
+import com.escapii.service.email.impl.ConfirmationDocumentEmailServiceImpl;
 import com.escapii.service.email.impl.ForecastEmailServiceImpl;
 import com.escapii.service.email.impl.RevealEmailServiceImpl;
+import com.escapii.service.impl.TravelAddonsService;
 import com.escapii.service.voucher.VoucherPdfService;
 import com.escapii.service.weather.DailyForecast;
 import org.junit.jupiter.api.Test;
@@ -27,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- * Četiri mejla kupcu (upit primljen, rezervacija potvrđena, prognoza, otkriće) se
+ * Pet mejlova kupcu (upit primljen, rezervacija potvrđena, prognoza, otkriće, dokument) se
  * STVARNO renderuju i snimaju u {@code target/email-preview/} - HTML, tekstualna
  * verzija i naslov - jedini način da se pogledaju bez slanja. Uz to tvrdi ono što
  * spam filteri kažnjavaju, a lako se vrati greškom: emodži ili uzvičnik u naslovu,
@@ -166,6 +170,23 @@ class EmailPreviewRenderTest {
         revealSvc.sendRevealEmail(rezervacija(polazak));
         mejlovi.put("otkrice", u5);
 
+        // 5. dokument rezervacije (PDF u prilogu) sa sva tri partnerska linka
+        Uhvaceno u6 = new Uhvaceno();
+        TravelAddonsService addons = mock(TravelAddonsService.class);
+        Map<String, String> linkovi = new LinkedHashMap<>();
+        linkovi.put("tours",   "https://www.getyourguide.com/sr-rs/barcelona-l45/?partner_id=ESCAPII");
+        linkovi.put("esim",    "https://holafly.sjv.io/c/1/2/3?u=https%3A%2F%2Fesim.holafly.com%2Fesim-spain%2F");
+        linkovi.put("luggage", "https://bounce.com/luggage-storage/barcelona");
+        when(addons.linksFor(any())).thenReturn(linkovi);
+        ConfirmationDocumentEmailServiceImpl dokumentSvc = new ConfirmationDocumentEmailServiceImpl(u6, ime -> ime, addons);
+        set(dokumentSvc, "contactEmail", "info@escapii.rs");
+        Booking saDokumentom = rezervacija(polazak);
+        saDokumentom.setAssignedDestination("Barselona");
+        saDokumentom.setAirlineName("Wizz Air");
+        saDokumentom.setConfirmationDocument(new byte[]{1, 2, 3});
+        dokumentSvc.sendConfirmationDocument(saDokumentom);
+        mejlovi.put("dokument", u6);
+
         snimi(mejlovi);
 
         for (var e : mejlovi.entrySet()) {
@@ -188,6 +209,13 @@ class EmailPreviewRenderTest {
             if (ime.equals("upit-primljen") || ime.equals("rezervacija-potvrdjena")) {
                 assertTrue(tekst.contains("Datum rođenja") && tekst.contains("Zemlja pasoša"),
                         ime + ": đ/š iz odeljka putnika izgubljeni u tekstualnoj verziji");
+            }
+            if (ime.equals("dokument")) {
+                assertTrue(tekst.contains("Još par sitnica pre puta"), ime + ": blok sa dodacima nije u tekstualnoj verziji");
+                assertTrue(tekst.contains("Pogledaj eSIM") && tekst.contains("Pogledaj ture") && tekst.contains("Pogledaj lokacije"),
+                        ime + ": linkovi bloka nisu u tekstualnoj verziji");
+                assertTrue(tekst.contains("(https://holafly.sjv.io/") && tekst.contains("(https://www.getyourguide.com/")
+                        && tekst.contains("(https://bounce.com/"), ime + ": adrese linkova nisu vidljive u tekstualnoj verziji");
             }
         }
     }

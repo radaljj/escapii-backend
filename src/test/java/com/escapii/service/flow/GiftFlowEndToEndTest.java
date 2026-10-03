@@ -152,7 +152,7 @@ class GiftFlowEndToEndTest {
         forecastMail = new ForecastEmailServiceImpl(sender);           set(forecastMail, "contactEmail", "info@escapii.rs");
         revealMail   = new RevealEmailServiceImpl(sender);             set(revealMail,   "contactEmail", "info@escapii.rs");
                                                                         set(revealMail,   "frontendUrl",  "https://escapii.rs");
-        docMail      = new ConfirmationDocumentEmailServiceImpl(sender, vok); set(docMail,    "contactEmail", "info@escapii.rs");
+        docMail      = new ConfirmationDocumentEmailServiceImpl(sender, vok, travelAddonsService); set(docMail, "contactEmail", "info@escapii.rs");
 
         reveal = new RevealServiceImpl(bookingRepository, revealEventRepository, docMail, travelAddonsService,
                 org.mockito.Mockito.mock(com.escapii.service.impl.ConfirmationDocumentAutoSender.class));

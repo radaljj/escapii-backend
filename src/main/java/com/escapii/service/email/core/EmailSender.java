@@ -83,6 +83,8 @@ public class EmailSender {
         s = s.replaceAll("(?is)<(style|script)[^>]*>.*?</\\1>", " ");
         // komentari (uključujući Outlook mso uslovne blokove)
         s = s.replaceAll("(?s)<!--.*?-->", " ");
+        // linkovi: u tekstu bez HTML-a dugme bez adrese je mrtvo, pa ide "tekst (URL)"
+        s = linkoviUTekst(s);
         // elementi koji vizuelno prelamaju red
         s = s.replaceAll("(?i)<br\\s*/?>", "\n");
         s = s.replaceAll("(?i)</(p|div|tr|h[1-6]|li|table)>", "\n");
@@ -109,6 +111,29 @@ public class EmailSender {
     private static final Pattern NUMERICKI_ENTITET = Pattern.compile("&#([xX][0-9a-fA-F]{1,6}|[0-9]{1,7});");
 
     /** Numerički HTML entitet → znak; kôd van Unicode opsega ostaje kakav je napisan. */
+    private static final Pattern LINK =
+            Pattern.compile("(?is)<a\\s[^>]*href=\"(https?://[^\"]+)\"[^>]*>(.*?)</a>");
+
+    /**
+     * {@code <a href="https://x">Pogledaj eSIM &rarr;</a>} postaje {@code Pogledaj eSIM (https://x)}.
+     * Kad je tekst linka sama adresa (futer, „kopiraj ovaj link"), ostaje samo adresa - bez
+     * udvostručavanja. mailto: i ostali linkovi bez http se ne diraju (ostaje tekst kao do sada).
+     */
+    static String linkoviUTekst(String s) {
+        Matcher m = LINK.matcher(s);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) {
+            String url = m.group(1).replace("&amp;", "&");
+            String tekst = m.group(2).replaceAll("(?s)<[^>]+>", " ")
+                    .replace("&rarr;", "").replace("→", "")
+                    .replaceAll("\\s+", " ").trim();
+            String zamena = tekst.isEmpty() || url.contains(tekst) ? url : tekst + " (" + url + ")";
+            m.appendReplacement(out, Matcher.quoteReplacement(zamena));
+        }
+        m.appendTail(out);
+        return out.toString();
+    }
+
     static String dekodirajNumerickeEntitete(String s) {
         if (s.indexOf("&#") < 0) return s;
         Matcher m = NUMERICKI_ENTITET.matcher(s);

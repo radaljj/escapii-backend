@@ -93,7 +93,10 @@ class ShellSmokeTest {
         check("reveal", cap.get());
 
         // 4. Dokument rezervacije
-        var cd = new ConfirmationDocumentEmailServiceImpl(sender, ident);
+        // Partnerski linkovi: prazna mapa, da smoke test gleda sam shell a ne blok sa dodacima
+        var addons = org.mockito.Mockito.mock(com.escapii.service.impl.TravelAddonsService.class);
+        org.mockito.Mockito.when(addons.linksFor(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.Map.of());
+        var cd = new ConfirmationDocumentEmailServiceImpl(sender, ident, addons);
         set(cd, "contactEmail", "info@escapii.rs");
         cd.sendConfirmationDocument(booking());
         check("dokument-rezervacije", cap.get());

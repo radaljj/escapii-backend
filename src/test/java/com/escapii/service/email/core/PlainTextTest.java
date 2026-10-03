@@ -44,6 +44,19 @@ class PlainTextTest {
         assertEquals("A & B", EmailSender.toPlainText("A &#38; B"));
     }
 
+    /** Dugme u tekstualnoj verziji bez adrese je mrtvo - link ide kao „tekst (URL)", adresa bez duplog. */
+    @Test
+    void linkoviDobijajuVidljivuAdresu() {
+        assertEquals("Pogledaj eSIM (https://x.y/a?b=1&c=2)",
+                EmailSender.toPlainText("<a href=\"https://x.y/a?b=1&amp;c=2\" style=\"color:#a85e44\">Pogledaj eSIM &rarr;</a>"));
+        assertEquals("https://escapii.rs/poklon?code=1",
+                EmailSender.toPlainText("<a href=\"https://escapii.rs/poklon?code=1\">https://escapii.rs/poklon?code=1</a>"),
+                "adresa kao tekst se ne udvostručava");
+        assertEquals("https://escapii.rs", EmailSender.toPlainText("<a href=\"https://escapii.rs\">escapii.rs</a>"));
+        assertEquals("info@escapii.rs", EmailSender.toPlainText("<a href=\"mailto:info@escapii.rs\">info@escapii.rs</a>"),
+                "mailto ostaje samo tekst");
+    }
+
     @Test
     void praznoIliCistTekstNePucaju() {
         assertEquals("", EmailSender.toPlainText(""));
