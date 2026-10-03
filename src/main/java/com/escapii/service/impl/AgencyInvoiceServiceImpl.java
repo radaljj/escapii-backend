@@ -70,7 +70,7 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
     private final InvoicePdfService               pdfService;
     private final InvoiceEmailService             emailService;
 
-    @Value("${app.company.name:Escapii d.o.o.}")           private String companyName;
+    @Value("${app.company.name:Marija Radalj PR agencija za marketing Escapii Techologies Beograd}")           private String companyName;
     @Value("${app.company.address:Beograd, Srbija}")       private String companyAddress;
     @Value("${app.company.pib:000000000}")                 private String companyPib;
     @Value("${app.company.mb:00000000}")                   private String companyMb;

@@ -48,7 +48,7 @@ class AgencyInvoiceServiceTest {
     void setUp() {
         svc = new AgencyInvoiceServiceImpl(agencije, rezervacije, fakture, sekvenca, kalkulator, pdf, mejl);
         ReflectionTestUtils.setField(svc, "dueDays", 8);
-        ReflectionTestUtils.setField(svc, "companyName", "Escapii d.o.o.");
+        ReflectionTestUtils.setField(svc, "companyName", "Marija Radalj PR agencija za marketing Escapii Techologies Beograd");
         sani = new Agency();
         sani.setId(3L);
         sani.setName("Sani Tours");

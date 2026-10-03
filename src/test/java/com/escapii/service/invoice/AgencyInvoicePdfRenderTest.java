@@ -27,7 +27,7 @@ class AgencyInvoicePdfRenderTest {
                 LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 15),
                 "Sani Tours", "Sandra", "sandra@sani.rs",
                 "Marketinške usluge za period 01.09.2026. – 15.09.2026.", new BigDecimal("1234.50"),
-                "Escapii d.o.o.", "Beograd, Srbija", pib, mb, account, bank, "info@escapii.rs", "escapii.rs");
+                "Marija Radalj PR agencija za marketing Escapii Techologies Beograd", "Beograd, Srbija", pib, mb, account, bank, "info@escapii.rs", "escapii.rs");
     }
 
     private static String tekst(byte[] pdf) throws Exception {
