@@ -78,6 +78,9 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
     @Value("${app.company.bank:placeholder banka}")        private String companyBank;
     @Value("${app.company.email:info@escapii.rs}")         private String companyEmail;
     @Value("${app.company.website:escapii.rs}")            private String companyWebsite;
+    /** Mesto izdavanja fakture i odgovorno lice - obavezni elementi fakture. */
+    @Value("${app.company.city:Beograd}")                  private String companyCity;
+    @Value("${app.company.signatory:}")                    private String companySignatory;
 
     /** Rok plaćanja fakture agenciji, u danima od izdavanja. */
     @Value("${app.invoice.agency-due-days:8}")
@@ -229,9 +232,11 @@ public class AgencyInvoiceServiceImpl implements AgencyInvoiceService {
     private AgencyInvoiceData pdfData(AgencyInvoice inv, Agency a) {
         return new AgencyInvoiceData(inv.getInvoiceNumber(), inv.getIssuedAt(), inv.getDueDate(),
                 inv.getPeriodFrom(), inv.getPeriodTo(),
-                a.getName(), a.getContactName(), inv.getAgencyEmail(), inv.getDescription(), inv.getAmount(),
+                a.getName(), a.getContactName(), inv.getAgencyEmail(),
+                a.getLegalName(), a.getAddress(), a.getPib(), a.getMb(),
+                inv.getDescription(), inv.getAmount(),
                 companyName, companyAddress, companyPib, companyMb, companyAccount, companyBank,
-                companyEmail, companyWebsite);
+                companyEmail, companyWebsite, companyCity, companySignatory);
     }
 
     /**

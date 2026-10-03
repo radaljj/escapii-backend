@@ -1086,6 +1086,11 @@ public class AdminServiceImpl implements AdminService {
                 .map(this::toAgencyResponse).toList();
     }
 
+    /** Prazno polje iz forme je null, ne prazan string - PDF proverava prisustvo. */
+    private static String prazno(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
+    }
+
     @Transactional
     public AgencyResponse createAgency(AgencyRequest req) {
         Agency a = new Agency();
@@ -1094,6 +1099,10 @@ public class AdminServiceImpl implements AdminService {
         a.setContactEmail(req.contactEmail() != null ? req.contactEmail().trim().toLowerCase() : null);
         a.setContactPhone(req.contactPhone() != null ? req.contactPhone().trim() : null);
         a.setNotes(req.notes() != null ? req.notes().trim() : null);
+        a.setLegalName(prazno(req.legalName()));
+        a.setAddress(prazno(req.address()));
+        a.setPib(prazno(req.pib()));
+        a.setMb(prazno(req.mb()));
         a.setActive(true);
         Agency saved = agencyRepository.save(a);
         log.info("[ADMIN] Kreirana agencija id={} name={}", saved.getId(), saved.getName());
@@ -1110,6 +1119,10 @@ public class AdminServiceImpl implements AdminService {
         a.setContactEmail(req.contactEmail() != null ? req.contactEmail().trim().toLowerCase() : null);
         a.setContactPhone(req.contactPhone() != null ? req.contactPhone().trim() : null);
         a.setNotes(req.notes() != null ? req.notes().trim() : null);
+        a.setLegalName(prazno(req.legalName()));
+        a.setAddress(prazno(req.address()));
+        a.setPib(prazno(req.pib()));
+        a.setMb(prazno(req.mb()));
         return toAgencyResponse(agencyRepository.save(a));
     }
 
@@ -1166,6 +1179,7 @@ public class AdminServiceImpl implements AdminService {
                 .contactEmail(a.getContactEmail())
                 .contactPhone(a.getContactPhone())
                 .notes(a.getNotes())
+                .legalName(a.getLegalName()).address(a.getAddress()).pib(a.getPib()).mb(a.getMb())
                 .active(a.getActive())
                 .build();
     }

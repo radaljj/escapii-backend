@@ -77,3 +77,9 @@ ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS promo_saved_eur INTEGER;
 -- (PartnerSlugFiller.osveziSveNaStartu). Stara kolona airalo_slug se ne dira - izveden
 -- podatak, ne smeta, a raniji jar bi bez nje pao ako se ikad vrati.
 ALTER TABLE IF EXISTS destinations ADD COLUMN IF NOT EXISTS holafly_slug VARCHAR(120);
+
+-- Pravni podaci agencije za fakturu (2026-10): pun naziv, adresa, PIB, maticni broj - opciono
+ALTER TABLE IF EXISTS agencies ADD COLUMN IF NOT EXISTS legal_name VARCHAR(200);
+ALTER TABLE IF EXISTS agencies ADD COLUMN IF NOT EXISTS address VARCHAR(200);
+ALTER TABLE IF EXISTS agencies ADD COLUMN IF NOT EXISTS pib VARCHAR(20);
+ALTER TABLE IF EXISTS agencies ADD COLUMN IF NOT EXISTS mb VARCHAR(20);

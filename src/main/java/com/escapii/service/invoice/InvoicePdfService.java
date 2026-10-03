@@ -31,17 +31,25 @@ public class InvoicePdfService {
     private final TemplateEngine templateEngine;
 
     public InvoicePdfService() {
+        this(podrazumevaniEngine());
+    }
+
+    /** Za probu šablona van classpath-a (InvoiceCandidateRenderTest) - isti fontovi, slike i podaci. */
+    InvoicePdfService(TemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+        XRLog.setLevel(XRLog.GENERAL, Level.WARNING);
+    }
+
+    private static TemplateEngine podrazumevaniEngine() {
         ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
         resolver.setPrefix("templates/");
         resolver.setSuffix(".html");
         resolver.setTemplateMode(TemplateMode.HTML);
         resolver.setCharacterEncoding("UTF-8");
         resolver.setCacheable(true);
-
-        this.templateEngine = new TemplateEngine();
-        this.templateEngine.setTemplateResolver(resolver);
-
-        XRLog.setLevel(XRLog.GENERAL, Level.WARNING);
+        TemplateEngine engine = new TemplateEngine();
+        engine.setTemplateResolver(resolver);
+        return engine;
     }
 
     public byte[] generate(InvoiceData data) {
@@ -161,6 +169,17 @@ public class InvoicePdfService {
             ctx.setVariable("hasMb",           d.hasMb());
             ctx.setVariable("hasAccount",      d.hasAccount());
             ctx.setVariable("hasBank",         d.hasBank());
+            // kupac - pravni podaci (prazno kad agencija nije unela)
+            ctx.setVariable("agencyLegalName",  d.agencyDisplayName());
+            ctx.setVariable("agencyAddress",    d.agencyAddress());
+            ctx.setVariable("agencyPib",        d.agencyPib());
+            ctx.setVariable("agencyMb",         d.agencyMb());
+            ctx.setVariable("hasAgencyAddress", d.hasAgencyAddress());
+            ctx.setVariable("hasAgencyPib",     d.hasAgencyPib());
+            ctx.setVariable("hasAgencyMb",      d.hasAgencyMb());
+            ctx.setVariable("companyCity",      d.companyCity());
+            ctx.setVariable("companySignatory", d.companySignatory());
+            ctx.setVariable("hasSignatory",     d.hasSignatory());
             String html = templateEngine.process("agency-invoice", ctx);
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 PdfRendererBuilder builder = new PdfRendererBuilder();

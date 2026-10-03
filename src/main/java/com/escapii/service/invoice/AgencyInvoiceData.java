@@ -18,6 +18,10 @@ public record AgencyInvoiceData(
         String agencyName,
         String agencyContact,
         String agencyEmail,
+        String agencyLegalName,
+        String agencyAddress,
+        String agencyPib,
+        String agencyMb,
         String description,
         BigDecimal amount,
         String companyName,
@@ -27,8 +31,19 @@ public record AgencyInvoiceData(
         String companyAccount,
         String companyBank,
         String companyEmail,
-        String companyWebsite
+        String companyWebsite,
+        String companyCity,
+        String companySignatory
 ) {
+    /** Pun naziv ako je agencija unela pravne podatke, inače radno ime. */
+    public String agencyDisplayName() { return blank(agencyLegalName) ? agencyName : agencyLegalName.trim(); }
+    public boolean hasAgencyAddress() { return !blank(agencyAddress); }
+    public boolean hasAgencyPib()     { return !blank(agencyPib); }
+    public boolean hasAgencyMb()      { return !blank(agencyMb); }
+    public boolean hasSignatory()     { return !blank(companySignatory); }
+
+    private static boolean blank(String s) { return s == null || s.isBlank(); }
+
     public boolean hasPib()     { return !placeholder(companyPib); }
     public boolean hasMb()      { return !placeholder(companyMb); }
     public boolean hasAccount() { return !placeholder(companyAccount); }

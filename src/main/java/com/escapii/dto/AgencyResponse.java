@@ -13,4 +13,9 @@ public class AgencyResponse {
     private String  contactPhone;
     private String  notes;
     private Boolean active;
+    /** Pravni podaci za fakturu (opciono). */
+    private String  legalName;
+    private String  address;
+    private String  pib;
+    private String  mb;
 }
