@@ -11,13 +11,13 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Promo „besplatna isključivanja": kod kaže koliko isključivanja UKUPNO ne košta ništa. SKIP3 = tri
+ * Promo „besplatna isključivanja": kod kaže koliko isključivanja UKUPNO ne košta ništa. ESCAPII2 = tri
  * (prvo je besplatno i bez koda, pa kod stvarno poklanja drugo i treće), a četvrto se naplaćuje
  * kao i do sada. Ostatak cene je isti, u odgovoru stoji ušteda, a pravila aerodroma ostaju.
  */
 class PriceCalculatorPromoTest {
 
-    private static final int SKIP3 = 3;
+    private static final int ESCAPII2 = 3;
 
     private final PriceCalculatorImpl calc = new PriceCalculatorImpl();
 
@@ -36,12 +36,12 @@ class PriceCalculatorPromoTest {
     }
 
     @Test
-    void skip3_cetiriIskljucenjaZaDvoje_naplacujeSeSamoCetvrto() {
+    void escapii2_cetiriIskljucenjaZaDvoje_naplacujeSeSamoCetvrto() {
         PricePreviewResponse puna  = cena("BEG", 4, 2, 0);
-        PricePreviewResponse promo = cena("BEG", 4, 2, SKIP3);
+        PricePreviewResponse promo = cena("BEG", 4, 2, ESCAPII2);
 
         assertEquals(60, puna.getExclusionCostFlat(), "bez koda: 3 naplativa × 10 € × 2 putnika");
-        assertEquals(20, promo.getExclusionCostFlat(), "uz SKIP3: samo četvrto, 10 € × 2 putnika");
+        assertEquals(20, promo.getExclusionCostFlat(), "uz ESCAPII2: samo četvrto, 10 € × 2 putnika");
         assertEquals(40, promo.getExclusionPromoSavedEur(), "drugo i treće su poklonjeni");
         assertTrue(promo.getExclusionPromoApplied());
         assertEquals(3, promo.getExclusionPromoFreeCount());
@@ -51,17 +51,17 @@ class PriceCalculatorPromoTest {
     }
 
     @Test
-    void skip3_doTriIskljucenja_nistaSeNeNaplacuje() {
-        assertEquals(0,  cena("BEG", 3, 2, SKIP3).getExclusionCostFlat());
-        assertEquals(40, cena("BEG", 3, 2, SKIP3).getExclusionPromoSavedEur());
-        assertEquals(0,  cena("BEG", 2, 2, SKIP3).getExclusionCostFlat());
-        assertEquals(20, cena("BEG", 2, 2, SKIP3).getExclusionPromoSavedEur());
+    void escapii2_doTriIskljucenja_nistaSeNeNaplacuje() {
+        assertEquals(0,  cena("BEG", 3, 2, ESCAPII2).getExclusionCostFlat());
+        assertEquals(40, cena("BEG", 3, 2, ESCAPII2).getExclusionPromoSavedEur());
+        assertEquals(0,  cena("BEG", 2, 2, ESCAPII2).getExclusionCostFlat());
+        assertEquals(20, cena("BEG", 2, 2, ESCAPII2).getExclusionPromoSavedEur());
     }
 
     @Test
     void promoSeNeSabiraSaPrvimGratis_triBesplatnaUkupno_neCetiri() {
-        // da se sabira, uz SKIP3 bi bila besplatna sva četiri
-        assertEquals(10, cena("BEG", 4, 1, SKIP3).getExclusionCostFlat());
+        // da se sabira, uz ESCAPII2 bi bila besplatna sva četiri
+        assertEquals(10, cena("BEG", 4, 1, ESCAPII2).getExclusionCostFlat());
     }
 
     @Test
@@ -82,7 +82,7 @@ class PriceCalculatorPromoTest {
 
     @Test
     void jednoIskljucenjeJeIonakoBesplatno_promoNeStediNista() {
-        PricePreviewResponse promo = cena("BEG", 1, 2, SKIP3);
+        PricePreviewResponse promo = cena("BEG", 1, 2, ESCAPII2);
         assertEquals(0, promo.getExclusionCostFlat());
         assertEquals(0, promo.getExclusionPromoSavedEur());
         assertEquals(cena("BEG", 1, 2, 0).getTotalEurAll(), promo.getTotalEurAll());
@@ -90,16 +90,16 @@ class PriceCalculatorPromoTest {
 
     @Test
     void aerodromBezIskljucivanja_promoNeDajeNista() {
-        PricePreviewResponse promo = cena("INI", 3, 2, SKIP3);
+        PricePreviewResponse promo = cena("INI", 3, 2, ESCAPII2);
         assertEquals(0, promo.getExclusionCostFlat());
         assertEquals(0, promo.getExclusionPromoSavedEur());
     }
 
     @Test
     void ustedaPratiBrojPutnika() {
-        assertEquals(20, cena("BEG", 4, 1, SKIP3).getExclusionPromoSavedEur());
-        assertEquals(60, cena("BEG", 4, 3, SKIP3).getExclusionPromoSavedEur());
-        assertEquals(30, cena("BEG", 4, 3, SKIP3).getExclusionCostFlat());
+        assertEquals(20, cena("BEG", 4, 1, ESCAPII2).getExclusionPromoSavedEur());
+        assertEquals(60, cena("BEG", 4, 3, ESCAPII2).getExclusionPromoSavedEur());
+        assertEquals(30, cena("BEG", 4, 3, ESCAPII2).getExclusionCostFlat());
     }
 
     @Test

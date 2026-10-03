@@ -82,7 +82,7 @@ class BookingPromoFlowTest {
                 .basePricePerPerson(500).accommodationExtraPerPerson(0).breakfastPerPerson(0).seatsTogether(0)
                 .insurancePerPerson(0).eurPerPerson(500).soloSurcharge(0).cabinSuitcaseCount(0).cabinSuitcaseTotal(0)
                 .revealBoxTotal(0).exclusionCount(0).numberOfTravelers(2).numberOfNights(3)
-                .exclusionCostFlat(promo ? 20 : 60).totalEurAll(promo ? 1020 : 1060)     // SKIP3: naplaćuje se samo četvrto
+                .exclusionCostFlat(promo ? 20 : 60).totalEurAll(promo ? 1020 : 1060)     // ESCAPII2: naplaćuje se samo četvrto
                 .exclusionPromoApplied(promo).exclusionPromoSavedEur(promo ? 40 : 0).exclusionPromoFreeCount(promo ? 3 : 0)
                 .build();
     }
@@ -100,15 +100,15 @@ class BookingPromoFlowTest {
 
     @Test
     void vazeciKod_iskljucivanjaBesplatna_iPromoZapisanNaRezervaciji() {
-        when(promo.besplatnihZa("SKIP3")).thenReturn(3);
+        when(promo.besplatnihZa("ESCAPII2")).thenReturn(3);
         kalkulatorVraca(true);
 
-        svc.createBooking(zahtev(" skip3 "));   // sajt šalje kako je kupac ukucao
+        svc.createBooking(zahtev(" escapii2 "));   // sajt šalje kako je kupac ukucao
 
         Booking b = sacuvana();
-        assertEquals("SKIP3", b.getPromoCode());
+        assertEquals("ESCAPII2", b.getPromoCode());
         assertEquals(40, b.getPromoSavedEur());
-        assertEquals(20, b.getExclusionCostEur(), "četvrto isključivanje se i uz SKIP3 naplaćuje");
+        assertEquals(20, b.getExclusionCostEur(), "četvrto isključivanje se i uz ESCAPII2 naplaćuje");
         assertEquals(1020, b.getTotalPriceAll());
     }
 
@@ -134,9 +134,9 @@ class BookingPromoFlowTest {
 
     @Test
     void kodKojiViseNeVazi_odbijaRezervaciju_daKupacVidiNovuCenu() {
-        when(promo.besplatnihZa("SKIP3")).thenReturn(0);
+        when(promo.besplatnihZa("ESCAPII2")).thenReturn(0);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(zahtev("SKIP3")));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> svc.createBooking(zahtev("ESCAPII2")));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         assertEquals(ExclusionPromo.PORUKA_NE_VAZI, ex.getReason());
@@ -148,7 +148,7 @@ class BookingPromoFlowTest {
     void pregledCene_nevazeciKodSeSamoIgnorise_aSajtSaznaDaLiPromoTraje() {
         when(promo.besplatnihZa("STARI")).thenReturn(0);
         when(promo.aktivan()).thenReturn(true);
-        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", LocalDate.now().plusDays(10), true, 3));
+        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", LocalDate.now().plusDays(10), true, 3));
         kalkulatorVraca(false);
 
         PricePreviewResponse p = svc.previewPrice(10L, 2, AccommodationType.STANDARD, 4, 0, "STARI", false, false, false);
@@ -161,12 +161,12 @@ class BookingPromoFlowTest {
 
     @Test
     void pregledCene_saVazecimKodom() {
-        when(promo.besplatnihZa("SKIP3")).thenReturn(3);
+        when(promo.besplatnihZa("ESCAPII2")).thenReturn(3);
         when(promo.aktivan()).thenReturn(true);
-        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", LocalDate.now().plusDays(10), true, 3));
+        when(promo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", LocalDate.now().plusDays(10), true, 3));
         kalkulatorVraca(true);
 
-        PricePreviewResponse p = svc.previewPrice(10L, 2, AccommodationType.STANDARD, 4, 0, "SKIP3", false, false, false);
+        PricePreviewResponse p = svc.previewPrice(10L, 2, AccommodationType.STANDARD, 4, 0, "ESCAPII2", false, false, false);
 
         assertTrue(p.getExclusionPromoApplied());
         assertEquals(20, p.getExclusionCostFlat());

@@ -41,7 +41,7 @@ class GiftCodeUtilsTest {
         assertEquals("ESC-NEMA", GiftCodeUtils.normalize("ESC-NEMA"));
         assertEquals("ESC-PENDING", GiftCodeUtils.normalize("  esc-pending "));
         assertEquals("ESC-5835C92", GiftCodeUtils.normalize("ESC-5835C92"), "znak manjka - ne izmišljati");
-        assertEquals("SKIP3", GiftCodeUtils.normalize("skip3"), "promo kod se ne dira");
+        assertEquals("ESCAPII2", GiftCodeUtils.normalize("escapii2"), "promo kod se ne dira");
         assertEquals("", GiftCodeUtils.normalize(null));
         assertEquals("", GiftCodeUtils.normalize("   "));
     }
