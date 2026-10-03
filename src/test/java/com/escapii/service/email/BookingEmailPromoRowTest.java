@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Uz promo kod u cenovniku mejla stoji red sa kodom, brojem poklonjenih isključivanja i uštedom -
- * kupac vidi da je pogodnost stvarno primenjena. Ono što se i uz kod naplaćuje (SKIP3: četvrto
+ * kupac vidi da je pogodnost stvarno primenjena. Ono što se i uz kod naplaćuje (ESCAPII2: četvrto
  * isključivanje) ima svoj red sa TAČNIM brojem. Bez promo koda mejl izgleda kao i do sada.
  *
  * <p>Tu je i doplata za solo putnika: u obračunu sa agencijom više nije zasebna stavka (ulazi u
@@ -96,10 +96,10 @@ class BookingEmailPromoRowTest {
     }
 
     @Test
-    void skip3SaCetiriIskljucivanja_naplacenoJedno_poklonjenaDva() {
+    void escapii2SaCetiriIskljucivanja_naplacenoJedno_poklonjenaDva() {
         Booking b = rezervacija();            // 4 isključivanja, 2 putnika
         b.setExclusionCostEur(20);
-        b.setPromoCode("SKIP3");
+        b.setPromoCode("ESCAPII2");
         b.setPromoSavedEur(40);
         b.setTotalPriceAll(1020);
 
@@ -107,22 +107,22 @@ class BookingEmailPromoRowTest {
 
         assertTrue(html.contains("Isključivanje (1× 10€/os)"), "naplaćeno je jedno, ne tri");
         assertFalse(html.contains("3× 10€/os"));
-        assertTrue(html.contains("Promo kod SKIP3 - 2 isključivanja besplatno"));
+        assertTrue(html.contains("Promo kod ESCAPII2 - 2 isključivanja besplatno"));
         assertTrue(html.contains("ušteda 40 €"));
     }
 
     @Test
-    void skip3SaTriIskljucivanja_nistaNaplaceno_samoPromoRed() {
+    void escapii2SaTriIskljucivanja_nistaNaplaceno_samoPromoRed() {
         Booking b = rezervacija();
         b.setExclusionCount(3);
         b.setExclusionCostEur(0);
-        b.setPromoCode("SKIP3");
+        b.setPromoCode("ESCAPII2");
         b.setPromoSavedEur(40);
         b.setTotalPriceAll(1000);
 
         String html = mejlKupcu(b);
 
-        assertTrue(html.contains("Promo kod SKIP3 - 2 isključivanja besplatno"));
+        assertTrue(html.contains("Promo kod ESCAPII2 - 2 isključivanja besplatno"));
         assertFalse(html.contains("10€/os"), "nema reda sa naplatom isključivanja");
     }
 
@@ -131,11 +131,11 @@ class BookingEmailPromoRowTest {
         Booking b = rezervacija();
         b.setExclusionCount(2);
         b.setExclusionCostEur(0);
-        b.setPromoCode("SKIP3");
+        b.setPromoCode("ESCAPII2");
         b.setPromoSavedEur(20);
         b.setTotalPriceAll(1000);
 
-        assertTrue(mejlKupcu(b).contains("Promo kod SKIP3 - 1 isključivanje besplatno (ušteda 20 €)"));
+        assertTrue(mejlKupcu(b).contains("Promo kod ESCAPII2 - 1 isključivanje besplatno (ušteda 20 €)"));
     }
 
     @Test
@@ -180,7 +180,7 @@ class BookingEmailPromoRowTest {
         Booking b = rezervacija();
         b.setExclusionCount(1);           // prvo isključivanje je ionako besplatno
         b.setExclusionCostEur(0);
-        b.setPromoCode("SKIP3");
+        b.setPromoCode("ESCAPII2");
         b.setPromoSavedEur(0);
         b.setTotalPriceAll(1000);
 
