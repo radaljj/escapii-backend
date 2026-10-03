@@ -909,7 +909,7 @@ public class BookingEmailServiceImpl implements BookingEmailService {
         if (booking.getCabinSuitcaseCount() > 0)
             rows.append(priceRow("Kabinski kofer (50 € × 2 smera)", "100 € / os", booking.getCabinSuitcaseCount(), booking.getCabinSuitcaseCount() * 100, false));
         // Koliko isključivanja je stvarno naplaćeno čita se iz iznosa (10 €/os po isključivanju), ne iz
-        // „broj - 1": uz promo kod je besplatno više od prvog, pa bi etiketa lagala (SKIP3 sa četiri
+        // „broj - 1": uz promo kod je besplatno više od prvog, pa bi etiketa lagala (ESCAPII2 sa četiri
         // isključivanja naplaćuje jedno, ne tri).
         int promoUsteda = booking.getPromoCode() != null && booking.getPromoSavedEur() != null
                 ? booking.getPromoSavedEur() : 0;

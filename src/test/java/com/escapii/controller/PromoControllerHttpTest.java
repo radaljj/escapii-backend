@@ -43,16 +43,16 @@ class PromoControllerHttpTest {
 
     @Test
     void vazeciKod_vracaVrstuIDatum_aNeKod() throws Exception {
-        when(exclusionPromo.besplatnihZa("skip3")).thenReturn(3);
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
+        when(exclusionPromo.besplatnihZa("escapii2")).thenReturn(3);
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", DO, true, 3));
 
-        mockMvc.perform(post("/api/promo/validate").contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"skip3\"}"))
+        mockMvc.perform(post("/api/promo/validate").contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"escapii2\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
                 .andExpect(jsonPath("$.kind").value("EXCLUSIONS_FREE"))
                 .andExpect(jsonPath("$.validUntil").value("2026-11-30"))
                 .andExpect(jsonPath("$.freeExclusions").value(3))
-                .andExpect(content().string(not(containsString("SKIP3"))));
+                .andExpect(content().string(not(containsString("ESCAPII2"))));
     }
 
     @Test
@@ -80,14 +80,14 @@ class PromoControllerHttpTest {
 
     @Test
     void panelCitaPodesavanjaIStatistiku() throws Exception {
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(LocalDate.of(2026, 10, 1));
-        when(bookingRepository.countPromoUses("SKIP3")).thenReturn(7L);
-        when(bookingRepository.sumPromoSaved("SKIP3")).thenReturn(340L);
+        when(bookingRepository.countPromoUses("ESCAPII2")).thenReturn(7L);
+        when(bookingRepository.sumPromoSaved("ESCAPII2")).thenReturn(340L);
 
         mockMvc.perform(get("/api/admin/promo"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("SKIP3"))
+                .andExpect(jsonPath("$.code").value("ESCAPII2"))
                 .andExpect(jsonPath("$.validUntil").value("2026-11-30"))
                 .andExpect(jsonPath("$.enabled").value(true))
                 .andExpect(jsonPath("$.active").value(true))
@@ -98,7 +98,7 @@ class PromoControllerHttpTest {
 
     @Test
     void ukljucenAliIstekao_panelKazeDaNijeAktivan() throws Exception {
-        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
+        when(exclusionPromo.podesavanja()).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(DO.plusDays(1));
 
         mockMvc.perform(get("/api/admin/promo"))
@@ -108,11 +108,11 @@ class PromoControllerHttpTest {
 
     @Test
     void cuvanjeIzPanela() throws Exception {
-        when(exclusionPromo.sacuvaj("SKIP3", DO, true, 3)).thenReturn(new ExclusionPromo.Podesavanja("SKIP3", DO, true, 3));
+        when(exclusionPromo.sacuvaj("ESCAPII2", DO, true, 3)).thenReturn(new ExclusionPromo.Podesavanja("ESCAPII2", DO, true, 3));
         when(exclusionPromo.danas()).thenReturn(LocalDate.of(2026, 10, 1));
 
         mockMvc.perform(put("/api/admin/promo").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"SKIP3\",\"validUntil\":\"2026-11-30\",\"enabled\":true,\"freeCount\":3}"))
+                        .content("{\"code\":\"ESCAPII2\",\"validUntil\":\"2026-11-30\",\"enabled\":true,\"freeCount\":3}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
     }
@@ -123,7 +123,7 @@ class PromoControllerHttpTest {
                 .thenThrow(new IllegalArgumentException("Da bi promo bio uključen, mora da ima datum do kog važi."));
 
         mockMvc.perform(put("/api/admin/promo").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"SKIP3\",\"validUntil\":null,\"enabled\":true}"))
+                        .content("{\"code\":\"ESCAPII2\",\"validUntil\":null,\"enabled\":true}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Da bi promo bio uključen, mora da ima datum do kog važi."));
     }

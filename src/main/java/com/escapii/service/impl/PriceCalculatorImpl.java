@@ -51,7 +51,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
         // Pravila isključivanja (koliko ih je dozvoljeno i da li je prvo gratis)
         // dolaze iz DepartureAirport - nema više if-a po kodu aerodroma.
         // Promo „besplatna isključivanja": pun iznos se i dalje izračuna, da kupac vidi koliko je
-        // uštedeo; naplaćuje se samo ono preko broja koji promo pokriva (SKIP3: tek četvrto).
+        // uštedeo; naplaćuje se samo ono preko broja koji promo pokriva (ESCAPII2: tek četvrto).
         boolean promo = promoFreeExclusions > 0;
         int exclusionFull = calcExclusionCost(exclusionCount, n, departureAirport, 0);
         int exclusionCostFlat = promo ? calcExclusionCost(exclusionCount, n, departureAirport, promoFreeExclusions) : exclusionFull;
@@ -105,7 +105,7 @@ public class PriceCalculatorImpl implements PriceCalculator {
 
         int effective = Math.min(exclusionCount, airport.maxExclusions());
         // Besplatnih je onoliko koliko daje pravilo aerodroma (prvo gratis) ili promo kod - šta je
-        // više. Promo se NE sabira sa „prvo gratis": SKIP3 znači tri besplatna ukupno, ne četiri.
+        // više. Promo se NE sabira sa „prvo gratis": ESCAPII2 znači tri besplatna ukupno, ne četiri.
         int free      = Math.max(airport.firstExclusionFree() ? 1 : 0, promoFree);
         int billable  = effective - free;
         return Math.max(0, billable) * EXCLUSION_PP * n;

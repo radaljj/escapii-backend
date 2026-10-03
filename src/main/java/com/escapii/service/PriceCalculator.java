@@ -44,7 +44,7 @@ public interface PriceCalculator {
      *
      * @param promoFreeExclusions koliko isključivanja UKUPNO ne košta ništa uz važeći promo kod
      *                       (proverava pozivalac, vidi ExclusionPromo); 0 = bez promo koda. Kod
-     *                       SKIP3 daje 3: prvo (besplatno i inače), drugo i treće su 0 €, a četvrto
+     *                       ESCAPII2 daje 3: prvo (besplatno i inače), drugo i treće su 0 €, a četvrto
      *                       se naplaćuje. U odgovoru stoji koliko je kupac uštedeo
      *                       ({@code exclusionPromoSavedEur}). Pravila aerodroma (koliko je
      *                       isključivanja dozvoljeno) ostaju ista.

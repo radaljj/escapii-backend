@@ -18,8 +18,9 @@ import java.util.regex.Pattern;
 
 /**
  * Promo „besplatna isključivanja destinacija": jedan zajednički kod koji kupac ukuca u polje za
- * vaučer, a obračun cene ga primeni tako što prvih N isključivanja ne košta ništa. Kod SKIP3 =
- * prva tri su besplatna (prvo je besplatno i bez koda), četvrto se naplaćuje kao i do sada.
+ * vaučer, a obračun cene ga primeni tako što prvih N isključivanja ne košta ništa. Ime koda
+ * (promenjeno 2026-10-03) ne kaže koliko je besplatnih - to je podesivo, danas 3: prva tri su
+ * besplatna (prvo je besplatno i bez koda), četvrto se naplaćuje kao i do sada.
  *
  * <p>Kod, datum isteka, broj besplatnih isključivanja i prekidač se menjaju iz admin panela
  * (tabela {@code app_settings}), bez deploya: promo traje mesec-dva, a ako kod procuri mora da
@@ -72,7 +73,7 @@ public class ExclusionPromo {
 
     @Autowired
     public ExclusionPromo(JdbcTemplate jdbc,
-                          @Value("${app.promo.exclusions.code:SKIP3}") String podrazumevaniKod,
+                          @Value("${app.promo.exclusions.code:ESCAPII2}") String podrazumevaniKod,
                           @Value("${app.promo.exclusions.free-count:3}") int podrazumevanoBesplatnih) {
         this(jdbc, podrazumevaniKod, podrazumevanoBesplatnih, () -> LocalDate.now(ZONA));
     }

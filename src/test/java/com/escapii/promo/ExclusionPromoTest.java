@@ -53,22 +53,22 @@ class ExclusionPromoTest {
 
     private final LaznaBaza baza = new LaznaBaza();
     private LocalDate sada = DANAS;
-    private final ExclusionPromo promo = new ExclusionPromo(baza, " skip3 ", 3, () -> sada);
+    private final ExclusionPromo promo = new ExclusionPromo(baza, " escapii2 ", 3, () -> sada);
 
     @Test
     void bezSacuvanihPodesavanja_kodPostojiAliJePromoUgasen() {
-        assertEquals("SKIP3", promo.podesavanja().kod());
+        assertEquals("ESCAPII2", promo.podesavanja().kod());
         assertFalse(promo.aktivan());
-        assertFalse(promo.vazi("SKIP3"), "dok admin ne uključi promo, kod ne radi");
+        assertFalse(promo.vazi("ESCAPII2"), "dok admin ne uključi promo, kod ne radi");
     }
 
     @Test
     void ukljucenSaDatumom_vazi_bezObziraNaVelicinuSlovaIRazmake() {
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
 
         assertTrue(promo.aktivan());
-        assertTrue(promo.vazi("SKIP3"));
-        assertTrue(promo.vazi("  skip3 "));
+        assertTrue(promo.vazi("ESCAPII2"));
+        assertTrue(promo.vazi("  escapii2 "));
         assertFalse(promo.vazi("SKIP4"));
         assertFalse(promo.vazi(""));
         assertFalse(promo.vazi(null));
@@ -76,32 +76,32 @@ class ExclusionPromoTest {
 
     @Test
     void poslednjiDanJosVazi_sutradanNe() {
-        promo.sacuvaj("SKIP3", DANAS, true, 3);
-        assertTrue(promo.vazi("SKIP3"), "datum isteka je uključiv");
+        promo.sacuvaj("ESCAPII2", DANAS, true, 3);
+        assertTrue(promo.vazi("ESCAPII2"), "datum isteka je uključiv");
 
         sada = DANAS.plusDays(1);
-        assertFalse(promo.vazi("SKIP3"));
+        assertFalse(promo.vazi("ESCAPII2"));
         assertFalse(promo.aktivan());
     }
 
     @Test
     void gasenjeIzPanela_vaziOdmah_bezCekanjaKesa() {
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
-        assertTrue(promo.vazi("SKIP3"));
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
+        assertTrue(promo.vazi("ESCAPII2"));
 
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), false, 3);
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), false, 3);
 
-        assertFalse(promo.vazi("SKIP3"), "ako kod procuri, gašenje mora da deluje odmah");
+        assertFalse(promo.vazi("ESCAPII2"), "ako kod procuri, gašenje mora da deluje odmah");
     }
 
     @Test
     void promenaKoda_stariViseNeVazi() {
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
         promo.sacuvaj("prvi-2026", DANAS.plusDays(10), true, 3);
 
         assertEquals("PRVI-2026", promo.podesavanja().kod());
         assertTrue(promo.vazi("PRVI-2026"));
-        assertFalse(promo.vazi("SKIP3"));
+        assertFalse(promo.vazi("ESCAPII2"));
     }
 
     @Test
@@ -111,81 +111,81 @@ class ExclusionPromoTest {
         assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("<script>", DANAS, true, 3));
         assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("ESC-ABCD-EFGH-JKLM", DANAS, true, 3),
                 "tako počinju poklon vaučeri - sajt po tome bira koju proveru zove");
-        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("SKIP3", null, true, 3),
+        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("ESCAPII2", null, true, 3),
                 "uključen promo bez datuma bi trajao zauvek");
         assertTrue(baza.redovi.isEmpty());
     }
 
     @Test
     void ugasenPromoSmeBezDatuma() {
-        assertDoesNotThrow(() -> promo.sacuvaj("SKIP3", null, false, 3));
+        assertDoesNotThrow(() -> promo.sacuvaj("ESCAPII2", null, false, 3));
         assertFalse(promo.aktivan());
     }
 
     @Test
     void podesavanjaSeKesiraju_bazaSeNeCitaNaSvakiObracunCene() {
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
         int posleCuvanja = baza.citanja;
 
-        for (int i = 0; i < 20; i++) promo.vazi("SKIP3");
+        for (int i = 0; i < 20; i++) promo.vazi("ESCAPII2");
 
         assertEquals(posleCuvanja, baza.citanja, "sačuvaj() je već napunio keš");
     }
 
     @Test
     void padBaze_koristiPoslednjePoznato_aBezToga_promoJeUgasen() {
-        ExclusionPromo svez = new ExclusionPromo(baza, "SKIP3", 3, () -> sada);
+        ExclusionPromo svez = new ExclusionPromo(baza, "ESCAPII2", 3, () -> sada);
         baza.pukni = true;
-        assertFalse(svez.vazi("SKIP3"), "bez ijednog uspešnog čitanja promo se tretira kao ugašen");
-        assertEquals("SKIP3", svez.podesavanja().kod());
+        assertFalse(svez.vazi("ESCAPII2"), "bez ijednog uspešnog čitanja promo se tretira kao ugašen");
+        assertEquals("ESCAPII2", svez.podesavanja().kod());
 
         baza.pukni = false;
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
-        assertTrue(promo.vazi("SKIP3"));
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
+        assertTrue(promo.vazi("ESCAPII2"));
     }
 
     @Test
     void neispravanDatumUBazi_znaciDaPromoNeRadi() {
-        baza.redovi.put(ExclusionPromo.K_KOD, "SKIP3");
+        baza.redovi.put(ExclusionPromo.K_KOD, "ESCAPII2");
         baza.redovi.put(ExclusionPromo.K_UKLJUCEN, "true");
         baza.redovi.put(ExclusionPromo.K_VAZI_DO, "nije-datum");
 
-        assertFalse(promo.vazi("SKIP3"));
+        assertFalse(promo.vazi("ESCAPII2"));
         assertNull(promo.podesavanja().vaziDo());
     }
 
     @Test
-    void skip3_podrazumevanoTriBesplatna_iToJeOnoStoObracunDobija() {
+    void escapii2_podrazumevanoTriBesplatna_iToJeOnoStoObracunDobija() {
         assertEquals(3, promo.podesavanja().besplatnih(), "i pre nego što admin išta sačuva");
-        assertEquals(0, promo.besplatnihZa("SKIP3"), "ugašen promo ne daje ništa");
+        assertEquals(0, promo.besplatnihZa("ESCAPII2"), "ugašen promo ne daje ništa");
 
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 3);
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 3);
 
-        assertEquals(3, promo.besplatnihZa("skip3"));
+        assertEquals(3, promo.besplatnihZa("escapii2"));
         assertEquals(0, promo.besplatnihZa("SKIP4"));
         assertEquals(0, promo.besplatnihZa(null));
     }
 
     @Test
     void brojBesplatnihSeMenjaIzPanela_samoOdDvaDoCetiri() {
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 4);
-        assertEquals(4, promo.besplatnihZa("SKIP3"));
-        promo.sacuvaj("SKIP3", DANAS.plusDays(10), true, 2);
-        assertEquals(2, promo.besplatnihZa("SKIP3"));
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 4);
+        assertEquals(4, promo.besplatnihZa("ESCAPII2"));
+        promo.sacuvaj("ESCAPII2", DANAS.plusDays(10), true, 2);
+        assertEquals(2, promo.besplatnihZa("ESCAPII2"));
 
-        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("SKIP3", DANAS, true, 1),
+        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("ESCAPII2", DANAS, true, 1),
                 "prvo isključivanje je besplatno i bez koda - promo na 1 ne bi davao ništa");
-        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("SKIP3", DANAS, true, 5));
-        assertEquals(2, promo.besplatnihZa("SKIP3"), "odbijen unos ne menja ništa");
+        assertThrows(IllegalArgumentException.class, () -> promo.sacuvaj("ESCAPII2", DANAS, true, 5));
+        assertEquals(2, promo.besplatnihZa("ESCAPII2"), "odbijen unos ne menja ništa");
     }
 
     @Test
     void besmislenBrojUBazi_vracaNaPodrazumevanih3() {
-        baza.redovi.put(ExclusionPromo.K_KOD, "SKIP3");
+        baza.redovi.put(ExclusionPromo.K_KOD, "ESCAPII2");
         baza.redovi.put(ExclusionPromo.K_UKLJUCEN, "true");
         baza.redovi.put(ExclusionPromo.K_VAZI_DO, DANAS.plusDays(5).toString());
         baza.redovi.put(ExclusionPromo.K_BESPLATNIH, "99");
 
-        assertEquals(3, promo.besplatnihZa("SKIP3"));
+        assertEquals(3, promo.besplatnihZa("ESCAPII2"));
     }
 }
